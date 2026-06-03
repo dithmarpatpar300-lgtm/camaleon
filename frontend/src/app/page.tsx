@@ -3,6 +3,9 @@
 import { useCallback, useRef, useState } from "react";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import type { TransmutationModule } from "@/workers/types";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Spinner } from "@/components/ui/Spinner";
+import { Badge } from "@/components/ui/Badge";
 
 type TransmutationStatus = "idle" | "processing" | "success" | "error";
 
@@ -126,25 +129,30 @@ export default function Home() {
     [handleFile]
   );
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-8">
-      <h1 className="mb-2 text-4xl font-bold text-zinc-50">Camaleon</h1>
-      <p className="mb-8 text-zinc-400">
-        Drop a{" "}
-        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-emerald-400">
-          .jpg
-        </code>
-        ,{" "}
-        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-emerald-400">
-          .jpeg
-        </code>
-        , or{" "}
-        <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-emerald-400">
-          .png
-        </code>{" "}
-        file to transmute it
-      </p>
+  const handleDropzoneKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (status === "processing") return;
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fileInputRef.current?.click();
+      }
+    },
+    [status]
+  );
 
+  return (
+    <div className="mx-auto flex max-w-2xl flex-col items-center justify-center px-6 py-16">
+      {/* Hero text */}
+      <div className="mb-10 text-center">
+        <h1 className="mb-3 text-3xl font-bold text-text-primary">
+          Transmutar archivos
+        </h1>
+        <p className="text-text-secondary">
+          Drop an image to convert it — everything happens in your browser.
+        </p>
+      </div>
+
+      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -153,68 +161,99 @@ export default function Home() {
         className="hidden"
       />
 
-      <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleClick}
-        className={`flex h-64 w-full max-w-xl cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed transition-colors ${
-          status === "processing"
-            ? "border-zinc-600 bg-zinc-900 cursor-not-allowed"
-            : dragging
-              ? "border-emerald-400 bg-emerald-400/10"
-              : "border-zinc-700 bg-zinc-900 hover:border-zinc-500"
-        }`}
-      >
-        <span className="text-zinc-500">
-          {status === "processing" ? (
-            <span className="flex items-center gap-2">
-              <svg
-                className="h-5 w-5 animate-spin text-emerald-400"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
+      {/* Dropzone card */}
+      <Card className="w-full">
+        <CardBody>
+          <div
+            role="button"
+            tabIndex={status === "processing" ? -1 : 0}
+            aria-label="Select an image file to transmute"
+            aria-disabled={status === "processing"}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+            onKeyDown={handleDropzoneKeyDown}
+            className={`flex h-56 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed transition-colors ${
+              status === "processing"
+                ? "border-border bg-bg-base cursor-not-allowed"
+                : dragging
+                  ? "border-accent bg-accent-subtle"
+                  : "border-border bg-bg-base hover:border-text-muted"
+            }`}
+          >
+            {status === "processing" ? (
+              <Spinner label={`Transmuting ${sourceFileName ?? ""}`} />
+            ) : (
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
                   stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              Transmuting{sourceFileName ? ` ${sourceFileName}` : ""}...
-            </span>
-          ) : dragging ? (
-            "Release to transmute"
-          ) : (
-            "Drag & drop an image here, or click to select"
-          )}
-        </span>
-      </div>
+                  strokeWidth={1.5}
+                  className="h-8 w-8 text-text-muted"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                  />
+                </svg>
+                <span className="text-sm text-text-muted">
+                  {dragging
+                    ? "Release to transmute"
+                    : "Drag & drop an image here, or click to select"}
+                </span>
+                <span className="text-xs text-text-muted">
+                  <code className="font-mono text-accent">.jpg</code>{" "}
+                  <code className="font-mono text-accent">.jpeg</code>{" "}
+                  <code className="font-mono text-accent">.png</code>
+                </span>
+              </>
+            )}
+          </div>
+        </CardBody>
+      </Card>
 
+      {/* Status messages */}
       {status === "success" && (
-        <p className="mt-6 rounded-lg bg-emerald-400/10 px-4 py-2 text-emerald-400">
-          Transmutation complete. File downloaded.
-        </p>
-      )}
-
-      {status === "error" && errorMessage && (
-        <div className="mt-6 w-full max-w-xl rounded-lg bg-red-400/10 px-4 py-3 text-red-400">
-          <p className="font-semibold">Transmutation failed</p>
-          <p className="mt-1 text-sm">{errorMessage}</p>
+        <div className="mt-4 flex items-center gap-2 rounded-xl bg-accent-subtle px-4 py-3 text-sm text-accent">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-4 w-4 shrink-0"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Transmutación completa. File downloaded.
         </div>
       )}
 
-      <p className="mt-6 text-xs text-zinc-600">
+      {status === "error" && errorMessage && (
+        <div className="mt-4 w-full rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+          <p className="font-semibold">Transmutation failed</p>
+          <p className="mt-1">{errorMessage}</p>
+        </div>
+      )}
+
+      {/* Engine status */}
+      <p className="mt-6 text-xs text-text-muted">
         Engine: {ready ? "Ready" : "Initializing..."}
       </p>
-    </main>
+
+      {/* Format badges */}
+      <div className="mt-6 flex items-center gap-2">
+        <Badge variant="lossless">PNG — Sin perdida</Badge>
+        <Badge variant="lossy">JPEG — Comprimido</Badge>
+      </div>
+    </div>
   );
 }

@@ -1,1 +1,87 @@
 @import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* Design tokens — "Verde Camaleón" (SPEC §7.4)                        */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --color-accent: #22C55E;
+  --color-accent-hover: #16A34A;
+  --color-accent-subtle: rgba(34, 197, 94, 0.12);
+  --color-lossless: #22C55E;
+  --color-lossy: #9BA1A8;
+  --color-warning: #F59E0B;
+  --color-error: #F43F5E;
+  --color-info: #38BDF8;
+}
+
+/* Dark theme (default) */
+.dark {
+  --color-bg-base: #0E0F11;
+  --color-bg-surface: #15171A;
+  --color-bg-elevated: #1C1F23;
+  --color-border: #262A2F;
+  --color-text-primary: #F2F4F5;
+  --color-text-secondary: #9BA1A8;
+  --color-text-muted: #61676E;
+}
+
+/* Light theme */
+.light {
+  --color-bg-base: #FAFAFA;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #F5F5F5;
+  --color-border: #E5E5E5;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #6B6B6B;
+  --color-text-muted: #9CA3AF;
+}
+
+/* ------------------------------------------------------------------ */
+/* Tailwind v4 @theme — maps tokens to utility classes                 */
+/* ------------------------------------------------------------------ */
+
+@theme {
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --color-bg-base: var(--color-bg-base);
+  --color-bg-surface: var(--color-bg-surface);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-subtle: var(--color-accent-subtle);
+  --color-lossless: var(--color-lossless);
+  --color-lossy: var(--color-lossy);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-info: var(--color-info);
+}
+
+/* ------------------------------------------------------------------ */
+/* Base styles                                                        */
+/* ------------------------------------------------------------------ */
+
+html {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
