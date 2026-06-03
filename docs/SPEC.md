@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.6.1  
+**Version:** 0.6.2  
 **Last updated:** 2026-06-02  
-**Status:** Active — UI-1 delivered: design tokens, theme system, primitives, layout shell
+**Status:** Active — UI-2 delivered: landing, ToolRegistry, per-tool routes, dropzone extraction
 
 ---
 
@@ -725,12 +725,14 @@ components/
 │               # □ Dropdown/Popover, SearchInput, Tooltip, Toast (later)
 ├── layout/     # ✅ Header, ThemeToggle, LanguageSelector, Footer (UI-1)
 │               # □ Mega-menu (deferred per §7.7)
-└── transmute/  # □ ToolCard, ToolGrid, Dropzone, TransmutationPanel,
-                #   OptionsControls, Hero, PrivacyBanner (UI-2+)
+├── transmute/  # ✅ ToolCard, ToolGrid, Dropzone, TransmutationDropzone,
+                #   Hero, PrivacyBanner (UI-2)
+                # □ OptionsControls, full TransmutationPanel polish (UI-3)
 providers/      # ✅ ThemeProvider (UI-1)
                 # □ I18nProvider (UI-4)
 lib/            # ✅ utils.ts (cn helper), types.ts (UI-1)
-                # lib/tools/ □ tool-registry.ts (UI-2)
+                # ✅ lib/tools/ types.ts + tool-registry.ts (UI-2)
+                # ✅ lib/transmutation/ download.ts (UI-2)
                 # lib/i18n/ □ dictionaries (UI-4)
 hooks/          # ✅ useTransmutationWorker (existing), useTheme (UI-1)
 ```
@@ -753,14 +755,14 @@ type ToolDefinition = {
 
 Components are token-driven and prop-typed; primitives carry no business logic.
 
-### 7.6 Page & Routing Model (Planned)
+### 7.6 Page & Routing Model (Implemented — UI-2)
 
 Next.js App Router:
 
-| Route | Purpose |
-|-------|---------|
-| `/` | Landing (entry point): `Hero` + `PrivacyBanner` + `ToolGrid` (cards generated from the registry) |
-| `/transmute/[slug]` | Per-tool workspace: `TransmutationPanel` pre-configured from the registry; hosts `Dropzone` and (future) `OptionsControls` (quality/compression backed by the v0.5.4/v0.5.5 Wasm exports) |
+| Route | Purpose | Status |
+|-------|---------|--------|
+| `/` | Landing (entry point): `Hero` + `PrivacyBanner` + `ToolGrid` (cards generated from the registry) | ✅ UI-2 |
+| `/transmute/[slug]` | Per-tool workspace: route shell with `TransmutationDropzone` pre-configured from the registry; `generateStaticParams` for SSG | ✅ UI-2 (route shell; full panel + OptionsControls in UI-3) |
 
 Privacy reassurance is a first-class, **verifiable** element (NFR-1), not marketing copy. Tool cards surface the §5.6.3 messaging doctrine (lossless/lossy badge; size-growth hint for JPG→PNG).
 
@@ -778,7 +780,7 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | Phase | Scope | Constraint |
 |-------|-------|-----------|
 | UI-1 | ✅ Design system foundation: tokens + `ThemeProvider` + `ui/` primitives + layout shell (Header + Footer) (v0.6.1) | No conversion behavior change; existing dropzone keeps working |
-| UI-2 | `ToolRegistry` + landing (`Hero`, `PrivacyBanner`, `ToolGrid`) + refactor inline dropzone into `Dropzone` component | — |
+| UI-2 | ✅ `ToolRegistry` + landing (`Hero`, `PrivacyBanner`, `ToolGrid`) + Dropzone extraction + `/transmute/[slug]` route shell (v0.6.2) | OptionsControls + TransmutationPanel polish in UI-3 |
 | UI-3 | `/transmute/[slug]` routes + `TransmutationPanel` | — |
 | UI-4 | i18n EN/ES across the app | — |
 | UI-5 | Accessibility (keyboard/ARIA), motion, responsive | Feeds Phase 4 (v1.0.0) MVP sign-off |
@@ -831,6 +833,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.6.2 | 2026-06-02 | OpenCode | UI-2: Landing + ToolRegistry + dropzone extraction + /transmute/[slug] route shell with SSG | `ui_2_landing_tool_registry_done.md` |
 | 0.6.1 | 2026-06-02 | OpenCode | UI-1: Design system foundation — design tokens via Tailwind v4 @theme, ThemeProvider with no-FOUC inline script, ui/ primitives (Button, IconButton, Badge, Card, Spinner), layout shell (Header + Footer), Geist typography | `ui_1_design_system_foundation_done.md` |
 | 0.6.0 | 2026-06-02 | Chief Architect | §7.4–§7.8 Frontend UI/UX architecture & design system: "Verde Camaleón" identity, design tokens, ToolRegistry, page/routing model, header anatomy, UI implementation track (UI-1..UI-5) | — |
 | 0.5.5 | 2026-06-02 | OpenCode | JPEG→PNG hardened: RGB color-type enforcement, configurable compression (1–9), PngEncoder with Adaptive filter, dual Wasm exports | `refine_transmutador_jpg_done.md` |

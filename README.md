@@ -1,4 +1,4 @@
-# 🦎 Camaleon (v0.6.1)
+# 🦎 Camaleon (v0.6.2)
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
