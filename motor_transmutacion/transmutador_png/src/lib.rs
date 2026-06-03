@@ -45,6 +45,34 @@ pub const MIN_JPEG_QUALITY: u8 = 1;
 pub const MAX_JPEG_QUALITY: u8 = 100;
 
 // ---------------------------------------------------------------------------
+// Bounded newtypes (§5.11.4)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Quality(u8);
+
+impl Quality {
+    pub const DEFAULT: Quality = Quality(DEFAULT_JPEG_QUALITY);
+
+    pub fn try_new(value: u8) -> Result<Self, String> {
+        if value == 0 {
+            return Err("JPEG quality must be at least 1".into());
+        }
+        if value > MAX_JPEG_QUALITY {
+            return Err(format!(
+                "JPEG quality {} exceeds maximum ({})",
+                value, MAX_JPEG_QUALITY
+            ));
+        }
+        Ok(Quality(value))
+    }
+
+    pub fn value(&self) -> u8 {
+        self.0
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Options types
 // ---------------------------------------------------------------------------
 
@@ -72,26 +100,18 @@ pub struct PngToJpgOptions {
 impl Default for PngToJpgOptions {
     fn default() -> Self {
         Self {
-            quality: DEFAULT_JPEG_QUALITY,
+            quality: Quality::DEFAULT.value(),
             background: BackgroundFill::WHITE,
         }
     }
 }
 
 // ---------------------------------------------------------------------------
-// Validation
+// Validation (kept for backward compat; newtype is preferred constructor)
 // ---------------------------------------------------------------------------
 
 pub fn validate_quality(quality: u8) -> Result<u8, String> {
-    if quality == 0 {
-        return Err("JPEG quality must be at least 1".into());
-    }
-    if quality > MAX_JPEG_QUALITY {
-        return Err(format!(
-            "JPEG quality {} exceeds maximum ({})",
-            quality, MAX_JPEG_QUALITY
-        ));
-    }
+    Quality::try_new(quality)?;
     Ok(quality)
 }
 
@@ -173,7 +193,9 @@ pub fn transmutar_png_a_jpg_inner(
     options: &PngToJpgOptions,
 ) -> Result<Vec<u8>, String> {
     core_utils::validate_input(input_bytes)?;
-    png_bytes_to_jpg_bytes(input_bytes, options)
+    let output = png_bytes_to_jpg_bytes(input_bytes, options)?;
+    core_utils::validate_output(&output, core_utils::OutputFormat::Jpeg)?;
+    Ok(output)
 }
 
 // ---------------------------------------------------------------------------

@@ -41,6 +41,34 @@ pub const MIN_PNG_COMPRESSION: u8 = 1;
 pub const MAX_PNG_COMPRESSION: u8 = 9;
 
 // ---------------------------------------------------------------------------
+// Bounded newtypes (§5.11.4)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Compression(u8);
+
+impl Compression {
+    pub const DEFAULT: Compression = Compression(DEFAULT_PNG_COMPRESSION);
+
+    pub fn try_new(value: u8) -> Result<Self, String> {
+        if value == 0 {
+            return Err("PNG compression level must be at least 1".into());
+        }
+        if value > MAX_PNG_COMPRESSION {
+            return Err(format!(
+                "PNG compression level {} exceeds maximum ({})",
+                value, MAX_PNG_COMPRESSION
+            ));
+        }
+        Ok(Compression(value))
+    }
+
+    pub fn value(&self) -> u8 {
+        self.0
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Options types
 // ---------------------------------------------------------------------------
 
@@ -52,25 +80,17 @@ pub struct JpgToPngOptions {
 impl Default for JpgToPngOptions {
     fn default() -> Self {
         Self {
-            compression: DEFAULT_PNG_COMPRESSION,
+            compression: Compression::DEFAULT.value(),
         }
     }
 }
 
 // ---------------------------------------------------------------------------
-// Validation
+// Validation (kept for backward compat; newtype is preferred constructor)
 // ---------------------------------------------------------------------------
 
 pub fn validate_compression(compression: u8) -> Result<u8, String> {
-    if compression == 0 {
-        return Err("PNG compression level must be at least 1".into());
-    }
-    if compression > MAX_PNG_COMPRESSION {
-        return Err(format!(
-            "PNG compression level {} exceeds maximum ({})",
-            compression, MAX_PNG_COMPRESSION
-        ));
-    }
+    Compression::try_new(compression)?;
     Ok(compression)
 }
 
@@ -125,7 +145,9 @@ pub fn transmutar_jpg_a_png_inner(
     options: &JpgToPngOptions,
 ) -> Result<Vec<u8>, String> {
     core_utils::validate_input(input_bytes)?;
-    jpg_bytes_to_png_bytes(input_bytes, options)
+    let output = jpg_bytes_to_png_bytes(input_bytes, options)?;
+    core_utils::validate_output(&output, core_utils::OutputFormat::Png)?;
+    Ok(output)
 }
 
 // ---------------------------------------------------------------------------

@@ -265,6 +265,46 @@ fn read_be_u32(bytes: &[u8], offset: usize) -> u32 {
 }
 
 // ---------------------------------------------------------------------------
+// Output validation (SPEC §5.11)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OutputFormat {
+    Png,
+    Jpeg,
+}
+
+pub fn validate_output(bytes: &[u8], format: OutputFormat) -> Result<(), String> {
+    if bytes.is_empty() {
+        return Err(TransmutationError::ConversionFailed(
+            "encoder produced empty output".into(),
+        )
+        .to_string());
+    }
+
+    match format {
+        OutputFormat::Png => {
+            if bytes.len() < 8 || &bytes[0..8] != PNG_SIGNATURE {
+                return Err(TransmutationError::ConversionFailed(
+                    "output is not a valid PNG (missing signature)".into(),
+                )
+                .to_string());
+            }
+        }
+        OutputFormat::Jpeg => {
+            if bytes.len() < 2 || &bytes[0..2] != JPEG_SOI {
+                return Err(TransmutationError::ConversionFailed(
+                    "output is not a valid JPEG (missing SOI)".into(),
+                )
+                .to_string());
+            }
+        }
+    }
+
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
 // Metadata scanners (StripAll policy — SPEC §5.10)
 // ---------------------------------------------------------------------------
 
@@ -780,5 +820,39 @@ mod tests {
         let png = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
         assert!(!png_contains_text_chunk(&png));
         assert!(!png_contains_exif_chunk(&png));
+    }
+
+    // ------------------------------------------------------------------
+    // Output validation tests (§5.11)
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn validate_output_rejects_empty() {
+        let err = validate_output(&[], OutputFormat::Png).unwrap_err();
+        assert!(err.contains("empty"));
+    }
+
+    #[test]
+    fn validate_output_png_ok() {
+        let png = make_minimal_png(8, 8);
+        assert!(validate_output(&png, OutputFormat::Png).is_ok());
+    }
+
+    #[test]
+    fn validate_output_png_bad_magic() {
+        let err = validate_output(b"not a PNG file content", OutputFormat::Png).unwrap_err();
+        assert!(err.contains("PNG") || err.contains("signature"));
+    }
+
+    #[test]
+    fn validate_output_jpeg_ok() {
+        let jpg = make_minimal_jpeg(8, 8);
+        assert!(validate_output(&jpg, OutputFormat::Jpeg).is_ok());
+    }
+
+    #[test]
+    fn validate_output_jpeg_bad_magic() {
+        let err = validate_output(b"not a JPEG file content", OutputFormat::Jpeg).unwrap_err();
+        assert!(err.contains("JPEG") || err.contains("SOI"));
     }
 }

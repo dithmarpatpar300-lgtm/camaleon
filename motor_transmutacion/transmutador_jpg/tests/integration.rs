@@ -3,8 +3,8 @@ use std::io::Cursor;
 
 use transmutador_jpg::{
     jpg_bytes_to_png_bytes, png_ihdr_color_type, transmutar_jpg_a_png_inner,
-    validate_compression, JpgToPngOptions, DEFAULT_PNG_COMPRESSION, MAX_PNG_COMPRESSION,
-    MIN_PNG_COMPRESSION,
+    validate_compression, Compression, JpgToPngOptions, DEFAULT_PNG_COMPRESSION,
+    MAX_PNG_COMPRESSION, MIN_PNG_COMPRESSION,
 };
 
 fn default_options() -> JpgToPngOptions {
@@ -209,6 +209,32 @@ fn higher_compression_smaller_or_equal_output() {
 fn default_options_compression_is_six() {
     let opts = JpgToPngOptions::default();
     assert_eq!(opts.compression, 6);
+}
+
+// ------------------------------------------------------------------
+// Compression newtype tests (§5.11.4)
+// ------------------------------------------------------------------
+
+#[test]
+fn compression_try_new_rejects_zero() {
+    assert!(Compression::try_new(0).is_err());
+}
+
+#[test]
+fn compression_try_new_accepts_range() {
+    assert!(Compression::try_new(1).is_ok());
+    assert!(Compression::try_new(6).is_ok());
+    assert!(Compression::try_new(9).is_ok());
+}
+
+#[test]
+fn compression_try_new_rejects_over_9() {
+    assert!(Compression::try_new(10).is_err());
+}
+
+#[test]
+fn compression_default_is_6() {
+    assert_eq!(Compression::DEFAULT.value(), 6);
 }
 
 // ------------------------------------------------------------------

@@ -3,7 +3,7 @@ use std::io::Cursor;
 
 use transmutador_png::{
     png_bytes_to_jpg_bytes, transmutar_png_a_jpg_inner, validate_quality, BackgroundFill,
-    PngToJpgOptions, DEFAULT_JPEG_QUALITY, MAX_JPEG_QUALITY, MIN_JPEG_QUALITY,
+    PngToJpgOptions, Quality, DEFAULT_JPEG_QUALITY, MAX_JPEG_QUALITY, MIN_JPEG_QUALITY,
 };
 
 fn default_options() -> PngToJpgOptions {
@@ -325,6 +325,32 @@ fn background_fill_white_const() {
     assert_eq!(BackgroundFill::WHITE.r, 255);
     assert_eq!(BackgroundFill::WHITE.g, 255);
     assert_eq!(BackgroundFill::WHITE.b, 255);
+}
+
+// ------------------------------------------------------------------
+// Quality newtype tests (§5.11.4)
+// ------------------------------------------------------------------
+
+#[test]
+fn quality_try_new_rejects_zero() {
+    assert!(Quality::try_new(0).is_err());
+}
+
+#[test]
+fn quality_try_new_accepts_range() {
+    assert!(Quality::try_new(1).is_ok());
+    assert!(Quality::try_new(85).is_ok());
+    assert!(Quality::try_new(100).is_ok());
+}
+
+#[test]
+fn quality_try_new_rejects_over_100() {
+    assert!(Quality::try_new(101).is_err());
+}
+
+#[test]
+fn quality_default_is_85() {
+    assert_eq!(Quality::DEFAULT.value(), 85);
 }
 
 // ------------------------------------------------------------------
