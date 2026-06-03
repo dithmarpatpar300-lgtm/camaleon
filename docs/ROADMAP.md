@@ -41,17 +41,17 @@ The Minimum Viable Product is **bidirectional JPEG ↔ PNG transmutation**, impl
 - [x] README, LICENSE, `.gitignore`
 - [x] JPEG dropzone UI placeholder
 
-### Phase 1 — Build & Bridge `v0.2.0`
+### Phase 1 — Build & Bridge `v0.2.0` ✅ (Complete)
 
 Goal: connect frontend to Wasm through a reproducible pipeline.
 
-- [ ] `wasm-pack` build script for `transmutador_jpg` (target: `web`)
-- [ ] Artifact output convention under `frontend/public/wasm/` (or documented alternative)
-- [ ] Web Worker scaffold in `frontend/src/workers/`
-- [ ] Typed message protocol: `{ type, payload, id }` between UI ↔ Worker ↔ Wasm
-- [ ] `core_utils`: shared error types and byte-validation helpers used by all transmutators
+- [x] `wasm-pack` build script for `transmutador_jpg` (target: `web`)
+- [x] Artifact output convention under `frontend/public/wasm/` (gitignored; build documented)
+- [x] Web Worker scaffold in `frontend/src/workers/`
+- [x] Typed message protocol (`id`, `module`, `bytes`) between UI ↔ Worker ↔ Wasm
+- [x] `core_utils`: shared error types and byte-validation helpers used by all transmutators
 
-**Exit gate:** Worker loads Wasm stub, round-trips a byte array, returns structured error from placeholder.
+**Exit gate:** Worker loads Wasm stub, round-trips a byte array, returns structured error from placeholder. **Met** (Architect validated 2026-06-02).
 
 ### Phase 2 — JPG → PNG `v0.3.0`
 
@@ -119,4 +119,5 @@ Prioritized backlog — **do not implement until MVP is signed off**:
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-02 | Chief Architect (Cursor) | Phase 1 marked complete after OpenCode delivery review |
 | 2026-06-02 | Chief Architect (Cursor) | Initial roadmap; MVP = JPG↔PNG as dual modules |

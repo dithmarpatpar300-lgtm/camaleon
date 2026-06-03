@@ -1,4 +1,4 @@
-# 🦎 Camaleon (v0.1.0)
+# 🦎 Camaleon (v0.2.0)
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
@@ -18,6 +18,25 @@ Bypassing traditional server-side processing, Camaleon executes computationally 
 - **High-Performance Bridge:** WebAssembly (`wasm-bindgen` / `wasm-pack`).
 - **Concurrency:** Web Workers API.
 
+## 🔧 Building Wasm
+
+The core transmutation engine is compiled to WebAssembly via `wasm-pack`.
+
+**Prerequisites:** [Rust](https://rustup.rs) and [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/).
+
+```bash
+# From repository root (PowerShell)
+.\scripts\build-wasm.ps1
+
+# From repository root (Unix / CI)
+./scripts/build-wasm.sh
+
+# Or from the frontend directory via npm
+cd frontend && npm run build:wasm
+```
+
+Artifacts are written to `frontend/public/wasm/transmutador_jpg/` and served as static assets by Next.js.
+
 ## 📂 Ecosystem Architecture
 - `/frontend`: Presentation layer and browser thread management.
 - `/motor_transmutacion`: Isolated native modules bounded by responsibility.
@@ -33,7 +52,7 @@ Full phased plan: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 | Phase | Version | Goal |
 |-------|---------|------|
 | Foundation | v0.1.0 ✅ | Monorepo bootstrap |
-| Build & Bridge | v0.2.0 | `wasm-pack` pipeline + Web Workers |
+| Build & Bridge | v0.2.0 ✅ | `wasm-pack` pipeline + Web Workers |
 | JPG → PNG | v0.3.0 | `transmutador_jpg` functional |
 | PNG → JPG | v0.4.0 | `transmutador_png` functional |
 | **MVP** | **v1.0.0** | **Bidirectional JPEG ↔ PNG in browser** |
