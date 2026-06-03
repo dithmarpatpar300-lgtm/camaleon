@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.5.3  
+**Version:** 0.5.4  
 **Last updated:** 2026-06-02  
-**Status:** Active — StripAll metadata verified by integration tests
+**Status:** Active — PNG→JPEG hardened: alpha flatten, quality param, subsampling documented
 
 ---
 
@@ -264,18 +264,18 @@ When source PNG contains transparency, JPEG encoding requires **flattening** ont
 
 | Policy | Status |
 |--------|--------|
-| **Required (future):** explicit `BackgroundFill` policy (default: white `#FFFFFF` unless user configures) | **Not yet in API — MUST implement before MVP** |
-| Document in errors/UI when alpha is detected and flattened | Recommended |
+| **Explicit `BackgroundFill` policy** (default: white `#FFFFFF`; compositing via `C_out = round((α·C_fg + (255-α)·C_bg) / 255)` per channel) | ✅ Implemented (v0.5.4) |
+| Document in errors/UI when alpha is detected and flattened | Recommended (Phase 4) |
 
 #### 5.5.3 Quality and encoder levers
 
 | Lever | Role | Current / target |
 |-------|------|------------------|
-| **Quality factor** | Scales quantizer matrix; primary perceptual control | `DEFAULT_JPEG_QUALITY = 85` via `JpegEncoder::new_with_quality` ✅ |
-| **Chroma subsampling** | `4:2:0` max compression vs `4:4:4` color fidelity | **Must be documented explicitly** in implementation; verify `image` crate defaults |
+| **Quality factor** | Scales quantizer matrix; primary perceptual control | `DEFAULT_JPEG_QUALITY = 85`; `MIN=1`, `MAX=100`; `transmutar_png_a_jpg_with_quality(bytes, quality)` Wasm export ✅ (v0.5.4) |
+| **Chroma subsampling** | `4:2:0` max compression vs `4:4:4` color fidelity | `JpegEncoder` (image v0.25) defaults to **4:2:0** — appropriate for photographic content; `4:4:4` toggle deferred post-MVP |
 | **Optimized Huffman** | Smaller files at same quality | Future (mozjpeg-style); `image` crate uses standard tables |
 | **Progressive JPEG** | Perceived faster load on web | Future optional |
-| **Metadata strip** | Privacy + bytes (EXIF, ICC) | Future optional; stripping ICC may shift colors |
+| **Metadata strip** | Privacy + bytes (EXIF, ICC) | ✅ StripAll verified (v0.5.3) |
 
 **Quality guidance:**
 
@@ -302,11 +302,12 @@ When source PNG contains transparency, JPEG encoding requires **flattening** ont
 - JPEG for sharp text / flat color logos (ringing, muddy edges).
 - Claiming lossless or reversible conversion.
 
-#### 5.5.5 Current implementation alignment (v0.4.0)
+#### 5.5.5 Current implementation alignment (v0.5.4)
 
-- `JpegEncoder::new_with_quality(..., 85)` — **P1/P2 partial** (constant, not yet user parameter).
-- Alpha flatten policy — **P3 not specified**; relies on `image` crate default behavior — **gap**.
-- Subsampling / optimized Huffman — **P4/P5 deferred**.
+- `JpegEncoder::new_with_quality(..., quality)` — **P1/P2 ✅** (quality configurable via `transmutar_png_a_jpg_with_quality`; default 85 via `transmutar_png_a_jpg`).
+- Alpha flatten onto `BackgroundFill::WHITE` — **P3 ✅** (manual compositing with `(α·C_fg + (255-α)·C_bg + 127) / 255`; `BackgroundFill` is configurable).
+- Subsampling — **P4 ✅ documented** (`4:2:0` via `image` crate `JpegEncoder` default; `4:4:4` toggle deferred).
+- Optimized Huffman — **P5 deferred**.
 
 ---
 
@@ -385,7 +386,7 @@ Tactical pause after Phase 3 to align code with this doctrine. These are **not**
 | `refine_core_utils_dimensions` | `MAX_PIXELS`, header dimension probe, tests | §5.7, §6.1 | v0.5.1 ✅ |
 | `refine_metadata_policy` | Verify StripAll behavior; regression tests; encoder audit; core_utils scanners | §5.10 | v0.5.3 ✅ |
 | `refine_transmutador_jpg` | Color-type policy enforcement, PNG compression effort doc | §5.4 | v0.5.x |
-| `refine_transmutador_png` | Alpha flatten policy, quality as parameter, subsampling explicit | §5.5 | v0.5.x |
+| `refine_transmutador_png` | Alpha flatten policy, quality as parameter, subsampling explicit | §5.5 | v0.5.4 ✅ |
 
 Phase 4 (`v1.0.0`) remains UI/UX polish, accessibility, and MVP sign-off per ROADMAP — **after** engine refinements above.
 
@@ -564,18 +565,34 @@ pub fn transmutar_jpg_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 ```rust
 #[wasm_bindgen]
 pub fn transmutar_png_a_jpg(input_bytes: &[u8]) -> Result<Vec<u8>, String>
+// Uses defaults: quality=85, background=WHITE
+
+#[wasm_bindgen]
+pub fn transmutar_png_a_jpg_with_quality(
+    input_bytes: &[u8],
+    quality: u8,
+) -> Result<Vec<u8>, String>
+// Quality 1–100; background=WHITE. Invalid quality → Err.
 ```
+
+**Options types (native + Wasm-ready):**
+
+- `PngToJpgOptions { quality: u8, background: BackgroundFill }` — `Default` gives Q85 + white.
+- `BackgroundFill { r, g, b }` — `BackgroundFill::WHITE` constant.
+- `validate_quality(quality: u8) -> Result<u8, String>` — rejects 0 and >100.
+- `DEFAULT_JPEG_QUALITY = 85`, `MIN_JPEG_QUALITY = 1`, `MAX_JPEG_QUALITY = 100`.
 
 **Behavior:**
 
 1. Validate via `core_utils::validate_input`
 2. Decode PNG via `image::ImageReader`
-3. Encode JPEG via `image::codecs::jpeg::JpegEncoder::new_with_quality` at `DEFAULT_JPEG_QUALITY` (**85**)
-4. Return JPEG bytes or descriptive `String` error
+3. If alpha detected: manually composite each pixel onto `options.background` using `(α·C_fg + (255-α)·C_bg + 127) / 255`
+4. Encode JPEG via `JpegEncoder::new_with_quality` at requested quality; chroma subsampling **4:2:0** (image crate default)
+5. Return JPEG bytes or descriptive `String` error
 
-**Pipeline:** `transmutar_png_a_jpg_inner` → validation → `png_bytes_to_jpg_bytes`; Wasm export delegates to `_inner`.
+**Pipeline:** `transmutar_png_a_jpg_inner(input, &options)` → validation → `png_bytes_to_jpg_bytes(input, &options)`. Both Wasm exports delegate to `_inner`.
 
-**Tests:** 5 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG, metadata StripAll). In-memory fixtures via the `image` crate. **Metadata:** `StripAll` verified by integration test (v0.5.3).
+**Tests:** 14 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG, metadata StripAll, alpha flatten on white, alpha flatten on black, opaque RGB unchanged, quality range validation, quality zero/overflow rejection, lower quality smaller output, options defaults). In-memory fixtures via the `image` crate. **Metadata:** `StripAll` verified by integration test (v0.5.3). **Alpha:** explicit white-background compositing (v0.5.4).
 
 ---
 
@@ -689,6 +706,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.5.4 | 2026-06-02 | OpenCode | PNG→JPEG hardened: alpha flatten on white, configurable quality (1–100), dual Wasm exports, chroma subsampling 4:2:0 documented | `refine_transmutador_png_done.md` |
 | 0.5.3-patch | 2026-06-02 | Chief Architect | PNG chunk walker bounds guard; SPEC §6.1 test count | — |
 | 0.5.3 | 2026-06-02 | OpenCode | Metadata StripAll verified: core_utils scanners, integration tests proving EXIF/tEXt not propagated through transmutation | `refine_metadata_policy_done.md` |
 | 0.5.2 | 2026-06-02 | Chief Architect | §5.10 Metadata Policy (StripAll default, privacy doctrine, planned refine_metadata_policy); P7 added | — |
