@@ -1,30 +1,47 @@
 import type { WorkerRequest, WorkerResponse } from "./types";
 
-let initPromise: Promise<void> | null = null;
-let transmutar: ((input: Uint8Array) => Uint8Array) | null = null;
+type TransmutarFn = (input: Uint8Array) => Uint8Array;
 
-async function initWasm(): Promise<void> {
+let initJpgPromise: Promise<void> | null = null;
+let transmutarJpg: TransmutarFn | null = null;
+
+let initPngPromise: Promise<void> | null = null;
+let transmutarPng: TransmutarFn | null = null;
+
+async function initJpgWasm(): Promise<void> {
   const module = await import(
     /* webpackIgnore: true */
     "/wasm/transmutador_jpg/transmutador_jpg.js"
   );
-
   await module.default();
-  transmutar = module.transmutar_jpg_a_png;
+  transmutarJpg = module.transmutar_jpg_a_png;
 }
 
-function ensureWasmInitialized(): Promise<void> {
-  if (!initPromise) {
-    initPromise = initWasm();
+async function initPngWasm(): Promise<void> {
+  const module = await import(
+    /* webpackIgnore: true */
+    "/wasm/transmutador_png/transmutador_png.js"
+  );
+  await module.default();
+  transmutarPng = module.transmutar_png_a_jpg;
+}
+
+function ensureJpgWasmInitialized(): Promise<void> {
+  if (!initJpgPromise) {
+    initJpgPromise = initJpgWasm();
   }
-  return initPromise;
+  return initJpgPromise;
+}
+
+function ensurePngWasmInitialized(): Promise<void> {
+  if (!initPngPromise) {
+    initPngPromise = initPngWasm();
+  }
+  return initPngPromise;
 }
 
 async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
-  if (req.module !== "transmutador_jpg") {
-    if (req.module === "transmutador_png") {
-      return { id: req.id, ok: false, error: "Module not yet available" };
-    }
+  if (req.module !== "transmutador_jpg" && req.module !== "transmutador_png") {
     return {
       id: req.id,
       ok: false,
@@ -32,13 +49,18 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     };
   }
 
+  const isJpg = req.module === "transmutador_jpg";
+  const initPromise = isJpg ? ensureJpgWasmInitialized() : ensurePngWasmInitialized();
+
   try {
-    await ensureWasmInitialized();
+    await initPromise;
   } catch (err) {
     const message =
       err instanceof Error ? err.message : String(err ?? "Wasm initialization failed");
     return { id: req.id, ok: false, error: message };
   }
+
+  const transmutar = isJpg ? transmutarJpg : transmutarPng;
 
   if (!transmutar) {
     return { id: req.id, ok: false, error: "Wasm module not initialized" };
@@ -53,12 +75,15 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       result.byteOffset + result.byteLength
     ) as ArrayBuffer;
 
+    const mime = isJpg ? "image/png" : "image/jpeg";
+    const extension = isJpg ? "png" : "jpg";
+
     return {
       id: req.id,
       ok: true,
       bytes: output,
-      mime: "image/png",
-      extension: "png",
+      mime,
+      extension,
     };
   } catch (err) {
     const message =
@@ -76,6 +101,6 @@ self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   }
 };
 
-ensureWasmInitialized().catch((err) => {
+Promise.all([ensureJpgWasmInitialized(), ensurePngWasmInitialized()]).catch((err) => {
   console.error("Worker: Wasm initialization failed", err);
 });

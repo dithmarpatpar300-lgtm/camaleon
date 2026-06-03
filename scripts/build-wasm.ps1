@@ -5,15 +5,26 @@
 $ErrorActionPreference = "Stop"
 
 $workspaceRoot = Split-Path -Parent $PSScriptRoot
-$cratePath = Join-Path $workspaceRoot "motor_transmutacion\transmutador_jpg"
-$outDir = Join-Path $workspaceRoot "frontend\public\wasm\transmutador_jpg"
+$wasmOutBase = Join-Path $workspaceRoot "frontend\public\wasm"
 
-Write-Host "Building Wasm for transmutador_jpg..." -ForegroundColor Cyan
-Push-Location $cratePath
-try {
-    wasm-pack build --target web --out-dir $outDir --out-name transmutador_jpg
-    Write-Host "Wasm build complete. Artifacts at: $outDir" -ForegroundColor Green
+$crates = @(
+    @{ Name = "transmutador_jpg"; Path = "motor_transmutacion\transmutador_jpg" },
+    @{ Name = "transmutador_png"; Path = "motor_transmutacion\transmutador_png" }
+)
+
+foreach ($crate in $crates) {
+    $cratePath = Join-Path $workspaceRoot $crate.Path
+    $outDir = Join-Path $wasmOutBase $crate.Name
+
+    Write-Host "Building Wasm for $($crate.Name)..." -ForegroundColor Cyan
+    Push-Location $cratePath
+    try {
+        wasm-pack build --target web --out-dir $outDir --out-name $($crate.Name)
+        Write-Host "Wasm build complete. Artifacts at: $outDir" -ForegroundColor Green
+    }
+    finally {
+        Pop-Location
+    }
 }
-finally {
-    Pop-Location
-}
+
+Write-Host "All Wasm modules built successfully." -ForegroundColor Green

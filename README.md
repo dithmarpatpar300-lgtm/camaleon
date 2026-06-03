@@ -1,4 +1,4 @@
-# 🦎 Camaleon (v0.3.0)
+# 🦎 Camaleon (v0.4.0)
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
@@ -40,15 +40,16 @@ Artifacts are written to `frontend/public/wasm/transmutador_jpg/` and served as 
 ## 🖥️ Development
 
 ```bash
-# 1. Build the Wasm module
+# 1. Build both Wasm modules
 npm run build:wasm        # from frontend/
 # or
 .\scripts\build-wasm.ps1  # from repo root (PowerShell)
+./scripts/build-wasm.sh   # from repo root (Unix)
 
 # 2. Start the Next.js dev server
 cd frontend && npm run dev
 
-# 3. Open http://localhost:3000 — drop a .jpg or .jpeg to transmute to .png
+# 3. Open http://localhost:3000 — drop a .jpg, .jpeg, or .png to transmute it
 ```
 
 ## 📂 Ecosystem Architecture
@@ -56,7 +57,7 @@ cd frontend && npm run dev
 - `/motor_transmutacion`: Isolated native modules bounded by responsibility.
   - `core_utils`: Global error handling and shared utilities.
   - `transmutador_jpg`: `.jpg`/`.jpeg` → `.png` transmutation.
-  - `transmutador_png`: `.png` → `.jpg`/`.jpeg` transmutation (planned).
+  - `transmutador_png`: `.png` → `.jpg`/`.jpeg` transmutation.
 - `/docs`: Project governance — **[SPEC](docs/SPEC.md)**, **[ROADMAP](docs/ROADMAP.md)**, **[GOVERNANCE](docs/GOVERNANCE.md)**.
 
 ## 🗺️ Roadmap — Summary
@@ -68,7 +69,7 @@ Full phased plan: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 | Foundation | v0.1.0 ✅ | Monorepo bootstrap |
 | Build & Bridge | v0.2.0 ✅ | `wasm-pack` pipeline + Web Workers |
 | JPG → PNG | v0.3.0 ✅ | `transmutador_jpg` functional |
-| PNG → JPG | v0.4.0 | `transmutador_png` functional |
+| PNG → JPG | v0.4.0 ✅ | `transmutador_png` functional |
 | **MVP** | **v1.0.0** | **Bidirectional JPEG ↔ PNG in browser** |
 
 ## 🤝 Contributing

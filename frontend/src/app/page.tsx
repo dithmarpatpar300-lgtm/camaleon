@@ -2,8 +2,34 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
+import type { TransmutationModule } from "@/workers/types";
 
 type TransmutationStatus = "idle" | "processing" | "success" | "error";
+
+const SUPPORTED_EXTENSIONS = /\.(jpg|jpeg|png)$/i;
+
+function detectModule(fileName: string): TransmutationModule | null {
+  if (/\.(jpg|jpeg)$/i.test(fileName)) return "transmutador_jpg";
+  if (/\.png$/i.test(fileName)) return "transmutador_png";
+  return null;
+}
+
+function downloadResult(
+  bytes: ArrayBuffer,
+  baseName: string,
+  mime: string,
+  extension: string
+) {
+  const blob = new Blob([bytes], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = baseName.replace(SUPPORTED_EXTENSIONS, "") + "." + extension;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 export default function Home() {
   const [dragging, setDragging] = useState(false);
@@ -14,29 +40,21 @@ export default function Home() {
 
   const { transmutate, ready } = useTransmutationWorker();
 
-  const downloadPng = useCallback((pngBytes: ArrayBuffer, baseName: string) => {
-    const blob = new Blob([pngBytes], { type: "image/png" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = baseName.replace(/\.(jpg|jpeg)$/i, "") + ".png";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, []);
-
   const handleFile = useCallback(
     async (file: File) => {
-      if (!file.name.match(/\.(jpg|jpeg)$/i)) {
+      const module = detectModule(file.name);
+
+      if (!module) {
         setStatus("error");
-        setErrorMessage("Only .jpg and .jpeg files are supported");
+        setErrorMessage("Supported formats: .jpg, .jpeg, .png");
         return;
       }
 
       if (!ready) {
         setStatus("error");
-        setErrorMessage("Engine is still initializing. Please wait a moment and try again.");
+        setErrorMessage(
+          "Engine is still initializing. Please wait a moment and try again."
+        );
         return;
       }
 
@@ -46,10 +64,10 @@ export default function Home() {
 
       try {
         const bytes = await file.arrayBuffer();
-        const response = await transmutate("transmutador_jpg", bytes);
+        const response = await transmutate(module, bytes);
 
         if (response.ok) {
-          downloadPng(response.bytes, file.name);
+          downloadResult(response.bytes, file.name, response.mime, response.extension);
           setStatus("success");
         } else {
           setStatus("error");
@@ -62,7 +80,7 @@ export default function Home() {
         );
       }
     },
-    [transmutate, downloadPng, ready]
+    [transmutate, ready]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -115,27 +133,26 @@ export default function Home() {
         Drop a{" "}
         <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-emerald-400">
           .jpg
-        </code>{" "}
-        or{" "}
+        </code>
+        ,{" "}
         <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-emerald-400">
           .jpeg
-        </code>{" "}
-        file to transmute it to{" "}
+        </code>
+        , or{" "}
         <code className="rounded bg-zinc-800 px-1.5 py-0.5 text-sm font-mono text-emerald-400">
           .png
-        </code>
+        </code>{" "}
+        file to transmute it
       </p>
 
-      {/* Hidden file input for click-to-select */}
       <input
         ref={fileInputRef}
         type="file"
-        accept=".jpg,.jpeg"
+        accept=".jpg,.jpeg,.png"
         onChange={handleFileInputChange}
         className="hidden"
       />
 
-      {/* Dropzone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -177,15 +194,14 @@ export default function Home() {
           ) : dragging ? (
             "Release to transmute"
           ) : (
-            "Drag & drop a JPEG here, or click to select"
+            "Drag & drop an image here, or click to select"
           )}
         </span>
       </div>
 
-      {/* Status messages */}
       {status === "success" && (
         <p className="mt-6 rounded-lg bg-emerald-400/10 px-4 py-2 text-emerald-400">
-          Transmutation complete. PNG downloaded.
+          Transmutation complete. File downloaded.
         </p>
       )}
 
@@ -196,7 +212,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Ready indicator */}
       <p className="mt-6 text-xs text-zinc-600">
         Engine: {ready ? "Ready" : "Initializing..."}
       </p>

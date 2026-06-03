@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.3.0  
+**Version:** 0.4.0  
 **Last updated:** 2026-06-02  
-**Status:** Active — JPG → PNG phase
+**Status:** Active — PNG → JPG phase
 
 ---
 
@@ -76,7 +76,7 @@ camaleon/
     ├── Cargo.toml
     ├── core_utils/
     ├── transmutador_jpg/    ← JPEG → PNG
-    └── transmutador_png/    ← PNG → JPEG (Phase 3; not yet scaffolded)
+    ├── transmutador_png/    ← PNG → JPEG
 ```
 
 ### 3.1 Layer Responsibilities
@@ -154,32 +154,48 @@ pub fn transmutar_jpg_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 
 **Purpose:** PNG → JPEG conversion.
 
-**Status:** Planned — Phase 3 (see ROADMAP).
+**Status:** Implemented — Phase 3.
 
-**Public Wasm API (contract, not yet implemented):**
+**Crate type:** `["cdylib", "rlib"]`
+
+**Dependencies:** `wasm-bindgen`, `image`, `core_utils`
+
+**Public Wasm API:**
 
 ```rust
 #[wasm_bindgen]
 pub fn transmutar_png_a_jpg(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 ```
 
-**Default JPEG quality:** `85` (constant in crate; expose as parameter post-MVP).
+**Behavior:**
+
+1. Validate via `core_utils::validate_input`
+2. Decode PNG via `image::ImageReader`
+3. Encode JPEG via `image::codecs::jpeg::JpegEncoder::new_with_quality` at `DEFAULT_JPEG_QUALITY` (**85**)
+4. Return JPEG bytes or descriptive `String` error
+
+**Pipeline:** `transmutar_png_a_jpg_inner` → validation → `png_bytes_to_jpg_bytes`; Wasm export delegates to `_inner`.
+
+**Tests:** 4 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG). In-memory fixtures via the `image` crate.
 
 ---
 
 ## 6. Frontend Specifications
 
-### 6.1 Dropzone (Implemented — Phase 2)
+### 6.1 Dropzone (Implemented — Phase 3)
 
 - **Input:** Drag-and-drop and click-to-select
-- **Format filter:** `.jpg`, `.jpeg` only (PNG input deferred to Phase 3)
+- **Format filter:** `.jpg`, `.jpeg`, `.png` — auto-routed to correct module by extension
+- **Routing:**
+  - `.jpg` / `.jpeg` → `transmutador_jpg` → outputs `.png` (`image/png`)
+  - `.png` → `transmutador_png` → outputs `.jpg` (`image/jpeg`)
 - **States:**
   - `idle` — Dropzone accepts interactions
   - `processing` — Spinner with file name; repeated drops disabled
-  - `success` — Auto-triggers browser download (`Blob` + `<a download>`) as `.png`
-  - `error` — User-visible error message rendered in the UI (not console-only)
-- Non-JPEG files produce visible rejection message: `"Only .jpg and .jpeg files are supported"`
-- Download filename derived from source: `photo.jpg` → `photo.png`
+  - `success` — Auto-triggers browser download with correct MIME type and extension
+  - `error` — User-visible error message rendered in the UI
+- Unsupported extensions produce: `"Supported formats: .jpg, .jpeg, .png"`
+- Download filename derived from source with extension replaced per module output
 
 ### 6.2 Web Worker Protocol (Implemented — Phase 1)
 
@@ -188,7 +204,7 @@ Implemented in `frontend/src/workers/`:
 | File | Purpose |
 |------|---------|
 | `types.ts` | `WorkerRequest`, `WorkerResponse`, `TransmutationModule` type definitions |
-| `transmutation.worker.ts` | Loads Wasm via dynamic `import()`, handles `postMessage` dispatch, returns structured `WorkerResponse` |
+| `transmutation.worker.ts` | Loads both Wasm modules (jpg + png) via dynamic `import()`, routes by `WorkerRequest.module`, returns correct mime/extension per module |
 
 Message shape (TypeScript):
 
@@ -207,21 +223,26 @@ type WorkerResponse =
 - Uses `Transferable` objects for `ArrayBuffer` on success responses
 - Worker does NOT import React or Next.js server APIs
 - Wasm module loaded via `import(/* webpackIgnore: true */ "/wasm/...")` to bypass bundler
-- `transmutador_png` requests return `"Module not yet available"`
-- Requests for `transmutador_jpg` **await** Wasm initialization (`ensureWasmInitialized`) before invoking the transmute function, avoiding spurious race errors
+- `transmutador_png` requests route to `transmutar_png_a_jpg` with `{ mime: "image/jpeg", extension: "jpg" }` on success
+- Each module awaits its own Wasm initialization (`ensureJpgWasmInitialized` / `ensurePngWasmInitialized`) before invoking the transmute function, avoiding spurious race errors
 
-### 6.3 Wasm Artifact Layout (Implemented — Phase 1)
+### 6.3 Wasm Artifact Layout (Implemented — Phase 3)
 
 ```
 frontend/public/wasm/
-└── transmutador_jpg/
-    ├── transmutador_jpg.js        ← JS glue (ES module)
-    ├── transmutador_jpg_bg.wasm   ← Wasm binary
-    ├── transmutador_jpg.d.ts      ← TypeScript declarations
-    └── transmutador_jpg_bg.wasm.d.ts
+├── transmutador_jpg/
+│   ├── transmutador_jpg.js        ← JS glue (ES module)
+│   ├── transmutador_jpg_bg.wasm   ← Wasm binary
+│   ├── transmutador_jpg.d.ts      ← TypeScript declarations
+│   └── transmutador_jpg_bg.wasm.d.ts
+└── transmutador_png/
+    ├── transmutador_png.js        ← JS glue (ES module)
+    ├── transmutador_png_bg.wasm   ← Wasm binary
+    ├── transmutador_png.d.ts      ← TypeScript declarations
+    └── transmutador_png_bg.wasm.d.ts
 ```
 
-Generated by `wasm-pack build --target web`. The `public/wasm/` directory is gitignored; developers must run `scripts/build-wasm.ps1`, `scripts/build-wasm.sh`, or `npm run build:wasm` to regenerate.
+Generated by `wasm-pack build --target web`. Both modules built by `scripts/build-wasm.ps1`, `scripts/build-wasm.sh`, or `npm run build:wasm`. The `public/wasm/` directory is gitignored.
 
 ---
 
@@ -269,6 +290,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.4.0-patch | 2026-06-02 | Chief Architect | `JpegEncoder` quality 85 applied; `transmutar_png_a_jpg_inner` + test alignment | — |
+| 0.4.0 | 2026-06-02 | OpenCode | Phase 3: transmutador_png crate + tests + dual Wasm pipeline + Worker routing + UI auto-detect | `phase3_png_to_jpg_done.md` |
 | 0.3.0-patch | 2026-06-02 | Chief Architect | `transmutar_jpg_a_png_inner` + empty-input test; UI `ready` guard | — |
 | 0.3.0 | 2026-06-02 | OpenCode | Phase 2: Real JPEG→PNG + tests + UI wired with states + auto-download | `phase2_jpg_to_png_done.md` |
 | 0.2.0-patch | 2026-06-02 | Chief Architect | Worker init race fix; hook `ready` state; Unix build script | — |

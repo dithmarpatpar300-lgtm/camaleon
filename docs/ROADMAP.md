@@ -64,17 +64,17 @@ Goal: first real transmutation path.
 
 **Exit gate:** Manual E2E — drop a real JPEG, receive valid PNG download. **Met** (Architect validated 2026-06-02).
 
-### Phase 3 — PNG → JPG `v0.4.0`
+### Phase 3 — PNG → JPG `v0.4.0` ✅ (Complete)
 
 Goal: second independent module; proves modular architecture.
 
-- [ ] Scaffold crate `transmutador_png` in workspace
-- [ ] Implement `transmutar_png_a_jpg` (decode PNG, encode JPEG with sensible quality default)
-- [ ] Separate Wasm build entry for `transmutador_png`
-- [ ] UI: format detection routes to correct module (or explicit mode selector)
-- [ ] Unit tests for `transmutador_png`
+- [x] Scaffold crate `transmutador_png` in workspace
+- [x] Implement `transmutar_png_a_jpg` (decode PNG, encode JPEG with quality 85 via `JpegEncoder`)
+- [x] Separate Wasm build entry for `transmutador_png`
+- [x] UI: format detection routes to correct module by file extension
+- [x] Unit tests for `transmutador_png`
 
-**Exit gate:** Manual E2E — drop a PNG, receive valid JPEG download.
+**Exit gate:** Manual E2E — drop a PNG, receive valid JPEG download. **Met** (Architect validated 2026-06-02).
 
 ### Phase 4 — MVP Polish `v1.0.0`
 
@@ -119,6 +119,7 @@ Prioritized backlog — **do not implement until MVP is signed off**:
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-02 | Chief Architect (Cursor) | Phase 3 marked complete after OpenCode delivery review |
 | 2026-06-02 | Chief Architect (Cursor) | Phase 2 marked complete after OpenCode delivery review |
 | 2026-06-02 | Chief Architect (Cursor) | Phase 1 marked complete after OpenCode delivery review |
 | 2026-06-02 | Chief Architect (Cursor) | Initial roadmap; MVP = JPG↔PNG as dual modules |
