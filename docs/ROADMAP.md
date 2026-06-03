@@ -53,16 +53,16 @@ Goal: connect frontend to Wasm through a reproducible pipeline.
 
 **Exit gate:** Worker loads Wasm stub, round-trips a byte array, returns structured error from placeholder. **Met** (Architect validated 2026-06-02).
 
-### Phase 2 — JPG → PNG `v0.3.0`
+### Phase 2 — JPG → PNG `v0.3.0` ✅ (Complete)
 
 Goal: first real transmutation path.
 
-- [ ] Implement `transmutar_jpg_a_png` using `image` crate (decode JPEG, encode PNG)
-- [ ] Unit tests with fixture bytes in `transmutador_jpg/tests/`
-- [ ] UI: accept `.jpg`/`.jpeg`, show progress, trigger download of `.png`
-- [ ] Error surfaces: corrupt input, unsupported color space, empty file
+- [x] Implement `transmutar_jpg_a_png` using `image` crate (decode JPEG, encode PNG)
+- [x] Unit tests with fixture bytes in `transmutador_jpg/tests/`
+- [x] UI: accept `.jpg`/`.jpeg`, show progress, trigger download of `.png`
+- [x] Error surfaces: corrupt input, empty file, unsupported file types (visible in UI)
 
-**Exit gate:** Manual E2E — drop a real JPEG, receive valid PNG download.
+**Exit gate:** Manual E2E — drop a real JPEG, receive valid PNG download. **Met** (Architect validated 2026-06-02).
 
 ### Phase 3 — PNG → JPG `v0.4.0`
 
@@ -119,5 +119,6 @@ Prioritized backlog — **do not implement until MVP is signed off**:
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-02 | Chief Architect (Cursor) | Phase 2 marked complete after OpenCode delivery review |
 | 2026-06-02 | Chief Architect (Cursor) | Phase 1 marked complete after OpenCode delivery review |
 | 2026-06-02 | Chief Architect (Cursor) | Initial roadmap; MVP = JPG↔PNG as dual modules |

@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.2.0  
+**Version:** 0.3.0  
 **Last updated:** 2026-06-02  
-**Status:** Active — Build & Bridge phase
+**Status:** Active — JPG → PNG phase
 
 ---
 
@@ -148,7 +148,7 @@ pub fn transmutar_jpg_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 3. Encode PNG to bytes
 4. Return PNG bytes or descriptive `String` error
 
-**Current state:** Stub with input validation. Calls `core_utils::validate_input` before returning `Err("Not yet implemented")`. Real JPEG decode/png encode deferred to Phase 2.
+**Current state:** Fully implemented (Phase 2). `transmutar_jpg_a_png_inner` runs `core_utils::validate_input` then `jpg_bytes_to_png_bytes` (decode via `image::ImageReader`, encode PNG). Errors return descriptive English `String` messages at the Wasm boundary.
 
 ### 5.3 `transmutador_png`
 
@@ -169,12 +169,17 @@ pub fn transmutar_png_a_jpg(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 
 ## 6. Frontend Specifications
 
-### 6.1 Dropzone (Functional)
+### 6.1 Dropzone (Implemented — Phase 2)
 
-- Accept drag-and-drop and click-to-select
-- **Phase 0 (current):** filter `.jpg`, `.jpeg` only
-- **MVP target:** auto-detect `.jpg`/`.jpeg`/`.png` and route to correct module
-- Reject unsupported types with user-visible message (not console-only)
+- **Input:** Drag-and-drop and click-to-select
+- **Format filter:** `.jpg`, `.jpeg` only (PNG input deferred to Phase 3)
+- **States:**
+  - `idle` — Dropzone accepts interactions
+  - `processing` — Spinner with file name; repeated drops disabled
+  - `success` — Auto-triggers browser download (`Blob` + `<a download>`) as `.png`
+  - `error` — User-visible error message rendered in the UI (not console-only)
+- Non-JPEG files produce visible rejection message: `"Only .jpg and .jpeg files are supported"`
+- Download filename derived from source: `photo.jpg` → `photo.png`
 
 ### 6.2 Web Worker Protocol (Implemented — Phase 1)
 
@@ -264,6 +269,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.3.0-patch | 2026-06-02 | Chief Architect | `transmutar_jpg_a_png_inner` + empty-input test; UI `ready` guard | — |
+| 0.3.0 | 2026-06-02 | OpenCode | Phase 2: Real JPEG→PNG + tests + UI wired with states + auto-download | `phase2_jpg_to_png_done.md` |
 | 0.2.0-patch | 2026-06-02 | Chief Architect | Worker init race fix; hook `ready` state; Unix build script | — |
 | 0.2.0 | 2026-06-02 | OpenCode | Phase 1: Wasm pipeline + Worker bridge + core_utils implementation | `phase1_wasm_pipeline_done.md` |
 | 0.1.0 | 2026-06-02 | Chief Architect | Initial SPEC from v0.1.0 bootstrap | — |

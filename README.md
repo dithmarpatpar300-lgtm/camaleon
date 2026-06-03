@@ -1,4 +1,4 @@
-# 🦎 Camaleon (v0.2.0)
+# 🦎 Camaleon (v0.3.0)
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
@@ -37,6 +37,20 @@ cd frontend && npm run build:wasm
 
 Artifacts are written to `frontend/public/wasm/transmutador_jpg/` and served as static assets by Next.js.
 
+## 🖥️ Development
+
+```bash
+# 1. Build the Wasm module
+npm run build:wasm        # from frontend/
+# or
+.\scripts\build-wasm.ps1  # from repo root (PowerShell)
+
+# 2. Start the Next.js dev server
+cd frontend && npm run dev
+
+# 3. Open http://localhost:3000 — drop a .jpg or .jpeg to transmute to .png
+```
+
 ## 📂 Ecosystem Architecture
 - `/frontend`: Presentation layer and browser thread management.
 - `/motor_transmutacion`: Isolated native modules bounded by responsibility.
@@ -53,7 +67,7 @@ Full phased plan: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 |-------|---------|------|
 | Foundation | v0.1.0 ✅ | Monorepo bootstrap |
 | Build & Bridge | v0.2.0 ✅ | `wasm-pack` pipeline + Web Workers |
-| JPG → PNG | v0.3.0 | `transmutador_jpg` functional |
+| JPG → PNG | v0.3.0 ✅ | `transmutador_jpg` functional |
 | PNG → JPG | v0.4.0 | `transmutador_png` functional |
 | **MVP** | **v1.0.0** | **Bidirectional JPEG ↔ PNG in browser** |
 
