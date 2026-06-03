@@ -1,0 +1,31 @@
+# Dependencies
+/frontend/node_modules
+
+# Next.js build output
+/frontend/.next
+/frontend/out
+
+# Rust build artifacts
+/target
+/motor_transmutacion/target
+
+# Cargo lock (workspace)
+**/Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
