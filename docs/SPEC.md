@@ -7,8 +7,8 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
 **Version:** 0.6.2  
-**Last updated:** 2026-06-02  
-**Status:** Active — UI-2 delivered: landing, ToolRegistry, per-tool routes, dropzone extraction
+**Last updated:** 2026-06-03  
+**Status:** Active — UI v0.6.2; backend v0.5.6 adds selectable alpha-flatten background for PNG→JPG (enables UI-3)
 
 ---
 
@@ -592,6 +592,16 @@ pub fn transmutar_png_a_jpg_with_quality(
     quality: u8,
 ) -> Result<Vec<u8>, String>
 // Quality 1–100; background=WHITE. Invalid quality → Err.
+
+#[wasm_bindgen]
+pub fn transmutar_png_a_jpg_with_options(
+    input_bytes: &[u8],
+    quality: u8,
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+) -> Result<Vec<u8>, String>
+// Quality 1–100; custom background color (r,g,b each 0–255).
 ```
 
 **Options types (native + Wasm-ready):**
@@ -611,7 +621,7 @@ pub fn transmutar_png_a_jpg_with_quality(
 
 **Pipeline:** `transmutar_png_a_jpg_inner(input, &options)` → validation → `png_bytes_to_jpg_bytes(input, &options)`. Both Wasm exports delegate to `_inner`.
 
-**Tests:** 14 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG, metadata StripAll, alpha flatten on white, alpha flatten on black, opaque RGB unchanged, quality range validation, quality zero/overflow rejection, lower quality smaller output, options defaults). In-memory fixtures via the `image` crate. **Metadata:** `StripAll` verified by integration test (v0.5.3). **Alpha:** explicit white-background compositing (v0.5.4).
+**Tests:** 17 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG, metadata StripAll, alpha flatten on white, alpha flatten on black, custom background red, opaque unchanged with custom bg, quality range/zero/overflow, quality vs size, options defaults). In-memory fixtures via the `image` crate. **Metadata:** `StripAll` verified (v0.5.3). **Alpha:** explicit white-background compositing (v0.5.4). **Background:** selectable via `transmutar_png_a_jpg_with_options` (v0.5.6).
 
 ---
 
@@ -833,6 +843,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.5.6 | 2026-06-03 | OpenCode | Background-color Wasm export: `transmutar_png_a_jpg_with_options(bytes, quality, r, g, b)` — custom `BackgroundFill` exposed to frontend | `refine_png_background_option_done.md` |
 | 0.6.2 | 2026-06-02 | OpenCode | UI-2: Landing + ToolRegistry + dropzone extraction + /transmute/[slug] route shell with SSG | `ui_2_landing_tool_registry_done.md` |
 | 0.6.1 | 2026-06-02 | OpenCode | UI-1: Design system foundation — design tokens via Tailwind v4 @theme, ThemeProvider with no-FOUC inline script, ui/ primitives (Button, IconButton, Badge, Card, Spinner), layout shell (Header + Footer), Geist typography | `ui_1_design_system_foundation_done.md` |
 | 0.6.0 | 2026-06-02 | Chief Architect | §7.4–§7.8 Frontend UI/UX architecture & design system: "Verde Camaleón" identity, design tokens, ToolRegistry, page/routing model, header anatomy, UI implementation track (UI-1..UI-5) | — |

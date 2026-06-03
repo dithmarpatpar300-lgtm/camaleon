@@ -7,5 +7,6 @@ declare module "*/transmutador_jpg/transmutador_jpg.js" {
 declare module "*/transmutador_png/transmutador_png.js" {
   export function transmutar_png_a_jpg(input_bytes: Uint8Array): Uint8Array;
   export function transmutar_png_a_jpg_with_quality(input_bytes: Uint8Array, quality: number): Uint8Array;
+  export function transmutar_png_a_jpg_with_options(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): Uint8Array;
   export default function init(): Promise<void>;
 }

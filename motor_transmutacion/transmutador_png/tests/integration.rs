@@ -326,3 +326,73 @@ fn background_fill_white_const() {
     assert_eq!(BackgroundFill::WHITE.g, 255);
     assert_eq!(BackgroundFill::WHITE.b, 255);
 }
+
+// ------------------------------------------------------------------
+// Custom background tests (v0.5.6)
+// ------------------------------------------------------------------
+
+#[test]
+fn custom_background_red_flattens_correctly() {
+    let png = create_transparent_png_bytes(); // (255,0,0,128)
+    let opts = PngToJpgOptions {
+        quality: 100,
+        background: BackgroundFill {
+            r: 0,
+            g: 0,
+            b: 255,
+        }, // blue
+    };
+    let jpg = png_bytes_to_jpg_bytes(&png, &opts)
+        .expect("should convert with custom bg");
+
+    let decoded = ImageReader::new(Cursor::new(&jpg))
+        .with_guessed_format()
+        .unwrap()
+        .decode()
+        .unwrap()
+        .to_rgb8();
+
+    let pixel = decoded.get_pixel(0, 0);
+    let [r, _g, b] = pixel.0;
+
+    // Red at alpha 128 on blue (0,0,255):
+    // R = (128*255 + 127*0 + 127)/255 ≈ 128
+    // B = (128*0 + 127*255 + 127)/255 ≈ 128
+    assert!(r > 100 && r < 160, "red channel {} should be ~128", r);
+    assert!(b > 100 && b < 160, "blue channel {} should be ~128 (blue bg)", b);
+}
+
+#[test]
+fn custom_background_opaque_image_unaffected() {
+    let png = create_valid_png_bytes(); // opaque RGBA (255,255,255,255 at some pixels)
+    let opts = PngToJpgOptions {
+        quality: 100,
+        background: BackgroundFill {
+            r: 0,
+            g: 255,
+            b: 0,
+        }, // green — should not affect opaque pixels
+    };
+    let jpg = png_bytes_to_jpg_bytes(&png, &opts)
+        .expect("should convert opaque PNG with non-white bg");
+
+    let decoded = ImageReader::new(Cursor::new(&jpg))
+        .with_guessed_format()
+        .unwrap()
+        .decode()
+        .unwrap()
+        .to_rgb8();
+
+    let pixel = decoded.get_pixel(8, 8);
+    let [r, g, b] = pixel.0;
+    // Pixel near (128,128,128) — should not be shifted green
+    assert!((100..=160).contains(&r), "red should be ~128, got {}", r);
+    assert!((100..=160).contains(&g), "green should be ~128, got {}", g);
+    assert!((100..=160).contains(&b), "blue should be ~128, got {}", b);
+}
+
+#[test]
+fn with_options_quality_zero_rejected() {
+    let err = validate_quality(0).unwrap_err();
+    assert!(err.contains("at least 1") || err.contains("0"));
+}

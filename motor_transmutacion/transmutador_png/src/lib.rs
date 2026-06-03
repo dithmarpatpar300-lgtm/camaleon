@@ -13,6 +13,12 @@
 //! `transmutar_png_a_jpg_with_quality` (1–100). The original
 //! `transmutar_png_a_jpg` export uses defaults (white background + Q85).
 //!
+//! ## Background selection
+//!
+//! Background color for alpha flatten is selectable via
+//! `transmutar_png_a_jpg_with_options(bytes, quality, r, g, b)`.
+//! Each channel is `u8` (0–255). Default remains white `#FFFFFF`.
+//!
 //! ## Chroma subsampling
 //!
 //! The `image` crate `JpegEncoder` (v0.25) defaults to **4:2:0**
@@ -188,6 +194,26 @@ pub fn transmutar_png_a_jpg_with_quality(
     let options = PngToJpgOptions {
         quality,
         background: BackgroundFill::WHITE,
+    };
+    transmutar_png_a_jpg_inner(input_bytes, &options)
+}
+
+#[wasm_bindgen]
+pub fn transmutar_png_a_jpg_with_options(
+    input_bytes: &[u8],
+    quality: u8,
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+) -> Result<Vec<u8>, String> {
+    validate_quality(quality)?;
+    let options = PngToJpgOptions {
+        quality,
+        background: BackgroundFill {
+            r: bg_r,
+            g: bg_g,
+            b: bg_b,
+        },
     };
     transmutar_png_a_jpg_inner(input_bytes, &options)
 }
