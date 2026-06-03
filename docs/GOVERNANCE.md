@@ -77,7 +77,7 @@ Every prompt sent to OpenCode **must** include this block (verbatim or equivalen
 COGNITIVE DIRECTIVE — THINK BEFORE ACTING
 
 Before writing or modifying any file:
-1. Read docs/SPEC.md and docs/ROADMAP.md. Identify which phase and acceptance criteria apply.
+1. Read docs/SPEC.md (especially §5 for engine work) and docs/ROADMAP.md. Identify which phase and acceptance criteria apply.
 2. List dependencies, risks, and edge cases for this task.
 3. Draft a mental execution plan and validate it against SPEC constraints.
 4. Execute incrementally; after each major step, self-check against the plan.
@@ -171,7 +171,7 @@ Cursor validates against:
 
 ```
 SYSTEM DIRECTIVE: Act as a Senior Implementation Engineer for the Camaleon project.
-Read docs/SPEC.md and docs/ROADMAP.md before any action.
+Read docs/SPEC.md (especially §5 Transmutation Science for engine tasks) and docs/ROADMAP.md before any action.
 All outputs strictly in English. No stack substitutions.
 
 {COGNITIVE DIRECTIVE — see §3}
