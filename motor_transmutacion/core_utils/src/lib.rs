@@ -265,8 +265,97 @@ fn read_be_u32(bytes: &[u8], offset: usize) -> u32 {
 }
 
 // ---------------------------------------------------------------------------
-// Tests
+// Metadata scanners (StripAll policy — SPEC §5.10)
 // ---------------------------------------------------------------------------
+
+pub fn jpeg_contains_exif_app1(bytes: &[u8]) -> bool {
+    if bytes.len() < 4 || &bytes[0..2] != JPEG_SOI {
+        return false;
+    }
+
+    let limit = bytes.len().min(JPEG_SCAN_LIMIT);
+    let mut pos = 2;
+
+    while pos + 4 <= limit {
+        if bytes[pos] != 0xFF {
+            break;
+        }
+
+        let marker = bytes[pos + 1];
+
+        if marker == 0xE1 {
+            if pos + 10 > limit {
+                return false;
+            }
+            let seg_len = read_be_u16(bytes, pos + 2) as usize;
+            if seg_len >= 8 && pos + 2 + seg_len <= limit {
+                let ident_start = pos + 4;
+                if &bytes[ident_start..ident_start + 6] == b"Exif\0\0" {
+                    return true;
+                }
+            }
+        }
+
+        if marker == 0xD8 || marker == 0x00 {
+            pos += 1;
+            continue;
+        }
+
+        if marker == 0xD9 || marker == 0xDA {
+            break;
+        }
+
+        if pos + 2 > limit {
+            break;
+        }
+
+        let seg_len = read_be_u16(bytes, pos + 2) as usize;
+        if seg_len < 2 {
+            break;
+        }
+        pos += 2 + seg_len;
+    }
+
+    false
+}
+
+pub fn png_contains_text_chunk(bytes: &[u8]) -> bool {
+    png_has_chunk(bytes, &[0x74, 0x45, 0x58, 0x74])   // tEXt
+        || png_has_chunk(bytes, &[0x69, 0x54, 0x58, 0x74]) // iTXt
+}
+
+pub fn png_contains_exif_chunk(bytes: &[u8]) -> bool {
+    png_has_chunk(bytes, &[0x65, 0x58, 0x49, 0x66]) // eXIf
+}
+
+pub fn png_contains_iccp_chunk(bytes: &[u8]) -> bool {
+    png_has_chunk(bytes, &[0x69, 0x43, 0x43, 0x50]) // iCCP
+}
+
+fn png_has_chunk(bytes: &[u8], chunk_type: &[u8; 4]) -> bool {
+    if bytes.len() < 8 || &bytes[0..8] != PNG_SIGNATURE {
+        return false;
+    }
+
+    let mut pos: usize = 8;
+    let limit = bytes.len();
+
+    while pos + 12 <= limit {
+        let data_len = read_be_u32(bytes, pos) as usize;
+
+        if &bytes[pos + 4..pos + 8] == chunk_type {
+            return true;
+        }
+
+        let next = pos.saturating_add(12).saturating_add(data_len);
+        if next <= pos || next > limit {
+            break;
+        }
+        pos = next;
+    }
+
+    false
+}
 
 #[cfg(test)]
 mod tests {
@@ -548,5 +637,148 @@ mod tests {
         let data = b"GIF89a............";
         let err = probe_dimensions(data).unwrap_err();
         assert!(err.contains("Unknown"));
+    }
+
+    // ------------------------------------------------------------------
+    // Metadata scanner tests
+    // ------------------------------------------------------------------
+
+    fn make_jpeg_with_exif_app1() -> Vec<u8> {
+        let mut jpg = Vec::new();
+        jpg.extend_from_slice(JPEG_SOI);
+
+        let exif_payload = b"CamaleonTest\x00\x00";
+        let app1_data_len = 6 + exif_payload.len(); // 6 for "Exif\0\0"
+        let seg_len = 2 + app1_data_len; // 2 for length field itself
+
+        jpg.push(0xFF);
+        jpg.push(0xE1); // APP1
+        jpg.extend_from_slice(&(seg_len as u16).to_be_bytes());
+        jpg.extend_from_slice(b"Exif\0\0");
+        jpg.extend_from_slice(exif_payload);
+
+        // APP0 / JFIF
+        jpg.push(0xFF);
+        jpg.push(0xE0);
+        jpg.extend_from_slice(&16u16.to_be_bytes());
+        jpg.extend_from_slice(b"JFIF\0");
+        jpg.extend_from_slice(&[1, 2, 0, 0, 1, 0, 1, 0, 0]);
+
+        // DQT
+        jpg.push(0xFF);
+        jpg.push(0xDB);
+        jpg.extend_from_slice(&67u16.to_be_bytes());
+        jpg.push(0);
+        jpg.extend(std::iter::repeat(1u8).take(64));
+
+        // SOF0
+        jpg.push(0xFF);
+        jpg.push(0xC0);
+        jpg.extend_from_slice(&17u16.to_be_bytes());
+        jpg.push(8);
+        jpg.extend_from_slice(&8u16.to_be_bytes()); // height
+        jpg.extend_from_slice(&8u16.to_be_bytes()); // width
+        jpg.extend_from_slice(&[3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1]);
+
+        jpg
+    }
+
+    fn make_png_with_text_chunk() -> Vec<u8> {
+        let base = make_minimal_png(16, 16);
+        let split = 8 + 4 + 4 + 13 + 4; // sig + len + type + IHDR data + CRC = 33
+
+        let keyword = b"Author";
+        let text = b"CamaleonTest";
+        let chunk_data: Vec<u8> = keyword
+            .iter()
+            .copied()
+            .chain(std::iter::once(0))
+            .chain(text.iter().copied())
+            .collect();
+
+        let chunk_type = b"tEXt";
+        let len = (chunk_data.len() as u32).to_be_bytes();
+
+        let mut crc_input = Vec::new();
+        crc_input.extend_from_slice(chunk_type);
+        crc_input.extend_from_slice(&chunk_data);
+        let crc = crc32(&crc_input);
+
+        let mut png = Vec::new();
+        png.extend_from_slice(&base[..split]);
+        png.extend_from_slice(&len);
+        png.extend_from_slice(chunk_type);
+        png.extend_from_slice(&chunk_data);
+        png.extend_from_slice(&crc.to_be_bytes());
+        png.extend_from_slice(&base[split..]);
+        png
+    }
+
+    fn make_png_with_exif_chunk() -> Vec<u8> {
+        let base = make_minimal_png(16, 16);
+        let split = 8 + 4 + 4 + 13 + 4;
+
+        let chunk_type = b"eXIf";
+        let chunk_data = b"CamaleonExifPayload\x00\x00";
+        let len = (chunk_data.len() as u32).to_be_bytes();
+
+        let mut crc_input = Vec::new();
+        crc_input.extend_from_slice(chunk_type);
+        crc_input.extend_from_slice(chunk_data);
+        let crc = crc32(&crc_input);
+
+        let mut png = Vec::new();
+        png.extend_from_slice(&base[..split]);
+        png.extend_from_slice(&len);
+        png.extend_from_slice(chunk_type);
+        png.extend_from_slice(chunk_data);
+        png.extend_from_slice(&crc.to_be_bytes());
+        png.extend_from_slice(&base[split..]);
+        png
+    }
+
+    #[test]
+    fn detects_exif_app1_in_jpeg() {
+        let jpg = make_jpeg_with_exif_app1();
+        assert!(jpeg_contains_exif_app1(&jpg));
+    }
+
+    #[test]
+    fn detects_no_exif_in_minimal_jpeg() {
+        let jpg = make_minimal_jpeg(16, 16);
+        assert!(!jpeg_contains_exif_app1(&jpg));
+    }
+
+    #[test]
+    fn detects_text_chunk_in_png() {
+        let png = make_png_with_text_chunk();
+        assert!(png_contains_text_chunk(&png));
+    }
+
+    #[test]
+    fn detects_exif_chunk_in_png() {
+        let png = make_png_with_exif_chunk();
+        assert!(png_contains_exif_chunk(&png));
+    }
+
+    #[test]
+    fn minimal_png_no_sensitive_chunks() {
+        let png = make_minimal_png(16, 16);
+        assert!(!png_contains_text_chunk(&png));
+        assert!(!png_contains_exif_chunk(&png));
+        assert!(!png_contains_iccp_chunk(&png));
+    }
+
+    #[test]
+    fn jpeg_exif_scanner_handles_truncated() {
+        let jpg = vec![0xFF, 0xD8, 0xFF, 0xE1];
+        assert!(!jpeg_contains_exif_app1(&jpg));
+    }
+
+    #[test]
+    fn png_scanner_handles_truncated() {
+        let png = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        assert!(!png_contains_text_chunk(&png));
+        assert!(!png_contains_exif_chunk(&png));
     }
 }

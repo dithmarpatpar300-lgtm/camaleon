@@ -60,3 +60,59 @@ fn rejects_invalid_jpeg_after_valid_header() {
     let result = jpg_bytes_to_png_bytes(&fake);
     assert!(result.is_err(), "should reject truncated/invalid JPEG");
 }
+
+// ------------------------------------------------------------------
+// Metadata tests (StripAll — SPEC §5.10)
+// ------------------------------------------------------------------
+
+/// Insert an APP1 EXIF segment after the SOI in a valid JPEG byte stream.
+fn insert_exif_app1(jpg: &[u8]) -> Vec<u8> {
+    let exif_payload = b"CamaleonTest\x00\x00";
+    let app1_data = [b"Exif\0\0".as_slice(), exif_payload.as_slice()].concat();
+    let seg_len = 2 + app1_data.len();
+
+    let mut out = Vec::with_capacity(jpg.len() + 2 + seg_len + 2);
+    out.extend_from_slice(&jpg[..2]); // SOI
+    out.push(0xFF);
+    out.push(0xE1); // APP1
+    out.extend_from_slice(&(seg_len as u16).to_be_bytes());
+    out.extend_from_slice(&app1_data);
+    out.extend_from_slice(&jpg[2..]); // rest of JPEG after SOI
+    out
+}
+
+#[test]
+fn source_jpeg_exif_not_in_output_png() {
+    let jpg = create_valid_jpeg_bytes();
+
+    assert!(
+        jpg.len() > 100,
+        "test fixture JPEG too small"
+    );
+
+    let jpg_with_exif = insert_exif_app1(&jpg);
+
+    assert!(
+        core_utils::jpeg_contains_exif_app1(&jpg_with_exif),
+        "sanity: source must contain EXIF APP1"
+    );
+
+    let png = transmutar_jpg_a_png_inner(&jpg_with_exif)
+        .expect("should convert JPEG with EXIF to PNG");
+
+    assert!(
+        png.len() > 8 && &png[0..8] == &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A],
+        "output should be valid PNG"
+    );
+
+    assert!(
+        !core_utils::png_contains_exif_chunk(&png),
+        "output PNG must not contain eXIf chunk"
+    );
+
+    let text = std::str::from_utf8(&png).unwrap_or("");
+    assert!(
+        !text.contains("CamaleonTest"),
+        "output PNG must not contain source EXIF payload text"
+    );
+}

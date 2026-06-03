@@ -1,3 +1,8 @@
+//! PNG → JPEG transmutator. Decodes PNG, re-encodes as JPEG at quality 85.
+//!
+//! Metadata policy: StripAll (SPEC §5.10).
+//! Decode→encode does not copy source tEXt/eXIf/iCCP chunks.
+
 use std::io::Cursor;
 
 use image::codecs::jpeg::JpegEncoder;

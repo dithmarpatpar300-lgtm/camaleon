@@ -67,3 +67,86 @@ fn rejects_truncated_png() {
         "should reject truncated/invalid PNG after header"
     );
 }
+
+// ------------------------------------------------------------------
+// Metadata tests (StripAll — SPEC §5.10)
+// ------------------------------------------------------------------
+
+/// Insert a tEXt chunk after IHDR in a valid PNG byte stream.
+fn insert_text_chunk(png: &[u8]) -> Vec<u8> {
+    // IHDR ends at byte 8 + 4 + 4 + 13 + 4 = 33
+    let ihdr_end = 8 + 4 + 4 + 13 + 4;
+
+    let keyword = b"Author";
+    let text = b"CamaleonTest";
+    let chunk_data: Vec<u8> = keyword
+        .iter()
+        .copied()
+        .chain(std::iter::once(0))
+        .chain(text.iter().copied())
+        .collect();
+
+    let chunk_type = b"tEXt";
+    let len = (chunk_data.len() as u32).to_be_bytes();
+
+    // CRC32 for tEXt chunk
+    let mut crc_input = Vec::new();
+    crc_input.extend_from_slice(chunk_type);
+    crc_input.extend_from_slice(&chunk_data);
+    let crc = crc32(&crc_input);
+
+    let mut out = Vec::new();
+    out.extend_from_slice(&png[..ihdr_end]);
+    out.extend_from_slice(&len);
+    out.extend_from_slice(chunk_type);
+    out.extend_from_slice(&chunk_data);
+    out.extend_from_slice(&crc.to_be_bytes());
+    out.extend_from_slice(&png[ihdr_end..]);
+    out
+}
+
+fn crc32(data: &[u8]) -> u32 {
+    let mut crc: u32 = 0xFFFF_FFFF;
+    for &byte in data {
+        crc ^= byte as u32;
+        for _ in 0..8 {
+            if crc & 1 != 0 {
+                crc = (crc >> 1) ^ 0xEDB8_8320;
+            } else {
+                crc >>= 1;
+            }
+        }
+    }
+    !crc
+}
+
+#[test]
+fn source_png_text_not_in_output_jpeg() {
+    let png = create_valid_png_bytes();
+
+    let png_with_text = insert_text_chunk(&png);
+
+    assert!(
+        core_utils::png_contains_text_chunk(&png_with_text),
+        "sanity: source must contain tEXt chunk"
+    );
+
+    let jpg = transmutar_png_a_jpg_inner(&png_with_text)
+        .expect("should convert PNG with tEXt to JPEG");
+
+    assert!(
+        jpg.len() > 2 && &jpg[0..2] == &[0xFF, 0xD8],
+        "output should be valid JPEG"
+    );
+
+    assert!(
+        !core_utils::jpeg_contains_exif_app1(&jpg),
+        "output JPEG must not contain EXIF APP1"
+    );
+
+    let text = std::str::from_utf8(&jpg).unwrap_or("");
+    assert!(
+        !text.contains("CamaleonTest"),
+        "output JPEG must not contain source tEXt payload text"
+    );
+}

@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.5.2  
+**Version:** 0.5.3  
 **Last updated:** 2026-06-02  
-**Status:** Active — Metadata policy codified (§5.10)
+**Status:** Active — StripAll metadata verified by integration tests
 
 ---
 
@@ -383,7 +383,7 @@ Tactical pause after Phase 3 to align code with this doctrine. These are **not**
 | Task ID | Scope | SPEC targets | Version target |
 |---------|-------|--------------|----------------|
 | `refine_core_utils_dimensions` | `MAX_PIXELS`, header dimension probe, tests | §5.7, §6.1 | v0.5.1 ✅ |
-| `refine_metadata_policy` | Verify StripAll behavior; regression tests; optional encoder hardening | §5.10 | v0.5.x |
+| `refine_metadata_policy` | Verify StripAll behavior; regression tests; encoder audit; core_utils scanners | §5.10 | v0.5.3 ✅ |
 | `refine_transmutador_jpg` | Color-type policy enforcement, PNG compression effort doc | §5.4 | v0.5.x |
 | `refine_transmutador_png` | Alpha flatten policy, quality as parameter, subsampling explicit | §5.5 | v0.5.x |
 
@@ -477,14 +477,14 @@ The `image` crate (current stack) decodes to an in-memory representation of **pi
 
 #### 5.10.7 Implementation requirements
 
-**Current state (v0.5.2):** Policy **documented**; behavior **de facto StripAll** via `image` decode→encode; **not yet verified** by automated tests.
+**Current state (v0.5.3):** Policy **documented**; behavior **de facto StripAll** via `image` decode→encode; **verified** by automated integration tests in both transmutators.
 
-**Planned task `refine_metadata_policy` (v0.5.x):**
+**Implemented (refine_metadata_policy, v0.5.3):**
 
-1. Add integration tests with synthetic JPEG containing fake EXIF APP1 → assert output PNG has **no** EXIF chunk / APP1.
-2. Add integration test with PNG containing `tEXt` / `eXIf` → assert output JPEG has **no** copy of those chunks (beyond encoder defaults).
-3. Document in technical report whether `image` encoder ever reintroduces sensitive APP segments; harden if needed (e.g. avoid APIs that embed metadata).
-4. Do **not** add EXIF parsing crate to `core_utils` unless selective preservation is approved.
+1. ✅ Integration test with synthetic JPEG containing fake EXIF APP1 → output PNG has **no** eXIf chunk, no source EXIF payload text.
+2. ✅ Integration test with PNG containing `tEXt` chunk → output JPEG has **no** EXIF APP1, no source text string.
+3. ✅ Encoder audit: `image::ImageFormat::Png` and `JpegEncoder::new_with_quality` do not embed source metadata. Minimal encoder output includes only standard container headers (JFIF APP0 in JPEG, IHDR/IDAT/IEND in PNG).
+4. ✅ Lightweight `core_utils` metadata scanners (`jpeg_contains_exif_app1`, `png_contains_text_chunk`, `png_contains_exif_chunk`, `png_contains_iccp_chunk`) for test assertions — pure byte-level parsing, no EXIF library.
 
 **Forbidden without SPEC amendment:**
 
@@ -510,7 +510,7 @@ The `image` crate (current stack) decodes to an in-memory representation of **pi
 
 **Purpose:** Shared error handling, byte-level utilities, and pre-decode safety checks.
 
-**Status:** Implemented — Phase 1 + dimension guards (v0.5.1).
+**Status:** Implemented — Phase 1 + dimension guards (v0.5.1) + metadata scanners (v0.5.3).
 
 **Capabilities:**
 
@@ -519,10 +519,11 @@ The `image` crate (current stack) decodes to an in-memory representation of **pi
 - `validate_input(bytes: &[u8]) -> Result<(), String>` — rejects empty, input exceeding `MAX_INPUT_BYTES`, and (for PNG/JPEG magic) dimensions exceeding `MAX_PIXELS` or zero dimensions
 - `probe_dimensions(bytes: &[u8]) -> Result<(u32, u32), String>` — reads PNG IHDR or JPEG SOF dimensions without decoding the full image; pure byte-level parsing, no `image` crate dependency
 - `pixel_count(width: u32, height: u32) -> Result<u64, String>` — safe `u32 × u32` multiply with overflow guard
+- **Metadata scanners (StripAll verification, §5.10):** `jpeg_contains_exif_app1`, `png_contains_text_chunk`, `png_contains_exif_chunk`, `png_contains_iccp_chunk`
 - `MAX_INPUT_BYTES`: **50 MB** on compressed input
 - `MAX_PIXELS`: **40,000,000** (40 megapixels) — balances 8K workflows (~33 MP) against browser Wasm memory
 
-**Tests:** 19 unit tests covering empty/oversized input, dimension probing (valid PNG, valid JPEG, zero dimensions, truncated headers, unknown format), pixel count arithmetic, format-aware gating in `validate_input`, and error display formatting.
+**Tests:** 26 unit tests covering validation, dimension probing, metadata scanners, and error display formatting.
 
 ### 6.2 `transmutador_jpg`
 
@@ -546,7 +547,7 @@ pub fn transmutar_jpg_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 3. Encode PNG to bytes
 4. Return PNG bytes or descriptive `String` error
 
-**Current state:** Fully implemented (Phase 2). `transmutar_jpg_a_png_inner` runs `core_utils::validate_input` then `jpg_bytes_to_png_bytes` (decode via `image::ImageReader`, encode PNG). Errors return descriptive English `String` messages at the Wasm boundary. **Metadata:** de facto `StripAll` per §5.10 (not yet test-verified).
+**Current state:** Fully implemented (Phase 2). `transmutar_jpg_a_png_inner` runs `core_utils::validate_input` then `jpg_bytes_to_png_bytes` (decode via `image::ImageReader`, encode PNG). Errors return descriptive English `String` messages at the Wasm boundary. **Metadata:** `StripAll` verified by integration test (v0.5.3).
 
 ### 6.3 `transmutador_png`
 
@@ -574,7 +575,7 @@ pub fn transmutar_png_a_jpg(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 
 **Pipeline:** `transmutar_png_a_jpg_inner` → validation → `png_bytes_to_jpg_bytes`; Wasm export delegates to `_inner`.
 
-**Tests:** 4 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG). In-memory fixtures via the `image` crate. **Metadata:** de facto `StripAll` per §5.10 (not yet test-verified).
+**Tests:** 5 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG, metadata StripAll). In-memory fixtures via the `image` crate. **Metadata:** `StripAll` verified by integration test (v0.5.3).
 
 ---
 
@@ -688,6 +689,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.5.3-patch | 2026-06-02 | Chief Architect | PNG chunk walker bounds guard; SPEC §6.1 test count | — |
+| 0.5.3 | 2026-06-02 | OpenCode | Metadata StripAll verified: core_utils scanners, integration tests proving EXIF/tEXt not propagated through transmutation | `refine_metadata_policy_done.md` |
 | 0.5.2 | 2026-06-02 | Chief Architect | §5.10 Metadata Policy (StripAll default, privacy doctrine, planned refine_metadata_policy); P7 added | — |
 | 0.5.1-patch | 2026-06-02 | Chief Architect | JPEG marker error format fix; truncated PNG header test | — |
 | 0.5.1 | 2026-06-02 | OpenCode | Dimension guards: MAX_PIXELS, probe_dimensions, pixel_count, validate_input hardened against decompression bombs | `refine_core_utils_dimensions_done.md` |

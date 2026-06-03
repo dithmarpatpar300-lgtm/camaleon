@@ -1,3 +1,8 @@
+//! JPEG → PNG transmutator. Decodes JPEG, re-encodes as PNG.
+//!
+//! Metadata policy: StripAll (SPEC §5.10).
+//! Decode→encode does not copy source EXIF/XMP/APP segments.
+
 use std::io::Cursor;
 
 use image::ImageReader;
