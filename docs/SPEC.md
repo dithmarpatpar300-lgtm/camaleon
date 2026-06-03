@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.5.1  
+**Version:** 0.5.2  
 **Last updated:** 2026-06-02  
-**Status:** Active — Backend dimension guards implemented
+**Status:** Active — Metadata policy codified (§5.10)
 
 ---
 
@@ -28,6 +28,7 @@ Camaleon transmutes file formats entirely inside the user's browser. Privacy is 
 | P4 | **Explicit contracts** | Wasm public APIs are typed, documented, versioned |
 | P5 | **Fail loudly** | Errors return structured messages; UI never silently drops failures |
 | P6 | **SPEC sync** | Every merge-worthy change updates this document |
+| P7 | **Metadata strip by default** | Output files must not carry source EXIF/XMP/text chunks unless an explicit opt-in policy is added and documented (§5.10) |
 
 ---
 
@@ -382,6 +383,7 @@ Tactical pause after Phase 3 to align code with this doctrine. These are **not**
 | Task ID | Scope | SPEC targets | Version target |
 |---------|-------|--------------|----------------|
 | `refine_core_utils_dimensions` | `MAX_PIXELS`, header dimension probe, tests | §5.7, §6.1 | v0.5.1 ✅ |
+| `refine_metadata_policy` | Verify StripAll behavior; regression tests; optional encoder hardening | §5.10 | v0.5.x |
 | `refine_transmutador_jpg` | Color-type policy enforcement, PNG compression effort doc | §5.4 | v0.5.x |
 | `refine_transmutador_png` | Alpha flatten policy, quality as parameter, subsampling explicit | §5.5 | v0.5.x |
 
@@ -398,7 +400,107 @@ Phase 4 (`v1.0.0`) remains UI/UX polish, accessibility, and MVP sign-off per ROA
 | Logo with flat colors → PNG | PNG (indexed future) | `transmutador_jpg` | Sharp edges; palette mode future |
 | Logo with transparency → JPEG | JPEG (flatten alpha first) | `transmutador_png` | Must apply §5.5.2 policy |
 
-**Camaleon does not** silently change backgrounds, strip metadata, or apply lossy PNG unless an explicit future flag is set and documented.
+**Camaleon does not** silently change backgrounds or apply lossy PNG unless an explicit future flag is set and documented. **Metadata** is governed by §5.10 (default: strip, not preserve).
+
+---
+
+### 5.10 Metadata Policy (Privacy & File Container Semantics)
+
+> Governs what happens to EXIF, ICC profiles, XMP, JFIF APP segments, and PNG text/chunk metadata during transmutation. Complements Principle **P1** (Privacy by design) and **P7** (Metadata strip by default).
+
+#### 5.10.1 What metadata is
+
+Metadata is **non-pixel information** embedded in the image **file container**, distinct from the decoded raster (pixel buffer).
+
+| Format | Container location | Examples of sensitive or identifying data |
+|--------|-------------------|-------------------------------------------|
+| **JPEG** | Marker segments (`APP0` JFIF, `APP1` EXIF, `APP2` ICC Profile, `APP13` IPTC/XMP, etc.) | GPS coordinates, camera make/model, serial numbers, capture timestamp, software, orientation, copyright |
+| **PNG** | Chunks after IHDR | `tEXt` / `iTXt` (author, comment), `eXIf` (embedded EXIF), `iCCP` (ICC profile), `pHYs` (DPI), `tIME` (last modification) |
+
+Metadata is **not** destroyed when pixels are decoded; it remains in the **source byte stream** until the engine produces a **new output byte stream**.
+
+#### 5.10.2 How Camaleon processes files (why metadata behaves as it does)
+
+Camaleon transmutators follow the pipeline in §5.1:
+
+```
+Source file bytes → decode to raster (pixels only) → re-encode to target format → output file bytes
+```
+
+The `image` crate (current stack) decodes to an in-memory representation of **pixel values** and re-encodes using **fresh encoder state**. It does **not** implement a metadata preservation pass:
+
+- **JPEG → PNG:** EXIF/APP segments from the source JPEG are **not** copied into output PNG chunks.
+- **PNG → JPEG:** `tEXt`, `eXIf`, `iCCP`, etc. from the source PNG are **not** copied into output JPEG APP segments.
+
+**Observed behavior (v0.5.1):** output files are effectively **metadata-stripped** relative to typical user-origin photos. This is a **side effect** of decode→re-encode, not yet enforced by dedicated strip logic or regression tests.
+
+**Encoder-minimal metadata:** the output may still contain **new, minimal** container data the encoder creates (e.g. baseline JFIF APP0 in JPEG, standard PNG IHDR/IDAT/IDAT structure). This is **not** a copy of the user's source metadata and is generally low sensitivity.
+
+#### 5.10.3 Privacy model: who can read metadata?
+
+| Boundary | Risk | Camaleon posture |
+|----------|------|------------------|
+| **Network** | Third parties intercept uploads | **None** — no server upload; bytes stay in browser (P1) |
+| **In-app** | Other browser tabs / extensions reading files | User's browser trust model; Camaleon does not persist files to server |
+| **Downloaded output file** | Anyone who obtains the `.jpg`/`.png` can run ExifTool, OS properties, etc. | If metadata exists **in the file**, it is **always readable** — there is no "hidden but preserved" metadata in standard image formats |
+
+**Critical doctrine:** It is **impossible** to "preserve metadata in the output file" while preventing "other users from reading it." Preservation means the data is **in the container**; reading is trivial. Camaleon's privacy guarantee for metadata is: **do not write sensitive source metadata into the output file** (StripAll default).
+
+#### 5.10.4 Policy matrix (normative)
+
+| Policy ID | Name | Behavior | Default? |
+|-----------|------|----------|----------|
+| `StripAll` | Strip all non-essential container metadata | Output contains pixel data and minimal encoder structure only; no source EXIF/XMP/tEXt/eXIf/ICC from input | **YES — mandatory default** |
+| `PreserveColorProfile` | Copy ICC color profile only | Output may embed ICC for color-accurate display; may leak profile fingerprint | No — future opt-in |
+| `PreserveExif` | Copy EXIF APP1 (or eXIf) to output | Output may contain GPS, device IDs, timestamps | **No — forbidden as default** (violates P7) |
+| `PreserveSelective` | Copy non-GPS EXIF fields only | Complex; requires EXIF parser and field allowlist | No — post-MVP research |
+
+**Normative rule:** Unless `PreserveColorProfile`, `PreserveExif`, or `PreserveSelective` is explicitly implemented, documented, and user-selected, all transmutators MUST behave as **`StripAll`**.
+
+#### 5.10.5 User-facing doctrine (for UI copy — Phase 4+)
+
+| Direction | Message intent |
+|-----------|----------------|
+| Any transmutation | "Metadata from your original file is not copied to the output. This protects location, device, and other hidden data." |
+| JPEG → PNG | "File size may increase. Hidden photo data (EXIF) is not carried over." |
+| PNG → JPEG | "Quality loss is irreversible. Transparency is flattened. Embedded descriptions/EXIF are not carried over." |
+| Future opt-in preserve | "Warning: downloaded file may contain identifiable metadata." |
+
+#### 5.10.6 What StripAll does NOT mean
+
+| Misconception | Clarification |
+|---------------|---------------|
+| "StripAll deletes pixels" | False — only **container** metadata is in scope; raster is preserved per module objectives (§5.4, §5.5) |
+| "StripAll encrypts metadata" | False — Camaleon does not encrypt; it omits copying |
+| "StripAll prevents forensic recovery of JPEG artifacts" | False — JPEG blocking/ringing in pixels remain in PNG (§5.6) |
+| "Source file on disk is modified" | False — only the **downloaded output** is produced in memory |
+
+#### 5.10.7 Implementation requirements
+
+**Current state (v0.5.2):** Policy **documented**; behavior **de facto StripAll** via `image` decode→encode; **not yet verified** by automated tests.
+
+**Planned task `refine_metadata_policy` (v0.5.x):**
+
+1. Add integration tests with synthetic JPEG containing fake EXIF APP1 → assert output PNG has **no** EXIF chunk / APP1.
+2. Add integration test with PNG containing `tEXt` / `eXIf` → assert output JPEG has **no** copy of those chunks (beyond encoder defaults).
+3. Document in technical report whether `image` encoder ever reintroduces sensitive APP segments; harden if needed (e.g. avoid APIs that embed metadata).
+4. Do **not** add EXIF parsing crate to `core_utils` unless selective preservation is approved.
+
+**Forbidden without SPEC amendment:**
+
+- Default-on EXIF preservation.
+- Silent GPS or device serial propagation to output.
+- Claiming "private metadata" inside a standard downloadable image file.
+
+#### 5.10.8 Relationship to other SPEC sections
+
+| Section | Interaction |
+|---------|-------------|
+| §5.4 JPG→PNG | StripAll applies; RGB PNG without copying EXIF to `eXIf` chunk |
+| §5.5 PNG→JPG | StripAll applies; alpha flatten (§5.5.2) is separate from metadata strip |
+| §5.6 Cycle analysis | Size explosion JPG→PNG is pixel/entropy, not metadata |
+| §6.1 `core_utils` | Validates bytes/dimensions only; does not parse EXIF |
+| NFR-1 Privacy | StripAll supports zero metadata leakage via output file |
 
 ---
 
@@ -420,7 +522,7 @@ Phase 4 (`v1.0.0`) remains UI/UX polish, accessibility, and MVP sign-off per ROA
 - `MAX_INPUT_BYTES`: **50 MB** on compressed input
 - `MAX_PIXELS`: **40,000,000** (40 megapixels) — balances 8K workflows (~33 MP) against browser Wasm memory
 
-**Tests:** 18 unit tests covering empty/oversized input, dimension probing (valid PNG, valid JPEG, zero dimensions, truncated headers, unknown format), pixel count arithmetic, format-aware gating in `validate_input`, and error display formatting.
+**Tests:** 19 unit tests covering empty/oversized input, dimension probing (valid PNG, valid JPEG, zero dimensions, truncated headers, unknown format), pixel count arithmetic, format-aware gating in `validate_input`, and error display formatting.
 
 ### 6.2 `transmutador_jpg`
 
@@ -444,7 +546,7 @@ pub fn transmutar_jpg_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 3. Encode PNG to bytes
 4. Return PNG bytes or descriptive `String` error
 
-**Current state:** Fully implemented (Phase 2). `transmutar_jpg_a_png_inner` runs `core_utils::validate_input` then `jpg_bytes_to_png_bytes` (decode via `image::ImageReader`, encode PNG). Errors return descriptive English `String` messages at the Wasm boundary.
+**Current state:** Fully implemented (Phase 2). `transmutar_jpg_a_png_inner` runs `core_utils::validate_input` then `jpg_bytes_to_png_bytes` (decode via `image::ImageReader`, encode PNG). Errors return descriptive English `String` messages at the Wasm boundary. **Metadata:** de facto `StripAll` per §5.10 (not yet test-verified).
 
 ### 6.3 `transmutador_png`
 
@@ -472,7 +574,7 @@ pub fn transmutar_png_a_jpg(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 
 **Pipeline:** `transmutar_png_a_jpg_inner` → validation → `png_bytes_to_jpg_bytes`; Wasm export delegates to `_inner`.
 
-**Tests:** 4 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG). In-memory fixtures via the `image` crate.
+**Tests:** 4 integration tests (valid PNG→JPEG, empty input, corrupt bytes, truncated PNG). In-memory fixtures via the `image` crate. **Metadata:** de facto `StripAll` per §5.10 (not yet test-verified).
 
 ---
 
@@ -546,7 +648,7 @@ Generated by `wasm-pack build --target web`. Both modules built by `scripts/buil
 
 | ID | Requirement | Target |
 |----|-------------|--------|
-| NFR-1 | Privacy | Zero network transmission of file bytes |
+| NFR-1 | Privacy | Zero network transmission of file bytes; output files default to StripAll metadata (§5.10) |
 | NFR-2 | UI responsiveness | Main thread free during conversion; 60fps UI goal |
 | NFR-3 | Build reproducibility | Documented commands; CI-ready scripts (future) |
 | NFR-4 | Error clarity | User-facing errors in plain English |
@@ -586,6 +688,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.5.2 | 2026-06-02 | Chief Architect | §5.10 Metadata Policy (StripAll default, privacy doctrine, planned refine_metadata_policy); P7 added | — |
 | 0.5.1-patch | 2026-06-02 | Chief Architect | JPEG marker error format fix; truncated PNG header test | — |
 | 0.5.1 | 2026-06-02 | OpenCode | Dimension guards: MAX_PIXELS, probe_dimensions, pixel_count, validate_input hardened against decompression bombs | `refine_core_utils_dimensions_done.md` |
 | 0.5.0 | 2026-06-02 | Chief Architect | §5 Transmutation Science & Module Doctrine (full technical foundation, cycle analysis, planned refinements) | — |

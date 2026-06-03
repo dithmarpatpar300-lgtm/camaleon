@@ -58,7 +58,7 @@ cd frontend && npm run dev
   - `core_utils`: Global error handling and shared utilities.
   - `transmutador_jpg`: `.jpg`/`.jpeg` → `.png` transmutation.
   - `transmutador_png`: `.png` → `.jpg`/`.jpeg` transmutation.
-- `/docs`: Project governance — **[SPEC](docs/SPEC.md)** (incl. §5 Transmutation Science), **[ROADMAP](docs/ROADMAP.md)**, **[GOVERNANCE](docs/GOVERNANCE.md)**.
+- `/docs`: Project governance — **[SPEC](docs/SPEC.md)** (§5 Science, §5.10 Metadata Policy), **[ROADMAP](docs/ROADMAP.md)**, **[GOVERNANCE](docs/GOVERNANCE.md)**.
 
 ## 🗺️ Roadmap — Summary
 
