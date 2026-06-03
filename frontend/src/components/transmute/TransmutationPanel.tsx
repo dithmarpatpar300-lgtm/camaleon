@@ -1,0 +1,279 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ToolDefinition } from "@/lib/tools/types";
+import type { TransmutationOptions } from "@/workers/types";
+import { fileMatchesExtensions } from "@/lib/tools/extensions";
+import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
+import { downloadResult } from "@/lib/transmutation/download";
+import { formatBytes } from "@/lib/format/bytes";
+import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
+import { Dropzone } from "./Dropzone";
+import { OptionsControls } from "./OptionsControls";
+
+type PanelStatus = "idle" | "staged" | "processing" | "success" | "error";
+
+type StagedFile = {
+  file: File;
+  bytes: ArrayBuffer;
+};
+
+type Result = {
+  inputSize: number;
+  outputBytes: ArrayBuffer;
+  outputSize: number;
+  mime: string;
+  extension: string;
+  fileName: string;
+};
+
+type TransmutationPanelProps = {
+  tool: ToolDefinition;
+};
+
+function buildDefaultOptions(specs: ToolDefinition["optionSpecs"]): TransmutationOptions {
+  const opts: TransmutationOptions = {};
+  if (!specs) return opts;
+  for (const s of specs) {
+    if (s.key === "background") {
+      opts.background = s.defaultValue as import("@/lib/tools/types").RgbColor;
+    } else {
+      opts[s.key] = s.defaultValue as number;
+    }
+  }
+  return opts;
+}
+
+export function TransmutationPanel({ tool }: TransmutationPanelProps) {
+  const [status, setStatus] = useState<PanelStatus>("idle");
+  const [dragging, setDragging] = useState(false);
+  const [staged, setStaged] = useState<StagedFile | null>(null);
+  const [options, setOptions] = useState<TransmutationOptions>(() =>
+    buildDefaultOptions(tool.optionSpecs)
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const { transmutate, ready } = useTransmutationWorker();
+
+  const accept = tool.acceptExtensions.join(",");
+
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      if (!fileMatchesExtensions(file.name, tool.acceptExtensions)) {
+        setStatus("error");
+        setErrorMessage(`This tool accepts: ${tool.acceptExtensions.join(", ")}`);
+        return;
+      }
+      const bytes = await file.arrayBuffer();
+      setStaged({ file, bytes });
+      setStatus("staged");
+      setErrorMessage(null);
+      setResult(null);
+    },
+    [tool]
+  );
+
+  const handleTransmutar = useCallback(async () => {
+    if (!staged || !ready) return;
+    setStatus("processing");
+    setErrorMessage(null);
+
+    try {
+      const response = await transmutate(tool.module, staged.bytes, options);
+      if (response.ok) {
+        setResult({
+          inputSize: staged.bytes.byteLength,
+          outputBytes: response.bytes,
+          outputSize: response.bytes.byteLength,
+          mime: response.mime,
+          extension: response.extension,
+          fileName: staged.file.name,
+        });
+        setStatus("success");
+      } else {
+        setStatus("error");
+        setErrorMessage(response.error);
+      }
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");
+    }
+  }, [staged, ready, tool.module, options, transmutate]);
+
+  const handleDownload = useCallback(() => {
+    if (!result) return;
+    downloadResult(result.outputBytes, result.fileName, result.mime, result.extension);
+  }, [result]);
+
+  const handleReset = useCallback(() => {
+    setStaged(null);
+    setResult(null);
+    setStatus("idle");
+    setErrorMessage(null);
+    setOptions(buildDefaultOptions(tool.optionSpecs));
+  }, [tool]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragging(false);
+      if (status === "processing") return;
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) handleFileSelect(files[0]);
+    },
+    [status, handleFileSelect]
+  );
+
+  const sizeDelta = useMemo(() => {
+    if (!result) return null;
+    const pct = result.inputSize > 0
+      ? Math.round(((result.outputSize - result.inputSize) / result.inputSize) * 100)
+      : 0;
+    const sign = pct >= 0 ? "+" : "";
+    return `${formatBytes(result.inputSize)} → ${formatBytes(result.outputSize)} (${sign}${pct}%)`;
+  }, [result]);
+
+  useEffect(() => {
+    if (!result) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(
+      new Blob([result.outputBytes], { type: result.mime })
+    );
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [result]);
+
+  const hasOptions = (tool.optionSpecs?.length ?? 0) > 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Dropzone (idle only) */}
+      {status === "idle" && (
+        <Dropzone
+          accept={accept}
+          status="idle"
+          dragging={dragging}
+          sourceFileName={null}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onFileSelect={handleFileSelect}
+          idleLabel="Drop an image here, or click to select"
+        />
+      )}
+
+      {/* Staged: file info + options + Transmutar */}
+      {status === "staged" && staged && (
+        <div className="rounded-2xl border border-border bg-bg-surface p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-text-primary">{staged.file.name}</p>
+              <p className="text-xs text-text-muted">{formatBytes(staged.bytes.byteLength)}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              Change
+            </Button>
+          </div>
+
+          {hasOptions && (
+            <div className="mb-5 border-t border-border pt-4">
+              <OptionsControls
+                specs={tool.optionSpecs!}
+                values={options}
+                onChange={setOptions}
+              />
+            </div>
+          )}
+
+          <Button
+            onClick={handleTransmutar}
+            disabled={!ready}
+            className="w-full"
+          >
+            {ready ? "Transmutar" : "Initializing..."}
+          </Button>
+        </div>
+      )}
+
+      {/* Processing */}
+      {status === "processing" && (
+        <div className="flex flex-col items-center gap-3 py-12">
+          <Spinner label="Transmuting..." />
+          <p className="text-sm text-text-secondary">Transmuting{staged ? ` ${staged.file.name}` : ""}...</p>
+        </div>
+      )}
+
+      {/* Success: result view */}
+      {status === "success" && result && (
+        <div className="space-y-5">
+          {/* Preview */}
+          <div className="overflow-hidden rounded-xl border border-border bg-bg-base">
+          {previewUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={previewUrl}
+              alt={`Preview of ${result.fileName}`}
+              className="mx-auto max-h-80 object-contain"
+            />
+          )}
+          </div>
+
+          {/* Size info */}
+          <div className="rounded-xl border border-border bg-bg-surface px-4 py-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-text-secondary">Tamaño</span>
+              <span className="font-mono tabular-nums text-text-primary">{sizeDelta}</span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <Button onClick={handleDownload} className="flex-1">
+              Descargar
+            </Button>
+            <Button variant="ghost" onClick={handleReset}>
+              Transmutar otro
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {status === "error" && errorMessage && (
+        <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+          <p className="font-semibold">Transmutation failed</p>
+          <p className="mt-1">{errorMessage}</p>
+          <div className="mt-3 flex gap-2">
+            {staged && (
+              <Button variant="subtle" size="sm" onClick={() => setStatus("staged")}>
+                Adjust & retry
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleReset}>
+              Start over
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <p className="text-center text-xs text-text-muted">
+        Engine: {ready ? "Ready" : "Initializing..."}
+      </p>
+    </div>
+  );
+}

@@ -29,7 +29,7 @@ export function CardHeader({ children, className }: CardProps) {
 
 export function CardBody({ children, className }: CardProps) {
   return (
-    <div className={cn("px-6 py-3", className)}>
+    <div className={cn("px-6 py-4", className)}>
       {children}
     </div>
   );

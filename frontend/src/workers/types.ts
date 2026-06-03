@@ -1,9 +1,18 @@
 export type TransmutationModule = "transmutador_jpg" | "transmutador_png";
 
+export type RgbColor = { r: number; g: number; b: number };
+
+export type TransmutationOptions = {
+  quality?: number;
+  compression?: number;
+  background?: RgbColor;
+};
+
 export type WorkerRequest = {
   id: string;
   module: TransmutationModule;
   bytes: ArrayBuffer;
+  options?: TransmutationOptions;
 };
 
 export type WorkerResponseSuccess = {

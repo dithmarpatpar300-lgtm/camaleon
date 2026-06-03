@@ -10,7 +10,7 @@ export function ToolGrid() {
       <h2 className="mb-6 text-xl font-semibold text-text-primary">
         Transmutaciones disponibles
       </h2>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid auto-rows-fr gap-4 sm:grid-cols-2">
         {activeTools.map((tool) => (
           <ToolCard key={tool.id} tool={tool} />
         ))}
@@ -20,7 +20,7 @@ export function ToolGrid() {
           <h3 className="mb-4 mt-10 text-sm font-medium text-text-muted">
             Próximamente
           </h3>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid auto-rows-fr gap-4 sm:grid-cols-2">
             {soonTools.map((tool) => (
               <ToolCard key={tool.id} tool={tool} />
             ))}

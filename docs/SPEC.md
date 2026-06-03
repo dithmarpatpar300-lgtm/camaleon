@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.6.2  
+**Version:** 0.6.3  
 **Last updated:** 2026-06-03  
-**Status:** Active — UI v0.6.2; backend v0.5.6 adds selectable alpha-flatten background for PNG→JPG (enables UI-3)
+**Status:** Active — UI-3 delivered: TransmutationPanel + atomic OptionsControls + worker options protocol
 
 ---
 
@@ -642,34 +642,39 @@ pub fn transmutar_png_a_jpg_with_options(
 - Unsupported extensions produce: `"Supported formats: .jpg, .jpeg, .png"`
 - Download filename derived from source with extension replaced per module output
 
-### 7.2 Web Worker Protocol (Implemented — Phase 1)
+### 7.2 Web Worker Protocol (Implemented — Phase 1 + options extension UI-3)
 
 Implemented in `frontend/src/workers/`:
 
 | File | Purpose |
 |------|---------|
-| `types.ts` | `WorkerRequest`, `WorkerResponse`, `TransmutationModule` type definitions |
-| `transmutation.worker.ts` | Loads both Wasm modules (jpg + png) via dynamic `import()`, routes by `WorkerRequest.module`, returns correct mime/extension per module |
+| `types.ts` | `WorkerRequest`, `WorkerResponse`, `TransmutationModule`, `TransmutationOptions` type definitions |
+| `transmutation.worker.ts` | Loads both Wasm modules (jpg + png) via dynamic `import()`, routes by `WorkerRequest.module`, maps `options` to parameterized Wasm exports, returns correct mime/extension per module |
 
 Message shape (TypeScript):
 
 ```typescript
+type TransmutationOptions = {
+  quality?: number;       // PNG→JPG, 1–100
+  compression?: number;   // JPG→PNG, 1–9
+  background?: RgbColor;  // PNG→JPG alpha flatten
+};
+
 type WorkerRequest = {
   id: string;
   module: "transmutador_jpg" | "transmutador_png";
   bytes: ArrayBuffer;
+  options?: TransmutationOptions;
 };
-
-type WorkerResponse =
-  | { id: string; ok: true; bytes: ArrayBuffer; mime: string; extension: string }
-  | { id: string; ok: false; error: string };
 ```
 
-- Uses `Transferable` objects for `ArrayBuffer` on success responses
-- Worker does NOT import React or Next.js server APIs
-- Wasm module loaded via `import(/* webpackIgnore: true */ "/wasm/...")` to bypass bundler
-- `transmutador_png` requests route to `transmutar_png_a_jpg` with `{ mime: "image/jpeg", extension: "jpg" }` on success
-- Each module awaits its own Wasm initialization (`ensureJpgWasmInitialized` / `ensurePngWasmInitialized`) before invoking the transmute function, avoiding spurious race errors
+**Worker routing (v0.6.3):**
+- `transmutador_jpg` + `options.compression` → `transmutar_jpg_a_png_with_compression`
+- `transmutador_jpg` (no options) → `transmutar_jpg_a_png` (defaults)
+- `transmutador_png` + `options.background` → `transmutar_png_a_jpg_with_options`
+- `transmutador_png` + `options.quality` → `transmutar_png_a_jpg_with_quality`
+- `transmutador_png` (no options) → `transmutar_png_a_jpg` (defaults)
+- Defaults preserved when no options present; backend validates all ranges
 
 ### 7.3 Wasm Artifact Layout (Implemented — Phase 3)
 
@@ -737,12 +742,13 @@ components/
 │               # □ Mega-menu (deferred per §7.7)
 ├── transmute/  # ✅ ToolCard, ToolGrid, Dropzone, TransmutationDropzone,
                 #   Hero, PrivacyBanner (UI-2)
-                # □ OptionsControls, full TransmutationPanel polish (UI-3)
+                # ✅ OptionsControls, TransmutationPanel (UI-3)
 providers/      # ✅ ThemeProvider (UI-1)
                 # □ I18nProvider (UI-4)
 lib/            # ✅ utils.ts (cn helper), types.ts (UI-1)
                 # ✅ lib/tools/ types.ts + tool-registry.ts (UI-2)
                 # ✅ lib/transmutation/ download.ts (UI-2)
+                # ✅ lib/format/ bytes.ts (UI-3)
                 # lib/i18n/ □ dictionaries (UI-4)
 hooks/          # ✅ useTransmutationWorker (existing), useTheme (UI-1)
 ```
@@ -772,7 +778,7 @@ Next.js App Router:
 | Route | Purpose | Status |
 |-------|---------|--------|
 | `/` | Landing (entry point): `Hero` + `PrivacyBanner` + `ToolGrid` (cards generated from the registry) | ✅ UI-2 |
-| `/transmute/[slug]` | Per-tool workspace: route shell with `TransmutationDropzone` pre-configured from the registry; `generateStaticParams` for SSG | ✅ UI-2 (route shell; full panel + OptionsControls in UI-3) |
+| `/transmute/[slug]` | Per-tool workspace: `TransmutationPanel` with staged/processing/result flow, declarative `OptionsControls` (slider + color), size delta display, local preview, explicit download | ✅ UI-3 |
 
 Privacy reassurance is a first-class, **verifiable** element (NFR-1), not marketing copy. Tool cards surface the §5.6.3 messaging doctrine (lossless/lossy badge; size-growth hint for JPG→PNG).
 
@@ -791,7 +797,7 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 |-------|-------|-----------|
 | UI-1 | ✅ Design system foundation: tokens + `ThemeProvider` + `ui/` primitives + layout shell (Header + Footer) (v0.6.1) | No conversion behavior change; existing dropzone keeps working |
 | UI-2 | ✅ `ToolRegistry` + landing (`Hero`, `PrivacyBanner`, `ToolGrid`) + Dropzone extraction + `/transmute/[slug]` route shell (v0.6.2) | OptionsControls + TransmutationPanel polish in UI-3 |
-| UI-3 | `/transmute/[slug]` routes + `TransmutationPanel` | — |
+| UI-3 | ✅ `/transmute/[slug]` + `TransmutationPanel` + atomic `OptionsControls` (slider + color) wired through extended worker protocol (v0.6.3) | Subsampling deferred; UI-4 = i18n |
 | UI-4 | i18n EN/ES across the app | — |
 | UI-5 | Accessibility (keyboard/ARIA), motion, responsive | Feeds Phase 4 (v1.0.0) MVP sign-off |
 
@@ -843,6 +849,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.6.3 | 2026-06-03 | OpenCode | UI-3: TransmutationPanel (staged flow + result view + local preview) + atomic OptionsControls (slider/color) + extended worker protocol + landing card height uniformity | `ui_3_transmutation_panel_options_done.md` |
 | 0.5.6 | 2026-06-03 | OpenCode | Background-color Wasm export: `transmutar_png_a_jpg_with_options(bytes, quality, r, g, b)` — custom `BackgroundFill` exposed to frontend | `refine_png_background_option_done.md` |
 | 0.6.2 | 2026-06-02 | OpenCode | UI-2: Landing + ToolRegistry + dropzone extraction + /transmute/[slug] route shell with SSG | `ui_2_landing_tool_registry_done.md` |
 | 0.6.1 | 2026-06-02 | OpenCode | UI-1: Design system foundation — design tokens via Tailwind v4 @theme, ThemeProvider with no-FOUC inline script, ui/ primitives (Button, IconButton, Badge, Card, Spinner), layout shell (Header + Footer), Geist typography | `ui_1_design_system_foundation_done.md` |

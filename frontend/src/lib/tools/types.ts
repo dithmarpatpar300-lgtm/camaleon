@@ -4,7 +4,34 @@ export type ImageFormat = "JPG" | "JPEG" | "PNG" | "WEBP";
 export type ToolCategory = "image";
 export type ToolFidelity = "lossless" | "lossy";
 export type ToolStatus = "active" | "soon";
-export type ToolOption = "quality" | "compression";
+
+export type RgbColor = { r: number; g: number; b: number };
+
+export type SliderOptionSpec = {
+  kind: "slider";
+  key: "quality" | "compression";
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  defaultValue: number;
+  presets: { label: string; value: number }[];
+  hint: string;
+  lowerLabel?: string;
+  upperLabel?: string;
+};
+
+export type ColorOptionSpec = {
+  kind: "color";
+  key: "background";
+  label: string;
+  defaultValue: RgbColor;
+  swatches: { label: string; value: RgbColor }[];
+  allowCustom: boolean;
+  hint: string;
+};
+
+export type ToolOptionSpec = SliderOptionSpec | ColorOptionSpec;
 
 export type ToolDefinition = {
   id: string;
@@ -20,5 +47,5 @@ export type ToolDefinition = {
   acceptExtensions: string[];
   outputExtension: string;
   fidelityHint?: string;
-  options?: ToolOption[];
+  optionSpecs?: ToolOptionSpec[];
 };

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getToolBySlug, getActiveTools } from "@/lib/tools/tool-registry";
 import { Badge } from "@/components/ui/Badge";
-import { TransmutationDropzone } from "@/components/transmute/TransmutationDropzone";
+import { TransmutationPanel } from "@/components/transmute/TransmutationPanel";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -72,7 +72,7 @@ export default async function TransmuteToolPage({ params }: Props) {
         )}
       </div>
 
-      <TransmutationDropzone tool={tool} />
+      <TransmutationPanel tool={tool} />
     </div>
   );
 }

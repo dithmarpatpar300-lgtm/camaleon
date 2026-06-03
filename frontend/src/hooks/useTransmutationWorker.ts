@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TransmutationModule, WorkerResponse } from "@/workers/types";
+import type { TransmutationModule, TransmutationOptions, WorkerResponse } from "@/workers/types";
 
 type TransmutateFn = (
   module: TransmutationModule,
-  bytes: ArrayBuffer
+  bytes: ArrayBuffer,
+  options?: TransmutationOptions
 ) => Promise<WorkerResponse>;
 
 export function useTransmutationWorker(): {
@@ -51,7 +52,7 @@ export function useTransmutationWorker(): {
   }, []);
 
   const transmutate = useCallback<TransmutateFn>(
-    (module, bytes) => {
+    (module, bytes, options) => {
       return new Promise((resolve, reject) => {
         const worker = workerRef.current;
         if (!worker) {
@@ -60,10 +61,8 @@ export function useTransmutationWorker(): {
         }
 
         const id = crypto.randomUUID();
-
         pendingRef.current.set(id, { resolve, reject });
-
-        worker.postMessage({ id, module, bytes }, [bytes]);
+        worker.postMessage({ id, module, bytes, options }, [bytes]);
       });
     },
     []
