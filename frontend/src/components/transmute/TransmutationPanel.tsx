@@ -7,6 +7,9 @@ import { fileMatchesExtensions } from "@/lib/tools/extensions";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
+import { useI18n } from "@/providers/I18nProvider";
+import { localizeError } from "@/lib/i18n/errors";
+import { resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Dropzone } from "./Dropzone";
@@ -14,11 +17,7 @@ import { OptionsControls } from "./OptionsControls";
 
 type PanelStatus = "idle" | "staged" | "processing" | "success" | "error";
 
-type StagedFile = {
-  file: File;
-  bytes: ArrayBuffer;
-};
-
+type StagedFile = { file: File; bytes: ArrayBuffer };
 type Result = {
   inputSize: number;
   outputBytes: ArrayBuffer;
@@ -28,9 +27,7 @@ type Result = {
   fileName: string;
 };
 
-type TransmutationPanelProps = {
-  tool: ToolDefinition;
-};
+type TransmutationPanelProps = { tool: ToolDefinition };
 
 function buildDefaultOptions(specs: ToolDefinition["optionSpecs"]): TransmutationOptions {
   const opts: TransmutationOptions = {};
@@ -46,41 +43,36 @@ function buildDefaultOptions(specs: ToolDefinition["optionSpecs"]): Transmutatio
 }
 
 export function TransmutationPanel({ tool }: TransmutationPanelProps) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<PanelStatus>("idle");
   const [dragging, setDragging] = useState(false);
   const [staged, setStaged] = useState<StagedFile | null>(null);
-  const [options, setOptions] = useState<TransmutationOptions>(() =>
-    buildDefaultOptions(tool.optionSpecs)
-  );
+  const [options, setOptions] = useState<TransmutationOptions>(() => buildDefaultOptions(tool.optionSpecs));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const { transmutate, ready } = useTransmutationWorker();
-
   const accept = tool.acceptExtensions.join(",");
+  const hint = resolveToolFidelityHint(tool.id, t);
 
-  const handleFileSelect = useCallback(
-    async (file: File) => {
-      if (!fileMatchesExtensions(file.name, tool.acceptExtensions)) {
-        setStatus("error");
-        setErrorMessage(`This tool accepts: ${tool.acceptExtensions.join(", ")}`);
-        return;
-      }
-      const bytes = await file.arrayBuffer();
-      setStaged({ file, bytes });
-      setStatus("staged");
-      setErrorMessage(null);
-      setResult(null);
-    },
-    [tool]
-  );
+  const handleFileSelect = useCallback(async (file: File) => {
+    if (!fileMatchesExtensions(file.name, tool.acceptExtensions)) {
+      setStatus("error");
+      setErrorMessage(t("panel.fmtError", { formats: tool.acceptExtensions.join(", ") }));
+      return;
+    }
+    const bytes = await file.arrayBuffer();
+    setStaged({ file, bytes });
+    setStatus("staged");
+    setErrorMessage(null);
+    setResult(null);
+  }, [tool, t]);
 
   const handleTransmutar = useCallback(async () => {
     if (!staged || !ready) return;
     setStatus("processing");
     setErrorMessage(null);
-
     try {
       const response = await transmutate(tool.module, staged.bytes, options);
       if (response.ok) {
@@ -95,13 +87,14 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         setStatus("success");
       } else {
         setStatus("error");
-        setErrorMessage(response.error);
+        setErrorMessage(localizeError(response.error, t));
       }
     } catch (err) {
       setStatus("error");
-      setErrorMessage(err instanceof Error ? err.message : "An unexpected error occurred");
+      const raw = err instanceof Error ? err.message : t("panel.unexpectedError");
+      setErrorMessage(localizeError(raw, t));
     }
-  }, [staged, ready, tool.module, options, transmutate]);
+  }, [staged, ready, tool.module, options, transmutate, t]);
 
   const handleDownload = useCallback(() => {
     if (!result) return;
@@ -116,34 +109,19 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setOptions(buildDefaultOptions(tool.optionSpecs));
   }, [tool]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragging(false);
-      if (status === "processing") return;
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0) handleFileSelect(files[0]);
-    },
-    [status, handleFileSelect]
-  );
+  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true); }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(false); }, []);
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault(); setDragging(false);
+    if (status === "processing") return;
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) handleFileSelect(files[0]);
+  }, [status, handleFileSelect]);
 
   const sizeDelta = useMemo(() => {
     if (!result) return null;
-    const pct = result.inputSize > 0
-      ? Math.round(((result.outputSize - result.inputSize) / result.inputSize) * 100)
-      : 0;
-    const sign = pct >= 0 ? "+" : "";
-    return `${formatBytes(result.inputSize)} → ${formatBytes(result.outputSize)} (${sign}${pct}%)`;
+    const pct = result.inputSize > 0 ? Math.round(((result.outputSize - result.inputSize) / result.inputSize) * 100) : 0;
+    return `${formatBytes(result.inputSize)} → ${formatBytes(result.outputSize)} (${pct >= 0 ? "+" : ""}${pct}%)`;
   }, [result]);
 
   useEffect(() => {
@@ -162,22 +140,13 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   return (
     <div className="space-y-6">
-      {/* Dropzone (idle only) */}
       {status === "idle" && (
-        <Dropzone
-          accept={accept}
-          status="idle"
-          dragging={dragging}
-          sourceFileName={null}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onFileSelect={handleFileSelect}
-          idleLabel="Drop an image here, or click to select"
+        <Dropzone accept={accept} status="idle" dragging={dragging} sourceFileName={null}
+          onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+          onFileSelect={handleFileSelect} idleLabel={t("dropzone.idleLabel")} processingLabel={t("dropzone.processingLabel")}
         />
       )}
 
-      {/* Staged: file info + options + Transmutar */}
       {status === "staged" && staged && (
         <div className="rounded-2xl border border-border bg-bg-surface p-5">
           <div className="mb-4 flex items-center justify-between">
@@ -185,94 +154,68 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
               <p className="text-sm font-medium text-text-primary">{staged.file.name}</p>
               <p className="text-xs text-text-muted">{formatBytes(staged.bytes.byteLength)}</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              Change
-            </Button>
+            <Button variant="ghost" size="sm" onClick={handleReset}>{t("panel.changeFile")}</Button>
           </div>
-
           {hasOptions && (
             <div className="mb-5 border-t border-border pt-4">
-              <OptionsControls
-                specs={tool.optionSpecs!}
-                values={options}
-                onChange={setOptions}
-              />
+              <OptionsControls toolId={tool.id} specs={tool.optionSpecs!} values={options} onChange={setOptions} />
             </div>
           )}
-
-          <Button
-            onClick={handleTransmutar}
-            disabled={!ready}
-            className="w-full"
-          >
-            {ready ? "Transmutar" : "Initializing..."}
+          <Button onClick={handleTransmutar} disabled={!ready} className="w-full">
+            {ready ? t("panel.transmuteButton") : t("panel.initializing")}
           </Button>
         </div>
       )}
 
-      {/* Processing */}
       {status === "processing" && (
         <div className="flex flex-col items-center gap-3 py-12">
-          <Spinner label="Transmuting..." />
-          <p className="text-sm text-text-secondary">Transmuting{staged ? ` ${staged.file.name}` : ""}...</p>
+          <Spinner label={t("panel.processingFallback")} />
+          <p className="text-sm text-text-secondary">
+            {staged ? t("panel.processing", { fileName: staged.file.name }) : t("panel.processingFallback")}
+          </p>
         </div>
       )}
 
-      {/* Success: result view */}
       {status === "success" && result && (
         <div className="space-y-5">
-          {/* Preview */}
           <div className="overflow-hidden rounded-xl border border-border bg-bg-base">
-          {previewUrl && (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={previewUrl}
-              alt={`Preview of ${result.fileName}`}
-              className="mx-auto max-h-80 object-contain"
-            />
-          )}
+            {previewUrl && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={previewUrl}
+                alt={t("panel.previewAlt", { fileName: result.fileName })}
+                className="mx-auto max-h-80 object-contain"
+              />
+            )}
           </div>
-
-          {/* Size info */}
           <div className="rounded-xl border border-border bg-bg-surface px-4 py-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-text-secondary">Tamaño</span>
+              <span className="text-text-secondary">{t("panel.size")}</span>
               <span className="font-mono tabular-nums text-text-primary">{sizeDelta}</span>
             </div>
           </div>
-
-          {/* Actions */}
           <div className="flex gap-3">
-            <Button onClick={handleDownload} className="flex-1">
-              Descargar
-            </Button>
-            <Button variant="ghost" onClick={handleReset}>
-              Transmutar otro
-            </Button>
+            <Button onClick={handleDownload} className="flex-1">{t("panel.download")}</Button>
+            <Button variant="ghost" onClick={handleReset}>{t("panel.transmuteAnother")}</Button>
           </div>
         </div>
       )}
 
-      {/* Error */}
       {status === "error" && errorMessage && (
         <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-          <p className="font-semibold">Transmutation failed</p>
+          <p className="font-semibold">{t("panel.errorTitle")}</p>
           <p className="mt-1">{errorMessage}</p>
           <div className="mt-3 flex gap-2">
             {staged && (
-              <Button variant="subtle" size="sm" onClick={() => setStatus("staged")}>
-                Adjust & retry
-              </Button>
+              <Button variant="subtle" size="sm" onClick={() => setStatus("staged")}>{t("panel.adjustAndRetry")}</Button>
             )}
-            <Button variant="ghost" size="sm" onClick={handleReset}>
-              Start over
-            </Button>
+            <Button variant="ghost" size="sm" onClick={handleReset}>{t("panel.startOver")}</Button>
           </div>
         </div>
       )}
 
       <p className="text-center text-xs text-text-muted">
-        Engine: {ready ? "Ready" : "Initializing..."}
+        {t("panel.engineLabel", { status: ready ? t("panel.engineReady") : t("panel.engineInit") })}
       </p>
     </div>
   );

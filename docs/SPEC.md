@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.6.3  
+**Version:** 0.6.4  
 **Last updated:** 2026-06-03  
-**Status:** Active — UI-3 delivered: TransmutationPanel + atomic OptionsControls + worker options protocol
+**Status:** Active — UI-4 delivered: full bilingual EN/ES i18n via I18nProvider + typed dictionaries
 
 ---
 
@@ -744,12 +744,12 @@ components/
                 #   Hero, PrivacyBanner (UI-2)
                 # ✅ OptionsControls, TransmutationPanel (UI-3)
 providers/      # ✅ ThemeProvider (UI-1)
-                # □ I18nProvider (UI-4)
+                # ✅ I18nProvider (UI-4)
 lib/            # ✅ utils.ts (cn helper), types.ts (UI-1)
                 # ✅ lib/tools/ types.ts + tool-registry.ts (UI-2)
                 # ✅ lib/transmutation/ download.ts (UI-2)
                 # ✅ lib/format/ bytes.ts (UI-3)
-                # lib/i18n/ □ dictionaries (UI-4)
+                # ✅ lib/i18n/ dictionaries (EN+ES), tool-copy.ts, errors.ts (UI-4)
 hooks/          # ✅ useTransmutationWorker (existing), useTheme (UI-1)
 ```
 
@@ -788,7 +788,7 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 |------|---------|--------|
 | Left | Chameleon logo mark (inline SVG) + `Camaleon` wordmark | ✅ |
 | Center-left | `Transmutaciones` nav (link to `/`) | ✅ |
-| Right | Language selector (EN / ES) — renders, locale state held, full i18n deferred to UI-4 | ✅ |
+| Right | Language selector (EN / ES) — fully wired to I18nProvider, persisted to localStorage, `<html lang>` synced | ✅ UI-4 |
 | Right | Theme toggle (dark / light) with `useTheme`, persisted, no FOUC | ✅ |
 
 ### 7.8 UI Implementation Track (Planned)
@@ -798,7 +798,7 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | UI-1 | ✅ Design system foundation: tokens + `ThemeProvider` + `ui/` primitives + layout shell (Header + Footer) (v0.6.1) | No conversion behavior change; existing dropzone keeps working |
 | UI-2 | ✅ `ToolRegistry` + landing (`Hero`, `PrivacyBanner`, `ToolGrid`) + Dropzone extraction + `/transmute/[slug]` route shell (v0.6.2) | OptionsControls + TransmutationPanel polish in UI-3 |
 | UI-3 | ✅ `/transmute/[slug]` + `TransmutationPanel` + atomic `OptionsControls` (slider + color) wired through extended worker protocol (v0.6.3) | Subsampling deferred; UI-4 = i18n |
-| UI-4 | i18n EN/ES across the app | — |
+| UI-4 | ✅ Full bilingual EN/ES i18n via `I18nProvider` + typed dictionaries + `LanguageSelector` wired + tool prose resolved from i18n keys (v0.6.4) | UI-5 = a11y/responsive sign-off |
 | UI-5 | Accessibility (keyboard/ARIA), motion, responsive | Feeds Phase 4 (v1.0.0) MVP sign-off |
 
 This UI track runs after the §5.8 backend refinements (now complete) and feeds Phase 4 MVP polish per ROADMAP.
@@ -849,6 +849,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.6.4 | 2026-06-03 | OpenCode | UI-4: Full EN/ES i18n — I18nProvider + typed dictionaries + LanguageSelector wired + all UI copy localized + ToolRegistry prose migrated to dictionaries | `ui_4_i18n_en_es_done.md` |
 | 0.6.3 | 2026-06-03 | OpenCode | UI-3: TransmutationPanel (staged flow + result view + local preview) + atomic OptionsControls (slider/color) + extended worker protocol + landing card height uniformity | `ui_3_transmutation_panel_options_done.md` |
 | 0.5.6 | 2026-06-03 | OpenCode | Background-color Wasm export: `transmutar_png_a_jpg_with_options(bytes, quality, r, g, b)` — custom `BackgroundFill` exposed to frontend | `refine_png_background_option_done.md` |
 | 0.6.2 | 2026-06-02 | OpenCode | UI-2: Landing + ToolRegistry + dropzone extraction + /transmute/[slug] route shell with SSG | `ui_2_landing_tool_registry_done.md` |

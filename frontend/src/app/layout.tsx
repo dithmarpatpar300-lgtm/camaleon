@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { I18nProvider } from "@/providers/I18nProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -18,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Camaleon",
+  title: "Camaleon — Transmute files in your browser",
   description: "Local, privacy-first file transmutation",
 };
 
@@ -28,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="es" className="dark" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -42,6 +43,12 @@ export default function RootLayout({
                   var root = document.documentElement;
                   root.classList.remove('dark', 'light');
                   root.classList.add(theme);
+                  var locale = localStorage.getItem('camaleon-locale');
+                  if (locale === 'en' || locale === 'es') {
+                    document.documentElement.lang = locale;
+                  } else {
+                    document.documentElement.lang = 'es';
+                  }
                 } catch(e) {}
               })();
             `,
@@ -51,13 +58,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <ThemeProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   );
