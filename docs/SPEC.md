@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.5.0  
+**Version:** 0.5.1  
 **Last updated:** 2026-06-02  
-**Status:** Active — Transmutation science & backend refinement
+**Status:** Active — Backend dimension guards implemented
 
 ---
 
@@ -357,15 +357,21 @@ A small PNG file (low byte count) can decode to **hundreds of megabytes** if dim
 
 The empirical cycle proves the inverse: **1.24 MB JPEG → ~14–22 MB raster** — input bytes are a poor proxy for memory risk.
 
-#### 5.7.2 Required safeguards (planned — pre-MVP)
+#### 5.7.2 Required safeguards (implemented — v0.5.1)
 
-| Guard | Description | Owner |
-|-------|-------------|-------|
-| `MAX_PIXELS` | Cap `width × height` (e.g. 16,000 × 16,000 or 40 MP) | `core_utils` |
-| **Dimension probe** | Read PNG IHDR / JPEG SOF markers **before** full decode when possible | `core_utils` |
-| **Raster budget error** | Clear English error: `"Image dimensions exceed maximum allowed pixels"` | `core_utils` |
+| Guard | Description | Owner | Status |
+|-------|-------------|-------|--------|
+| `MAX_PIXELS` | Cap `width × height` at **40,000,000** (40 MP) — covers 8K workflows up to ~7680×4320 (33 MP) with headroom for professional DSLR photos while preventing decompression bombs | `core_utils` | ✅ Implemented |
+| **Dimension probe** | `probe_dimensions(bytes)` reads PNG IHDR / JPEG SOF markers **before** full decode; pure byte-level parsing, no `image` crate dependency | `core_utils` | ✅ Implemented |
+| **Raster budget error** | `DimensionsTooLarge { width, height, pixel_count, max_pixels }` with clear English Display: `"Image dimensions {width}x{height} ({pixel_count} pixels) exceed maximum allowed ({max_pixels} pixels)"` | `core_utils` | ✅ Implemented |
+| **Zero dimension guard** | `InvalidDimensions { reason }` rejects `width == 0` or `height == 0` in PNG IHDR / JPEG SOF | `core_utils` | ✅ Implemented |
+| **Format-aware gating** | `validate_input` only enforces pixel cap on known magic (PNG / JPEG SOI); unknown formats pass through to byte-size check only | `core_utils` | ✅ Implemented |
 
-**Status:** `MAX_INPUT_BYTES` only ✅ — dimension guards **not yet implemented** (see §5.8).
+**Edge cases covered:**
+- Truncated PNG/JPEG headers → `InvalidDimensions` error (not silent pass, not panic)
+- JPEG with SOI but no valid SOF in first 64 KB → error
+- Empty input still rejected first (existing check preserved)
+- `pixel_count()` guards `u32 × u32` overflow via `checked_mul`
 
 ---
 
@@ -375,7 +381,7 @@ Tactical pause after Phase 3 to align code with this doctrine. These are **not**
 
 | Task ID | Scope | SPEC targets | Version target |
 |---------|-------|--------------|----------------|
-| `refine_core_utils_dimensions` | `MAX_PIXELS`, header dimension probe, tests | §5.7, §6.1 | v0.5.x |
+| `refine_core_utils_dimensions` | `MAX_PIXELS`, header dimension probe, tests | §5.7, §6.1 | v0.5.1 ✅ |
 | `refine_transmutador_jpg` | Color-type policy enforcement, PNG compression effort doc | §5.4 | v0.5.x |
 | `refine_transmutador_png` | Alpha flatten policy, quality as parameter, subsampling explicit | §5.5 | v0.5.x |
 
@@ -400,19 +406,21 @@ Phase 4 (`v1.0.0`) remains UI/UX polish, accessibility, and MVP sign-off per ROA
 
 ### 6.1 `core_utils`
 
-**Purpose:** Shared error handling and byte-level utilities.
+**Purpose:** Shared error handling, byte-level utilities, and pre-decode safety checks.
 
-**Status:** Implemented (Phase 1).
+**Status:** Implemented — Phase 1 + dimension guards (v0.5.1).
 
 **Capabilities:**
 
-- `TransmutationError` enum with variants: `EmptyInput`, `InputTooLarge { size, max }`, `ConversionFailed(String)`
+- `TransmutationError` enum with variants: `EmptyInput`, `InputTooLarge { size, max }`, `DimensionsTooLarge { width, height, pixel_count, max_pixels }`, `InvalidDimensions { reason }`, `ConversionFailed(String)`
 - `Display` implementation for `String` conversion at Wasm boundary
-- `validate_input(bytes: &[u8]) -> Result<(), String>` — rejects empty input and inputs exceeding `MAX_INPUT_BYTES`
-- `MAX_INPUT_BYTES`: configurable constant, default **50 MB** on **compressed input** size only
-- **Planned (§5.7, §5.8):** `MAX_PIXELS` and dimension probing from image headers before full decode — input byte limits alone do not bound decoded raster memory
+- `validate_input(bytes: &[u8]) -> Result<(), String>` — rejects empty, input exceeding `MAX_INPUT_BYTES`, and (for PNG/JPEG magic) dimensions exceeding `MAX_PIXELS` or zero dimensions
+- `probe_dimensions(bytes: &[u8]) -> Result<(u32, u32), String>` — reads PNG IHDR or JPEG SOF dimensions without decoding the full image; pure byte-level parsing, no `image` crate dependency
+- `pixel_count(width: u32, height: u32) -> Result<u64, String>` — safe `u32 × u32` multiply with overflow guard
+- `MAX_INPUT_BYTES`: **50 MB** on compressed input
+- `MAX_PIXELS`: **40,000,000** (40 megapixels) — balances 8K workflows (~33 MP) against browser Wasm memory
 
-**Tests:** 4 unit tests covering empty input rejection, valid input acceptance, oversized input rejection, and error display formatting.
+**Tests:** 18 unit tests covering empty/oversized input, dimension probing (valid PNG, valid JPEG, zero dimensions, truncated headers, unknown format), pixel count arithmetic, format-aware gating in `validate_input`, and error display formatting.
 
 ### 6.2 `transmutador_jpg`
 
@@ -578,6 +586,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.5.1-patch | 2026-06-02 | Chief Architect | JPEG marker error format fix; truncated PNG header test | — |
+| 0.5.1 | 2026-06-02 | OpenCode | Dimension guards: MAX_PIXELS, probe_dimensions, pixel_count, validate_input hardened against decompression bombs | `refine_core_utils_dimensions_done.md` |
 | 0.5.0 | 2026-06-02 | Chief Architect | §5 Transmutation Science & Module Doctrine (full technical foundation, cycle analysis, planned refinements) | — |
 | 0.4.0-patch | 2026-06-02 | Chief Architect | `JpegEncoder` quality 85 applied; `transmutar_png_a_jpg_inner` + test alignment | — |
 | 0.4.0 | 2026-06-02 | OpenCode | Phase 3: transmutador_png crate + tests + dual Wasm pipeline + Worker routing + UI auto-detect | `phase3_png_to_jpg_done.md` |

@@ -1,9 +1,20 @@
 use core::fmt;
 
+// ---------------------------------------------------------------------------
+// Error types
+// ---------------------------------------------------------------------------
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TransmutationError {
     EmptyInput,
     InputTooLarge { size: usize, max: usize },
+    DimensionsTooLarge {
+        width: u32,
+        height: u32,
+        pixel_count: u64,
+        max_pixels: u64,
+    },
+    InvalidDimensions { reason: String },
     ConversionFailed(String),
 }
 
@@ -18,12 +29,80 @@ impl fmt::Display for TransmutationError {
                     size, max
                 )
             }
+            Self::DimensionsTooLarge {
+                width,
+                height,
+                pixel_count,
+                max_pixels,
+            } => {
+                write!(
+                    f,
+                    "Image dimensions {}x{} ({} pixels) exceed maximum allowed ({} pixels)",
+                    width, height, pixel_count, max_pixels
+                )
+            }
+            Self::InvalidDimensions { reason } => {
+                write!(f, "Invalid image dimensions: {}", reason)
+            }
             Self::ConversionFailed(msg) => write!(f, "Transmutation failed: {}", msg),
         }
     }
 }
 
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
 pub const MAX_INPUT_BYTES: usize = 50 * 1024 * 1024;
+
+pub const MAX_PIXELS: u64 = 40_000_000;
+
+const PNG_SIGNATURE: &[u8] = &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+const JPEG_SOI: &[u8] = &[0xFF, 0xD8];
+
+/// Maximum bytes to scan when searching for JPEG SOF markers.
+const JPEG_SCAN_LIMIT: usize = 64 * 1024;
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+pub fn pixel_count(width: u32, height: u32) -> Result<u64, String> {
+    let w = width as u64;
+    let h = height as u64;
+    w.checked_mul(h)
+        .ok_or_else(|| "Pixel count overflow".to_string())
+}
+
+pub fn probe_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
+    if bytes.len() < 24 && bytes.starts_with(PNG_SIGNATURE) {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: "Input too short to contain PNG header".into(),
+        }
+        .to_string());
+    }
+
+    if bytes.len() < 4 && bytes.starts_with(JPEG_SOI) {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: "Input too short to contain JPEG header".into(),
+        }
+        .to_string());
+    }
+
+    if bytes.starts_with(PNG_SIGNATURE) {
+        return probe_png_dimensions(bytes);
+    }
+
+    if bytes.starts_with(JPEG_SOI) && bytes.len() >= 4 {
+        return probe_jpeg_dimensions(bytes);
+    }
+
+    Err(TransmutationError::InvalidDimensions {
+        reason: "Unknown image format; cannot probe dimensions".into(),
+    }
+    .to_string())
+}
 
 pub fn validate_input(bytes: &[u8]) -> Result<(), String> {
     if bytes.is_empty() {
@@ -38,12 +117,164 @@ pub fn validate_input(bytes: &[u8]) -> Result<(), String> {
             .to_string(),
         );
     }
+
+    let magic_known = bytes.starts_with(PNG_SIGNATURE) || bytes.starts_with(JPEG_SOI);
+
+    if magic_known {
+        let (width, height) = probe_dimensions(bytes)?;
+
+        if width == 0 || height == 0 {
+            return Err(TransmutationError::InvalidDimensions {
+                reason: format!("Zero dimension: {}x{}", width, height),
+            }
+            .to_string());
+        }
+
+        let pc = pixel_count(width, height)?;
+
+        if pc > MAX_PIXELS {
+            return Err(
+                TransmutationError::DimensionsTooLarge {
+                    width,
+                    height,
+                    pixel_count: pc,
+                    max_pixels: MAX_PIXELS,
+                }
+                .to_string(),
+            );
+        }
+    }
+
     Ok(())
 }
+
+// ---------------------------------------------------------------------------
+// Internal format probes
+// ---------------------------------------------------------------------------
+
+fn probe_png_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
+    if bytes.len() < 24 {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: "Truncated PNG: header too short for IHDR".into(),
+        }
+        .to_string());
+    }
+
+    let width = read_be_u32(bytes, 16);
+    let height = read_be_u32(bytes, 20);
+
+    if width == 0 || height == 0 {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: format!("PNG IHDR has zero dimension: {}x{}", width, height),
+        }
+        .to_string());
+    }
+
+    Ok((width, height))
+}
+
+fn probe_jpeg_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
+    let limit = bytes.len().min(JPEG_SCAN_LIMIT);
+    let mut pos = 2;
+
+    while pos + 4 <= limit {
+        if bytes[pos] != 0xFF {
+            return Err(TransmutationError::InvalidDimensions {
+                reason: format!("Invalid JPEG: expected marker at offset {}", pos),
+            }
+            .to_string());
+        }
+
+        let marker = bytes[pos + 1];
+
+        if is_sof_marker(marker) {
+            if pos + 9 > limit {
+                return Err(TransmutationError::InvalidDimensions {
+                    reason: "Truncated JPEG: SOF marker extends past input".into(),
+                }
+                .to_string());
+            }
+
+            let height = read_be_u16(bytes, pos + 5) as u32;
+            let width = read_be_u16(bytes, pos + 7) as u32;
+
+            if width == 0 || height == 0 {
+                return Err(TransmutationError::InvalidDimensions {
+                    reason: format!("JPEG SOF has zero dimension: {}x{}", width, height),
+                }
+                .to_string());
+            }
+
+            return Ok((width, height));
+        }
+
+        if marker == 0xD8 || marker == 0x00 {
+            pos += 1;
+            continue;
+        }
+
+        if marker == 0xD9 {
+            break;
+        }
+
+        if pos + 2 > limit {
+            break;
+        }
+
+        let seg_len = read_be_u16(bytes, pos + 2) as usize;
+
+        if seg_len < 2 {
+            return Err(TransmutationError::InvalidDimensions {
+                reason: format!(
+                    "Invalid JPEG: marker {:02X} has length {} < 2",
+                    marker, seg_len
+                ),
+            }
+            .to_string());
+        }
+
+        pos += 2 + seg_len;
+    }
+
+    Err(TransmutationError::InvalidDimensions {
+        reason: "No SOF marker found in JPEG data".into(),
+    }
+    .to_string())
+}
+
+fn is_sof_marker(marker: u8) -> bool {
+    matches!(
+        marker,
+        0xC0 | 0xC1 | 0xC2 | 0xC3 | 0xC5 | 0xC6 | 0xC7 | 0xC9 | 0xCA | 0xCB | 0xCD | 0xCE | 0xCF
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Byte-level helpers (no std dependency beyond core)
+// ---------------------------------------------------------------------------
+
+fn read_be_u16(bytes: &[u8], offset: usize) -> u16 {
+    ((bytes[offset] as u16) << 8) | (bytes[offset + 1] as u16)
+}
+
+fn read_be_u32(bytes: &[u8], offset: usize) -> u32 {
+    ((bytes[offset] as u32) << 24)
+        | ((bytes[offset + 1] as u32) << 16)
+        | ((bytes[offset + 2] as u32) << 8)
+        | (bytes[offset + 3] as u32)
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ------------------------------------------------------------------
+    // Existing tests (preserved)
+    // ------------------------------------------------------------------
 
     #[test]
     fn rejects_empty_input() {
@@ -53,7 +284,7 @@ mod tests {
     }
 
     #[test]
-    fn accepts_valid_input() {
+    fn accepts_valid_non_image_input() {
         let result = validate_input(&[0u8; 1024]);
         assert!(result.is_ok());
     }
@@ -79,5 +310,243 @@ mod tests {
 
         let e = TransmutationError::ConversionFailed("bad pixel".into());
         assert!(e.to_string().contains("bad pixel"));
+
+        let e = TransmutationError::DimensionsTooLarge {
+            width: 10000,
+            height: 10000,
+            pixel_count: 100_000_000,
+            max_pixels: 40_000_000,
+        };
+        let msg = e.to_string();
+        assert!(msg.contains("10000x10000"));
+        assert!(msg.contains("100000000"));
+        assert!(msg.contains("40000000"));
+
+        let e = TransmutationError::InvalidDimensions {
+            reason: "zero width".into(),
+        };
+        assert!(e.to_string().contains("zero width"));
+    }
+
+    // ------------------------------------------------------------------
+    // Helper: create a minimal valid PNG in memory
+    // ------------------------------------------------------------------
+
+    fn make_minimal_png(width: u32, height: u32) -> Vec<u8> {
+        let sig = PNG_SIGNATURE;
+
+        let mut chunk_data = Vec::new();
+        chunk_data.extend_from_slice(&width.to_be_bytes());
+        chunk_data.extend_from_slice(&height.to_be_bytes());
+        chunk_data.push(8); // bit depth
+        chunk_data.push(2); // color type (RGB)
+        chunk_data.extend_from_slice(&[0, 0, 0]); // compression, filter, interlace
+
+        let ihdr_type = b"IHDR";
+        let len = (chunk_data.len() as u32).to_be_bytes();
+
+        let mut crc_input = Vec::new();
+        crc_input.extend_from_slice(ihdr_type);
+        crc_input.extend_from_slice(&chunk_data);
+        let crc = crc32(&crc_input);
+
+        let mut png = Vec::new();
+        png.extend_from_slice(sig);
+        png.extend_from_slice(&len);
+        png.extend_from_slice(ihdr_type);
+        png.extend_from_slice(&chunk_data);
+        png.extend_from_slice(&crc.to_be_bytes());
+        png
+    }
+
+    fn crc32(data: &[u8]) -> u32 {
+        let mut crc: u32 = 0xFFFF_FFFF;
+        for &byte in data {
+            crc ^= byte as u32;
+            for _ in 0..8 {
+                if crc & 1 != 0 {
+                    crc = (crc >> 1) ^ 0xEDB8_8320;
+                } else {
+                    crc >>= 1;
+                }
+            }
+        }
+        !crc
+    }
+
+    // ------------------------------------------------------------------
+    // Helper: create a minimal valid JPEG with SOF0 in memory
+    // ------------------------------------------------------------------
+
+    fn make_minimal_jpeg(width: u16, height: u16) -> Vec<u8> {
+        let mut jpg = Vec::new();
+        jpg.extend_from_slice(JPEG_SOI);
+
+        // APP0 / JFIF marker
+        jpg.push(0xFF);
+        jpg.push(0xE0);
+        jpg.extend_from_slice(&16u16.to_be_bytes()); // length
+        jpg.extend_from_slice(b"JFIF\0");
+        jpg.push(1); // major version
+        jpg.push(2); // minor version
+        jpg.push(0); // units
+        jpg.extend_from_slice(&[0, 1, 0, 1]); // x/y density
+        jpg.push(0); // thumbnail w
+        jpg.push(0); // thumbnail h
+
+        // DQT marker (quantization table — placeholder)
+        jpg.push(0xFF);
+        jpg.push(0xDB);
+        jpg.extend_from_slice(&67u16.to_be_bytes()); // length
+        jpg.push(0); // table info
+        jpg.extend(std::iter::repeat(1u8).take(64));
+
+        // SOF0 marker
+        jpg.push(0xFF);
+        jpg.push(0xC0);
+        jpg.extend_from_slice(&17u16.to_be_bytes()); // length
+        jpg.push(8); // precision
+        jpg.extend_from_slice(&height.to_be_bytes());
+        jpg.extend_from_slice(&width.to_be_bytes());
+        jpg.push(3); // 3 components
+        // Y component
+        jpg.push(1); // id
+        jpg.push(0x22); // sampling
+        jpg.push(0); // qt table
+        // Cb component
+        jpg.push(2);
+        jpg.push(0x11);
+        jpg.push(1);
+        // Cr component
+        jpg.push(3);
+        jpg.push(0x11);
+        jpg.push(1);
+
+        jpg
+    }
+
+    // ------------------------------------------------------------------
+    // pixel_count tests
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn pixel_count_normal() {
+        assert_eq!(pixel_count(100, 200).unwrap(), 20_000);
+    }
+
+    #[test]
+    fn pixel_count_zero() {
+        assert_eq!(pixel_count(0, 100).unwrap(), 0);
+        assert_eq!(pixel_count(100, 0).unwrap(), 0);
+    }
+
+    // ------------------------------------------------------------------
+    // probe_dimensions: PNG
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn probe_valid_minimal_png() {
+        let png = make_minimal_png(64, 32);
+        let (w, h) = probe_dimensions(&png).unwrap();
+        assert_eq!(w, 64);
+        assert_eq!(h, 32);
+    }
+
+    #[test]
+    fn probe_truncated_png_header() {
+        let data = PNG_SIGNATURE.to_vec();
+        let err = probe_dimensions(&data).unwrap_err();
+        assert!(
+            err.contains("short") || err.contains("Truncated"),
+            "unexpected error: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn probe_truncated_jpeg_too_short() {
+        let jpg = JPEG_SOI.to_vec();
+        let err = probe_dimensions(&jpg).unwrap_err();
+        assert!(err.contains("short") || err.contains("truncat"));
+    }
+
+    // ------------------------------------------------------------------
+    // probe_dimensions: JPEG
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn probe_valid_minimal_jpeg() {
+        let jpg = make_minimal_jpeg(80, 60);
+        let (w, h) = probe_dimensions(&jpg).unwrap();
+        assert_eq!(w, 80);
+        assert_eq!(h, 60);
+    }
+
+    #[test]
+    fn probe_jpeg_no_sof() {
+        let mut jpg = Vec::new();
+        jpg.extend_from_slice(JPEG_SOI);
+        jpg.push(0xFF);
+        jpg.push(0xD9); // EOI immediately
+        let err = probe_dimensions(&jpg).unwrap_err();
+        assert!(err.contains("No SOF"));
+    }
+
+    // ------------------------------------------------------------------
+    // validate_input with dimensions
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn valid_small_png_passes_validate() {
+        let png = make_minimal_png(64, 64);
+        assert!(validate_input(&png).is_ok());
+    }
+
+    #[test]
+    fn valid_small_jpeg_passes_validate() {
+        let jpg = make_minimal_jpeg(64, 64);
+        assert!(validate_input(&jpg).is_ok());
+    }
+
+    #[test]
+    fn png_over_max_pixels_fails_validate() {
+        let huge = make_minimal_png(65535, 65535);
+        let err = validate_input(&huge).unwrap_err();
+        assert!(err.contains("pixels"));
+        assert!(err.contains("exceed"));
+    }
+
+    #[test]
+    fn jpeg_over_max_pixels_fails_validate() {
+        let huge = make_minimal_jpeg(65535, 65535);
+        let err = validate_input(&huge).unwrap_err();
+        assert!(err.contains("pixels"));
+        assert!(err.contains("exceed"));
+    }
+
+    #[test]
+    fn png_zero_dimensions_fails_validate() {
+        let bad = make_minimal_png(0, 100);
+        let err = validate_input(&bad).unwrap_err();
+        assert!(err.contains("zero") || err.contains("Invalid"));
+    }
+
+    #[test]
+    fn unknown_magic_skips_dimension_check() {
+        let data = vec![0xAAu8; 1024];
+        assert!(validate_input(&data).is_ok());
+    }
+
+    #[test]
+    fn unknown_but_empty_still_fails() {
+        let err = validate_input(&[]).unwrap_err();
+        assert!(err.contains("empty"));
+    }
+
+    #[test]
+    fn probe_unknown_format_returns_error() {
+        let data = b"GIF89a............";
+        let err = probe_dimensions(data).unwrap_err();
+        assert!(err.contains("Unknown"));
     }
 }
