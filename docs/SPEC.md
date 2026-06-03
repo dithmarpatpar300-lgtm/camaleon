@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.5.4  
+**Version:** 0.5.5  
 **Last updated:** 2026-06-02  
-**Status:** Active — PNG→JPEG hardened: alpha flatten, quality param, subsampling documented
+**Status:** Active — JPEG→PNG hardened: RGB enforcement, configurable compression, encoder levers documented
 
 ---
 
@@ -226,9 +226,9 @@ This is **not a bug**; it is information-theoretic consequence of moving from lo
 | Priority | Objective | Requirement |
 |----------|-----------|-------------|
 | P1 | **Bit-exact raster fidelity** | Decoded pixels re-encoded without additional loss |
-| P2 | **Correct color type** | JPEG sources → **RGB** PNG, not RGBA, unless source truly has alpha |
+| P2 | **Correct color type** | JPEG sources → **RGB** PNG (IHDR color type 2), not RGBA (6); grayscale expands to RGB. ✅ Enforced via explicit `to_rgb8()` + `PngEncoder` with `ExtendedColorType::Rgb8` (v0.5.5) |
 | P3 | **Honest format semantics** | Document that PNG is a **master / edit** format, not a size-reduction format |
-| P4 | **Compression effort** | PNG filter + DEFLATE level tunable (CPU vs size tradeoff) — future parameter |
+| P4 | **Compression effort** | PNG filter (`FilterType::Adaptive`) + DEFLATE level tunable (1–9). Default 6 via `JpgToPngOptions`. Configurable via `transmutar_jpg_a_png_with_compression` (v0.5.5) |
 | P5 | **Palette / indexed PNG** | For suitable content (flat colors), optional indexed mode — future optimization |
 
 **Ideal use cases:** logos, screenshots, text/UI captures, images requiring transparency in downstream editing, intermediate masters, avoiding further generational JPEG loss.
@@ -241,11 +241,13 @@ This is **not a bug**; it is information-theoretic consequence of moving from lo
 
 **Future explicit mode (not default):** lossy PNG via palette quantization (e.g. pngquant-style) — separate flag; changes module contract.
 
-#### 5.4.4 Current implementation alignment (v0.4.0)
+#### 5.4.4 Current implementation alignment (v0.5.5)
 
-- Uses `image::ImageReader` decode + `ImageFormat::Png` encode.
-- JPEG decode yields `Rgb8` → PNG without gratuitous alpha — **aligned with P2**.
-- No palette optimization yet — **P5 deferred**.
+- `PngEncoder::new_with_quality(&mut buf, CompressionType::Level(n), FilterType::Adaptive)` — **P4 ✅** (compression configurable 1–9; default 6).
+- `ExtendedColorType::Rgb8` via explicit `img.to_rgb8()` + `PngEncoder::write_image` — **P2 ✅** (IHDR color type 2 enforced; never RGBA for JPEG sources).
+- Grayscale JPEG expands to RGB — **P2 ✅**.
+- `write_to(ImageFormat::Png)` replaced with explicit encoder — full control over color type and compression.
+- No palette optimization — **P5 deferred**.
 
 ---
 
@@ -385,7 +387,7 @@ Tactical pause after Phase 3 to align code with this doctrine. These are **not**
 |---------|-------|--------------|----------------|
 | `refine_core_utils_dimensions` | `MAX_PIXELS`, header dimension probe, tests | §5.7, §6.1 | v0.5.1 ✅ |
 | `refine_metadata_policy` | Verify StripAll behavior; regression tests; encoder audit; core_utils scanners | §5.10 | v0.5.3 ✅ |
-| `refine_transmutador_jpg` | Color-type policy enforcement, PNG compression effort doc | §5.4 | v0.5.x |
+| `refine_transmutador_jpg` | Color-type policy enforcement, PNG compression effort doc | §5.4 | v0.5.5 ✅ |
 | `refine_transmutador_png` | Alpha flatten policy, quality as parameter, subsampling explicit | §5.5 | v0.5.4 ✅ |
 
 Phase 4 (`v1.0.0`) remains UI/UX polish, accessibility, and MVP sign-off per ROADMAP — **after** engine refinements above.
@@ -539,16 +541,33 @@ The `image` crate (current stack) decodes to an in-memory representation of **pi
 ```rust
 #[wasm_bindgen]
 pub fn transmutar_jpg_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String>
+// Uses defaults: RGB output, compression=6
+
+#[wasm_bindgen]
+pub fn transmutar_jpg_a_png_with_compression(
+    input_bytes: &[u8],
+    compression: u8,
+) -> Result<Vec<u8>, String>
+// Compression 1–9; RGB output. Invalid compression → Err.
 ```
 
-**Behavior (target):**
+**Options types (native + Wasm-ready):**
 
-1. Validate non-empty input
-2. Decode JPEG via `image`
-3. Encode PNG to bytes
-4. Return PNG bytes or descriptive `String` error
+- `JpgToPngOptions { compression: u8 }` — `Default` gives compression 6.
+- `validate_compression(compression: u8) -> Result<u8, String>` — rejects 0 and >9.
+- `DEFAULT_PNG_COMPRESSION = 6`, `MIN_PNG_COMPRESSION = 1`, `MAX_PNG_COMPRESSION = 9`.
 
-**Current state:** Fully implemented (Phase 2). `transmutar_jpg_a_png_inner` runs `core_utils::validate_input` then `jpg_bytes_to_png_bytes` (decode via `image::ImageReader`, encode PNG). Errors return descriptive English `String` messages at the Wasm boundary. **Metadata:** `StripAll` verified by integration test (v0.5.3).
+**Behavior:**
+
+1. Validate via `core_utils::validate_input`
+2. Decode JPEG via `image::ImageReader`
+3. Convert decoded raster to `Rgb8` via explicit `to_rgb8()`
+4. Encode PNG via `PngEncoder::new_with_quality` with `CompressionType::Level(n)`, `FilterType::Adaptive`, `ExtendedColorType::Rgb8` — IHDR color type **2 (RGB)**, never **6 (RGBA)**
+5. Return PNG bytes or descriptive `String` error
+
+**Pipeline:** `transmutar_jpg_a_png_inner(input, &options)` → validation → `jpg_bytes_to_png_bytes(input, &options)`. Both Wasm exports delegate to `_inner`.
+
+**Tests:** 15 integration tests (valid JPEG→PNG, empty input, corrupt bytes, truncated JPEG, metadata StripAll, IHDR color type=2, grayscale→RGB, pixel values preserved, compression validation, compression vs size, options defaults, IHDR reader). In-memory fixtures via the `image` crate. **Metadata:** `StripAll` verified by integration test (v0.5.3). **Color-type:** explicit RGB enforcement (v0.5.5).
 
 ### 6.3 `transmutador_png`
 
@@ -706,6 +725,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.5.5 | 2026-06-02 | OpenCode | JPEG→PNG hardened: RGB color-type enforcement, configurable compression (1–9), PngEncoder with Adaptive filter, dual Wasm exports | `refine_transmutador_jpg_done.md` |
 | 0.5.4 | 2026-06-02 | OpenCode | PNG→JPEG hardened: alpha flatten on white, configurable quality (1–100), dual Wasm exports, chroma subsampling 4:2:0 documented | `refine_transmutador_png_done.md` |
 | 0.5.3-patch | 2026-06-02 | Chief Architect | PNG chunk walker bounds guard; SPEC §6.1 test count | — |
 | 0.5.3 | 2026-06-02 | OpenCode | Metadata StripAll verified: core_utils scanners, integration tests proving EXIF/tEXt not propagated through transmutation | `refine_metadata_policy_done.md` |

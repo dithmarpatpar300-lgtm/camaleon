@@ -1,5 +1,6 @@
 declare module "*/transmutador_jpg/transmutador_jpg.js" {
   export function transmutar_jpg_a_png(input_bytes: Uint8Array): Uint8Array;
+  export function transmutar_jpg_a_png_with_compression(input_bytes: Uint8Array, compression: number): Uint8Array;
   export default function init(): Promise<void>;
 }
 
