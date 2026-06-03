@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 0.6.4  
+**Version:** 0.6.5  
 **Last updated:** 2026-06-03  
-**Status:** Active — UI-4 delivered: full bilingual EN/ES i18n via I18nProvider + typed dictionaries
+**Status:** Active — UI-4 delivered (v0.6.4); §5.11 Output Integrity Protocol + JPEG encoder-swap doctrine added (planned backend refinements)
 
 ---
 
@@ -274,8 +274,8 @@ When source PNG contains transparency, JPEG encoding requires **flattening** ont
 | Lever | Role | Current / target |
 |-------|------|------------------|
 | **Quality factor** | Scales quantizer matrix; primary perceptual control | `DEFAULT_JPEG_QUALITY = 85`; `MIN=1`, `MAX=100`; `transmutar_png_a_jpg_with_quality(bytes, quality)` Wasm export ✅ (v0.5.4) |
-| **Chroma subsampling** | `4:2:0` max compression vs `4:4:4` color fidelity | `JpegEncoder` (image v0.25) defaults to **4:2:0** — appropriate for photographic content; `4:4:4` toggle deferred post-MVP |
-| **Optimized Huffman** | Smaller files at same quality | Future (mozjpeg-style); `image` crate uses standard tables |
+| **Chroma subsampling** | `4:2:0` max compression vs `4:4:4` color fidelity | `JpegEncoder` (image v0.25) defaults to **4:2:0** and **does not expose** a sampling-factor setter in its public API. `4:4:4`/`4:2:2` control **requires an encoder swap** (see §5.5.6). Deferred to `refine_jpeg_encoder_swap`. |
+| **Optimized Huffman** | Smaller files at same quality | `image` crate uses fixed standard tables and exposes no optimization toggle. Requires encoder swap (mozjpeg/jpeg-encoder, §5.5.6). |
 | **Progressive JPEG** | Perceived faster load on web | Future optional |
 | **Metadata strip** | Privacy + bytes (EXIF, ICC) | ✅ StripAll verified (v0.5.3) |
 
@@ -308,8 +308,27 @@ When source PNG contains transparency, JPEG encoding requires **flattening** ont
 
 - `JpegEncoder::new_with_quality(..., quality)` — **P1/P2 ✅** (quality configurable via `transmutar_png_a_jpg_with_quality`; default 85 via `transmutar_png_a_jpg`).
 - Alpha flatten onto `BackgroundFill::WHITE` — **P3 ✅** (manual compositing with `(α·C_fg + (255-α)·C_bg + 127) / 255`; `BackgroundFill` is configurable).
-- Subsampling — **P4 ✅ documented** (`4:2:0` via `image` crate `JpegEncoder` default; `4:4:4` toggle deferred).
-- Optimized Huffman — **P5 deferred**.
+- Subsampling — **P4 ✅ documented** (`4:2:0` via `image` crate `JpegEncoder` default; `4:4:4` toggle deferred — see §5.5.6).
+- Optimized Huffman — **P5 deferred** (see §5.5.6).
+
+#### 5.5.6 Encoder-swap doctrine (subsampling, Huffman, progressive)
+
+The `image` crate `JpegEncoder` (v0.25) is intentionally minimal: it exposes **only** a quality factor (`new_with_quality`). It does **not** expose chroma subsampling selection, Huffman table optimization, or progressive scan mode. These are **encoder-level capabilities** that cannot be unlocked from the `image` API — they require replacing the JPEG encode backend. This is a deliberate architectural boundary, **not** a Camaleon defect.
+
+**Candidate backends (decision pending — `refine_jpeg_encoder_swap`):**
+
+| Backend | Subsampling | Optimized Huffman | Progressive | Wasm build risk | Notes |
+|---------|-------------|-------------------|-------------|-----------------|-------|
+| `image` `JpegEncoder` (current) | ❌ (fixed 4:2:0) | ❌ (standard tables) | ❌ | None (baseline) | Quality-only |
+| **`jpeg-encoder`** (vstroebel, pure Rust) | ✅ `set_sampling_factor` | partial | ✅ | **Low** — pure Rust, clean `wasm32-unknown-unknown` | **Recommended** for subsampling control with minimal build risk |
+| **`mozjpeg`** (C bindings) | ✅ | ✅ (trellis) | ✅ | **High** — `cc`/C toolchain in `wasm-pack`; larger binary | Best ratio; adopt only if compression ratio is a product goal |
+
+**Doctrine:**
+
+- Default subsampling remains **4:2:0** (correct for photographic content) regardless of backend.
+- A `ChromaSubsampling` enum (`S444 | S422 | S420`) makes invalid factors **unrepresentable** (defense in depth, §5.11).
+- `4:4:4` matters for **text-in-image / sharp colored edges** (screenshots, rasterized logos) where `4:2:0` causes color bleeding; surface it as an advanced PNG→JPG option only after the swap lands.
+- Encoder swap is a **backend-only** task (new `0.5.x`-class engine version); it does not alter the worker protocol beyond an additional optional `subsampling` parameter.
 
 ---
 
@@ -389,8 +408,11 @@ Tactical pause after Phase 3 to align code with this doctrine. These are **not**
 | `refine_metadata_policy` | Verify StripAll behavior; regression tests; encoder audit; core_utils scanners | §5.10 | v0.5.3 ✅ |
 | `refine_transmutador_jpg` | Color-type policy enforcement, PNG compression effort doc | §5.4 | v0.5.5 ✅ |
 | `refine_transmutador_png` | Alpha flatten policy, quality as parameter, subsampling explicit | §5.5 | v0.5.4 ✅ |
+| `refine_png_background_option` | Selectable background fill for alpha flatten (`_with_options`) | §5.5.2 | v0.5.6 ✅ |
+| `refine_output_integrity` | Post-encode output validation (non-empty + magic bytes + optional round-trip) + bounded-parameter newtypes | §5.11 | **Planned** |
+| `refine_jpeg_encoder_swap` | Replace JPEG encode backend to unlock chroma subsampling / optimized Huffman; `ChromaSubsampling` enum | §5.5.6 | **Planned** |
 
-Phase 4 (`v1.0.0`) remains UI/UX polish, accessibility, and MVP sign-off per ROADMAP — **after** engine refinements above.
+Phase 4 (`v1.0.0`) remains UI/UX polish, accessibility, and MVP sign-off per ROADMAP — **after** engine refinements above. `refine_output_integrity` is the next backend priority (closes the output-validation gap, §5.11); `refine_jpeg_encoder_swap` is sequenced before any subsampling UI control.
 
 ---
 
@@ -504,6 +526,75 @@ The `image` crate (current stack) decodes to an in-memory representation of **pi
 | §5.6 Cycle analysis | Size explosion JPG→PNG is pixel/entropy, not metadata |
 | §6.1 `core_utils` | Validates bytes/dimensions only; does not parse EXIF |
 | NFR-1 Privacy | StripAll supports zero metadata leakage via output file |
+
+---
+
+### 5.11 Output Integrity Protocol (Corruption Prevention)
+
+> Governs validation **after** encoding, and the type-level bounding of user parameters, so that no configuration can ever yield an empty buffer, a truncated file, or an unreadable output. Complements §5.7 (input/memory safety) and NFR-4 (honest error surfacing).
+
+#### 5.11.1 The validation asymmetry (current gap)
+
+All hardening to date (§5.7) validates the **input**. **No transmutator currently validates its output.** If an encoder ever produced a zero-byte or truncated buffer — via a future bug, a crate edge case, or memory pressure in Wasm — the user would download a corrupt `.jpg`/`.png` with **no warning**. This is the highest-priority integrity gap.
+
+#### 5.11.2 Break-point taxonomy
+
+| Break point | Failure mode | Layer | Status |
+|-------------|--------------|-------|--------|
+| Empty input buffer | encoder 0 bytes / panic | input | ✅ `validate_input` |
+| Out-of-range parameter (quality 0 / >100, compression 0 / >9) | invalid encoder state | params | ✅ `validate_quality` / `validate_compression` |
+| Decompression bomb (small file → huge raster) | OOM, tab crash | input | ✅ `MAX_PIXELS` pre-decode probe |
+| `width × height` overflow | wraparound evades cap | input | ✅ `pixel_count` `checked_mul` |
+| Zero dimension (0×N) | undefined encode | input | ✅ probe guards |
+| Truncated header / unknown magic | decoder panic | input | ✅ `with_guessed_format` + `map_err` |
+| **Empty / truncated output buffer** | corrupt downloaded file | **output** | ❌ **gap → `refine_output_integrity`** |
+| **Wrong-format / headerless output** | unreadable file | **output** | ❌ **gap** |
+| Silent alpha loss without notice | perceived corruption | UX | ⚠️ functional; no user feedback |
+
+The three exposed levers (quality, compression, background RGB) are **orthogonal** — no valid combination produces an invalid result. Background channels are `u8`, so they are always valid by construction.
+
+#### 5.11.3 Required output validations (`refine_output_integrity`)
+
+Applied in the pipeline wrappers (`transmutar_*_inner`) **after** encode, **before** returning bytes across the Wasm boundary:
+
+| Check | Rule | Cost | Priority |
+|-------|------|------|----------|
+| **Non-empty** | `output.is_empty()` → `ConversionFailed("encoder produced empty output")` | O(1) | **Mandatory** |
+| **Magic bytes** | output starts with destination signature (`\x89PNG\r\n\x1a\n` for PNG; `\xFF\xD8` for JPEG) | O(1) | **Mandatory** |
+| **Round-trip sanity** (strict mode) | re-decode output via `ImageReader`; confirm dimensions match the decoded input raster | ~1 extra decode | Optional / opt-in (cost on large images) |
+| **Size coherence** | output suspiciously small for given dimensions → warning, not hard error | O(1) heuristic | Low |
+
+Errors must surface as honest English `String` messages (NFR-4), distinct from input errors so the UI can localize them (i18n `errors.*`).
+
+#### 5.11.4 Make invalid parameters unrepresentable (type-level defense)
+
+Runtime validation is necessary but not sufficient. The robust posture is to encode bounds in the **type system** so out-of-range values cannot be constructed:
+
+- **Bounded newtypes:** `Quality(u8)` and `Compression(u8)` with a private field and a `try_new(value) -> Result<Self, String>` as the **only** constructor. Downstream code cannot receive an out-of-range value. (Today validation lives in free functions; newtypes make it structural.)
+- **`ChromaSubsampling` enum** (when §5.5.6 lands): `S444 | S422 | S420` — non-existent factors are unrepresentable.
+- **Defense in depth:** the UI already bounds values via sliders/swatches, **but the backend MUST still validate** — a frontend bug or a direct Wasm caller must not be able to bypass limits. The Wasm exports already re-validate; newtypes extend this guarantee through the call graph.
+
+#### 5.11.5 Protocol summary
+
+```
+INPUT      [✅ implemented — §5.7]
+  non-empty · ≤ 50 MB · pre-decode dimension probe · ≤ 40 MP · no zero dim · checked_mul
+
+PARAMETERS [✅ runtime / ⚠️ harden with bounded newtypes — §5.11.4]
+  quality ∈ [1,100] · compression ∈ [1,9] · background RGB (u8, always valid)
+
+OUTPUT     [❌ gap → refine_output_integrity — §5.11.3]
+  non-empty · destination magic bytes · (strict) round-trip decode + dimension match · size coherence
+```
+
+#### 5.11.6 Relationship to other SPEC sections
+
+| Section | Interaction |
+|---------|-------------|
+| §5.7 Memory safety | Input-side guards; §5.11 is the symmetric output-side guarantee |
+| §5.5.2 Alpha flatten | §5.11 adds a recommended pre-transmute "transparency detected" notice (UX) |
+| §6.1 `core_utils` | Will host `validate_output(bytes, expected_format)` + bounded-parameter newtypes |
+| NFR-4 Error transparency | Output errors surfaced as honest English strings, localized in UI |
 
 ---
 
@@ -849,6 +940,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 0.6.5 | 2026-06-03 | Chief Architect | §5.11 Output Integrity Protocol (post-encode validation + bounded-parameter newtypes doctrine); §5.5.6 JPEG encoder-swap doctrine (subsampling/Huffman require backend swap); §5.8 adds `refine_output_integrity` + `refine_jpeg_encoder_swap` planned tasks | — |
 | 0.6.4 | 2026-06-03 | OpenCode | UI-4: Full EN/ES i18n — I18nProvider + typed dictionaries + LanguageSelector wired + all UI copy localized + ToolRegistry prose migrated to dictionaries | `ui_4_i18n_en_es_done.md` |
 | 0.6.3 | 2026-06-03 | OpenCode | UI-3: TransmutationPanel (staged flow + result view + local preview) + atomic OptionsControls (slider/color) + extended worker protocol + landing card height uniformity | `ui_3_transmutation_panel_options_done.md` |
 | 0.5.6 | 2026-06-03 | OpenCode | Background-color Wasm export: `transmutar_png_a_jpg_with_options(bytes, quality, r, g, b)` — custom `BackgroundFill` exposed to frontend | `refine_png_background_option_done.md` |
