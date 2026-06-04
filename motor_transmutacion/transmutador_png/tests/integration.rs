@@ -25,6 +25,18 @@ fn create_valid_png_bytes() -> Vec<u8> {
     png_bytes.into_inner()
 }
 
+/// Opt-in round-trip sanity (SPEC §5.11.3): output decodes to same dimensions as input.
+fn assert_roundtrip_dimensions(input: &[u8], output: &[u8]) {
+    let (iw, ih) = core_utils::probe_dimensions(input).expect("input dimensions");
+    let decoded = ImageReader::new(Cursor::new(output))
+        .with_guessed_format()
+        .expect("guess output format")
+        .decode()
+        .expect("decode output");
+    assert_eq!(decoded.width(), iw, "width mismatch after PNG→JPG");
+    assert_eq!(decoded.height(), ih, "height mismatch after PNG→JPG");
+}
+
 fn create_transparent_png_bytes() -> Vec<u8> {
     let img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_fn(1, 1, |_x, _y| {
         Rgba([255, 0, 0, 128])
@@ -49,6 +61,14 @@ fn converts_valid_png_to_jpg() {
 
     assert!(jpg.len() > 2, "JPEG output too short: {} bytes", jpg.len());
     assert_eq!(&jpg[0..2], &[0xFF, 0xD8], "JPEG SOI magic bytes mismatch");
+    assert_roundtrip_dimensions(&png, &jpg);
+}
+
+#[test]
+fn roundtrip_via_inner_pipeline() {
+    let png = create_valid_png_bytes();
+    let jpg = transmutar_png_a_jpg_inner(&png, &default_options()).expect("inner pipeline");
+    assert_roundtrip_dimensions(&png, &jpg);
 }
 
 #[test]

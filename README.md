@@ -2,11 +2,11 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**App v0.6.4** · **Engine v0.6.6** · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v1.0.0** (App + Engine) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (MVP-ready)
+## What works today (v1.0.0)
 
 | Capability | Status |
 |------------|--------|
@@ -16,9 +16,11 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Staged transmutation flow** | Drop → adjust options → Transmutar → preview + size delta → download |
 | **EN / ES** | Full UI i18n with persisted locale |
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
+| **Accessibility baseline** | Keyboard focus, ToolCard affordance visible, `role="alert"`, reduced motion |
+| **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Privacy** | StripAll metadata default; 100% local processing |
 
-Formal **v1.0.0** release pending **UI-5** (accessibility + responsive sign-off). See [docs/ROADMAP.md](docs/ROADMAP.md).
+Post-v1.0 backlog: Playwright E2E, JPEG encoder swap (subsampling). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 
@@ -84,8 +86,8 @@ cd frontend && npm run build
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v0.6.4)
-├── motor_transmutacion/     # Rust workspace (v0.6.6)
+├── frontend/              # Next.js app (v1.0.0)
+├── motor_transmutacion/     # Rust workspace (v1.0.0)
 │   ├── core_utils/          # Validation, output integrity, metadata scanners
 │   ├── transmutador_jpg/    # JPEG → PNG
 │   └── transmutador_png/    # PNG → JPEG
@@ -108,7 +110,7 @@ camaleon/
 | PNG → JPG | v0.4.0 | ✅ |
 | Engine hardening | v0.5.1–v0.6.6 | ✅ |
 | UI track (UI-1..UI-4) | v0.6.1–v0.6.4 | ✅ |
-| **MVP sign-off** | **v1.0.0** | UI-5 + formal sign-off pending |
+| **MVP** | **v1.0.0** | ✅ Shipped (UI-5 baseline + CI) |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 

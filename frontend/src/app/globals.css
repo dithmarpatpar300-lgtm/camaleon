@@ -85,3 +85,9 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+@supports (min-height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+}

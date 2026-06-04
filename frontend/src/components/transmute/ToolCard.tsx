@@ -29,7 +29,7 @@ export function ToolCard({ tool }: ToolCardProps) {
         </div>
         <p className="mt-2 text-sm text-text-secondary flex-1">{copy.description}</p>
         {hint && <p className="mt-2 text-xs text-text-muted">{hint}</p>}
-        <div className="mt-3 flex h-5 items-center gap-1 text-xs text-accent opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="mt-3 flex h-5 items-center gap-1 text-xs text-accent opacity-60 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
           <span>{t("toolCard.transmute")}</span>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden="true">
             <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" clipRule="evenodd" />
@@ -41,7 +41,10 @@ export function ToolCard({ tool }: ToolCardProps) {
 
   if (isActive) {
     return (
-      <Link href={`/transmute/${tool.slug}`} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base">
+      <Link
+        href={`/transmute/${tool.slug}`}
+        className="block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base"
+      >
         {content}
       </Link>
     );

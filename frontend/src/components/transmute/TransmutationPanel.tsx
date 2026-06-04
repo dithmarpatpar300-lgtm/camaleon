@@ -202,7 +202,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       )}
 
       {status === "error" && errorMessage && (
-        <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+        <div role="alert" className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
           <p className="font-semibold">{t("panel.errorTitle")}</p>
           <p className="mt-1">{errorMessage}</p>
           <div className="mt-3 flex gap-2">
