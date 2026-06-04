@@ -1,26 +1,42 @@
-# 🦎 Camaleon (v0.6.4)
+# 🦎 Camaleon
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-Camaleon is an open-source web platform engineered for ultra-fast, modular, and **100% private** file format transmutation. 
+**App v0.6.4** · **Engine v0.6.6** · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
-Bypassing traditional server-side processing, Camaleon executes computationally intensive conversions directly within the browser. It leverages local hardware via high-performance **WebAssembly** modules running asynchronously on Web Workers.
+Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## 🚀 Core Features
-- **Privacy by Design:** Zero external servers. Zero logs. Absolute security.
-- **Native Performance:** Core engine written in Rust, compiled to WebAssembly (Wasm).
-- **Immersive UI:** Modern, fluid interface built with Next.js, TypeScript, and Tailwind CSS.
-- **Asynchronous Architecture:** Heavy processing is delegated to Web Workers, guaranteeing a locked 60fps UI.
+## What works today (MVP-ready)
 
-## 🛠️ Technology Stack
-- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS.
-- **Core Engine:** Rust (Modular Workspace).
-- **High-Performance Bridge:** WebAssembly (`wasm-bindgen` / `wasm-pack`).
-- **Concurrency:** Web Workers API.
+| Capability | Status |
+|------------|--------|
+| **JPG / JPEG → PNG** | Lossless raster storage; configurable PNG compression (1–9) |
+| **PNG → JPG** | Configurable JPEG quality (1–100); alpha flattened onto selectable background |
+| **Landing + per-tool routes** | `/` tool grid + `/transmute/jpg-to-png`, `/transmute/png-to-jpg` |
+| **Staged transmutation flow** | Drop → adjust options → Transmutar → preview + size delta → download |
+| **EN / ES** | Full UI i18n with persisted locale |
+| **Dark / light theme** | Design tokens, no-FOUC persistence |
+| **Privacy** | StripAll metadata default; 100% local processing |
 
-## 🔧 Building Wasm
+Formal **v1.0.0** release pending **UI-5** (accessibility + responsive sign-off). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
-The core transmutation engine is compiled to WebAssembly via `wasm-pack`.
+## Core principles
+
+- **Privacy by design:** Zero external servers. Zero logs. Files never leave the browser.
+- **Native performance:** Core engine in Rust, compiled to Wasm.
+- **Modular architecture:** One Rust crate per transmutation direction; shared `core_utils`.
+- **Honest science:** UI copy reflects lossless vs lossy semantics (no false "quality" on PNG).
+
+## Technology stack
+
+| Layer | Stack |
+|-------|--------|
+| Frontend | Next.js 15 (App Router), TypeScript, Tailwind v4 |
+| Engine | Rust workspace (`image` crate, `wasm-bindgen`) |
+| Bridge | `wasm-pack` → `frontend/public/wasm/` |
+| Concurrency | Web Workers |
+
+## Building Wasm
 
 **Prerequisites:** [Rust](https://rustup.rs) and [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/).
 
@@ -31,49 +47,75 @@ The core transmutation engine is compiled to WebAssembly via `wasm-pack`.
 # From repository root (Unix / CI)
 ./scripts/build-wasm.sh
 
-# Or from the frontend directory via npm
+# Or from the frontend directory
 cd frontend && npm run build:wasm
 ```
 
-Artifacts are written to `frontend/public/wasm/transmutador_jpg/` and served as static assets by Next.js.
+Artifacts: `frontend/public/wasm/transmutador_jpg/` and `transmutador_png/` (gitignored; rebuild after engine changes).
 
-## 🖥️ Development
+## Development
 
 ```bash
-# 1. Build both Wasm modules
-npm run build:wasm        # from frontend/
-# or
-.\scripts\build-wasm.ps1  # from repo root (PowerShell)
-./scripts/build-wasm.sh   # from repo root (Unix)
+# 1. Build both Wasm modules (required after motor_transmutacion changes)
+cd frontend && npm run build:wasm
 
-# 2. Start the Next.js dev server
-cd frontend && npm run dev
+# 2. Install dependencies (first time)
+npm install
 
-# 3. Open http://localhost:3000 — drop a .jpg, .jpeg, or .png to transmute it
+# 3. Start Next.js dev server
+npm run dev
+
+# 4. Open http://localhost:3000
 ```
 
-## 📂 Ecosystem Architecture
-- `/frontend`: Presentation layer and browser thread management.
-- `/motor_transmutacion`: Isolated native modules bounded by responsibility.
-  - `core_utils`: Global error handling and shared utilities.
-  - `transmutador_jpg`: `.jpg`/`.jpeg` → `.png` transmutation.
-  - `transmutador_png`: `.png` → `.jpg`/`.jpeg` transmutation.
-- `/docs`: Project governance — **[SPEC](docs/SPEC.md)** (§5 Science, §5.10 Metadata Policy), **[ROADMAP](docs/ROADMAP.md)**, **[GOVERNANCE](docs/GOVERNANCE.md)**.
+**Verify engine:**
 
-## 🗺️ Roadmap — Summary
+```bash
+cd motor_transmutacion && cargo test --workspace
+```
 
-Full phased plan: **[docs/ROADMAP.md](docs/ROADMAP.md)**
+**Verify frontend:**
 
-| Phase | Version | Goal |
-|-------|---------|------|
-| Foundation | v0.1.0 ✅ | Monorepo bootstrap |
-| Build & Bridge | v0.2.0 ✅ | `wasm-pack` pipeline + Web Workers |
-| JPG → PNG | v0.3.0 ✅ | `transmutador_jpg` functional |
-| PNG → JPG | v0.4.0 ✅ | `transmutador_png` functional |
-| **MVP** | **v1.0.0** | **Bidirectional JPEG ↔ PNG in browser** |
+```bash
+cd frontend && npm run build
+```
 
-## 🤝 Contributing
-Designed modularly from Day 0, adding a new format requires only generating a new crate within the Rust Workspace and exposing its Wasm interface. Contribution guidelines to follow.
+## Repository layout
+
+```
+camaleon/
+├── frontend/              # Next.js app (v0.6.4)
+├── motor_transmutacion/     # Rust workspace (v0.6.6)
+│   ├── core_utils/          # Validation, output integrity, metadata scanners
+│   ├── transmutador_jpg/    # JPEG → PNG
+│   └── transmutador_png/    # PNG → JPEG
+├── docs/
+│   ├── SPEC.md              # Architecture bible (v0.6.6)
+│   ├── ROADMAP.md           # Phases + MVP criteria
+│   ├── GOVERNANCE.md        # Agent workflow
+│   ├── prompts/             # OpenCode task prompts
+│   └── reports/             # OpenCode technical reports
+└── scripts/                 # build-wasm.ps1 / .sh
+```
+
+## Roadmap summary
+
+| Phase | Version | Status |
+|-------|---------|--------|
+| Foundation | v0.1.0 | ✅ |
+| Build & Bridge | v0.2.0 | ✅ |
+| JPG → PNG | v0.3.0 | ✅ |
+| PNG → JPG | v0.4.0 | ✅ |
+| Engine hardening | v0.5.1–v0.6.6 | ✅ |
+| UI track (UI-1..UI-4) | v0.6.1–v0.6.4 | ✅ |
+| **MVP sign-off** | **v1.0.0** | UI-5 + formal sign-off pending |
+
+Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
+
+## Contributing
+
+The project is modular by design: a new format = one registry entry + one Rust crate + one Worker route + Wasm build. Contribution guidelines (`CONTRIBUTING.md`) are planned post-v1.0.0.
 
 ---
+
 License: MIT
