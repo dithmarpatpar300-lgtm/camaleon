@@ -2,7 +2,7 @@
 
 > **Author:** Chief Architect (Cursor)  
 > **Date:** 2026-06-07  
-> **Status:** Phase 5.1 ✅ complete — Phase 5.2 prompt ready for OpenCode  
+> **Status:** Phase 5.1–5.3 ✅ complete — Phase 5.4 prompt next  
 > **Target release:** Frontend + Engine **v1.7.0** (four phases)  
 > **Builds on:** v1.6.1 (FOUC fix, Scrollbar Camaleón, layout stability)  
 > **SPEC reference:** §5.12 (WebP science), §6.4, §6.5, §12.2  
@@ -30,9 +30,9 @@ We do **not** implement all four WebP directions in one pass. Each direction is 
 ```
 Phase 5.1: WebP → PNG           ← first prompt (ready)
      │ QA gate ✓
-Phase 5.2: WebP → JPEG          ← second prompt (issued after 5.1 approved)
+Phase 5.2: WebP → JPEG          ← ✅ v1.7.2
      │ QA gate ✓
-Phase 5.3: PNG → WebP (spike)   ← third prompt (issued after 5.2 approved)
+Phase 5.3: PNG → WebP (spike)   ← ✅ v1.7.3
      │ QA gate ✓
 Phase 5.4: JPEG → WebP          ← fourth prompt (issued after 5.3 approved)
      │ QA gate ✓
@@ -264,20 +264,25 @@ Alpha flatten policy: identical to `transmutador_png` §5.5.2 — composite each
 
 ## 6. Phase 5.3 — PNG → WebP (lossless)
 
-**Blocked on:** Phase 5.2 QA gate approval.  
+**Blocked on:** ~~Phase 5.2 QA gate~~ ✅ approved.  
 **Task slug:** `phase5_png_to_webp`  
-**Target:** Engine v1.4.0 + Frontend v1.7.0-alpha.3
+**Target:** Engine v1.4.0 + Frontend v1.7.3 ✅  
+**Prompt:** `docs/prompts/phase5_png_to_webp.md`  
+**Report:** `docs/reports/phase5_png_to_webp_done.md`
 
-### 6.1 Spike requirement (before full implementation)
+**Options doctrine (§3.6):** Zero user controls — one-click lossless transmutation. UI must label **Lossless WebP** and warn that photographic PNGs may inflate (§5.12.4).
 
-Before scaffolding `transmutador_encode`, OpenCode must:
+### 6.1 Spike gate (embedded in prompt — mandatory first step)
 
-1. Create a minimal test binary (not a library) that encodes a 1024×768 PNG as lossless WebP using `image` 0.25.
-2. Measure output `.wasm` file size.
-3. Report: bundle size, output quality (compare with original PNG dimensions), any compile errors.
-4. Chief Architect reviews spike report before issuing full implementation prompt.
+OpenCode must run the spike **inside** the Phase 5.3 session before frontend work:
 
-**If spike fails NFR-7 (> 3 MB .wasm), do not proceed — escalate to Chief Architect for alternative encoding library evaluation.**
+1. Scaffold minimal `transmutador_encode` and `wasm-pack build`.
+2. Measure `transmutador_encode_bg.wasm` uncompressed size.
+3. Verify 1024×768 PNG → WebP round-trip preserves dimensions.
+4. **If > 3 MB:** STOP — spike report only, escalate to Architect.
+5. **If ≤ 3 MB:** proceed with full crate + frontend in same session.
+
+**If spike fails NFR-7, do not scaffold frontend or ToolRegistry entry.**
 
 ### 6.2 Engine deliverables (post-spike)
 
@@ -304,9 +309,23 @@ pub fn estimate_png_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 
 ### 6.3 Frontend deliverables
 
-- ToolRegistry: `png-to-webp` active; no quality slider (lossless only — v1.7.x); label must say "Lossless WebP"
-- Worker: new `initEncodeWasm`; route `transmutador_encode`
-- i18n: size inflation hint for photographic PNGs (§5.12.4)
+- ToolRegistry: `png-to-webp` active; **no `optionSpecs`** (lossless one-click — §3.6)
+- Worker: new `initEncodeWasm` (lazy-load); route `transmutador_encode` → `image/webp`
+- `OutputExtension: "webp"` in fingerprint pipeline
+- Build scripts: `transmutador_encode` added to `build:wasm` / `build-wasm.sh` / `build-wasm.ps1`
+- i18n EN+ES: action title **"Convert to Lossless WebP"**; fidelityHint warns photographic PNG inflation (§5.12.4)
+
+### 6.4 Acceptance criteria (QA gate — Chief Architect)
+
+- [ ] Spike gate documented: wasm size ≤ 3 MB or session stopped with escalation
+- [ ] `cargo test --workspace` passes (core_utils WebP validation + 7 encode integration tests)
+- [ ] `npm run build` passes; `/transmute/png-to-webp` in static params
+- [ ] Manual E2E: drop `.png` → transmute → `.webp` downloads
+- [ ] Metrics estimate shown before Transmutar
+- [ ] EN/ES strings include "Lossless WebP" — NFR-8 honesty
+- [ ] No option sliders on tool page
+- [ ] Existing four tools regression-clean
+- [ ] Report: `docs/reports/phase5_png_to_webp_done.md`
 
 ---
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
-import type { TransmutationOptions } from "@/workers/types";
+import type { OutputExtension, TransmutationOptions } from "@/workers/types";
 import { fileMatchesExtensions } from "@/lib/tools/extensions";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import { useFileMetrics } from "@/hooks/useFileMetrics";
@@ -71,7 +71,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const metrics = useFileMetrics({
     file: staged?.file ?? null,
     module: tool.module,
-    outputExtension: tool.outputExtension as "png" | "jpg",
+    outputExtension: tool.outputExtension as OutputExtension,
     options,
     ready,
     profile,
@@ -114,7 +114,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         staged.bytes,
         options,
         metrics.transmuteMeta,
-        tool.outputExtension as "png" | "jpg"
+        tool.outputExtension as OutputExtension
       );
       if (response.ok) {
         metrics.setFinalSize(response.outputSize);

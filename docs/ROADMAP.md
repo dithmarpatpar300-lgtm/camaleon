@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.7.2 | WebP→PNG + WebP→JPEG active; v1.7.1 filename truncation |
-| **Engine (Rust workspace)** | v1.3.1 | JPG↔PNG + WebP→PNG + WebP→JPEG |
-| **SPEC** | v1.7.0 | WebP science + Tier 1 Phase 5.1–5.2 implemented |
+| **Frontend (app)** | v1.7.3 | Five active tools incl. PNG→WebP (lossless) |
+| **Engine (Rust workspace)** | v1.4.0 | Four Wasm crates + `transmutador_encode` |
+| **SPEC** | v1.7.0 | Tier 1 Phase 5.1–5.3 implemented |
 
-**v1.7.2 shipped** (2026-06-07). Next: Phase 5.3 PNG→WebP spike (`phase5_png_to_webp`).
+**v1.7.3 shipped** (2026-06-07). Next: Phase 5.4 JPEG→WebP (`phase5_jpg_to_webp`).
 
 ---
 
@@ -163,13 +163,17 @@ Goal: second WebP conversion; alpha-flatten reuse from `transmutador_png` patter
 - [x] Wasm binary size: **626 KB** (NFR-7 gate: ≤ 3 MB)
 - [x] Report: `docs/reports/phase5_webp_to_jpg_done.md`
 
-### Phase 5.3 — PNG → WebP `v1.7.0-alpha.3`
+### Phase 5.3 — PNG → WebP `v1.7.3` ✅ (Complete)
 
-- [ ] Spike: validate `image` crate WebP lossless encode bundle size and quality
-- [ ] Scaffold `motor_transmutacion/transmutador_encode/` only if spike passes NFR-7
-- [ ] `transmutar_png_a_webp`, `estimate_png_to_webp_size`
-- [ ] `OutputFormat::WebP` added to `core_utils`; magic bytes validator
-- [ ] ToolRegistry `png-to-webp` → `active`
+Goal: first encode-direction crate; lossless VP8L only; spike gate embedded in prompt.
+
+- [x] Spike gate: `transmutador_encode` wasm **423 KB** (≤ 3 MB)
+- [x] Scaffold `motor_transmutacion/transmutador_encode/`
+- [x] `transmutar_png_a_webp`, `estimate_png_to_webp_size` (CountingWriter + Seek)
+- [x] `OutputFormat::WebP` in `core_utils`; RIFF WEBP magic validator
+- [x] Worker lazy-load fourth module; all build scripts updated
+- [x] ToolRegistry `png-to-webp` → `active`; zero option sliders; Lossless WebP copy EN+ES
+- [x] Report: `docs/reports/phase5_png_to_webp_done.md`
 
 ### Phase 5.4 — JPEG → WebP `v1.7.0`
 

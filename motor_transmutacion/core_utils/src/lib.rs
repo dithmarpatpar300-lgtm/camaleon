@@ -274,6 +274,7 @@ fn read_be_u32(bytes: &[u8], offset: usize) -> u32 {
 pub enum OutputFormat {
     Png,
     Jpeg,
+    WebP,
 }
 
 pub fn validate_output(bytes: &[u8], format: OutputFormat) -> Result<(), String> {
@@ -297,6 +298,20 @@ pub fn validate_output(bytes: &[u8], format: OutputFormat) -> Result<(), String>
             if bytes.len() < 2 || &bytes[0..2] != JPEG_SOI {
                 return Err(TransmutationError::ConversionFailed(
                     "output is not a valid JPEG (missing SOI)".into(),
+                )
+                .to_string());
+            }
+        }
+        OutputFormat::WebP => {
+            if bytes.len() < 12 {
+                return Err(TransmutationError::ConversionFailed(
+                    "output is not a valid WebP (too short)".into(),
+                )
+                .to_string());
+            }
+            if &bytes[0..4] != b"RIFF" || &bytes[8..12] != b"WEBP" {
+                return Err(TransmutationError::ConversionFailed(
+                    "output is not a valid WebP (missing RIFF/WEBP signature)".into(),
                 )
                 .to_string());
             }
@@ -856,5 +871,20 @@ mod tests {
     fn validate_output_jpeg_bad_magic() {
         let err = validate_output(b"not a JPEG file content", OutputFormat::Jpeg).unwrap_err();
         assert!(err.contains("JPEG") || err.contains("SOI"));
+    }
+
+    #[test]
+    fn validate_output_webp_ok() {
+        let mut webp = Vec::new();
+        webp.extend_from_slice(b"RIFF");
+        webp.extend_from_slice(&4u32.to_le_bytes());
+        webp.extend_from_slice(b"WEBP");
+        assert!(validate_output(&webp, OutputFormat::WebP).is_ok());
+    }
+
+    #[test]
+    fn validate_output_webp_bad_magic() {
+        let err = validate_output(b"not a WebP file", OutputFormat::WebP).unwrap_err();
+        assert!(err.contains("WebP") || err.contains("RIFF"));
     }
 }

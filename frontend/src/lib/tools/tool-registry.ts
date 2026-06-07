@@ -135,6 +135,19 @@ export const TOOLS: ToolDefinition[] = [
       },
     ],
   },
+  {
+    id: "png-to-webp",
+    slug: "png-to-webp",
+    title: "PNG → WebP",
+    fromFormat: "PNG",
+    toFormat: "WEBP",
+    module: "transmutador_encode",
+    category: "image",
+    fidelity: "lossless",
+    status: "active",
+    acceptExtensions: [".png"],
+    outputExtension: "webp",
+  },
 ];
 
 export function getToolBySlug(slug: string): ToolDefinition | undefined {

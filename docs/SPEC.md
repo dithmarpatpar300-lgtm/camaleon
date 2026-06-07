@@ -8,7 +8,7 @@
 
 **Version:** 1.7.0  
 **Last updated:** 2026-06-07  
-**Status:** v1.7.0 shipped — WebP→PNG (Phase 5.1); Engine v1.3.0; Tier 1 phases 5.2–5.4 planned
+**Status:** v1.7.3 shipped — Tier 1 phases 5.1–5.3; Engine v1.4.0; Phase 5.4 JPEG→WebP next
 
 ---
 
@@ -78,7 +78,7 @@ camaleon/
     ├── core_utils/
     ├── transmutador_jpg/    ← JPEG → PNG  (v0.5.5 — active)
     ├── transmutador_png/    ← PNG → JPEG  (v0.5.6 — active)
-    ├── transmutador_webp/   ← WebP → PNG  (v1.7.0 — active); WebP → JPEG (Phase 5.2)
+    ├── transmutador_webp/   ← WebP → PNG + WebP → JPEG (v1.7.0–1.7.2 — active)
     └── transmutador_encode/ ← PNG/JPEG → WebP  (Tier 1 — planned §6.5)
 ```
 
@@ -666,7 +666,7 @@ UI hints for each conversion derived from these ranges — same copy doctrine as
 - `Display` implementation for `String` conversion at Wasm boundary
 - `validate_input(bytes: &[u8]) -> Result<(), String>` — rejects empty, input exceeding `MAX_INPUT_BYTES`, and (for PNG/JPEG magic) dimensions exceeding `MAX_PIXELS` or zero dimensions
 - `validate_output(bytes: &[u8], format: OutputFormat) -> Result<(), String>` — post-encode integrity: rejects empty output, validates destination magic bytes (PNG signature / JPEG SOI). O(1), mandatory in both `_inner` pipelines (v0.6.6)
-- `OutputFormat` enum: `Png | Jpeg`
+- `OutputFormat` enum: `Png | Jpeg | WebP` — WebP validates RIFF `WEBP` magic (Phase 5.3)
 - `probe_dimensions`, `pixel_count`, metadata scanners (unchanged)
 - `MAX_INPUT_BYTES`: **50 MB**; `MAX_PIXELS`: **40,000,000** (40 MP)
 
@@ -843,7 +843,7 @@ pub fn estimate_webp_to_jpg_size(input_bytes: &[u8], quality: u8) -> Result<u32,
 
 **Purpose:** WebP encoding crate. Handles conversions **to** WebP: PNG→WebP and JPEG→WebP.
 
-**Status:** Planned. No code yet. Depends on Phase 5.1+5.2 completion and lossy-WebP spike result.
+**Status:** Implemented — Phase 5.3 (`phase5_png_to_webp`, v1.7.3). JPEG→WebP export planned Phase 5.4.
 
 **Crate type:** `["cdylib", "rlib"]`
 
@@ -1228,12 +1228,12 @@ Goal: make Camaleon the best browser-local WebP converter. Four conversion direc
 
 | Phase | Task slug | Direction | Crate | Fidelity | Status |
 |-------|-----------|-----------|-------|----------|--------|
-| **5.1** | `phase5_webp_to_png` | WebP → PNG | `transmutador_webp` | Lossless (raster) | **Next** |
-| **5.2** | `phase5_webp_to_jpg` | WebP → JPEG | `transmutador_webp` (add export) | Lossy | Blocked on 5.1 |
-| **5.3** | `phase5_png_to_webp` | PNG → WebP | `transmutador_encode` | Lossless WebP | Blocked on 5.2 |
+| **5.1** | `phase5_webp_to_png` | WebP → PNG | `transmutador_webp` | Lossless (raster) | ✅ v1.7.0 |
+| **5.2** | `phase5_webp_to_jpg` | WebP → JPEG | `transmutador_webp` (add export) | Lossy | ✅ v1.7.2 |
+| **5.3** | `phase5_png_to_webp` | PNG → WebP | `transmutador_encode` | Lossless WebP | ✅ v1.7.3 |
 | **5.4** | `phase5_jpg_to_webp` | JPEG → WebP | `transmutador_encode` (add export) | Lossless WebP | Blocked on 5.3 |
 
-**Version target:** v1.7.0 (all four phases). Each phase ships independently with a patch bump (v1.7.0-alpha.1 → … → v1.7.0).
+**Version target:** v1.7.x (four phases). Each phase ships independently: v1.7.0 (5.1) → v1.7.2 (5.2) → v1.7.3 (5.3) → v1.7.4 (5.4).
 
 **QA gate between phases (Chief Architect):**
 1. `cargo test --workspace` passes

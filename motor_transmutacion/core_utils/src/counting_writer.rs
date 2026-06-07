@@ -1,4 +1,4 @@
-use std::io::{self, Write};
+use std::io::{self, Seek, SeekFrom, Write};
 
 /// A writer that counts bytes written and discards the payload.
 /// Used for size-only estimation without allocating output buffers.
@@ -15,6 +15,19 @@ impl Write for CountingWriter {
 
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
+    }
+}
+
+/// No-op seek sink — satisfies encoders (e.g. WebP) that patch RIFF headers via `Seek`.
+impl Seek for CountingWriter {
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+        match pos {
+            SeekFrom::Start(0) => Ok(0),
+            SeekFrom::Current(0) | SeekFrom::End(0) => Ok(self.bytes_written),
+            SeekFrom::Start(n) => Ok(n),
+            SeekFrom::Current(n) => Ok(((self.bytes_written as i64) + n).max(0) as u64),
+            SeekFrom::End(n) => Ok(((self.bytes_written as i64) + n).max(0) as u64),
+        }
     }
 }
 

@@ -11,6 +11,7 @@ type TransmutarWebpWithCompression = (input: Uint8Array, compression: number) =>
 type EstimateWebpSizeFn = (input: Uint8Array, compression: number) => number;
 type TransmutarWebpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
 type EstimateWebpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
+type EstimatePngToWebpSizeFn = (input: Uint8Array) => number;
 
 let initJpgPromise: Promise<void> | null = null;
 let transmutarJpg: TransmutarFn | null = null;
@@ -29,6 +30,10 @@ let transmutarWebpWithCompression: TransmutarWebpWithCompression | null = null;
 let estimateWebpToPngSize: EstimateWebpSizeFn | null = null;
 let transmutarWebpJpgWithOptions: TransmutarWebpJpgWithOptions | null = null;
 let estimateWebpToJpgSize: EstimateWebpToJpgSizeFn | null = null;
+
+let initEncodePromise: Promise<void> | null = null;
+let transmutarPngToWebp: TransmutarFn | null = null;
+let estimatePngToWebpSize: EstimatePngToWebpSizeFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
@@ -77,6 +82,18 @@ function ensureWebpWasmInitialized(): Promise<void> {
   return initWebpPromise;
 }
 
+async function initEncodeWasm(): Promise<void> {
+  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_encode/transmutador_encode.js");
+  await module.default();
+  transmutarPngToWebp = module.transmutar_png_a_webp;
+  estimatePngToWebpSize = module.estimate_png_to_webp_size;
+}
+
+function ensureEncodeWasmInitialized(): Promise<void> {
+  if (!initEncodePromise) initEncodePromise = initEncodeWasm();
+  return initEncodePromise;
+}
+
 function postResponse(response: WorkerResponse): void {
   if (response.ok && response.bytes) {
     self.postMessage(response, { transfer: [response.bytes] });
@@ -94,19 +111,24 @@ type RouteFlags = {
   isPng: boolean;
   isWebpToPng: boolean;
   isWebpToJpg: boolean;
+  isEncode: boolean;
 };
 
 function resolveRoute(req: WorkerRequest): RouteFlags {
   const isJpg = req.module === "transmutador_jpg";
   const isPng = req.module === "transmutador_png";
+  const isEncode = req.module === "transmutador_encode";
   const isWebpToPng =
     req.module === "transmutador_webp" && (req.outputExtension ?? "png") === "png";
   const isWebpToJpg =
     req.module === "transmutador_webp" && req.outputExtension === "jpg";
-  return { isJpg, isPng, isWebpToPng, isWebpToJpg };
+  return { isJpg, isPng, isWebpToPng, isWebpToJpg, isEncode };
 }
 
 function resolveMimeExtension(route: RouteFlags): { mime: string; extension: OutputExtension } {
+  if (route.isEncode) {
+    return { mime: "image/webp", extension: "webp" };
+  }
   if (route.isWebpToJpg || route.isPng) {
     return { mime: "image/jpeg", extension: "jpg" };
   }
@@ -118,6 +140,10 @@ function runFullEncode(
   input: Uint8Array,
   opts: WorkerRequest["options"]
 ): Uint8Array {
+  if (route.isEncode) {
+    if (!transmutarPngToWebp) throw new Error("Wasm module not initialized");
+    return transmutarPngToWebp(input);
+  }
   if (route.isWebpToJpg) {
     const quality = opts?.quality ?? 85;
     const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
@@ -155,6 +181,10 @@ function runSizeEstimate(
   input: Uint8Array,
   opts: WorkerRequest["options"]
 ): number {
+  if (route.isEncode) {
+    if (!estimatePngToWebpSize) throw new Error("Wasm estimate export not initialized");
+    return estimatePngToWebpSize(input);
+  }
   if (route.isWebpToJpg) {
     const quality = opts?.quality ?? 85;
     const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
@@ -179,7 +209,7 @@ function runSizeEstimate(
 }
 
 async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
-  const knownModules = ["transmutador_jpg", "transmutador_png", "transmutador_webp"];
+  const knownModules = ["transmutador_jpg", "transmutador_png", "transmutador_webp", "transmutador_encode"];
   if (!knownModules.includes(req.module)) {
     return { id: req.id, ok: false, error: `Unknown module: ${req.module}` };
   }
@@ -194,6 +224,8 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       await ensureJpgWasmInitialized();
     } else if (route.isWebpToPng || route.isWebpToJpg) {
       await ensureWebpWasmInitialized();
+    } else if (route.isEncode) {
+      await ensureEncodeWasmInitialized();
     } else {
       await ensurePngWasmInitialized();
     }

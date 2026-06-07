@@ -21,6 +21,10 @@ const es: Dictionary = {
         title: "WebP a PNG — Camaleon",
         description: "Convierte WebP a PNG en tu navegador. Almacenamiento sin perdida — local y privado.",
       },
+      "png-to-webp": {
+        title: "PNG a WebP — Camaleon",
+        description: "Convierte PNG a WebP sin perdida en tu navegador. Archivos mas pequenos para graficos web — local y privado.",
+      },
     },
   },
 
@@ -181,6 +185,11 @@ const es: Dictionary = {
           presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
         },
       },
+    },
+    "png-to-webp": {
+      actionTitle: "Convertir a WebP sin Perdida",
+      description: "WebP sin perdida — preserva cada pixel incluyendo transparencia.",
+      fidelityHint: "El resultado es WebP VP8L sin perdida. Graficos y capturas suelen reducirse 20-30%; PNGs fotograficos pueden terminar mas grandes que el original.",
     },
   },
 
