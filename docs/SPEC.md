@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.5.0  
-**Last updated:** 2026-06-06  
-**Status:** MVP — Camaleon v1.5.0 (result cache + metrics UX) / Engine v1.2.0
+**Version:** 1.6.0  
+**Last updated:** 2026-06-07  
+**Status:** MVP — Camaleon v1.6.0 (header/footer polish) / Engine v1.2.0
 
 ---
 
@@ -842,6 +842,7 @@ components/
 │               # □ Dropdown/Popover, SearchInput, Tooltip (later)
 ├── layout/     # ✅ Header, ThemeToggle, LanguageSelector, Footer (UI-1)
 │               # ✅ CommandPalette (UI-7)
+│               # ✅ UtilityCluster, KeyboardShortcutsDialog (v1.6.0)
 │               # □ Mega-menu (deferred per §7.7)
 ├── transmute/  # ✅ ToolCard, ToolGrid, Dropzone, TransmutationDropzone,
                 #   Hero, PrivacyBanner (UI-2)
@@ -851,7 +852,9 @@ components/
 providers/      # ✅ ThemeProvider (UI-1)
                 # ✅ I18nProvider (UI-4)
                 # ✅ ToastProvider (UI-6)
+                # ✅ TransmutationWorkerProvider — single Worker app-wide (v1.6.0)
 lib/            # ✅ utils.ts (cn helper), types.ts (UI-1)
+                # ✅ lib/site.ts — APP_VERSION, SITE_REPO_URL (v1.6.0)
                 # ✅ lib/tools/ types.ts + tool-registry.ts (UI-2)
                 # ✅ lib/transmutation/ download.ts (UI-2)
                 # ✅ lib/format/ bytes.ts (UI-3), detect-png-alpha.ts, color-label.ts (UI-6)
@@ -895,14 +898,26 @@ Next.js App Router:
 
 Privacy reassurance is a first-class, **verifiable** element (NFR-1), not marketing copy. Tool cards surface the §5.6.3 messaging doctrine (lossless/lossy badge; size-growth hint for JPG→PNG).
 
-### 7.7 Header Anatomy (Implemented — UI-1)
+### 7.7 Header Anatomy (Implemented — UI-1, polished v1.6.0)
 
 | Zone | Element | Status |
 |------|---------|--------|
-| Left | Chameleon logo mark (inline SVG) + `Camaleon` wordmark (link to `/`) | ✅ |
-| Center-left | `Transmutaciones` command palette trigger (`⌘K` / `Ctrl+K`) — opens glassmorphism `<dialog>` with tool rows | ✅ UI-7 |
-| Right | Language selector (EN / ES) — fully wired to I18nProvider, persisted to localStorage, `<html lang>` synced | ✅ UI-4 |
-| Right | Theme toggle (dark / light) with `useTheme`, persisted, no FOUC | ✅ |
+| Left | Chameleon logo mark (inline SVG, token-driven) + `Camaleon` wordmark (link to `/`) | ✅ v1.6.0 |
+| Center-left (tool routes) | Registry-driven breadcrumb: action title + `FROM → TO` mono slug on `/transmute/[slug]` | ✅ v1.6.0 |
+| Center-left | `Transmutaciones` command palette trigger (`⌘K` / `Ctrl+K`) — active state (`accent-subtle` + ring) when open | ✅ v1.6.0 |
+| Shell | `.glass-header` — lighter acrylic than Command Palette (12px blur) | ✅ v1.6.0 |
+| Right | `UtilityCluster` — EN/ES + theme toggle in bordered segment control | ✅ v1.6.0 |
+
+### 7.9 Footer Anatomy (Implemented — v1.6.0)
+
+| Zone | Element | Status |
+|------|---------|--------|
+| Left | Trust pill — lock icon + `footer.privacy` copy (`accent-subtle`) | ✅ |
+| Center | GitHub link (`SITE_REPO_URL`) + keyboard shortcuts dialog trigger | ✅ |
+| Right | Dynamic version (`APP_VERSION` from `package.json`) + engine status pill (dot + label) | ✅ |
+| Layout | Three-zone responsive row; `min-height` reserved to avoid layout shift | ✅ |
+
+**Engine status:** reads `ready` from `TransmutationWorkerProvider` (single Worker instance shared with transmute/estimate paths).
 
 ### 7.8 UI Implementation Track (Planned)
 
@@ -917,6 +932,7 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | UI-7 | ✅ Command Palette + semantic action titles + color visual swatch (v1.2.0) | UI-8 = search + keyboard nav |
 | Metrics | ✅ Centralized `computeSizeDelta` + `useFileMetrics` + worker estimate path; debounced “estimated size” preview in staged panel (v1.3.0) | — |
 | Resource | ✅ `computeResourceProfile` + coalescing + CountingWriter + result cache + `MetricsPanel` SWR animation (v1.4.0–v1.5.0) | Multi-entry batch cache |
+| UI-9 | ✅ Header/footer visual polish: glass header, breadcrumb, trust footer, shortcuts dialog, global engine pill (v1.6.0) | UI-8 search |
 
 This UI track runs after the §5.8 backend refinements (now complete) and feeds Phase 4 MVP polish per ROADMAP.
 
@@ -966,6 +982,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 1.6.0 | 2026-06-07 | Chief Architect | UI-9 header/footer polish; `TransmutationWorkerProvider`; restore v1.5.0 cache/metrics wiring after OpenCode regression | — |
+| 1.5.0-patch-2 | 2026-06-07 | Chief Architect | Metrics UX polish: badge delta pills, result view layout, `buildFingerprint` deep serialize fix, estimate flicker fixes | — |
 | 1.0.0-patch | 2026-06-03 | Chief Architect | Round-trip integration tests; CI triggers `master`; README/ROADMAP v1.0.0 alignment; ToolCard `h-full` restored | — |
 | 1.2.0-patch | 2026-06-06 | Chief Architect | SPEC §7.5/§7.7/§7.8 sync; dialog close listener fix; TransparencyNotice client directive | — |
 | 1.5.0-patch | 2026-06-06 | Chief Architect | Phase C wiring: fingerprint/meta to worker; cache-before-encode; dual estimate restored; `cacheWarm` from `cacheStored`; MetricsPanel SWR fixes | — |

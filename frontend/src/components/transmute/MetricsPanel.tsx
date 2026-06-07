@@ -5,6 +5,7 @@ import { useI18n } from "@/providers/I18nProvider";
 import { formatBytes } from "@/lib/format/bytes";
 import { Button } from "@/components/ui/Button";
 import type { SizeDelta } from "@/lib/format/metrics";
+import { cn } from "@/lib/utils";
 
 type MetricsPanelProps = {
   originalSize: number;
@@ -26,16 +27,17 @@ export function MetricsPanel({
   onRequestEstimate,
 }: MetricsPanelProps) {
   const { t } = useI18n();
+  const showCacheHint = cacheWarm && !estimating;
 
   return (
-    <div className="mb-3 space-y-1 rounded-lg bg-bg-elevated px-4 py-2 text-xs">
-      <div className="flex items-center justify-between">
+    <div className="mb-3 rounded-lg bg-bg-elevated px-4 py-2 text-xs">
+      <div className="flex items-center justify-between py-1">
         <span className="text-text-muted">{t("panel.metrics.original")}</span>
         <span className="font-mono tabular-nums text-text-secondary">
           {formatBytes(originalSize)}
         </span>
       </div>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 py-1">
         <span className="text-text-muted">{t("panel.metrics.estimated")}</span>
         <span className="font-mono tabular-nums text-text-secondary">
           <EstimatedMetricsValue
@@ -49,11 +51,19 @@ export function MetricsPanel({
         </span>
       </div>
       {!autoEstimate && !estimateDelta && !estimating && (
-        <p className="text-text-muted">{t("panel.metrics.largeFileHint")}</p>
+        <p className="py-1 text-text-muted">{t("panel.metrics.largeFileHint")}</p>
       )}
-      {cacheWarm && (
-        <p className="text-center text-text-muted">{t("panel.metrics.cacheReady")}</p>
-      )}
+      {/* Always in DOM — opacity toggle prevents the button from jumping */}
+      <p
+        className={cn(
+          "py-1 text-center text-text-muted transition-opacity duration-300",
+          showCacheHint ? "opacity-100" : "pointer-events-none select-none opacity-0"
+        )}
+        aria-live="polite"
+        aria-hidden={!showCacheHint}
+      >
+        {t("panel.metrics.cacheReady")}
+      </p>
     </div>
   );
 }
@@ -67,6 +77,10 @@ type EstimatedMetricsValueProps = {
   onRequestEstimate: () => void;
 };
 
+function estimateValueKey(delta: SizeDelta): string {
+  return `${delta.finalSize}:${delta.deltaPct}`;
+}
+
 function EstimatedMetricsValue({
   delta,
   estimating,
@@ -76,14 +90,25 @@ function EstimatedMetricsValue({
   onRequestEstimate,
 }: EstimatedMetricsValueProps) {
   const { t } = useI18n();
+  const [animateIn, setAnimateIn] = useState(false);
+  const prevValueKeyRef = useRef<string | null>(null);
+
+  const valueKey = delta ? estimateValueKey(delta) : null;
+
+  useEffect(() => {
+    if (!valueKey) {
+      prevValueKeyRef.current = null;
+      return;
+    }
+    if (prevValueKeyRef.current !== null && prevValueKeyRef.current !== valueKey) {
+      setAnimateIn(true);
+    }
+    prevValueKeyRef.current = valueKey;
+  }, [valueKey]);
 
   if (!delta) {
     if (estimating) {
-      return (
-        <span className="motion-safe:animate-pulse">
-          {t("panel.metrics.calculating")}
-        </span>
-      );
+      return <span className="text-text-muted">{t("panel.metrics.calculating")}</span>;
     }
     if (!autoEstimate) {
       return (
@@ -101,35 +126,31 @@ function EstimatedMetricsValue({
     return <span>—</span>;
   }
 
-  const prefix = cacheWarm ? "" : "~";
-  const formatted = `${prefix}${formatBytes(delta.finalSize)} (${delta.deltaLabel})`;
-
-  if (estimating) {
-    return (
-      <span className="opacity-60 motion-safe:animate-pulse">{formatted}</span>
-    );
-  }
-
-  return <AnimatedValue formatted={formatted} />;
-}
-
-function AnimatedValue({ formatted }: { formatted: string }) {
-  const [animate, setAnimate] = useState(false);
-  const prevRef = useRef(formatted);
-
-  useEffect(() => {
-    if (prevRef.current !== formatted) {
-      setAnimate(true);
-      prevRef.current = formatted;
-    }
-  }, [formatted]);
+  const isConfirmed = cacheWarm && !estimating;
+  const isGrowth = delta.deltaPct > 0;
 
   return (
     <span
-      className={animate ? "motion-safe:metrics-value-in" : undefined}
-      onAnimationEnd={() => setAnimate(false)}
+      className={cn(
+        "inline-flex items-center gap-1.5 transition-opacity duration-200",
+        estimating && "opacity-60",
+        animateIn && "motion-safe:metrics-value-in"
+      )}
+      onAnimationEnd={() => setAnimateIn(false)}
     >
-      {formatted}
+      <span>{formatBytes(delta.finalSize)}</span>
+      <span
+        className={cn(
+          "inline-flex items-center rounded-full px-1.5 py-px text-[10px] font-medium tabular-nums leading-none transition-colors duration-300",
+          isConfirmed
+            ? isGrowth
+              ? "bg-error/15 text-error"
+              : "bg-accent/15 text-accent"
+            : "border border-border bg-transparent text-text-muted"
+        )}
+      >
+        {delta.deltaLabel}
+      </span>
     </span>
   );
 }

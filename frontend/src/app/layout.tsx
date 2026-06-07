@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { I18nProvider } from "@/providers/I18nProvider";
+import { TransmutationWorkerProvider } from "@/providers/TransmutationWorkerProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -65,13 +66,15 @@ export default function RootLayout({
       >
         <I18nProvider>
           <ThemeProvider>
-            <ToastProvider>
-              <div className="flex min-h-screen flex-col">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-            </ToastProvider>
+            <TransmutationWorkerProvider>
+              <ToastProvider>
+                <div className="flex min-h-screen flex-col">
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+              </ToastProvider>
+            </TransmutationWorkerProvider>
           </ThemeProvider>
         </I18nProvider>
       </body>

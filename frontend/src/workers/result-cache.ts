@@ -9,17 +9,26 @@ export type CacheEntry = {
   createdAt: number;
 };
 
+function sortKeysDeep(value: unknown): unknown {
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(sortKeysDeep);
+  const record = value as Record<string, unknown>;
+  return Object.keys(record)
+    .sort()
+    .reduce<Record<string, unknown>>((acc, key) => {
+      acc[key] = sortKeysDeep(record[key]);
+      return acc;
+    }, {});
+}
+
 export function buildFingerprint(
   module: string,
   fileIdentity: string,
   options: TransmutationOptions
 ): string {
-  const payload = {
-    module,
-    fileIdentity,
-    opts: options,
-  };
-  return JSON.stringify(payload, Object.keys(payload).sort());
+  return JSON.stringify(
+    sortKeysDeep({ module, fileIdentity, opts: options })
+  );
 }
 
 export class ResultCache {

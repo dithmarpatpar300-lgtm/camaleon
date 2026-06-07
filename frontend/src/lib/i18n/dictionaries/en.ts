@@ -33,7 +33,14 @@ const en: Dictionary = {
 
   footer: {
     privacy: "100% local. Your files never leave your device.",
-    version: "Camaleon v{version} — MIT",
+    version: "v{version} · MIT",
+    github: "GitHub",
+    shortcuts: "Shortcuts",
+    shortcutsTitle: "Keyboard shortcuts",
+    shortcutOpenPalette: "Open transmutations",
+    shortcutClose: "Close",
+    engineReady: "Engine ready",
+    engineInit: "Engine starting…",
   },
 
   landing: {
@@ -76,6 +83,9 @@ const en: Dictionary = {
     processing: "Transmuting {fileName}...",
     processingFallback: "Transmuting...",
     size: "Size",
+    result: {
+      final: "Final size",
+    },
     download: "Download",
     transmuteAnother: "Transmute another",
     errorTitle: "Transmutation failed",

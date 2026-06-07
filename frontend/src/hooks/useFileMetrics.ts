@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import type { TransmutationModule, TransmutationOptions } from "@/workers/types";
 import { computeSizeDelta, type SizeDelta } from "@/lib/format/metrics";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
@@ -9,21 +10,12 @@ import {
   buildTransmuteFingerprint,
 } from "@/lib/transmutation/fingerprint";
 import type { WorkerRequestMeta } from "@/workers/types";
-import type { EstimateResult } from "@/hooks/useTransmutationWorker";
-
-type EstimateFn = (
-  module: TransmutationModule,
-  bytes: ArrayBuffer,
-  options?: TransmutationOptions,
-  meta?: WorkerRequestMeta
-) => Promise<EstimateResult>;
 
 type UseFileMetricsArgs = {
   file: File | null;
   module: TransmutationModule;
   options: TransmutationOptions;
   ready: boolean;
-  estimate: EstimateFn;
   profile: ResourceProfile;
 };
 
@@ -51,36 +43,54 @@ async function getEstimateBuffer(file: File): Promise<ArrayBuffer> {
 }
 
 export function useFileMetrics({
-  file, module, options, ready, estimate, profile,
+  file, module, options, ready, profile,
 }: UseFileMetricsArgs): FileMetrics {
+  const { estimate } = useTransmutationWorker();
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null);
   const [estimating, setEstimating] = useState(false);
   const [finalDelta, setFinalDelta] = useState<SizeDelta | null>(null);
-  const [cacheWarm, setCacheWarm] = useState(false);
+  const [cachedFingerprint, setCachedFingerprint] = useState<string | null>(null);
   const estimateIdRef = useRef(0);
+  const estimateInFlightRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const originalSize = file?.size ?? 0;
 
-  const transmuteMeta: WorkerRequestMeta | undefined = file
-    ? {
-        fingerprint: buildTransmuteFingerprint(module, file, options),
-        fileIdentity: buildFileIdentity(file),
-        enableResultCache: profile.enableResultCache,
-        cacheMaxOutputBytes: profile.cacheMaxOutputBytes,
-      }
-    : undefined;
+  const fingerprint = useMemo(
+    () => (file ? buildTransmuteFingerprint(module, file, options) : null),
+    [file, module, options]
+  );
+
+  const cacheWarm =
+    fingerprint !== null && cachedFingerprint === fingerprint;
+
+  const fileIdentity = useMemo(
+    () => (file ? buildFileIdentity(file) : null),
+    [file]
+  );
+
+  const transmuteMeta = useMemo((): WorkerRequestMeta | undefined => {
+    if (!file || !fingerprint || !fileIdentity) return undefined;
+    return {
+      fingerprint,
+      fileIdentity,
+      enableResultCache: profile.enableResultCache,
+      cacheMaxOutputBytes: profile.cacheMaxOutputBytes,
+    };
+  }, [
+    file,
+    fingerprint,
+    fileIdentity,
+    profile.enableResultCache,
+    profile.cacheMaxOutputBytes,
+  ]);
 
   useEffect(() => {
     setEstimatedSize(null);
     setFinalDelta(null);
-    setCacheWarm(false);
+    setCachedFingerprint(null);
     estimateIdRef.current++;
   }, [file]);
-
-  useEffect(() => {
-    setCacheWarm(false);
-  }, [transmuteMeta?.fingerprint]);
 
   const estimateDelta =
     estimatedSize != null
@@ -93,6 +103,7 @@ export function useFileMetrics({
 
     estimateIdRef.current++;
     const thisId = estimateIdRef.current;
+    estimateInFlightRef.current++;
     setEstimating(true);
     try {
       const buf = await getEstimateBuffer(file);
@@ -102,33 +113,47 @@ export function useFileMetrics({
       const result = await estimate(module, buf, options, transmuteMeta);
       if (thisId !== estimateIdRef.current) return;
 
-      setEstimatedSize(result.outputSize);
-      setCacheWarm(result.cacheStored === true);
+      setEstimatedSize((prev) =>
+        prev === result.outputSize ? prev : result.outputSize
+      );
+      if (result.cacheStored === true && fingerprint) {
+        setCachedFingerprint((prev) =>
+          prev === fingerprint ? prev : fingerprint
+        );
+      }
     } catch (err) {
       if (err instanceof Error && err.message === "superseded") return;
     } finally {
-      if (thisId === estimateIdRef.current) {
+      estimateInFlightRef.current = Math.max(0, estimateInFlightRef.current - 1);
+      if (estimateInFlightRef.current === 0) {
         setEstimating(false);
       }
     }
-  }, [file, ready, module, options, estimate, transmuteMeta]);
+  }, [file, ready, module, options, estimate, transmuteMeta, fingerprint]);
+
+  const runEstimateRef = useRef(runEstimate);
+  runEstimateRef.current = runEstimate;
 
   const requestEstimate = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    runEstimate();
-  }, [runEstimate]);
+    void runEstimateRef.current();
+  }, []);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (!file || !ready) return;
+    if (!file || !ready || !fingerprint) return;
     if (!profile.autoEstimate) return;
     if (typeof document !== "undefined" && document.hidden) return;
 
-    timerRef.current = setTimeout(runEstimate, profile.debounceMs);
+    estimateIdRef.current++;
+
+    timerRef.current = setTimeout(() => {
+      void runEstimateRef.current();
+    }, profile.debounceMs);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [file, ready, options, runEstimate, profile.debounceMs, profile.autoEstimate]);
+  }, [file, ready, fingerprint, profile.debounceMs, profile.autoEstimate]);
 
   useEffect(() => {
     if (!file || !ready || !profile.autoEstimate) return;
@@ -136,12 +161,14 @@ export function useFileMetrics({
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(runEstimate, profile.debounceMs);
+      timerRef.current = setTimeout(() => {
+        void runEstimateRef.current();
+      }, profile.debounceMs);
     };
 
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [file, ready, profile.autoEstimate, profile.debounceMs, runEstimate]);
+  }, [file, ready, profile.autoEstimate, profile.debounceMs]);
 
   const setFinalSize = useCallback(
     (bytes: number) => setFinalDelta(computeSizeDelta(originalSize, bytes)),
@@ -152,7 +179,7 @@ export function useFileMetrics({
     setEstimatedSize(null);
     setEstimating(false);
     setFinalDelta(null);
-    setCacheWarm(false);
+    setCachedFingerprint(null);
     estimateIdRef.current++;
   }, []);
 

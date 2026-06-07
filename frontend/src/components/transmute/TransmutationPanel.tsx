@@ -17,6 +17,7 @@ import { localizeError } from "@/lib/i18n/errors";
 import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { cn } from "@/lib/utils";
 import { Dropzone } from "./Dropzone";
 import { OptionsControls } from "./OptionsControls";
 import { MetricsPanel } from "./MetricsPanel";
@@ -61,7 +62,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [hasAlpha, setHasAlpha] = useState(false);
 
-  const { transmutate, estimate, ready } = useTransmutationWorker();
+  const { transmutate, ready } = useTransmutationWorker();
   const { toast } = useToast();
   const profile = useAdaptiveResourceProfile(staged?.file?.size ?? 0);
   const metrics = useFileMetrics({
@@ -69,7 +70,6 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     module: tool.module,
     options,
     ready,
-    estimate,
     profile,
   });
   const accept = tool.acceptExtensions.join(",");
@@ -252,7 +252,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       )}
 
       {status === "success" && result && (
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div className="overflow-hidden rounded-xl border border-border bg-bg-base">
             {previewUrl && (
               /* eslint-disable-next-line @next/next/no-img-element */
@@ -263,11 +263,29 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
               />
             )}
           </div>
-          <div className="rounded-xl border border-border bg-bg-surface px-4 py-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-text-secondary">{t("panel.size")}</span>
-              <span className="font-mono tabular-nums text-text-primary">
-                {metrics.finalDelta?.formatted}
+          <div className="rounded-xl border border-border bg-bg-surface px-4 py-2 text-xs">
+            <div className="flex items-center justify-between py-1">
+              <span className="text-text-muted">{t("panel.metrics.original")}</span>
+              <span className="font-mono tabular-nums text-text-secondary">
+                {formatBytes(result.inputSize)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-text-muted">{t("panel.result.final")}</span>
+              <span className="inline-flex items-center gap-1.5 font-mono tabular-nums text-text-secondary">
+                <span>{formatBytes(result.outputSize)}</span>
+                {metrics.finalDelta && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full px-1.5 py-px text-[10px] font-medium tabular-nums leading-none",
+                      metrics.finalDelta.deltaPct > 0
+                        ? "bg-error/15 text-error"
+                        : "bg-accent/15 text-accent"
+                    )}
+                  >
+                    {metrics.finalDelta.deltaLabel}
+                  </span>
+                )}
               </span>
             </div>
           </div>
