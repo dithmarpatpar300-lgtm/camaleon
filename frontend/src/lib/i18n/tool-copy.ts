@@ -35,6 +35,15 @@ export function resolveToolFidelityHint(
   return resolved !== key ? resolved : undefined;
 }
 
+export function resolveToolActionTitle(
+  toolId: string,
+  t: TranslateFn
+): string | undefined {
+  const key = `tools.${toolId}.actionTitle`;
+  const resolved = t(key);
+  return resolved !== key ? resolved : undefined;
+}
+
 export function getOptionSpecStrings(
   toolId: string,
   spec: ToolOptionSpec,

@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.1.0  
-**Last updated:** 2026-06-04  
-**Status:** MVP — Camaleon v1.1.0 (UI-6 UX polish layer)
+**Version:** 1.2.0  
+**Last updated:** 2026-06-06  
+**Status:** MVP — Camaleon v1.2.0 (UI-7: Command Palette + semantic naming + color swatch)
 
 ---
 
@@ -826,6 +826,7 @@ components/
 │               # ✅ Toast (UI-6)
 │               # □ Dropdown/Popover, SearchInput, Tooltip (later)
 ├── layout/     # ✅ Header, ThemeToggle, LanguageSelector, Footer (UI-1)
+│               # ✅ CommandPalette (UI-7)
 │               # □ Mega-menu (deferred per §7.7)
 ├── transmute/  # ✅ ToolCard, ToolGrid, Dropzone, TransmutationDropzone,
                 #   Hero, PrivacyBanner (UI-2)
@@ -842,6 +843,7 @@ lib/            # ✅ utils.ts (cn helper), types.ts (UI-1)
                 # ✅ lib/i18n/ metadata.ts — locale cookie bridge + OpenGraph (UI-6)
 hooks/          # ✅ useTransmutationWorker (existing), useTheme (UI-1)
                 # ✅ usePageFileDrop (UI-6)
+                # ✅ useCommandPalette (UI-7)
 ```
 
 **ToolRegistry (scalability keystone — mirrors backend NFR-5):** every tool is declared once in a typed registry that drives the `ToolGrid`, routes, and (later) the menu/search. Adding a format = one registry entry + one Worker route + the crate; no UI rewrites.
@@ -877,8 +879,8 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 
 | Zone | Element | Status |
 |------|---------|--------|
-| Left | Chameleon logo mark (inline SVG) + `Camaleon` wordmark | ✅ |
-| Center-left | `Transmutaciones` nav (link to `/`) | ✅ |
+| Left | Chameleon logo mark (inline SVG) + `Camaleon` wordmark (link to `/`) | ✅ |
+| Center-left | `Transmutaciones` command palette trigger (`⌘K` / `Ctrl+K`) — opens glassmorphism `<dialog>` with tool rows | ✅ UI-7 |
 | Right | Language selector (EN / ES) — fully wired to I18nProvider, persisted to localStorage, `<html lang>` synced | ✅ UI-4 |
 | Right | Theme toggle (dark / light) with `useTheme`, persisted, no FOUC | ✅ |
 
@@ -891,7 +893,8 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | UI-3 | ✅ `/transmute/[slug]` + `TransmutationPanel` + atomic `OptionsControls` (slider + color) wired through extended worker protocol (v0.6.3) | Subsampling deferred |
 | UI-4 | ✅ Full bilingual EN/ES i18n via `I18nProvider` + typed dictionaries + `LanguageSelector` wired (v0.6.4) | UI-5 = a11y/responsive sign-off |
 | UI-5 | ✅ Accessibility + responsive sign-off (v1.0.0) | — |
-| UI-6 | ✅ UX polish layer: transparency pre-notice, page drag overlay, toasts, locale metadata cookie bridge (v1.1.0) | UI-7 = [locale] routing |
+| UI-6 | ✅ UX polish layer: transparency pre-notice, page drag overlay, toasts, locale metadata cookie bridge (v1.1.0) | UI-7 = Command Palette |
+| UI-7 | ✅ Command Palette + semantic action titles + color visual swatch (v1.2.0) | UI-8 = search + keyboard nav |
 
 This UI track runs after the §5.8 backend refinements (now complete) and feeds Phase 4 MVP polish per ROADMAP.
 
@@ -942,6 +945,8 @@ Chief Architect validates SPEC diff during second-pass review.
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
 | 1.0.0-patch | 2026-06-03 | Chief Architect | Round-trip integration tests; CI triggers `master`; README/ROADMAP v1.0.0 alignment; ToolCard `h-full` restored | — |
+| 1.2.0-patch | 2026-06-06 | Chief Architect | SPEC §7.5/§7.7/§7.8 sync; dialog close listener fix; TransparencyNotice client directive | — |
+| 1.2.0 | 2026-06-06 | OpenCode | UI-7: Command Palette (glassmorphism, ⌘K), semantic action titles (Proposal A), color visual swatch for TransparencyNotice | `ui_7_header_semantic_done.md` |
 | 1.1.0 | 2026-06-04 | OpenCode | UI-6: UX polish — transparency pre-notice, page drag overlay, toast system, locale metadata cookie bridge, detectPngAlpha | `ui_6_ux_polish_layer_done.md` |
 | 1.0.0 | 2026-06-03 | OpenCode | v1.0.0 MVP sign-off: UI-5 a11y baseline, CI workflow, version bump (encoder swap + Playwright deferred to v1.1.0) | `mvp_1_0_0_signoff_done.md` |
 | 0.6.6-docs | 2026-06-03 | Chief Architect | README + ROADMAP aligned to MVP-ready state; SPEC status/UI track notes; MVP acceptance criteria marked met | — |

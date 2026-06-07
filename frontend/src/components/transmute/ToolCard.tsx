@@ -5,7 +5,7 @@ import type { ToolDefinition } from "@/lib/tools/types";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardBody } from "@/components/ui/Card";
 import { useI18n } from "@/providers/I18nProvider";
-import { getToolStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
+import { getToolStrings, resolveToolFidelityHint, resolveToolActionTitle } from "@/lib/i18n/tool-copy";
 
 type ToolCardProps = { tool: ToolDefinition };
 
@@ -14,12 +14,22 @@ export function ToolCard({ tool }: ToolCardProps) {
   const isActive = tool.status === "active";
   const copy = getToolStrings(tool, t);
   const hint = resolveToolFidelityHint(tool.id, t);
+  const actionTitle = resolveToolActionTitle(tool.id, t);
 
   const content = (
     <Card className={"flex h-full flex-col " + (isActive ? "group transition-shadow hover:shadow-lg hover:shadow-accent/5" : "opacity-50")}>
       <CardBody className="flex flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-semibold text-text-primary">{tool.title}</h3>
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-lg font-semibold text-text-primary truncate">
+              {actionTitle ?? tool.title}
+            </h3>
+            {actionTitle && (
+              <span className="font-mono text-xs text-text-muted shrink-0">
+                {tool.fromFormat} → {tool.toFormat}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <Badge variant={tool.fidelity === "lossless" ? "lossless" : "lossy"}>
               {tool.fidelity === "lossless" ? t("badges.lossless") : t("badges.lossy")}

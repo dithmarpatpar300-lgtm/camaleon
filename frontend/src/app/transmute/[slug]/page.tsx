@@ -40,7 +40,7 @@ export default async function TransmuteToolPage({ params }: Props) {
 
       <div className="mb-8">
         <div className="mb-2 flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-text-primary">{tool.title}</h1>
+          <ToolPageStrings toolId={tool.id} showActionTitle />
           <ToolPageStrings toolId={tool.id} />
         </div>
         <ToolPageStrings toolId={tool.id} showDescription />

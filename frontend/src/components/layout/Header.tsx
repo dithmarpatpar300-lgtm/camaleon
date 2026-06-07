@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { LanguageSelector } from "@/components/layout/LanguageSelector";
+import { CommandPalette } from "@/components/layout/CommandPalette";
+import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { useI18n } from "@/providers/I18nProvider";
 
 export function Header() {
   const { t } = useI18n();
+  const { open, toggle, closePalette, dialogRef } = useCommandPalette();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-bg-base/80 backdrop-blur-sm">
@@ -21,9 +24,18 @@ export function Header() {
           <span className="text-base font-semibold text-text-primary">Camaleon</span>
         </Link>
         <nav className="flex items-center gap-1" aria-label={t("nav.mainNavAria")}>
-          <Link href="/" className="rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary hover:bg-bg-elevated">
-            {t("nav.transmutations")}
-          </Link>
+          <button
+            onClick={toggle}
+            aria-expanded={open}
+            aria-haspopup="dialog"
+            aria-label={t("commandPalette.triggerAriaLabel")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <span>{t("nav.transmutations")}</span>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-text-muted">
+              <span>⌘</span><span>K</span>
+            </kbd>
+          </button>
         </nav>
         <div className="flex-1" />
         <div className="flex items-center gap-2">
@@ -31,6 +43,7 @@ export function Header() {
           <ThemeToggle />
         </div>
       </div>
+      <CommandPalette ref={dialogRef} onClose={closePalette} />
     </header>
   );
 }

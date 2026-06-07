@@ -91,11 +91,15 @@ const es: Dictionary = {
     transparencyNotice: {
       title: "Esta imagen tiene transparencia",
       body: "Las áreas transparentes se aplanarán sobre {color} antes de codificar a JPEG. JPEG no soporta transparencia.",
+      bodyBefore: "Las áreas transparentes se aplanarán sobre ",
+      bodyAfter: " antes de codificar a JPEG. JPEG no soporta transparencia.",
+      thisColor: "este color",
     },
   },
 
   tools: {
     "jpg-to-png": {
+      actionTitle: "Preservar Calidad",
       description: "Conversión sin pérdida — preserva cada píxel perfectamente.",
       fidelityHint:
         "El tamaño puede aumentar para fotos — PNG es un formato maestro/edición, no para comprimir.",
@@ -114,6 +118,7 @@ const es: Dictionary = {
       },
     },
     "png-to-jpg": {
+      actionTitle: "Comprimir para Web",
       description: "Comprimido para web — archivos más pequeños a calidad 85.",
       fidelityHint:
         "La pérdida de calidad es irreversible. La transparencia se aplana a blanco por defecto.",
@@ -166,6 +171,15 @@ const es: Dictionary = {
     white: "Blanco",
     black: "Negro",
     gray: "Gris",
+  },
+
+  commandPalette: {
+    ariaLabel: "Paleta de comandos — navegar transmutaciones",
+    triggerAriaLabel: "Abrir paleta de comandos",
+    title: "Transmutaciones",
+    categoryImage: "Imagen",
+    categorySoon: "Próximamente",
+    closeHint: "Esc para cerrar",
   },
 };
 
