@@ -7,19 +7,24 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build:wasm": "wasm-pack build --target web --out-dir ../public/wasm/transmutador_jpg --out-name transmutador_jpg ../motor_transmutacion/transmutador_jpg && wasm-pack build --target web --out-dir ../public/wasm/transmutador_png --out-name transmutador_png ../motor_transmutacion/transmutador_png && wasm-pack build --target web --out-dir ../public/wasm/transmutador_webp --out-name transmutador_webp ../motor_transmutacion/transmutador_webp && wasm-pack build --target web --out-dir ../public/wasm/transmutador_encode --out-name transmutador_encode ../motor_transmutacion/transmutador_encode"
+    "build:wasm": "wasm-pack build --target web --out-dir ../public/wasm/transmutador_jpg --out-name transmutador_jpg ../motor_transmutacion/transmutador_jpg && wasm-pack build --target web --out-dir ../public/wasm/transmutador_png --out-name transmutador_png ../motor_transmutacion/transmutador_png && wasm-pack build --target web --out-dir ../public/wasm/transmutador_webp --out-name transmutador_webp ../motor_transmutacion/transmutador_webp && wasm-pack build --target web --out-dir ../public/wasm/transmutador_encode --out-name transmutador_encode ../motor_transmutacion/transmutador_encode",
+    "build:cf": "opennextjs-cloudflare build",
+    "preview:cf": "npm run build:wasm && opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cf": "npm run build:wasm && opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.19.11",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.7.0",
     "tailwindcss": "^4.1.0",
-    "@tailwindcss/postcss": "^4.1.0"
+    "typescript": "^5.7.0",
+    "wrangler": "^4.98.0"
   }
 }

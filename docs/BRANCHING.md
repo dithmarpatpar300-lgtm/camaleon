@@ -40,9 +40,12 @@ dev               ●──●──●──●      daily work + internal docs
 | `docs/prompts/`, `docs/planning/`, `docs/reports/` | ❌ | ✅ | ❌ |
 | `docs/GOVERNANCE.md` (agent workflow) | ❌ | ✅ | ❌ |
 
-## First push to GitHub
+## Remote
+
+**https://github.com/dithmarpatpar300-lgtm/camaleon**
 
 ```bash
+git remote add origin https://github.com/dithmarpatpar300-lgtm/camaleon.git
 git push -u origin main
 git push -u origin dev
 git push -u origin contrib

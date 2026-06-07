@@ -2,7 +2,7 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v1.7.8** (App) · Engine v1.4.1 · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v1.7.8** (App) · Engine v1.4.1 · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
@@ -20,7 +20,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Privacy** | StripAll metadata default; 100% local processing |
 
-Next: public deploy, Tier 2 formats (v1.8.x). See [docs/ROADMAP.md](docs/ROADMAP.md).
+Deploy: [docs/DEPLOY.md](docs/DEPLOY.md) (Cloudflare Workers + OpenNext). Next formats: Tier 2 (v1.8.x) — [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 
@@ -82,6 +82,16 @@ cd motor_transmutacion && cargo test --workspace
 cd frontend && npm run build
 ```
 
+## Deploy to Cloudflare
+
+Configured for [@opennextjs/cloudflare](https://opennext.js.org/cloudflare). Full steps: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
+```bash
+cd frontend
+npm run preview:cf   # local Workers preview (builds Wasm + Next)
+npm run deploy:cf    # manual deploy (requires wrangler login)
+```
+
 ## Repository layout
 
 ```
@@ -96,6 +106,7 @@ camaleon/
 ├── docs/
 │   ├── SPEC.md              # Architecture reference
 │   ├── ROADMAP.md           # Product phases and status
+│   ├── DEPLOY.md            # Cloudflare Workers deploy guide
 │   └── BRANCHING.md         # main / dev / contrib workflow
 ├── CONTRIBUTING.md          # How to contribute (PRs → contrib)
 └── scripts/                 # build-wasm.ps1 / .sh

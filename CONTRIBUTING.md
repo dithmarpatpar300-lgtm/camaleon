@@ -18,7 +18,7 @@ Thank you for helping improve Camaleon — a privacy-first, browser-local image 
 
 ```bash
 # Clone and enter the repo
-git clone https://github.com/gator/camaleon.git
+git clone https://github.com/dithmarpatpar300-lgtm/camaleon.git
 cd camaleon
 git checkout contrib
 
@@ -71,7 +71,7 @@ Camaleon converts files **entirely in the browser**. Do not add:
 
 ## Questions
 
-Open a [GitHub Issue](https://github.com/gator/camaleon/issues) for bugs, feature ideas, or questions before large changes.
+Open a [GitHub Issue](https://github.com/dithmarpatpar300-lgtm/camaleon/issues) for bugs, feature ideas, or questions before large changes.
 
 ## License
 

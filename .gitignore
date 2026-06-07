@@ -4,6 +4,8 @@
 # Next.js build output
 /frontend/.next
 /frontend/out
+/frontend/.open-next
+/frontend/.wrangler
 
 # Rust build artifacts
 /target
