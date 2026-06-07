@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ToolDefinition } from "@/lib/tools/types";
+import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import { fileMatchesExtensions } from "@/lib/tools/extensions";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
@@ -12,7 +12,7 @@ import { useI18n } from "@/providers/I18nProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { usePageFileDrop } from "@/hooks/usePageFileDrop";
 import { localizeError } from "@/lib/i18n/errors";
-import { resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
+import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Dropzone } from "./Dropzone";
@@ -161,8 +161,16 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     acceptExtensions: tool.acceptExtensions,
   });
 
+  const backgroundSpec = tool.optionSpecs?.find(
+    (s): s is ColorOptionSpec => s.kind === "color" && s.key === "background"
+  );
   const currentBackground =
-    options.background ?? (tool.optionSpecs?.find((s) => s.key === "background")?.defaultValue as import("@/lib/tools/types").RgbColor | undefined) ?? { r: 255, g: 255, b: 255 };
+    options.background ??
+    backgroundSpec?.defaultValue ??
+    { r: 255, g: 255, b: 255 };
+  const backgroundSwatches = backgroundSpec
+    ? getOptionSpecStrings(tool.id, backgroundSpec, t).swatches
+    : [];
 
   return (
     <div className="space-y-6">
@@ -182,9 +190,16 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
             </div>
             <Button variant="ghost" size="sm" onClick={handleReset}>{t("panel.changeFile")}</Button>
           </div>
-          {hasAlpha && (
+          {hasAlpha && backgroundSpec && (
             <div className="mb-4">
-              <TransparencyNotice background={currentBackground} />
+              <TransparencyNotice
+                background={currentBackground}
+                swatches={backgroundSwatches}
+                allowCustom={backgroundSpec.allowCustom}
+                onBackgroundChange={(bg) =>
+                  setOptions((prev) => ({ ...prev, background: bg }))
+                }
+              />
             </div>
           )}
           {hasOptions && (

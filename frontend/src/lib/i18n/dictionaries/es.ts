@@ -90,10 +90,11 @@ const es: Dictionary = {
     previewAlt: "Vista previa de {fileName}",
     transparencyNotice: {
       title: "Esta imagen tiene transparencia",
-      body: "Las áreas transparentes se aplanarán sobre {color} antes de codificar a JPEG. JPEG no soporta transparencia.",
-      bodyBefore: "Las áreas transparentes se aplanarán sobre ",
-      bodyAfter: " antes de codificar a JPEG. JPEG no soporta transparencia.",
-      thisColor: "este color",
+      bodyPrefix: "Las áreas transparentes se aplanarán sobre ",
+      bodySuffix: " antes de codificar a JPEG. JPEG no soporta transparencia.",
+      pillAriaLabel: "Color de fondo: {color}. Clic para cambiar.",
+      pickerTitle: "Aplanar sobre",
+      pickerHint: "Solo afecta píxeles transparentes.",
     },
   },
 

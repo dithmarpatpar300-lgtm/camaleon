@@ -90,10 +90,11 @@ const en: Dictionary = {
     previewAlt: "Preview of {fileName}",
     transparencyNotice: {
       title: "This image has transparency",
-      body: "Transparent areas will be flattened onto {color} before JPEG encoding. JPEG does not support transparency.",
-      bodyBefore: "Transparent areas will be flattened onto ",
-      bodyAfter: " before JPEG encoding. JPEG does not support transparency.",
-      thisColor: "this color",
+      bodyPrefix: "Transparent areas will be flattened onto ",
+      bodySuffix: " before JPEG encoding. JPEG does not support transparency.",
+      pillAriaLabel: "Background color: {color}. Click to change.",
+      pickerTitle: "Flatten onto",
+      pickerHint: "Only affects transparent pixels.",
     },
   },
 
