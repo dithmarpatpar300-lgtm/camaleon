@@ -94,11 +94,10 @@ camaleon/
 │   ├── transmutador_webp/   # WebP → PNG / JPEG
 │   └── transmutador_encode/ # PNG / JPEG → WebP
 ├── docs/
-│   ├── SPEC.md              # Architecture bible (v1.7.0)
-│   ├── ROADMAP.md           # Phases + MVP criteria
-│   ├── GOVERNANCE.md        # Agent workflow
-│   ├── prompts/             # OpenCode task prompts
-│   └── reports/             # OpenCode technical reports
+│   ├── SPEC.md              # Architecture reference
+│   ├── ROADMAP.md           # Product phases and status
+│   └── BRANCHING.md         # main / dev / contrib workflow
+├── CONTRIBUTING.md          # How to contribute (PRs → contrib)
 └── scripts/                 # build-wasm.ps1 / .sh
 ```
 
@@ -120,7 +119,9 @@ Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 
 ## Contributing
 
-The project is modular by design: a new format = one registry entry + one Rust crate + one Worker route + Wasm build. Contribution guidelines (`CONTRIBUTING.md`) are planned post-v1.0.0.
+The project is modular by design: a new format = one registry entry + one Rust crate + one Worker route + Wasm build.
+
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** — open PRs against the `contrib` branch. Branch strategy: **[docs/BRANCHING.md](docs/BRANCHING.md)**.
 
 ---
 

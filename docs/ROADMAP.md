@@ -149,7 +149,6 @@ Goal: first WebP conversion; proves `transmutador_webp` crate pattern.
 - [x] Worker lazy-load third Wasm module; `TransmutationModule` type extended
 - [x] ToolRegistry `webp-to-png` → `status: "active"`; UI strings EN + ES
 - [x] Wasm binary size: **401 KB** (NFR-7 gate: ≤ 3 MB)
-- [x] Report: `docs/reports/phase5_webp_to_png_done.md`
 
 ### Phase 5.2 — WebP → JPEG `v1.7.2` ✅ (Complete)
 
@@ -161,7 +160,6 @@ Goal: second WebP conversion; alpha-flatten reuse from `transmutador_png` patter
 - [x] UI two-generation lossy warning; `detectWebpAlpha` + `TransparencyNotice` parity
 - [x] ToolRegistry `webp-to-jpg` → `active`
 - [x] Wasm binary size: **626 KB** (NFR-7 gate: ≤ 3 MB)
-- [x] Report: `docs/reports/phase5_webp_to_jpg_done.md`
 
 ### Phase 5.3 — PNG → WebP `v1.7.3` ✅ (Complete)
 
@@ -173,7 +171,6 @@ Goal: first encode-direction crate; lossless VP8L only; spike gate embedded in p
 - [x] `OutputFormat::WebP` in `core_utils`; RIFF WEBP magic validator
 - [x] Worker lazy-load fourth module; all build scripts updated
 - [x] ToolRegistry `png-to-webp` → `active`; zero option sliders; Lossless WebP copy EN+ES
-- [x] Report: `docs/reports/phase5_png_to_webp_done.md`
 
 ### Phase 5.4 — JPEG → WebP `v1.7.6`
 
@@ -182,7 +179,6 @@ Goal: first encode-direction crate; lossless VP8L only; spike gate embedded in p
 - [x] UI hint: lossless-of-lossy size inflation (§5.12.4) EN+ES
 - [x] ToolRegistry `jpg-to-webp` → `active`
 - [x] Wasm size gate: **649 KB** (≤ 3 MB)
-- [x] Report: `docs/reports/phase5_jpg_to_webp_done.md`
 - [x] **Tier 1 WebP Suite complete** (four conversion directions)
 
 ---
@@ -198,8 +194,7 @@ Minimum trust + product surface for real users:
 - [ ] Production deploy (Cloudflare Pages / Vercel recommended)
 - [ ] Git release tag `v1.7.8`
 - [ ] Optional: contact email; Playwright smoke E2E before scale
-
-Report: `docs/reports/v1_7_8_legal_launch_done.md`
+- [x] Public repo hygiene (`main` / `dev` / `contrib` — see `docs/BRANCHING.md`)
 
 ---
 
@@ -216,7 +211,7 @@ Report: `docs/reports/v1_7_8_legal_launch_done.md`
 | `refine_jpeg_encoder_swap` | Chroma subsampling 4:4:4 / 4:2:2 (§5.5.6) — deferred |
 | Playwright E2E | Smoke tests; deferred from v1.0.0 |
 | PWA / offline shell | Service worker; post-Tier 1 |
-| `CONTRIBUTING.md` + issue templates | Community onboarding |
+| GitHub issue templates | Community onboarding (`CONTRIBUTING.md` ✅) |
 
 **Delivered post-MVP items (moved out of backlog):** quality/compression sliders (UI-3), background color (v0.5.6), metadata strip (v0.5.3), UI-9 header/footer (v1.6.0), locale/theme FOUC fix + Scrollbar Camaleón (v1.6.1).
 
@@ -238,6 +233,7 @@ Report: `docs/reports/v1_7_8_legal_launch_done.md`
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-07 | Chief Architect (Cursor) | Public repo prep: `main`/`dev`/`contrib` branches; internal docs removed from `main`; `CONTRIBUTING.md` + `docs/BRANCHING.md` |
 | 2026-06-07 | Chief Architect (Cursor) | v1.7.8 shipped: legal pages EN+ES, footer redesign, public-launch baseline section |
 | 2026-06-07 | Chief Architect (Cursor) | Phase 5 (Tier 1 WebP suite) planned; ROADMAP snapshot updated to v1.6.1; post-v1.7 horizon added |
 | 2026-06-07 | Chief Architect (Cursor) | v1.6.1 shipped: locale/theme FOUC, Scrollbar Camaleón, landing layout stability |
