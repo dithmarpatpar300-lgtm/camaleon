@@ -239,3 +239,43 @@ pub fn transmutar_png_a_jpg_with_options(
     };
     transmutar_png_a_jpg_inner(input_bytes, &options)
 }
+
+// ---------------------------------------------------------------------------
+// Size-only estimate (Phase B — CountingWriter, no output allocation)
+// ---------------------------------------------------------------------------
+
+use core_utils::counting_writer::CountingWriter;
+
+#[wasm_bindgen]
+pub fn estimate_png_to_jpg_size(
+    input_bytes: &[u8],
+    quality: u8,
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+) -> Result<u32, String> {
+    core_utils::validate_input(input_bytes)?;
+    validate_quality(quality)?;
+
+    let img = ImageReader::new(Cursor::new(input_bytes))
+        .with_guessed_format()
+        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?
+        .decode()
+        .map_err(|e| format!("Failed to decode PNG: {}", e))?;
+
+    let bg = BackgroundFill { r: bg_r, g: bg_g, b: bg_b };
+    let rgb = if img.color().has_alpha() {
+        let rgba = img.to_rgba8();
+        flatten_rgba_on_background(&rgba, bg)
+    } else {
+        img.to_rgb8()
+    };
+
+    let mut writer = CountingWriter::default();
+    let mut encoder = JpegEncoder::new_with_quality(&mut writer, quality);
+    encoder
+        .encode_image(&rgb)
+        .map_err(|e| format!("Failed to encode JPEG: {}", e))?;
+
+    Ok(writer.bytes_written as u32)
+}

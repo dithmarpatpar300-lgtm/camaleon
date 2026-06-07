@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Last updated:** 2026-06-06  
-**Status:** MVP — Camaleon v1.3.0 (metrics engine + real-time size estimation)
+**Status:** MVP — Camaleon v1.4.0 (adaptive resource tuning) / Engine v1.2.0
 
 ---
 
@@ -767,7 +767,7 @@ type WorkerResponseSuccess = {
 };
 ```
 
-**Estimate path (v1.3.0):** when `purpose === "estimate"`, the worker runs the same Wasm encode but returns `{ purpose: "estimate", outputSize }` only — no `bytes` transfer. Estimation reads a fresh `file.arrayBuffer()` on the main thread; the staged buffer is never used for estimates (avoids detach before real transmute).
+**Estimate path (v1.3.0 + v1.4.0):** when `purpose === "estimate"`, the worker calls Wasm `estimate_*_size` exports (v1.4.0 — `CountingWriter`, no output buffer allocation) and returns `{ purpose: "estimate", outputSize }` only. Worker pipeline serializes jobs; estimate coalescing drops superseded requests; transmute preempts pending estimates. Estimation reads a fresh `file.arrayBuffer()` copy (WeakMap-cached per `File`); the staged buffer is never used for estimates.
 
 **Worker routing (v0.6.3):**
 - `transmutador_jpg` + `options.compression` → `transmutar_jpg_a_png_with_compression`
@@ -855,12 +855,14 @@ lib/            # ✅ utils.ts (cn helper), types.ts (UI-1)
                 # ✅ lib/transmutation/ download.ts (UI-2)
                 # ✅ lib/format/ bytes.ts (UI-3), detect-png-alpha.ts, color-label.ts (UI-6)
                 # ✅ lib/format/ metrics.ts — computeSizeDelta (v1.3.0)
+                # ✅ lib/device/ resource-profile.ts — situational scoring (v1.4.0)
                 # ✅ lib/i18n/ dictionaries (EN+ES), tool-copy.ts, errors.ts (UI-4)
                 # ✅ lib/i18n/ metadata.ts — locale cookie bridge + OpenGraph (UI-6)
 hooks/          # ✅ useTransmutationWorker + estimate (v1.3.0), useTheme (UI-1)
                 # ✅ usePageFileDrop (UI-6)
                 # ✅ useCommandPalette (UI-7)
                 # ✅ useFileMetrics — debounced worker estimation (v1.3.0)
+                # ✅ useAdaptiveResourceProfile (v1.4.0)
 ```
 
 **ToolRegistry (scalability keystone — mirrors backend NFR-5):** every tool is declared once in a typed registry that drives the `ToolGrid`, routes, and (later) the menu/search. Adding a format = one registry entry + one Worker route + the crate; no UI rewrites.
@@ -912,7 +914,8 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | UI-5 | ✅ Accessibility + responsive sign-off (v1.0.0) | — |
 | UI-6 | ✅ UX polish layer: transparency pre-notice, page drag overlay, toasts, locale metadata cookie bridge (v1.1.0) | UI-7 = Command Palette |
 | UI-7 | ✅ Command Palette + semantic action titles + color visual swatch (v1.2.0) | UI-8 = search + keyboard nav |
-| Metrics | ✅ Centralized `computeSizeDelta` + `useFileMetrics` + worker estimate path; debounced “estimated size” preview in staged panel (v1.3.0) | Large-file throttle deferred |
+| Metrics | ✅ Centralized `computeSizeDelta` + `useFileMetrics` + worker estimate path; debounced “estimated size” preview in staged panel (v1.3.0) | — |
+| Resource | ✅ Situational `computeResourceProfile` + coalescing + CountingWriter estimates + manual large-file gate (v1.4.0) | Result cache → v1.5.0 |
 
 This UI track runs after the §5.8 backend refinements (now complete) and feeds Phase 4 MVP polish per ROADMAP.
 
@@ -964,6 +967,8 @@ Chief Architect validates SPEC diff during second-pass review.
 |---------|------|--------|---------|------------|
 | 1.0.0-patch | 2026-06-03 | Chief Architect | Round-trip integration tests; CI triggers `master`; README/ROADMAP v1.0.0 alignment; ToolCard `h-full` restored | — |
 | 1.2.0-patch | 2026-06-06 | Chief Architect | SPEC §7.5/§7.7/§7.8 sync; dialog close listener fix; TransparencyNotice client directive | — |
+| 1.4.0-patch | 2026-06-06 | Chief Architect | Worker wired to `estimate_*_size`; pipeline coalescing; superseded fix; manual estimate UI+i18n; size parity tests; Phase C deferred | — |
+| 1.4.0 | 2026-06-06 | OpenCode | Adaptive resource tuning: `computeResourceProfile`, worker coalescing, CountingWriter+estimate Wasm exports, `useAdaptiveResourceProfile` | `resource_tuning_engine_done.md` |
 | 1.3.0 | 2026-06-06 | OpenCode | Metrics engine: computeSizeDelta, useFileMetrics, worker estimate path (purpose+outputSize), debounced real-time size estimation in TransmutationPanel | `metrics_estimation_engine_done.md` |
 | 1.2.0 | 2026-06-06 | OpenCode | UI-7: Command Palette (glassmorphism, ⌘K), semantic action titles (Proposal A), color visual swatch for TransparencyNotice | `ui_7_header_semantic_done.md` |
 | 1.1.0 | 2026-06-04 | OpenCode | UI-6: UX polish — transparency pre-notice, page drag overlay, toast system, locale metadata cookie bridge, detectPngAlpha | `ui_6_ux_polish_layer_done.md` |

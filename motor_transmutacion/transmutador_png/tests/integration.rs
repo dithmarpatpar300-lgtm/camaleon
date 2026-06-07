@@ -2,8 +2,9 @@ use image::{ImageBuffer, ImageReader, Rgba};
 use std::io::Cursor;
 
 use transmutador_png::{
-    png_bytes_to_jpg_bytes, transmutar_png_a_jpg_inner, validate_quality, BackgroundFill,
-    PngToJpgOptions, Quality, DEFAULT_JPEG_QUALITY, MAX_JPEG_QUALITY, MIN_JPEG_QUALITY,
+    estimate_png_to_jpg_size, png_bytes_to_jpg_bytes, transmutar_png_a_jpg_inner,
+    validate_quality, BackgroundFill, PngToJpgOptions, Quality, DEFAULT_JPEG_QUALITY,
+    MAX_JPEG_QUALITY, MIN_JPEG_QUALITY,
 };
 
 fn default_options() -> PngToJpgOptions {
@@ -441,4 +442,20 @@ fn custom_background_opaque_image_unaffected() {
 fn with_options_quality_zero_rejected() {
     let err = validate_quality(0).unwrap_err();
     assert!(err.contains("at least 1") || err.contains("0"));
+}
+
+#[test]
+fn estimate_size_matches_full_transmute() {
+    let png = create_valid_png_bytes();
+    let opts = default_options();
+    let full = transmutar_png_a_jpg_inner(&png, &opts).expect("transmute");
+    let estimated = estimate_png_to_jpg_size(
+        &png,
+        opts.quality,
+        opts.background.r,
+        opts.background.g,
+        opts.background.b,
+    )
+    .expect("estimate");
+    assert_eq!(estimated as usize, full.len());
 }

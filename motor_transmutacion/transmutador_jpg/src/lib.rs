@@ -168,3 +168,38 @@ pub fn transmutar_jpg_a_png_with_compression(
     let options = JpgToPngOptions { compression };
     transmutar_jpg_a_png_inner(input_bytes, &options)
 }
+
+// ---------------------------------------------------------------------------
+// Size-only estimate (Phase B — CountingWriter, no output allocation)
+// ---------------------------------------------------------------------------
+
+use core_utils::counting_writer::CountingWriter;
+
+#[wasm_bindgen]
+pub fn estimate_jpg_to_png_size(
+    input_bytes: &[u8],
+    compression: u8,
+) -> Result<u32, String> {
+    core_utils::validate_input(input_bytes)?;
+    validate_compression(compression)?;
+
+    let img = ImageReader::new(Cursor::new(input_bytes))
+        .with_guessed_format()
+        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?
+        .decode()
+        .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
+
+    let rgb = img.to_rgb8();
+
+    let mut writer = CountingWriter::default();
+    let encoder = PngEncoder::new_with_quality(
+        &mut writer,
+        CompressionType::Level(compression),
+        FilterType::Adaptive,
+    );
+    encoder
+        .write_image(rgb.as_raw(), rgb.width(), rgb.height(), ExtendedColorType::Rgb8)
+        .map_err(|e| format!("Failed to encode PNG: {}", e))?;
+
+    Ok(writer.bytes_written as u32)
+}

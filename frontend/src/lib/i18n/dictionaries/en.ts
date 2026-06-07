@@ -100,6 +100,8 @@ const en: Dictionary = {
       original: "Original size",
       estimated: "Estimated size",
       calculating: "Calculating…",
+      calculate: "Calculate estimate",
+      largeFileHint: "Large file — tap to calculate estimated size.",
     },
   },
 

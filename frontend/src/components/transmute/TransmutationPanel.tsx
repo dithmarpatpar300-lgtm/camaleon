@@ -6,6 +6,7 @@ import type { TransmutationOptions } from "@/workers/types";
 import { fileMatchesExtensions } from "@/lib/tools/extensions";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import { useFileMetrics } from "@/hooks/useFileMetrics";
+import { useAdaptiveResourceProfile } from "@/hooks/useAdaptiveResourceProfile";
 import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
 import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
@@ -61,12 +62,14 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   const { transmutate, estimate, ready } = useTransmutationWorker();
   const { toast } = useToast();
+  const profile = useAdaptiveResourceProfile(staged?.file?.size ?? 0);
   const metrics = useFileMetrics({
     file: staged?.file ?? null,
     module: tool.module,
     options,
     ready,
     estimate,
+    profile,
   });
   const accept = tool.acceptExtensions.join(",");
   const hint = resolveToolFidelityHint(tool.id, t);
@@ -224,7 +227,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                   {formatBytes(metrics.originalSize)}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span className="text-text-muted">{t("panel.metrics.estimated")}</span>
                 <span className="font-mono tabular-nums text-text-secondary">
                   {metrics.estimating ? (
@@ -236,11 +239,24 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                       ~{formatBytes(metrics.estimateDelta.finalSize)}{" "}
                       ({metrics.estimateDelta.deltaLabel})
                     </span>
+                  ) : !profile.autoEstimate ? (
+                    <Button
+                      type="button"
+                      variant="subtle"
+                      size="sm"
+                      onClick={metrics.requestEstimate}
+                      disabled={!ready}
+                    >
+                      {t("panel.metrics.calculate")}
+                    </Button>
                   ) : (
                     "—"
                   )}
                 </span>
               </div>
+              {!profile.autoEstimate && !metrics.estimateDelta && !metrics.estimating && (
+                <p className="text-text-muted">{t("panel.metrics.largeFileHint")}</p>
+              )}
             </div>
           )}
           <Button onClick={handleTransmutar} disabled={!ready} className="w-full">

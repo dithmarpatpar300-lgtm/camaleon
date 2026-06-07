@@ -2,9 +2,9 @@ use image::{ImageBuffer, ImageReader, Rgb};
 use std::io::Cursor;
 
 use transmutador_jpg::{
-    jpg_bytes_to_png_bytes, png_ihdr_color_type, transmutar_jpg_a_png_inner,
-    validate_compression, Compression, JpgToPngOptions, DEFAULT_PNG_COMPRESSION,
-    MAX_PNG_COMPRESSION, MIN_PNG_COMPRESSION,
+    estimate_jpg_to_png_size, jpg_bytes_to_png_bytes, png_ihdr_color_type,
+    transmutar_jpg_a_png_inner, validate_compression, Compression, JpgToPngOptions,
+    DEFAULT_PNG_COMPRESSION, MAX_PNG_COMPRESSION, MIN_PNG_COMPRESSION,
 };
 
 fn default_options() -> JpgToPngOptions {
@@ -327,4 +327,13 @@ fn ihdr_color_type_reader_identifies_rgb() {
 fn ihdr_color_type_reader_rejects_non_png() {
     assert_eq!(png_ihdr_color_type(b"not a PNG"), None);
     assert_eq!(png_ihdr_color_type(&[]), None);
+}
+
+#[test]
+fn estimate_size_matches_full_transmute() {
+    let jpg = create_valid_jpeg_bytes();
+    let opts = default_options();
+    let full = transmutar_jpg_a_png_inner(&jpg, &opts).expect("transmute");
+    let estimated = estimate_jpg_to_png_size(&jpg, opts.compression).expect("estimate");
+    assert_eq!(estimated as usize, full.len());
 }

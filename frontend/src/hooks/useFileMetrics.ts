@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TransmutationModule, TransmutationOptions } from "@/workers/types";
 import { computeSizeDelta, type SizeDelta } from "@/lib/format/metrics";
+import type { ResourceProfile } from "@/lib/device/resource-profile";
 
 type EstimateFn = (
   module: TransmutationModule,
@@ -16,7 +17,7 @@ type UseFileMetricsArgs = {
   options: TransmutationOptions;
   ready: boolean;
   estimate: EstimateFn;
-  debounceMs?: number;
+  profile: ResourceProfile;
 };
 
 type FileMetrics = {
@@ -27,15 +28,21 @@ type FileMetrics = {
   finalDelta: SizeDelta | null;
   setFinalSize: (bytes: number) => void;
   resetMetrics: () => void;
+  requestEstimate: () => void;
 };
 
+const estimateInputCache = new WeakMap<File, ArrayBuffer>();
+
+async function getEstimateBuffer(file: File): Promise<ArrayBuffer> {
+  const cached = estimateInputCache.get(file);
+  if (cached) return cached.slice(0);
+  const buf = await file.arrayBuffer();
+  estimateInputCache.set(file, buf);
+  return buf.slice(0);
+}
+
 export function useFileMetrics({
-  file,
-  module,
-  options,
-  ready,
-  estimate,
-  debounceMs = 400,
+  file, module, options, ready, estimate, profile,
 }: UseFileMetricsArgs): FileMetrics {
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null);
   const [estimating, setEstimating] = useState(false);
@@ -58,21 +65,22 @@ export function useFileMetrics({
 
   const runEstimate = useCallback(async () => {
     if (!file || !ready) return;
+    if (typeof document !== "undefined" && document.hidden) return;
 
     estimateIdRef.current++;
     const thisId = estimateIdRef.current;
-
     setEstimating(true);
     try {
-      const buf = await file.arrayBuffer();
+      const buf = await getEstimateBuffer(file);
       if (thisId !== estimateIdRef.current) return;
+      if (typeof document !== "undefined" && document.hidden) return;
 
       const size = await estimate(module, buf, options);
       if (thisId !== estimateIdRef.current) return;
 
       setEstimatedSize(size);
-    } catch {
-      // estimate failed silently — user still sees the real result
+    } catch (err) {
+      if (err instanceof Error && err.message === "superseded") return;
     } finally {
       if (thisId === estimateIdRef.current) {
         setEstimating(false);
@@ -80,20 +88,38 @@ export function useFileMetrics({
     }
   }, [file, ready, module, options, estimate]);
 
+  const requestEstimate = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    runEstimate();
+  }, [runEstimate]);
+
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!file || !ready) return;
+    if (!profile.autoEstimate) return;
+    if (typeof document !== "undefined" && document.hidden) return;
 
-    timerRef.current = setTimeout(runEstimate, debounceMs);
+    timerRef.current = setTimeout(runEstimate, profile.debounceMs);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [file, ready, options, debounceMs, runEstimate]);
+  }, [file, ready, options, runEstimate, profile.debounceMs, profile.autoEstimate]);
+
+  useEffect(() => {
+    if (!file || !ready || !profile.autoEstimate) return;
+
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(runEstimate, profile.debounceMs);
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [file, ready, profile.autoEstimate, profile.debounceMs, runEstimate]);
 
   const setFinalSize = useCallback(
-    (bytes: number) => {
-      setFinalDelta(computeSizeDelta(originalSize, bytes));
-    },
+    (bytes: number) => setFinalDelta(computeSizeDelta(originalSize, bytes)),
     [originalSize]
   );
 
@@ -105,12 +131,7 @@ export function useFileMetrics({
   }, []);
 
   return {
-    originalSize,
-    estimatedSize,
-    estimating,
-    estimateDelta,
-    finalDelta,
-    setFinalSize,
-    resetMetrics,
+    originalSize, estimatedSize, estimating, estimateDelta, finalDelta,
+    setFinalSize, resetMetrics, requestEstimate,
   };
 }

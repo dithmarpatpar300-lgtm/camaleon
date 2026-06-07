@@ -82,8 +82,11 @@ export function useTransmutationWorker(): {
   const estimate = useCallback<EstimateFn>(
     async (module, bytes, options) => {
       const response = await sendMessage(module, bytes, options, "estimate");
-      if (!response.ok) throw new Error(response.error);
-      return response.outputSize;
+      if (response.ok) return response.outputSize;
+      if (response.error === "superseded") {
+        throw new Error("superseded");
+      }
+      throw new Error(response.error);
     },
     [sendMessage]
   );
