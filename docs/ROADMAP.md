@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.7.3 | Five active tools incl. PNG→WebP (lossless) |
+| **Frontend (app)** | v1.7.5 | Five active tools; ScrollVeil + theme/header UX polish |
 | **Engine (Rust workspace)** | v1.4.0 | Four Wasm crates + `transmutador_encode` |
-| **SPEC** | v1.7.0 | Tier 1 Phase 5.1–5.3 implemented |
+| **SPEC** | v1.7.0 | Tier 1 Phase 5.1–5.3 implemented; v1.7.4–5 UX hotfixes shipped |
 
-**v1.7.3 shipped** (2026-06-07). Next: Phase 5.4 JPEG→WebP (`phase5_jpg_to_webp`).
+**v1.7.5 shipped** (2026-06-07): bounded scroll veils, smooth theme crossfade, animated language/theme controls, scroll-lock for overlays. **v1.7.4** hotfix: MetricsPanel for lossless encode tools. Next: Phase 5.4 JPEG→WebP (`phase5_jpg_to_webp`).
 
 ---
 

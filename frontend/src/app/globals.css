@@ -148,6 +148,203 @@ dialog.command-palette::backdrop {
 }
 
 /* ------------------------------------------------------------------ */
+/* Language selector — animated sliding pill                           */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Positioned pill that tracks the active locale.
+ * --active-idx : zero-based index of the active locale (set via inline style)
+ * --lang-btn-w : button width (default 2.25rem = w-9). Override per instance
+ *                if button widths change (e.g. longer locale codes like "ZH").
+ */
+.lang-pill-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--lang-btn-w, 2.25rem);
+  border-radius: 9999px;
+  background-color: var(--color-bg-elevated);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  transform: translateX(calc(var(--active-idx, 0) * var(--lang-btn-w, 2.25rem)));
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.light .lang-pill-thumb {
+  background-color: var(--color-bg-surface);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* ------------------------------------------------------------------ */
+/* Theme fade — smooth color crossfade on dark ↔ light switch         */
+/* ------------------------------------------------------------------ */
+
+/*
+ * This class is added to <html> by ThemeProvider only when the user
+ * explicitly toggles the theme, and only if prefers-reduced-motion is
+ * not set. It is removed after 350 ms (slightly longer than the longest
+ * transition below so every element finishes cleanly).
+ *
+ * We intentionally target only the properties that define "color" in the
+ * design system, avoiding transform/opacity to not interfere with running
+ * animations (scroll veils, metrics, toasts, etc.).
+ */
+html.camaleon-theme-fade *,
+html.camaleon-theme-fade *::before,
+html.camaleon-theme-fade *::after {
+  transition:
+    background-color 300ms ease,
+    color            220ms ease,
+    border-color     300ms ease,
+    fill             220ms ease,
+    stroke           220ms ease,
+    box-shadow       300ms ease,
+    outline-color    220ms ease !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Theme toggle — icon entrance animation                              */
+/* ------------------------------------------------------------------ */
+
+@keyframes themeIconIn {
+  from {
+    opacity: 0;
+    transform: rotate(-20deg) scale(0.65);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.theme-icon-in {
+  display: block;
+  animation: themeIconIn 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scroll lock — modals / overlays block page scroll                   */
+/* ------------------------------------------------------------------ */
+
+html.camaleon-scroll-locked {
+  overflow: hidden !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* ScrollVeil — frosted gradient veil for bounded scroll regions       */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Technique: background-color (CSS variable) + background-image (accent) + mask-image.
+ *
+ * background-color: var(--color-bg-*) — driven by design token.
+ *   → Participates in the camaleon-theme-fade transition (background-color 300ms).
+ *   → Dark and light values come from the token automatically; no .light override needed.
+ *
+ * background-image: subtle green accent gradient, fades to transparent at 40%.
+ *   → Layered on top of background-color by the browser.
+ *   → .light override reduces its opacity slightly.
+ *   → Stays constant during the theme transition (imperceptible at these low opacities).
+ *
+ * mask-image: linear-gradient — makes the leading edge of the veil perfectly
+ *   transparent so there is zero hard fringe against the scroll container border.
+ *
+ * backdrop-filter: blur — frosted / "empañado" effect.
+ *
+ * *-bot veils: fade top→bottom (content disappears into the background below).
+ * *-top veils: fade bottom→top (content disappears into the background above).
+ */
+
+/* ─── main bottom ────────────────────────────────────────────────── */
+.scroll-veil-main-bot {
+  background-color: var(--color-bg-base);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(34, 197, 94, 0.07) 0%,
+    transparent             40%
+  );
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 55%);
+          mask-image: linear-gradient(to bottom, transparent 0%, black 55%);
+  backdrop-filter:         blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.light .scroll-veil-main-bot {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(34, 197, 94, 0.04) 0%,
+    transparent             40%
+  );
+}
+
+/* ─── main top ───────────────────────────────────────────────────── */
+.scroll-veil-main-top {
+  background-color: var(--color-bg-base);
+  background-image: linear-gradient(
+    to top,
+    rgba(34, 197, 94, 0.07) 0%,
+    transparent             40%
+  );
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, black 55%);
+          mask-image: linear-gradient(to top, transparent 0%, black 55%);
+  backdrop-filter:         blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.light .scroll-veil-main-top {
+  background-image: linear-gradient(
+    to top,
+    rgba(34, 197, 94, 0.04) 0%,
+    transparent             40%
+  );
+}
+
+/* ─── palette bottom ─────────────────────────────────────────────── */
+.scroll-veil-palette-bot {
+  background-color: var(--color-bg-surface);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(34, 197, 94, 0.05) 0%,
+    transparent             38%
+  );
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 50%);
+          mask-image: linear-gradient(to bottom, transparent 0%, black 50%);
+  backdrop-filter:         blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.light .scroll-veil-palette-bot {
+  background-image: linear-gradient(
+    to bottom,
+    rgba(34, 197, 94, 0.03) 0%,
+    transparent             38%
+  );
+}
+
+/* ─── palette top ────────────────────────────────────────────────── */
+.scroll-veil-palette-top {
+  background-color: var(--color-bg-surface);
+  background-image: linear-gradient(
+    to top,
+    rgba(34, 197, 94, 0.05) 0%,
+    transparent             38%
+  );
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, black 50%);
+          mask-image: linear-gradient(to top, transparent 0%, black 50%);
+  backdrop-filter:         blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.light .scroll-veil-palette-top {
+  background-image: linear-gradient(
+    to top,
+    rgba(34, 197, 94, 0.03) 0%,
+    transparent             38%
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Scrollbar Camaleón                                                   */
 /* ------------------------------------------------------------------ */
 

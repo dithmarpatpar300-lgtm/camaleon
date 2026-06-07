@@ -8,7 +8,7 @@
 
 **Version:** 1.7.0  
 **Last updated:** 2026-06-07  
-**Status:** v1.7.3 shipped — Tier 1 phases 5.1–5.3; Engine v1.4.0; Phase 5.4 JPEG→WebP next
+**Status:** v1.7.5 shipped — v1.7.4 hotfix (MetricsPanel + `count_webp_bytes`) + v1.7.5 UX polish (ScrollVeil, theme fade, header controls); Engine v1.4.0; Phase 5.4 JPEG→WebP next
 
 ---
 
@@ -1162,6 +1162,8 @@ Chief Architect validates SPEC diff during second-pass review.
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
 | 1.7.0 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.1: `transmutador_webp` WebP→PNG + estimate(compression) + worker/registry/i18n; §6.4 implemented | `phase5_webp_to_png_done.md` |
+| 1.7.5 | 2026-06-07 | Chief Architect | v1.7.5 UX polish: `ScrollVeil` bounded scroll (main + palette), scroll-lock for modals, overlay scrollbar rAF sync, animated language pill + circular theme toggle, `camaleon-theme-fade` theme crossfade, veil tokens use `background-color` for theme transition | `v1_7_5_ux_polish_done.md` |
+| 1.7.4 | 2026-06-07 | Chief Architect | v1.7.4 hotfix: `MetricsPanel` for zero-option tools; `count_webp_bytes` centralized in `core_utils` | — |
 | 1.7.0-planned | 2026-06-07 | Chief Architect | §3 planned crates; §5.12 WebP science; §6.4 transmutador_webp API contract; §6.5 transmutador_encode stub; §7.1 Dropzone Tier 1 routing; §7.3 Wasm layout extended; NFR-7 bundle size; NFR-8 format honesty; §12 Format Expansion Program | — |
 | 1.6.1 | 2026-06-07 | Chief Architect | v1.6.1 hotfix: locale/theme FOUC (cookie SSR + bootstrap script); Scrollbar Camaleón overlay; landing shell unification; ToolCard min-heights; CommandPalette FormatChip alignment | — |
 | 1.6.0 | 2026-06-07 | Chief Architect | UI-9 header/footer polish; `TransmutationWorkerProvider`; restore v1.5.0 cache/metrics wiring after OpenCode regression | — |

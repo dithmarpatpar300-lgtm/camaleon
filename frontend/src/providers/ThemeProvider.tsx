@@ -19,8 +19,17 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function applyThemeClass(theme: Theme) {
+const THEME_FADE_CLASS = "camaleon-theme-fade";
+const THEME_FADE_DURATION_MS = 350;
+
+function applyThemeClass(theme: Theme, animate = false) {
   const root = document.documentElement;
+
+  if (animate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    root.classList.add(THEME_FADE_CLASS);
+    setTimeout(() => root.classList.remove(THEME_FADE_CLASS), THEME_FADE_DURATION_MS);
+  }
+
   root.classList.remove("dark", "light");
   root.classList.add(theme);
 }
@@ -56,7 +65,7 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
     setThemeState(t);
     localStorage.setItem(THEME_STORAGE_KEY, t);
     document.cookie = `${THEME_COOKIE_NAME}=${t}; path=/; max-age=31536000; SameSite=Lax`;
-    applyThemeClass(t);
+    applyThemeClass(t, true);
   }, []);
 
   const toggleTheme = useCallback(() => {

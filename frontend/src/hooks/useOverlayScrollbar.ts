@@ -2,17 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const MIN_THUMB_H = 40;           // px — prevents tiny thumb on very long pages
-const TRACK_PAD_V = 8;            // px — top/bottom inset of the usable track area
-const DEACTIVATE_DELAY_MS = 1000; // ms after scroll/hover stops → revert to thin idle
-const HIDE_DELAY_MS = 5000;       // ms after going idle → fully hide (long inactivity)
+const MIN_THUMB_H = 40;
+const TRACK_PAD_V = 8;
+const DEACTIVATE_DELAY_MS = 1000;
+const HIDE_DELAY_MS = 5000;
 
-/**
- * Three visual states for the scrollbar:
- *  "active"  — user is scrolling, hovering, or dragging: thumb is wider + accent color
- *  "idle"    — overflow exists but no recent activity: ultra-thin subtle thumb always visible
- *  "hidden"  — long inactivity (HIDE_DELAY_MS): thumb fully faded out
- */
 export type ScrollbarVisibility = "active" | "idle" | "hidden";
 
 export interface OverlayScrollbarState {
@@ -50,10 +44,20 @@ function computeThumb(): { thumbTop: number; thumbHeight: number; hasOverflow: b
   return { thumbTop: thumbT, thumbHeight: thumbH, hasOverflow: true };
 }
 
+/** Apply thumb geometry directly to the DOM — zero React render lag. */
+function paintThumb(el: HTMLDivElement | null, g: ReturnType<typeof computeThumb>) {
+  if (!el) return;
+  el.style.top = `${g.thumbTop}px`;
+  el.style.height = `${g.thumbHeight}px`;
+}
+
 export function useOverlayScrollbar(): {
   state: OverlayScrollbarState;
   handlers: OverlayScrollbarHandlers;
+  thumbRef: React.RefObject<HTMLDivElement | null>;
 } {
+  const thumbRef = useRef<HTMLDivElement | null>(null);
+
   const [state, setState] = useState<OverlayScrollbarState>({
     thumbTop: TRACK_PAD_V,
     thumbHeight: MIN_THUMB_H,
@@ -74,16 +78,15 @@ export function useOverlayScrollbar(): {
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
   }, []);
 
-  // After activity ends → go idle after DEACTIVATE_DELAY, then hidden after HIDE_DELAY
   const scheduleDeactivate = useCallback(() => {
     if (isDraggingRef.current) return;
     clearTimers();
     deactivateTimerRef.current = setTimeout(() => {
       if (!isDraggingRef.current) {
-        setState(s => ({ ...s, visibility: "idle" }));
+        setState((s) => ({ ...s, visibility: "idle" }));
         hideTimerRef.current = setTimeout(() => {
           if (!isDraggingRef.current) {
-            setState(s => ({ ...s, visibility: "hidden" }));
+            setState((s) => ({ ...s, visibility: "hidden" }));
           }
         }, HIDE_DELAY_MS);
       }
@@ -92,38 +95,47 @@ export function useOverlayScrollbar(): {
 
   const setActive = useCallback(() => {
     clearTimers();
-    setState(s => ({ ...s, visibility: "active" }));
+    setState((s) => ({ ...s, visibility: "active" }));
   }, [clearTimers]);
 
   const applyGeometry = useCallback((makeActive = false) => {
     const g = computeThumb();
     thumbHRef.current = g.thumbHeight;
     hasOverflowRef.current = g.hasOverflow;
-    setState(s => ({
+    paintThumb(thumbRef.current, g);
+    setState((s) => ({
       ...s,
       ...g,
-      // When overflow appears for the first time, show idle immediately
       ...(makeActive ? { visibility: "active" as ScrollbarVisibility } : {}),
       ...(!g.hasOverflow ? { visibility: "hidden" as ScrollbarVisibility } : {}),
     }));
   }, []);
 
-  // On mount: compute and show idle if there's already overflow
   useEffect(() => {
     const g = computeThumb();
     thumbHRef.current = g.thumbHeight;
     hasOverflowRef.current = g.hasOverflow;
-    setState(s => ({
+    paintThumb(thumbRef.current, g);
+    setState((s) => ({
       ...s,
       ...g,
       visibility: g.hasOverflow ? "idle" : "hidden",
     }));
   }, []);
 
-  // Scroll + resize listeners
   useEffect(() => {
     const onScroll = () => {
-      applyGeometry(true);
+      const g = computeThumb();
+      thumbHRef.current = g.thumbHeight;
+      hasOverflowRef.current = g.hasOverflow;
+      paintThumb(thumbRef.current, g);
+      setState((s) => ({
+        ...s,
+        thumbTop: g.thumbTop,
+        thumbHeight: g.thumbHeight,
+        hasOverflow: g.hasOverflow,
+        visibility: g.hasOverflow ? "active" : "hidden",
+      }));
       scheduleDeactivate();
     };
 
@@ -146,7 +158,6 @@ export function useOverlayScrollbar(): {
     };
   }, [applyGeometry, scheduleDeactivate, clearTimers]);
 
-  // Window-level pointer events for drag
   useEffect(() => {
     const onPointerMove = (e: PointerEvent) => {
       if (!dragRef.current) return;
@@ -161,13 +172,20 @@ export function useOverlayScrollbar(): {
       const delta = e.clientY - dragRef.current.startY;
       const newTop = dragRef.current.startScrollTop + delta * (maxScroll / thumbTrackH);
       el.scrollTop = Math.max(0, Math.min(maxScroll, newTop));
+      const g = computeThumb();
+      paintThumb(thumbRef.current, g);
+      setState((s) => ({
+        ...s,
+        thumbTop: g.thumbTop,
+        thumbHeight: g.thumbHeight,
+      }));
     };
 
     const onPointerUp = () => {
       if (!dragRef.current) return;
       dragRef.current = null;
       isDraggingRef.current = false;
-      setState(s => ({ ...s, dragging: false }));
+      setState((s) => ({ ...s, dragging: false }));
       scheduleDeactivate();
     };
 
@@ -189,7 +207,7 @@ export function useOverlayScrollbar(): {
     };
     isDraggingRef.current = true;
     setActive();
-    setState(s => ({ ...s, dragging: true }));
+    setState((s) => ({ ...s, dragging: true }));
   }, [setActive]);
 
   const onTrackPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -203,6 +221,9 @@ export function useOverlayScrollbar(): {
     const el = document.documentElement;
     const maxScroll = el.scrollHeight - window.innerHeight;
     el.scrollTop = Math.max(0, Math.min(maxScroll, ratio * maxScroll));
+    const g = computeThumb();
+    paintThumb(thumbRef.current, g);
+    setState((s) => ({ ...s, ...g, visibility: "active" }));
     setActive();
     scheduleDeactivate();
   }, [setActive, scheduleDeactivate]);
@@ -225,5 +246,6 @@ export function useOverlayScrollbar(): {
       onTrackMouseEnter,
       onTrackMouseLeave,
     },
+    thumbRef,
   };
 }

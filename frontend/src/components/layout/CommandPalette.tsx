@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import Link from "next/link";
 import { TOOLS } from "@/lib/tools/tool-registry";
 import { Badge } from "@/components/ui/Badge";
+import { ScrollVeil } from "@/components/ui/ScrollVeil";
 import { useI18n } from "@/providers/I18nProvider";
 import { getToolStrings, resolveToolActionTitle } from "@/lib/i18n/tool-copy";
 
@@ -69,45 +70,49 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
             <p className="mb-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
               {t("commandPalette.categoryImage")}
             </p>
-            <div className="flex flex-col gap-1.5">
-              {activeTools.map((tool) => {
-                const copy = getToolStrings(tool, t);
-                const actionTitle = resolveToolActionTitle(tool.id, t);
-                return (
-                  <Link
-                    key={tool.id}
-                    href={`/transmute/${tool.slug}`}
-                    onClick={onClose}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
-                  >
-                    <FormatChip from={tool.fromFormat} to={tool.toFormat} />
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span className="text-sm font-semibold text-text-primary leading-snug">
-                          {actionTitle ?? tool.title}
-                        </span>
-                        {actionTitle && (
-                          <span className="font-mono text-[10px] text-text-muted shrink-0">
-                            {tool.fromFormat} → {tool.toFormat}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-0.5 truncate text-xs text-text-secondary">
-                        {copy.description}
-                      </p>
-                    </div>
-
-                    <Badge
-                      variant={tool.fidelity === "lossless" ? "lossless" : "lossy"}
-                      className="shrink-0 text-[10px] font-bold px-2 py-0.5"
+            {/* ScrollVeil: shows 5 rows + peek of 6th when list grows */}
+            <ScrollVeil variant="palette">
+              {/* pb-1 breathing room so last item's focus ring isn't clipped */}
+              <div className="flex flex-col gap-1.5 pb-1">
+                {activeTools.map((tool) => {
+                  const copy = getToolStrings(tool, t);
+                  const actionTitle = resolveToolActionTitle(tool.id, t);
+                  return (
+                    <Link
+                      key={tool.id}
+                      href={`/transmute/${tool.slug}`}
+                      onClick={onClose}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
                     >
-                      {tool.fidelity === "lossless" ? t("badges.lossless") : t("badges.lossy")}
-                    </Badge>
-                  </Link>
-                );
-              })}
-            </div>
+                      <FormatChip from={tool.fromFormat} to={tool.toFormat} />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <span className="text-sm font-semibold text-text-primary leading-snug">
+                            {actionTitle ?? tool.title}
+                          </span>
+                          {actionTitle && (
+                            <span className="font-mono text-[10px] text-text-muted shrink-0">
+                              {tool.fromFormat} → {tool.toFormat}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 truncate text-xs text-text-secondary">
+                          {copy.description}
+                        </p>
+                      </div>
+
+                      <Badge
+                        variant={tool.fidelity === "lossless" ? "lossless" : "lossy"}
+                        className="shrink-0 text-[10px] font-bold px-2 py-0.5"
+                      >
+                        {tool.fidelity === "lossless" ? t("badges.lossless") : t("badges.lossy")}
+                      </Badge>
+                    </Link>
+                  );
+                })}
+              </div>
+            </ScrollVeil>
           </div>
 
           {/* ── Coming soon ─────────────────────────────────────────── */}

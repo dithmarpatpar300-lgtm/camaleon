@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { useI18n } from "@/providers/I18nProvider";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import { APP_VERSION, SITE_REPO_URL } from "@/lib/site";
@@ -33,6 +34,8 @@ export function Footer() {
   const { t } = useI18n();
   const { ready } = useTransmutationWorker();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  useScrollLock(shortcutsOpen);
 
   return (
     <footer className="shrink-0 border-t border-border">
