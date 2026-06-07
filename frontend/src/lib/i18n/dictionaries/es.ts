@@ -49,7 +49,13 @@ const es: Dictionary = {
 
   footer: {
     privacy: "100% local. Tus archivos nunca salen de tu dispositivo.",
-    version: "v{version} . MIT",
+    about: "Acerca de",
+    contact: "Contacto",
+    privacyPolicy: "Privacidad",
+    terms: "Términos",
+    legalNav: "Legal",
+    copyright: "© {year} {name} · {license}",
+    version: "v{version}",
     github: "GitHub",
     shortcuts: "Atajos",
     shortcutsTitle: "Atajos de teclado",
@@ -59,6 +65,11 @@ const es: Dictionary = {
     engineInit: "Motor iniciando...",
   },
 
+  legal: {
+    backHome: "Volver al inicio",
+    lastUpdated: "Última actualización: {date}",
+  },
+
   landing: {
     hero: {
       title: "Transmutar archivos",
@@ -66,6 +77,7 @@ const es: Dictionary = {
     },
     privacy: {
       text: "100% local. Tus archivos nunca salen de tu dispositivo.",
+      learnMore: "Política de privacidad",
     },
     tools: {
       available: "Transmutaciones disponibles",

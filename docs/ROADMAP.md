@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.7.7 | Six active tools — Tier 1 WebP Suite complete |
+| **Frontend (app)** | v1.7.8 | Six active tools + legal pages — **public-launch baseline** |
 | **Engine (Rust workspace)** | v1.4.1 | Four Wasm crates; `transmutador_encode` PNG+JPEG→WebP |
 | **SPEC** | v1.7.0 | Tier 1 Phases 5.1–5.4 implemented |
 
-**v1.7.7 shipped** (2026-06-07): `PanelScrollFade` for command palette + ScrollVeil flash-free reload. **v1.7.6** closed Tier 1 (JPEG→WebP). Next: Tier 2 raster classics (v1.8.x).
+**v1.7.8 shipped** (2026-06-07): Legal shields (About, Contact, Privacy, Terms) EN+ES; minimal footer; landing privacy link. **v1.7.7** scroll UX polish. **v1.7.6** closed Tier 1 (JPEG→WebP). Next: deploy + real-user feedback, then Tier 2 (v1.8.x).
 
 ---
 
@@ -187,6 +187,22 @@ Goal: first encode-direction crate; lossless VP8L only; spike gate embedded in p
 
 ---
 
+## Public launch baseline (v1.7.8)
+
+Minimum trust + product surface for real users:
+
+- [x] Six high-demand conversions (JPG↔PNG + full WebP suite)
+- [x] Bilingual legal pages (`/about`, `/contact`, `/privacy`, `/terms`)
+- [x] Footer copyright + MIT + version
+- [x] Privacy banner → policy link on landing
+- [ ] Production deploy (Cloudflare Pages / Vercel recommended)
+- [ ] Git release tag `v1.7.8`
+- [ ] Optional: contact email; Playwright smoke E2E before scale
+
+Report: `docs/reports/v1_7_8_legal_launch_done.md`
+
+---
+
 ## Post-v1.7 Horizon
 
 | Tier | Target | Features | Notes |
@@ -222,6 +238,7 @@ Goal: first encode-direction crate; lossless VP8L only; spike gate embedded in p
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-07 | Chief Architect (Cursor) | v1.7.8 shipped: legal pages EN+ES, footer redesign, public-launch baseline section |
 | 2026-06-07 | Chief Architect (Cursor) | Phase 5 (Tier 1 WebP suite) planned; ROADMAP snapshot updated to v1.6.1; post-v1.7 horizon added |
 | 2026-06-07 | Chief Architect (Cursor) | v1.6.1 shipped: locale/theme FOUC, Scrollbar Camaleón, landing layout stability |
 | 2026-06-07 | Chief Architect (Cursor) | v1.6.0 shipped: UI-9 header/footer polish, metrics UX, result cache |

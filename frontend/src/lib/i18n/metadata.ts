@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { Locale } from "./types";
 import { LOCALE_COOKIE_NAME, getDictionary } from "./index";
 import { resolveLocaleFromCookie } from "@/lib/prefs";
+import { getLegalPageContent, type LegalPageId } from "@/lib/legal";
 
 export { LOCALE_COOKIE_NAME, resolveLocaleFromCookie };
 
@@ -29,6 +30,20 @@ export function getRootMetadata(locale: Locale): Metadata {
     openGraph: {
       title: t(locale, "meta.title"),
       description: t(locale, "meta.description"),
+      type: "website",
+      locale: locale === "es" ? "es_ES" : "en_US",
+    },
+  };
+}
+
+export function getLegalMetadata(locale: Locale, pageId: LegalPageId): Metadata {
+  const page = getLegalPageContent(locale, pageId);
+  return {
+    title: `${page.title} — Camaleon`,
+    description: page.description,
+    openGraph: {
+      title: `${page.title} — Camaleon`,
+      description: page.description,
       type: "website",
       locale: locale === "es" ? "es_ES" : "en_US",
     },

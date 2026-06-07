@@ -2,25 +2,25 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v1.0.0** (App + Engine) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v1.7.8** (App) · Engine v1.4.1 · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v1.0.0)
+## What works today (v1.7.8)
 
 | Capability | Status |
 |------------|--------|
-| **JPG / JPEG → PNG** | Lossless raster storage; configurable PNG compression (1–9) |
-| **PNG → JPG** | Configurable JPEG quality (1–100); alpha flattened onto selectable background |
-| **Landing + per-tool routes** | `/` tool grid + `/transmute/jpg-to-png`, `/transmute/png-to-jpg` |
+| **JPG / JPEG ↔ PNG** | Lossless PNG compression (1–9); JPEG quality (1–100); alpha flatten |
+| **WebP suite** | WebP→PNG/JPG; PNG/JPEG→WebP (lossless WebP) |
+| **Six active tools** | Landing grid + `/transmute/[slug]` per conversion |
 | **Staged transmutation flow** | Drop → adjust options → Transmutar → preview + size delta → download |
 | **EN / ES** | Full UI i18n with persisted locale |
+| **Legal pages** | `/about`, `/contact`, `/privacy`, `/terms` (bilingual) |
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
-| **Accessibility baseline** | Keyboard focus, ToolCard affordance visible, `role="alert"`, reduced motion |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Privacy** | StripAll metadata default; 100% local processing |
 
-Post-v1.0 backlog: Playwright E2E, JPEG encoder swap (subsampling). See [docs/ROADMAP.md](docs/ROADMAP.md).
+Next: public deploy, Tier 2 formats (v1.8.x). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 
@@ -53,7 +53,7 @@ Post-v1.0 backlog: Playwright E2E, JPEG encoder swap (subsampling). See [docs/RO
 cd frontend && npm run build:wasm
 ```
 
-Artifacts: `frontend/public/wasm/transmutador_jpg/` and `transmutador_png/` (gitignored; rebuild after engine changes).
+Artifacts: `frontend/public/wasm/transmutador_{jpg,png,webp,encode}/` (gitignored; rebuild after engine changes).
 
 ## Development
 
@@ -86,13 +86,15 @@ cd frontend && npm run build
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v1.0.0)
-├── motor_transmutacion/     # Rust workspace (v1.0.0)
+├── frontend/              # Next.js app (v1.7.8)
+├── motor_transmutacion/     # Rust workspace (v1.4.1)
 │   ├── core_utils/          # Validation, output integrity, metadata scanners
 │   ├── transmutador_jpg/    # JPEG → PNG
-│   └── transmutador_png/    # PNG → JPEG
+│   ├── transmutador_png/    # PNG → JPEG
+│   ├── transmutador_webp/   # WebP → PNG / JPEG
+│   └── transmutador_encode/ # PNG / JPEG → WebP
 ├── docs/
-│   ├── SPEC.md              # Architecture bible (v0.6.6)
+│   ├── SPEC.md              # Architecture bible (v1.7.0)
 │   ├── ROADMAP.md           # Phases + MVP criteria
 │   ├── GOVERNANCE.md        # Agent workflow
 │   ├── prompts/             # OpenCode task prompts
@@ -111,6 +113,8 @@ camaleon/
 | Engine hardening | v0.5.1–v0.6.6 | ✅ |
 | UI track (UI-1..UI-4) | v0.6.1–v0.6.4 | ✅ |
 | **MVP** | **v1.0.0** | ✅ Shipped (UI-5 baseline + CI) |
+| **Tier 1 WebP suite** | **v1.7.6** | ✅ Six active tools |
+| **Launch baseline** | **v1.7.8** | ✅ Legal pages + footer |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 

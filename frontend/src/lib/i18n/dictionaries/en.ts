@@ -49,7 +49,13 @@ const en: Dictionary = {
 
   footer: {
     privacy: "100% local. Your files never leave your device.",
-    version: "v{version} · MIT",
+    about: "About",
+    contact: "Contact",
+    privacyPolicy: "Privacy",
+    terms: "Terms",
+    legalNav: "Legal",
+    copyright: "© {year} {name} · {license}",
+    version: "v{version}",
     github: "GitHub",
     shortcuts: "Shortcuts",
     shortcutsTitle: "Keyboard shortcuts",
@@ -59,6 +65,11 @@ const en: Dictionary = {
     engineInit: "Engine starting…",
   },
 
+  legal: {
+    backHome: "Back to home",
+    lastUpdated: "Last updated: {date}",
+  },
+
   landing: {
     hero: {
       title: "Transmute files",
@@ -66,6 +77,7 @@ const en: Dictionary = {
     },
     privacy: {
       text: "100% local. Your files never leave your device.",
+      learnMore: "Privacy policy",
     },
     tools: {
       available: "Available transmutations",

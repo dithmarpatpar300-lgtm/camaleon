@@ -8,7 +8,7 @@
 
 **Version:** 1.7.0  
 **Last updated:** 2026-06-07  
-**Status:** v1.7.7 shipped — Tier 1 WebP Suite complete (Phases 5.1–5.4); Engine v1.4.1; v1.7.7 scroll UX (PanelScrollFade + ScrollVeil flash fix)
+**Status:** v1.7.8 shipped — Tier 1 WebP Suite complete; legal pages + launch baseline; Engine v1.4.1; v1.7.7 scroll UX; v1.7.8 legal shields (footer + `/about` `/contact` `/privacy` `/terms`)
 
 ---
 
@@ -1164,6 +1164,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 1.7.8 | 2026-06-07 | Chief Architect | v1.7.8 launch baseline: bilingual legal pages (`lib/legal`), minimal footer, PrivacyBanner → `/privacy`; no server-side file handling change | `v1_7_8_legal_launch_done.md` |
 | 1.7.0 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.1: `transmutador_webp` WebP→PNG + estimate(compression) + worker/registry/i18n; §6.4 implemented | `phase5_webp_to_png_done.md` |
 | 1.7.7 | 2026-06-07 | Chief Architect | v1.7.7 scroll UX: `PanelScrollFade` for acrylic panels (mask-based); `ScrollVeil` optimistic SSR defaults (no F5 flash); glass-palette transparency | — |
 | 1.7.6 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.4 JPEG→WebP: `transmutar_jpg_a_webp` + estimate; dual `encodeSource` worker routing (Architect patch); Tier 1 WebP Suite complete | `phase5_jpg_to_webp_done.md` |
