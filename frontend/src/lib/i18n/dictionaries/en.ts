@@ -99,9 +99,10 @@ const en: Dictionary = {
     metrics: {
       original: "Original size",
       estimated: "Estimated size",
-      calculating: "Calculating…",
+      calculating: "Calculating",
       calculate: "Calculate estimate",
       largeFileHint: "Large file — tap to calculate estimated size.",
+      cacheReady: "Ready to transmute",
     },
   },
 

@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.4.0  
+**Version:** 1.5.0  
 **Last updated:** 2026-06-06  
-**Status:** MVP — Camaleon v1.4.0 (adaptive resource tuning) / Engine v1.2.0
+**Status:** MVP — Camaleon v1.5.0 (result cache + metrics UX) / Engine v1.2.0
 
 ---
 
@@ -767,7 +767,7 @@ type WorkerResponseSuccess = {
 };
 ```
 
-**Estimate path (v1.3.0 + v1.4.0):** when `purpose === "estimate"`, the worker calls Wasm `estimate_*_size` exports (v1.4.0 — `CountingWriter`, no output buffer allocation) and returns `{ purpose: "estimate", outputSize }` only. Worker pipeline serializes jobs; estimate coalescing drops superseded requests; transmute preempts pending estimates. Estimation reads a fresh `file.arrayBuffer()` copy (WeakMap-cached per `File`); the staged buffer is never used for estimates.
+**Estimate path (v1.3.0–v1.5.0):** when `purpose === "estimate"`, dual strategy by `enableResultCache` on `WorkerRequest`: (a) cache-enabled — full encode, store bytes in worker `ResultCache`, return `{ outputSize, cacheStored }`; (b) cache-disabled — Wasm `estimate_*_size` (`CountingWriter`). Worker pipeline serializes jobs; coalescing drops superseded requests; transmute preempts estimates. **Transmute fast path (v1.5.0):** matching `fingerprint` → transfer cached bytes (`cacheHit: true`) without re-encode. Fingerprint built on main thread via `buildTransmuteFingerprint`. Estimation never uses `staged.bytes`.
 
 **Worker routing (v0.6.3):**
 - `transmutador_jpg` + `options.compression` → `transmutar_jpg_a_png_with_compression`
@@ -847,6 +847,7 @@ components/
                 #   Hero, PrivacyBanner (UI-2)
                 # ✅ OptionsControls, TransmutationPanel (UI-3)
                 # ✅ TransparencyNotice, BackgroundColorPill, PageDropOverlay (UI-6 / pill v1.2.0-patch)
+                # ✅ MetricsPanel + EstimatedMetricsValue SWR animation (v1.5.0)
 providers/      # ✅ ThemeProvider (UI-1)
                 # ✅ I18nProvider (UI-4)
                 # ✅ ToastProvider (UI-6)
@@ -915,7 +916,7 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | UI-6 | ✅ UX polish layer: transparency pre-notice, page drag overlay, toasts, locale metadata cookie bridge (v1.1.0) | UI-7 = Command Palette |
 | UI-7 | ✅ Command Palette + semantic action titles + color visual swatch (v1.2.0) | UI-8 = search + keyboard nav |
 | Metrics | ✅ Centralized `computeSizeDelta` + `useFileMetrics` + worker estimate path; debounced “estimated size” preview in staged panel (v1.3.0) | — |
-| Resource | ✅ Situational `computeResourceProfile` + coalescing + CountingWriter estimates + manual large-file gate (v1.4.0) | Result cache → v1.5.0 |
+| Resource | ✅ `computeResourceProfile` + coalescing + CountingWriter + result cache + `MetricsPanel` SWR animation (v1.4.0–v1.5.0) | Multi-entry batch cache |
 
 This UI track runs after the §5.8 backend refinements (now complete) and feeds Phase 4 MVP polish per ROADMAP.
 
@@ -967,6 +968,8 @@ Chief Architect validates SPEC diff during second-pass review.
 |---------|------|--------|---------|------------|
 | 1.0.0-patch | 2026-06-03 | Chief Architect | Round-trip integration tests; CI triggers `master`; README/ROADMAP v1.0.0 alignment; ToolCard `h-full` restored | — |
 | 1.2.0-patch | 2026-06-06 | Chief Architect | SPEC §7.5/§7.7/§7.8 sync; dialog close listener fix; TransparencyNotice client directive | — |
+| 1.5.0-patch | 2026-06-06 | Chief Architect | Phase C wiring: fingerprint/meta to worker; cache-before-encode; dual estimate restored; `cacheWarm` from `cacheStored`; MetricsPanel SWR fixes | — |
+| 1.5.0 | 2026-06-06 | OpenCode | Result cache + MetricsPanel SWR animation + `metricsValueIn` CSS | `resource_tuning_phase_c_done.md` |
 | 1.4.0-patch | 2026-06-06 | Chief Architect | Worker wired to `estimate_*_size`; pipeline coalescing; superseded fix; manual estimate UI+i18n; size parity tests; Phase C deferred | — |
 | 1.4.0 | 2026-06-06 | OpenCode | Adaptive resource tuning: `computeResourceProfile`, worker coalescing, CountingWriter+estimate Wasm exports, `useAdaptiveResourceProfile` | `resource_tuning_engine_done.md` |
 | 1.3.0 | 2026-06-06 | OpenCode | Metrics engine: computeSizeDelta, useFileMetrics, worker estimate path (purpose+outputSize), debounced real-time size estimation in TransmutationPanel | `metrics_estimation_engine_done.md` |

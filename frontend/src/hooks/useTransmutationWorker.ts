@@ -1,19 +1,34 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TransmutationModule, TransmutationOptions, WorkerResponse, WorkerPurpose } from "@/workers/types";
+import type {
+  TransmutationModule,
+  TransmutationOptions,
+  WorkerRequestMeta,
+  WorkerResponse,
+  WorkerPurpose,
+} from "@/workers/types";
+
+export type { WorkerRequestMeta };
 
 type TransmutateFn = (
   module: TransmutationModule,
   bytes: ArrayBuffer,
-  options?: TransmutationOptions
+  options?: TransmutationOptions,
+  meta?: WorkerRequestMeta
 ) => Promise<WorkerResponse>;
+
+export type EstimateResult = {
+  outputSize: number;
+  cacheStored?: boolean;
+};
 
 type EstimateFn = (
   module: TransmutationModule,
   bytes: ArrayBuffer,
-  options?: TransmutationOptions
-) => Promise<number>;
+  options?: TransmutationOptions,
+  meta?: WorkerRequestMeta
+) => Promise<EstimateResult>;
 
 export function useTransmutationWorker(): {
   transmutate: TransmutateFn;
@@ -59,7 +74,13 @@ export function useTransmutationWorker(): {
   }, []);
 
   const sendMessage = useCallback(
-    (module: TransmutationModule, bytes: ArrayBuffer, options?: TransmutationOptions, purpose?: WorkerPurpose): Promise<WorkerResponse> => {
+    (
+      module: TransmutationModule,
+      bytes: ArrayBuffer,
+      options?: TransmutationOptions,
+      purpose?: WorkerPurpose,
+      meta?: WorkerRequestMeta
+    ): Promise<WorkerResponse> => {
       return new Promise((resolve, reject) => {
         const worker = workerRef.current;
         if (!worker) {
@@ -68,21 +89,40 @@ export function useTransmutationWorker(): {
         }
         const id = crypto.randomUUID();
         pendingRef.current.set(id, { resolve, reject });
-        worker.postMessage({ id, module, bytes, options, purpose }, [bytes]);
+        worker.postMessage(
+          {
+            id,
+            module,
+            bytes,
+            options,
+            purpose,
+            fingerprint: meta?.fingerprint,
+            fileIdentity: meta?.fileIdentity,
+            enableResultCache: meta?.enableResultCache,
+            cacheMaxOutputBytes: meta?.cacheMaxOutputBytes,
+          },
+          [bytes]
+        );
       });
     },
     []
   );
 
   const transmutate = useCallback<TransmutateFn>(
-    (module, bytes, options) => sendMessage(module, bytes, options, "transmute"),
+    (module, bytes, options, meta) =>
+      sendMessage(module, bytes, options, "transmute", meta),
     [sendMessage]
   );
 
   const estimate = useCallback<EstimateFn>(
-    async (module, bytes, options) => {
-      const response = await sendMessage(module, bytes, options, "estimate");
-      if (response.ok) return response.outputSize;
+    async (module, bytes, options, meta) => {
+      const response = await sendMessage(module, bytes, options, "estimate", meta);
+      if (response.ok) {
+        return {
+          outputSize: response.outputSize,
+          cacheStored: response.cacheStored,
+        };
+      }
       if (response.error === "superseded") {
         throw new Error("superseded");
       }

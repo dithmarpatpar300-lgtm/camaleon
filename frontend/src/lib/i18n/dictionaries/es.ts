@@ -99,9 +99,10 @@ const es: Dictionary = {
     metrics: {
       original: "Peso original",
       estimated: "Peso estimado",
-      calculating: "Calculando…",
+      calculating: "Calculando",
       calculate: "Calcular estimación",
       largeFileHint: "Archivo grande — toca para calcular el peso estimado.",
+      cacheReady: "Listo para transmutar",
     },
   },
 

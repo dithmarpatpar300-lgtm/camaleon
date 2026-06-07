@@ -1,4 +1,5 @@
 import type { WorkerRequest, WorkerResponse } from "./types";
+import { ResultCache } from "./result-cache";
 
 type TransmutarFn = (input: Uint8Array) => Uint8Array;
 type TransmutarJpgWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
@@ -32,6 +33,8 @@ let estimatePngToJpgSize: EstimatePngSizeFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
+
+const resultCache = new ResultCache();
 
 async function initJpgWasm(): Promise<void> {
   const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_jpg/transmutador_jpg.js");
@@ -72,17 +75,60 @@ function supersedeEstimate(id: string): void {
   postResponse({ id, ok: false, error: "superseded" });
 }
 
+function runFullEncode(
+  isJpg: boolean,
+  input: Uint8Array,
+  opts: WorkerRequest["options"]
+): Uint8Array {
+  if (isJpg) {
+    if (opts?.compression != null && transmutarJpgWithCompression) {
+      return transmutarJpgWithCompression(input, opts.compression);
+    }
+    if (transmutarJpg) return transmutarJpg(input);
+    throw new Error("Wasm module not initialized");
+  }
+
+  if (opts?.background != null && transmutarPngWithOptions) {
+    const bg = opts.background;
+    return transmutarPngWithOptions(input, opts.quality ?? 85, bg.r, bg.g, bg.b);
+  }
+  if (opts?.quality != null && transmutarPngWithQuality) {
+    return transmutarPngWithQuality(input, opts.quality);
+  }
+  if (transmutarPng) return transmutarPng(input);
+  throw new Error("Wasm module not initialized");
+}
+
+function runSizeEstimate(
+  isJpg: boolean,
+  input: Uint8Array,
+  opts: WorkerRequest["options"]
+): number {
+  if (isJpg) {
+    const compression = opts?.compression ?? 6;
+    if (!estimateJpgToPngSize) throw new Error("Wasm estimate export not initialized");
+    return estimateJpgToPngSize(input, compression);
+  }
+
+  const quality = opts?.quality ?? 85;
+  const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+  if (!estimatePngToJpgSize) throw new Error("Wasm estimate export not initialized");
+  return estimatePngToJpgSize(input, quality, bg.r, bg.g, bg.b);
+}
+
 async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   if (req.module !== "transmutador_jpg" && req.module !== "transmutador_png") {
     return { id: req.id, ok: false, error: `Unknown module: ${req.module}` };
   }
 
   const isEstimate = req.purpose === "estimate";
+  const isTransmute = req.purpose === "transmute" || req.purpose == null;
   const isJpg = req.module === "transmutador_jpg";
-  const initPromise = isJpg ? ensureJpgWasmInitialized() : ensurePngWasmInitialized();
+  const mime = isJpg ? "image/png" : "image/jpeg";
+  const extension = isJpg ? "png" : "jpg";
 
   try {
-    await initPromise;
+    await (isJpg ? ensureJpgWasmInitialized() : ensurePngWasmInitialized());
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err ?? "Wasm initialization failed");
     return { id: req.id, ok: false, error: message };
@@ -92,53 +138,78 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   const opts = req.options;
 
   try {
-    const mime = isJpg ? "image/png" : "image/jpeg";
-    const extension = isJpg ? "png" : "jpg";
+    if (isTransmute && req.fingerprint) {
+      const cached = resultCache.get(req.fingerprint);
+      if (cached) {
+        return {
+          id: req.id,
+          ok: true,
+          purpose: "transmute",
+          outputSize: cached.outputSize,
+          bytes: cached.bytes,
+          mime: cached.mime,
+          extension: cached.extension,
+          cacheHit: true,
+        };
+      }
+    }
 
     if (isEstimate) {
-      let outputSize: number;
-      if (isJpg) {
-        const compression = opts?.compression ?? 6;
-        if (!estimateJpgToPngSize) {
-          return { id: req.id, ok: false, error: "Wasm estimate export not initialized" };
-        }
-        outputSize = estimateJpgToPngSize(input, compression);
-      } else {
-        const quality = opts?.quality ?? 85;
-        const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
-        if (!estimatePngToJpgSize) {
-          return { id: req.id, ok: false, error: "Wasm estimate export not initialized" };
-        }
-        outputSize = estimatePngToJpgSize(input, quality, bg.r, bg.g, bg.b);
+      const useCache =
+        req.enableResultCache &&
+        !!req.fingerprint &&
+        !!req.fileIdentity &&
+        (req.cacheMaxOutputBytes ?? 0) > 0;
+
+      if (useCache) {
+        const result = runFullEncode(isJpg, input, opts);
+        const outputSize = result.byteLength;
+        const output = result.buffer.slice(
+          result.byteOffset,
+          result.byteOffset + outputSize
+        ) as ArrayBuffer;
+
+        const cacheStored = resultCache.set(
+          {
+            fingerprint: req.fingerprint!,
+            bytes: output,
+            outputSize,
+            mime,
+            extension,
+            createdAt: Date.now(),
+          },
+          req.cacheMaxOutputBytes ?? 0
+        );
+
+        return {
+          id: req.id,
+          ok: true,
+          purpose: "estimate",
+          outputSize,
+          cacheStored,
+        };
       }
-      return { id: req.id, ok: true, purpose: "estimate", outputSize };
+
+      const outputSize = runSizeEstimate(isJpg, input, opts);
+      return { id: req.id, ok: true, purpose: "estimate", outputSize, cacheStored: false };
     }
 
-    let result: Uint8Array;
-    if (isJpg) {
-      if (opts?.compression != null && transmutarJpgWithCompression) {
-        result = transmutarJpgWithCompression(input, opts.compression);
-      } else if (transmutarJpg) {
-        result = transmutarJpg(input);
-      } else {
-        return { id: req.id, ok: false, error: "Wasm module not initialized" };
-      }
-    } else {
-      if (opts?.background != null && transmutarPngWithOptions) {
-        const bg = opts.background;
-        result = transmutarPngWithOptions(input, opts.quality ?? 85, bg.r, bg.g, bg.b);
-      } else if (opts?.quality != null && transmutarPngWithQuality) {
-        result = transmutarPngWithQuality(input, opts.quality);
-      } else if (transmutarPng) {
-        result = transmutarPng(input);
-      } else {
-        return { id: req.id, ok: false, error: "Wasm module not initialized" };
-      }
-    }
-
+    const result = runFullEncode(isJpg, input, opts);
     const outputSize = result.byteLength;
-    const output = result.buffer.slice(result.byteOffset, result.byteOffset + outputSize) as ArrayBuffer;
-    return { id: req.id, ok: true, purpose: "transmute", outputSize, bytes: output, mime, extension };
+    const output = result.buffer.slice(
+      result.byteOffset,
+      result.byteOffset + outputSize
+    ) as ArrayBuffer;
+
+    return {
+      id: req.id,
+      ok: true,
+      purpose: "transmute",
+      outputSize,
+      bytes: output,
+      mime,
+      extension,
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err ?? "Unknown worker error");
     return { id: req.id, ok: false, error: message };
@@ -164,9 +235,7 @@ async function dispatch(req: WorkerRequest): Promise<void> {
   const response = await handleRequest(req);
 
   if (isEstimate) {
-    if (pendingEstimateId !== req.id) {
-      return;
-    }
+    if (pendingEstimateId !== req.id) return;
     pendingEstimateId = null;
   }
 
@@ -177,6 +246,10 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   const req = e.data;
   pipeline = pipeline.then(() => dispatch(req));
 };
+
+self.addEventListener("pagehide", () => {
+  resultCache.clear();
+});
 
 Promise.all([ensureJpgWasmInitialized(), ensurePngWasmInitialized()]).catch((err) => {
   console.error("Worker: Wasm initialization failed", err);

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Dropzone } from "./Dropzone";
 import { OptionsControls } from "./OptionsControls";
+import { MetricsPanel } from "./MetricsPanel";
 import { TransparencyNotice } from "./TransparencyNotice";
 import { PageDropOverlay } from "./PageDropOverlay";
 
@@ -99,7 +100,12 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setStatus("processing");
     setErrorMessage(null);
     try {
-      const response = await transmutate(tool.module, staged.bytes, options);
+      const response = await transmutate(
+        tool.module,
+        staged.bytes,
+        options,
+        metrics.transmuteMeta
+      );
       if (response.ok) {
         metrics.setFinalSize(response.outputSize);
         setResult({
@@ -120,7 +126,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       const raw = err instanceof Error ? err.message : t("panel.unexpectedError");
       setErrorMessage(localizeError(raw, t));
     }
-  }, [staged, ready, tool.module, options, transmutate, metrics.setFinalSize, t]);
+  }, [staged, ready, tool.module, options, transmutate, metrics.setFinalSize, metrics.transmuteMeta, t]);
 
   const handleDownload = useCallback(() => {
     if (!result) return;
@@ -220,44 +226,15 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
             </div>
           )}
           {hasOptions && (
-            <div className="mb-3 space-y-1 rounded-lg bg-bg-elevated px-4 py-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-text-muted">{t("panel.metrics.original")}</span>
-                <span className="font-mono tabular-nums text-text-secondary">
-                  {formatBytes(metrics.originalSize)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-text-muted">{t("panel.metrics.estimated")}</span>
-                <span className="font-mono tabular-nums text-text-secondary">
-                  {metrics.estimating ? (
-                    <span className="motion-safe:animate-pulse">
-                      {t("panel.metrics.calculating")}
-                    </span>
-                  ) : metrics.estimateDelta ? (
-                    <span>
-                      ~{formatBytes(metrics.estimateDelta.finalSize)}{" "}
-                      ({metrics.estimateDelta.deltaLabel})
-                    </span>
-                  ) : !profile.autoEstimate ? (
-                    <Button
-                      type="button"
-                      variant="subtle"
-                      size="sm"
-                      onClick={metrics.requestEstimate}
-                      disabled={!ready}
-                    >
-                      {t("panel.metrics.calculate")}
-                    </Button>
-                  ) : (
-                    "—"
-                  )}
-                </span>
-              </div>
-              {!profile.autoEstimate && !metrics.estimateDelta && !metrics.estimating && (
-                <p className="text-text-muted">{t("panel.metrics.largeFileHint")}</p>
-              )}
-            </div>
+            <MetricsPanel
+              originalSize={metrics.originalSize}
+              estimateDelta={metrics.estimateDelta}
+              estimating={metrics.estimating}
+              cacheWarm={metrics.cacheWarm}
+              autoEstimate={profile.autoEstimate}
+              ready={ready}
+              onRequestEstimate={metrics.requestEstimate}
+            />
           )}
           <Button onClick={handleTransmutar} disabled={!ready} className="w-full">
             {ready ? t("panel.transmuteButton") : t("panel.initializing")}

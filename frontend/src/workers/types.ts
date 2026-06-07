@@ -10,12 +10,23 @@ export type TransmutationOptions = {
 
 export type WorkerPurpose = "transmute" | "estimate";
 
+export type WorkerRequestMeta = {
+  fingerprint?: string;
+  fileIdentity?: string;
+  enableResultCache?: boolean;
+  cacheMaxOutputBytes?: number;
+};
+
 export type WorkerRequest = {
   id: string;
   module: TransmutationModule;
   bytes: ArrayBuffer;
   options?: TransmutationOptions;
   purpose?: WorkerPurpose;
+  fingerprint?: string;
+  fileIdentity?: string;
+  enableResultCache?: boolean;
+  cacheMaxOutputBytes?: number;
 };
 
 export type WorkerResponseSuccess = {
@@ -26,6 +37,8 @@ export type WorkerResponseSuccess = {
   bytes?: ArrayBuffer;
   mime?: string;
   extension?: string;
+  cacheStored?: boolean;
+  cacheHit?: boolean;
 };
 
 export type WorkerResponseError = {

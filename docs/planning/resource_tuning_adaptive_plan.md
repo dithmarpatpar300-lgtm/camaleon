@@ -285,7 +285,9 @@ Test matrix: iPhone Safari, mid Android Chrome, 4 GB laptop, desktop 16 GB.
 
 | Document | Role |
 |----------|------|
-| `docs/planning/resource_tuning_adaptive_plan.md` | This file — architecture & scoring |
-| `docs/prompts/resource_tuning_engine.md` | **Single executable prompt** (Phases A+B+C) |
+| `docs/planning/resource_tuning_adaptive_plan.md` | This file — architecture & scoring (Phases A–C overview) |
+| `docs/prompts/resource_tuning_engine.md` | Executed — Phases A + B (v1.4.0) |
+| `docs/planning/v1_5_0_phase_c_metrics_ux_plan.md` | Phase C + metrics UX animation (v1.5.0) |
+| `docs/prompts/resource_tuning_phase_c.md` | **Next OpenCode prompt** — Phase C + centralized metrics animation |
 
 **Superseded (deleted):** `resource_tuning_mobile_plan.md`, `resource_tuning_phase_a.md`
