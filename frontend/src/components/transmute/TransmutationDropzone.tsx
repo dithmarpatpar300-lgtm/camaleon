@@ -51,10 +51,10 @@ export function TransmutationDropzone({ tool }: TransmutationDropzoneProps) {
 
         if (response.ok) {
           downloadResult(
-            response.bytes,
+            response.bytes!,
             file.name,
-            response.mime,
-            response.extension
+            response.mime!,
+            response.extension!
           );
           setStatus("success");
         } else {

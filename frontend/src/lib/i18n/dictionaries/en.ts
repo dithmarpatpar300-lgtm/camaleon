@@ -96,6 +96,11 @@ const en: Dictionary = {
       pickerTitle: "Flatten onto",
       pickerHint: "Only affects transparent pixels.",
     },
+    metrics: {
+      original: "Original size",
+      estimated: "Estimated size",
+      calculating: "Calculating…",
+    },
   },
 
   tools: {

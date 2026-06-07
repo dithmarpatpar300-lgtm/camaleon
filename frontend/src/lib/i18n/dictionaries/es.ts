@@ -96,6 +96,11 @@ const es: Dictionary = {
       pickerTitle: "Aplanar sobre",
       pickerHint: "Solo afecta píxeles transparentes.",
     },
+    metrics: {
+      original: "Peso original",
+      estimated: "Peso estimado",
+      calculating: "Calculando…",
+    },
   },
 
   tools: {

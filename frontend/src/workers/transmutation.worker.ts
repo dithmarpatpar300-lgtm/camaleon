@@ -42,26 +42,18 @@ async function initPngWasm(): Promise<void> {
 }
 
 function ensureJpgWasmInitialized(): Promise<void> {
-  if (!initJpgPromise) {
-    initJpgPromise = initJpgWasm();
-  }
+  if (!initJpgPromise) initJpgPromise = initJpgWasm();
   return initJpgPromise;
 }
 
 function ensurePngWasmInitialized(): Promise<void> {
-  if (!initPngPromise) {
-    initPngPromise = initPngWasm();
-  }
+  if (!initPngPromise) initPngPromise = initPngWasm();
   return initPngPromise;
 }
 
 async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   if (req.module !== "transmutador_jpg" && req.module !== "transmutador_png") {
-    return {
-      id: req.id,
-      ok: false,
-      error: `Unknown module: ${req.module}`,
-    };
+    return { id: req.id, ok: false, error: `Unknown module: ${req.module}` };
   }
 
   const isJpg = req.module === "transmutador_jpg";
@@ -70,8 +62,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   try {
     await initPromise;
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : String(err ?? "Wasm initialization failed");
+    const message = err instanceof Error ? err.message : String(err ?? "Wasm initialization failed");
     return { id: req.id, ok: false, error: message };
   }
 
@@ -94,13 +85,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     } else {
       if (opts?.background != null && transmutarPngWithOptions) {
         const bg = opts.background;
-        result = transmutarPngWithOptions(
-          input,
-          opts.quality ?? 85,
-          bg.r,
-          bg.g,
-          bg.b
-        );
+        result = transmutarPngWithOptions(input, opts.quality ?? 85, bg.r, bg.g, bg.b);
       } else if (opts?.quality != null && transmutarPngWithQuality) {
         result = transmutarPngWithQuality(input, opts.quality);
       } else if (transmutarPng) {
@@ -110,22 +95,24 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       }
     }
 
-    const output = result.buffer.slice(
-      result.byteOffset,
-      result.byteOffset + result.byteLength
-    ) as ArrayBuffer;
+    const outputSize = result.byteLength;
+    const isEstimate = req.purpose === "estimate";
 
-    return { id: req.id, ok: true, bytes: output, mime, extension };
+    if (isEstimate) {
+      return { id: req.id, ok: true, purpose: "estimate", outputSize };
+    }
+
+    const output = result.buffer.slice(result.byteOffset, result.byteOffset + outputSize) as ArrayBuffer;
+    return { id: req.id, ok: true, purpose: "transmute", outputSize, bytes: output, mime, extension };
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : String(err ?? "Unknown worker error");
+    const message = err instanceof Error ? err.message : String(err ?? "Unknown worker error");
     return { id: req.id, ok: false, error: message };
   }
 }
 
 self.onmessage = async (e: MessageEvent<WorkerRequest>) => {
   const response = await handleRequest(e.data);
-  if (response.ok) {
+  if (response.ok && response.bytes) {
     self.postMessage(response, { transfer: [response.bytes] });
   } else {
     self.postMessage(response);

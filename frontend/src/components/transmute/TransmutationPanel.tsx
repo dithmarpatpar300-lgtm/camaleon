@@ -5,6 +5,7 @@ import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import { fileMatchesExtensions } from "@/lib/tools/extensions";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
+import { useFileMetrics } from "@/hooks/useFileMetrics";
 import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
 import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
@@ -58,8 +59,15 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [hasAlpha, setHasAlpha] = useState(false);
 
-  const { transmutate, ready } = useTransmutationWorker();
+  const { transmutate, estimate, ready } = useTransmutationWorker();
   const { toast } = useToast();
+  const metrics = useFileMetrics({
+    file: staged?.file ?? null,
+    module: tool.module,
+    options,
+    ready,
+    estimate,
+  });
   const accept = tool.acceptExtensions.join(",");
   const hint = resolveToolFidelityHint(tool.id, t);
 
@@ -90,12 +98,13 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     try {
       const response = await transmutate(tool.module, staged.bytes, options);
       if (response.ok) {
+        metrics.setFinalSize(response.outputSize);
         setResult({
           inputSize: staged.file.size,
-          outputBytes: response.bytes,
-          outputSize: response.bytes.byteLength,
-          mime: response.mime,
-          extension: response.extension,
+          outputBytes: response.bytes!,
+          outputSize: response.outputSize,
+          mime: response.mime!,
+          extension: response.extension!,
           fileName: staged.file.name,
         });
         setStatus("success");
@@ -108,7 +117,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       const raw = err instanceof Error ? err.message : t("panel.unexpectedError");
       setErrorMessage(localizeError(raw, t));
     }
-  }, [staged, ready, tool.module, options, transmutate, t]);
+  }, [staged, ready, tool.module, options, transmutate, metrics.setFinalSize, t]);
 
   const handleDownload = useCallback(() => {
     if (!result) return;
@@ -124,7 +133,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setHasAlpha(false);
     setPreviewUrl(null);
     setOptions(buildDefaultOptions(tool.optionSpecs));
-  }, [tool]);
+    metrics.resetMetrics();
+  }, [tool, metrics]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true); }, []);
   const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(false); }, []);
@@ -134,12 +144,6 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) handleFileSelect(files[0]);
   }, [status, handleFileSelect]);
-
-  const sizeDelta = useMemo(() => {
-    if (!result) return null;
-    const pct = result.inputSize > 0 ? Math.round(((result.outputSize - result.inputSize) / result.inputSize) * 100) : 0;
-    return `${formatBytes(result.inputSize)} → ${formatBytes(result.outputSize)} (${pct >= 0 ? "+" : ""}${pct}%)`;
-  }, [result]);
 
   useEffect(() => {
     if (!result) {
@@ -153,7 +157,12 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     return () => URL.revokeObjectURL(url);
   }, [result]);
 
-  const hasOptions = (tool.optionSpecs?.length ?? 0) > 0;
+  const panelOptionSpecs = useMemo(() => {
+    if (!tool.optionSpecs) return [];
+    return tool.optionSpecs.filter((spec) => spec.key !== "background");
+  }, [tool.optionSpecs]);
+
+  const hasOptions = panelOptionSpecs.length > 0;
 
   const { active: dropOverlayActive } = usePageFileDrop({
     enabled: status === "idle" || status === "staged",
@@ -186,7 +195,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-text-primary">{staged.file.name}</p>
-              <p className="text-xs text-text-muted">{formatBytes(staged.bytes.byteLength)}</p>
+              <p className="text-xs text-text-muted">{formatBytes(staged.file.size)}</p>
             </div>
             <Button variant="ghost" size="sm" onClick={handleReset}>{t("panel.changeFile")}</Button>
           </div>
@@ -204,7 +213,34 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
           )}
           {hasOptions && (
             <div className="mb-5 border-t border-border pt-4">
-              <OptionsControls toolId={tool.id} specs={tool.optionSpecs!} values={options} onChange={setOptions} />
+              <OptionsControls toolId={tool.id} specs={panelOptionSpecs} values={options} onChange={setOptions} />
+            </div>
+          )}
+          {hasOptions && (
+            <div className="mb-3 space-y-1 rounded-lg bg-bg-elevated px-4 py-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted">{t("panel.metrics.original")}</span>
+                <span className="font-mono tabular-nums text-text-secondary">
+                  {formatBytes(metrics.originalSize)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted">{t("panel.metrics.estimated")}</span>
+                <span className="font-mono tabular-nums text-text-secondary">
+                  {metrics.estimating ? (
+                    <span className="motion-safe:animate-pulse">
+                      {t("panel.metrics.calculating")}
+                    </span>
+                  ) : metrics.estimateDelta ? (
+                    <span>
+                      ~{formatBytes(metrics.estimateDelta.finalSize)}{" "}
+                      ({metrics.estimateDelta.deltaLabel})
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </span>
+              </div>
             </div>
           )}
           <Button onClick={handleTransmutar} disabled={!ready} className="w-full">
@@ -237,7 +273,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
           <div className="rounded-xl border border-border bg-bg-surface px-4 py-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-text-secondary">{t("panel.size")}</span>
-              <span className="font-mono tabular-nums text-text-primary">{sizeDelta}</span>
+              <span className="font-mono tabular-nums text-text-primary">
+                {metrics.finalDelta?.formatted}
+              </span>
             </div>
           </div>
           <div className="flex gap-3">

@@ -116,9 +116,9 @@ export function BackgroundColorPill({
           aria-label={t("panel.transparencyNotice.pickerTitle")}
           className="glass-palette absolute left-0 top-full z-50 mt-2 w-56 rounded-xl p-3"
         >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-widest text-text-muted">
             {t("panel.transparencyNotice.pickerTitle")}
-          </p>
+          </div>
           <div
             className="flex flex-wrap items-center gap-2"
             role="group"
@@ -162,9 +162,9 @@ export function BackgroundColorPill({
               </span>
             )}
           </div>
-          <p className="mt-2 text-xs text-text-muted">
+          <div className="mt-2 text-xs text-text-muted">
             {t("panel.transparencyNotice.pickerHint")}
-          </p>
+          </div>
         </div>
       )}
     </span>

@@ -8,19 +8,24 @@ export type TransmutationOptions = {
   background?: RgbColor;
 };
 
+export type WorkerPurpose = "transmute" | "estimate";
+
 export type WorkerRequest = {
   id: string;
   module: TransmutationModule;
   bytes: ArrayBuffer;
   options?: TransmutationOptions;
+  purpose?: WorkerPurpose;
 };
 
 export type WorkerResponseSuccess = {
   id: string;
   ok: true;
-  bytes: ArrayBuffer;
-  mime: string;
-  extension: string;
+  purpose: WorkerPurpose;
+  outputSize: number;
+  bytes?: ArrayBuffer;
+  mime?: string;
+  extension?: string;
 };
 
 export type WorkerResponseError = {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TransmutationModule, TransmutationOptions, WorkerResponse } from "@/workers/types";
+import type { TransmutationModule, TransmutationOptions, WorkerResponse, WorkerPurpose } from "@/workers/types";
 
 type TransmutateFn = (
   module: TransmutationModule,
@@ -9,8 +9,15 @@ type TransmutateFn = (
   options?: TransmutationOptions
 ) => Promise<WorkerResponse>;
 
+type EstimateFn = (
+  module: TransmutationModule,
+  bytes: ArrayBuffer,
+  options?: TransmutationOptions
+) => Promise<number>;
+
 export function useTransmutationWorker(): {
   transmutate: TransmutateFn;
+  estimate: EstimateFn;
   ready: boolean;
 } {
   const workerRef = useRef<Worker | null>(null);
@@ -51,22 +58,35 @@ export function useTransmutationWorker(): {
     };
   }, []);
 
-  const transmutate = useCallback<TransmutateFn>(
-    (module, bytes, options) => {
+  const sendMessage = useCallback(
+    (module: TransmutationModule, bytes: ArrayBuffer, options?: TransmutationOptions, purpose?: WorkerPurpose): Promise<WorkerResponse> => {
       return new Promise((resolve, reject) => {
         const worker = workerRef.current;
         if (!worker) {
           reject(new Error("Worker not initialized"));
           return;
         }
-
         const id = crypto.randomUUID();
         pendingRef.current.set(id, { resolve, reject });
-        worker.postMessage({ id, module, bytes, options }, [bytes]);
+        worker.postMessage({ id, module, bytes, options, purpose }, [bytes]);
       });
     },
     []
   );
 
-  return { transmutate, ready };
+  const transmutate = useCallback<TransmutateFn>(
+    (module, bytes, options) => sendMessage(module, bytes, options, "transmute"),
+    [sendMessage]
+  );
+
+  const estimate = useCallback<EstimateFn>(
+    async (module, bytes, options) => {
+      const response = await sendMessage(module, bytes, options, "estimate");
+      if (!response.ok) throw new Error(response.error);
+      return response.outputSize;
+    },
+    [sendMessage]
+  );
+
+  return { transmutate, estimate, ready };
 }

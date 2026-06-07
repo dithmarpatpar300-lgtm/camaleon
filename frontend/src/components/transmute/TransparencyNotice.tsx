@@ -34,7 +34,7 @@ export function TransparencyNotice({
       <p className="font-semibold text-info">
         {t("panel.transparencyNotice.title")}
       </p>
-      <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">
+      <div className="mt-1.5 text-sm leading-relaxed text-text-secondary">
         {t("panel.transparencyNotice.bodyPrefix")}
         <BackgroundColorPill
           color={background}
@@ -44,7 +44,7 @@ export function TransparencyNotice({
           className="mx-1"
         />
         {t("panel.transparencyNotice.bodySuffix")}
-      </p>
+      </div>
     </div>
   );
 }
