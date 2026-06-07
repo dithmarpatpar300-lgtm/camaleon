@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.6.0  
+**Version:** 1.7.0-planned  
 **Last updated:** 2026-06-07  
-**Status:** MVP — Camaleon v1.6.0 (header/footer polish) / Engine v1.2.0
+**Status:** v1.6.1 shipped — Format Expansion Tier 1 (WebP suite) planned; Engine v1.2.0 active
 
 ---
 
@@ -76,9 +76,13 @@ camaleon/
 └── motor_transmutacion/     ← Rust workspace (Wasm engine)
     ├── Cargo.toml
     ├── core_utils/
-    ├── transmutador_jpg/    ← JPEG → PNG
-    ├── transmutador_png/    ← PNG → JPEG
+    ├── transmutador_jpg/    ← JPEG → PNG  (v0.5.5 — active)
+    ├── transmutador_png/    ← PNG → JPEG  (v0.5.6 — active)
+    ├── transmutador_webp/   ← WebP → PNG/JPEG  (Tier 1 — planned §6.4)
+    └── transmutador_encode/ ← PNG/JPEG → WebP  (Tier 1 — planned §6.5)
 ```
+
+> **Planned crates** (no code yet) are documented here so OpenCode has the required naming convention before implementation begins. Do not create these crates until the corresponding planning prompt is issued.
 
 ### 3.1 Layer Responsibilities
 
@@ -594,6 +598,60 @@ OUTPUT     [✅ implemented — §5.11.3]
 
 ---
 
+### 5.12 WebP Format Science (Tier 1 — planned)
+
+> Foundation for `transmutador_webp` (§6.4) and `transmutador_encode` WebP outputs (§6.5).
+
+#### 5.12.1 What WebP Is
+
+WebP is a **dual-mode** raster format developed by Google (2010), based on VP8/VP8L codecs:
+
+| Mode | Encoding | Alpha | Typical use case |
+|------|----------|-------|-----------------|
+| **Lossy** | VP8 (intra-frame DCT, similar to JPEG) | No (or separate alpha plane) | Photos, thumbnails |
+| **Lossless** | VP8L (spatial prediction + entropy) | Yes (RGBA) | Screenshots, graphics, sprites |
+| **Extended** | Lossless + alpha plane + ICC/Exif metadata chunks | Yes | General purpose |
+
+**Key properties:**
+- Lossy WebP: ~25–35% smaller than JPEG at equivalent visual quality (per Google benchmarks).
+- Lossless WebP: ~26% smaller than PNG on average; worse on photographic content.
+- Container: RIFF with `WEBP` FourCC; chunk-based (`VP8 `, `VP8L`, `VP8X`, `EXIF`, `XMP `…).
+
+#### 5.12.2 Decode-side policies (WebP → PNG or JPEG)
+
+| Source | Output | Policy |
+|--------|--------|--------|
+| Lossy WebP | PNG | Decode to raster (RGB/RGBA) → encode PNG. **File size will increase** (same as §5.4 JPG→PNG — entropy expansion). |
+| Lossless WebP | PNG | Lossless round-trip of pixels; alpha preserved as RGBA PNG. |
+| Lossy WebP | JPEG | Decode → discard alpha if present → re-compress at requested quality. Two-generation lossy — UI **must warn**. |
+| Lossless WebP (with alpha) | JPEG | Alpha flatten (same policy as §5.5.2) → JPEG. |
+| Metadata | Any | **StripAll** (§5.10) — EXIF, XMP, ICC chunks are not propagated. |
+
+#### 5.12.3 Encode-side policies (PNG/JPEG → WebP)
+
+| Source | Mode | Policy |
+|--------|------|--------|
+| PNG (opaque) | Lossless WebP (via `image` crate) | RGB; same lossless pixels. |
+| PNG (with alpha) | Lossless WebP | RGBA; alpha preserved. |
+| JPEG | Lossless WebP | Decode JPEG → re-encode lossless (size likely increases; UI warns). |
+| JPEG | Lossy WebP | Decode → re-compress at requested quality. Two-generation lossy — UI warns. |
+
+> **Constraint (v1.7.x):** The `image` crate 0.25 WebP encoder supports **lossless only**. Lossy WebP encode (PNG→WebP lossy, JPG→WebP lossy) requires a dedicated spike to evaluate `webp` crate or `libwebp` WASM bindings — do not ship until spike is validated. The initial `transmutador_encode` WebP output is therefore **lossless** only and must be clearly labeled.
+
+#### 5.12.4 Size expectations
+
+| Conversion | Typical Δ | Explanation |
+|------------|-----------|-------------|
+| Lossy WebP → PNG | **+5×–20×** | Entropy expansion (same as §5.4.2) |
+| Lossless WebP → PNG | **±0–30%** | Near pixel-identical; compression efficiency differences |
+| PNG → WebP (lossless) | **−20–30%** | VP8L beats DEFLATE on most graphics; can be larger on photos |
+| JPEG → WebP (lossless) | **2×–10× larger** | Lossless of an already-lossy source inflates size |
+| WebP → JPEG | Similar to WebP + JPEG quality | Two lossy generations accumulate |
+
+UI hints for each conversion derived from these ranges — same copy doctrine as §5.6.3.
+
+---
+
 ## 6. Module Specifications
 
 ### 6.1 `core_utils`
@@ -711,15 +769,122 @@ pub fn transmutar_png_a_jpg_with_options(
 
 ---
 
+### 6.4 `transmutador_webp` (Planned — Tier 1)
+
+**Purpose:** WebP decoding crate. Handles all conversions **from** WebP: WebP→PNG and WebP→JPEG.
+
+**Status:** Planned. No code yet. First task: `phase5_webp_to_png`.
+
+**Crate type:** `["cdylib", "rlib"]`
+
+**Dependencies:** `wasm-bindgen`, `image = { version = "0.25", default-features = false, features = ["webp", "png", "jpeg"] }`, `core_utils`
+
+> **Wasm note:** Must compile with `default-features = false` to exclude `rayon` (threading breaks in single-threaded Wasm). Features enabled explicitly: `webp` (decode + lossless encode), `png`, `jpeg`.
+
+**Public Wasm API (planned — subject to Architect confirmation before implementation):**
+
+```rust
+// Phase 5.1 — WebP → PNG
+#[wasm_bindgen]
+pub fn transmutar_webp_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String>
+// Default PNG compression: 6. RGB or RGBA output based on alpha presence.
+
+#[wasm_bindgen]
+pub fn transmutar_webp_a_png_with_compression(
+    input_bytes: &[u8],
+    compression: u8,        // 1–9
+) -> Result<Vec<u8>, String>
+
+#[wasm_bindgen]
+pub fn estimate_webp_to_png_size(input_bytes: &[u8]) -> Result<u32, String>
+// CountingWriter pattern — no actual allocation of output (§5.12 Phase 5.1)
+
+// Phase 5.2 — WebP → JPEG (planned, separate prompt)
+#[wasm_bindgen]
+pub fn transmutar_webp_a_jpg_with_options(
+    input_bytes: &[u8],
+    quality: u8,            // 1–100
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+) -> Result<Vec<u8>, String>
+// Alpha flatten policy identical to §5.5.2 (PNG→JPEG background composite)
+
+#[wasm_bindgen]
+pub fn estimate_webp_to_jpg_size(input_bytes: &[u8], quality: u8) -> Result<u32, String>
+```
+
+**Behavior (WebP→PNG):**
+1. `validate_input` via `core_utils`
+2. Decode WebP via `image::ImageReader` (auto-detects lossy/lossless/extended)
+3. If alpha present → RGBA PNG (color type 6); else → RGB PNG (color type 2)
+4. Encode PNG via `PngEncoder` with `CompressionType::Level(n)`, `FilterType::Adaptive`
+5. `validate_output(bytes, OutputFormat::Png)` via `core_utils`
+6. Return bytes or error string
+
+**Policies:** StripAll (§5.10) — RIFF EXIF/XMP chunks not propagated. No alpha loss without UI notice (§5.11.6). Compression range 1–9 (same `validate_compression` from `core_utils`).
+
+**Required tests (Phase 5.1):**
+- Lossy WebP → valid PNG (magic bytes, dimensions preserved)
+- Lossless WebP → valid PNG
+- WebP with alpha → RGBA PNG (color type 6)
+- WebP without alpha → RGB PNG (color type 2)
+- Empty input → error
+- Corrupt bytes → error
+- Truncated RIFF → error
+- StripAll: output PNG has no EXIF/tEXt chunks from source
+- Compression validation (0 and 10 rejected)
+- Estimate vs full-encode size within 5% tolerance
+- Large WebP within MAX_PIXELS → OK; over → error
+
+---
+
+### 6.5 `transmutador_encode` (Planned — Tier 1, Phase 5.3–5.4)
+
+**Purpose:** WebP encoding crate. Handles conversions **to** WebP: PNG→WebP and JPEG→WebP.
+
+**Status:** Planned. No code yet. Depends on Phase 5.1+5.2 completion and lossy-WebP spike result.
+
+**Crate type:** `["cdylib", "rlib"]`
+
+**Initial constraint:** lossless WebP encode only via `image` 0.25 `image-webp` feature. Lossy encode requires an additional spike (see §12.3).
+
+**Planned Wasm API:**
+
+```rust
+// Phase 5.3 — PNG → WebP (lossless)
+#[wasm_bindgen]
+pub fn transmutar_png_a_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String>
+
+#[wasm_bindgen]
+pub fn estimate_png_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
+
+// Phase 5.4 — JPEG → WebP lossless (planned)
+#[wasm_bindgen]
+pub fn transmutar_jpg_a_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String>
+// Warning: lossless of lossy source. UI must surface "Two-generation" hint.
+```
+
+**Policies:** StripAll (§5.10). PNG→WebP preserves alpha via RGBA lossless. JPEG→WebP warns in UI about size inflation (§5.12.4). `validate_output` must verify RIFF `WEBP` magic (`52 49 46 46 xx xx xx xx 57 45 42 50`).
+
+> **OutputFormat extension required:** `core_utils::OutputFormat` must be extended with `WebP` variant when this crate ships. Chief Architect will issue the amendment at implementation time.
+
+---
+
 ## 7. Frontend Specifications
 
 ### 7.1 Dropzone (Implemented — Phase 3)
 
 - **Input:** Drag-and-drop and click-to-select
-- **Format filter:** `.jpg`, `.jpeg`, `.png` — auto-routed to correct module by extension
-- **Routing:**
+- **Format filter:** `.jpg`, `.jpeg`, `.png` (active); `.webp` (Tier 1 — planned) — auto-routed to correct module by extension
+- **Routing (active):**
   - `.jpg` / `.jpeg` → `transmutador_jpg` → outputs `.png` (`image/png`)
   - `.png` → `transmutador_png` → outputs `.jpg` (`image/jpeg`)
+- **Routing (Tier 1 — planned, §12):**
+  - `.webp` on `/transmute/webp-to-png` → `transmutador_webp` → outputs `.png`
+  - `.webp` on `/transmute/webp-to-jpg` → `transmutador_webp` → outputs `.jpg`
+  - `.png` on `/transmute/png-to-webp` → `transmutador_encode` → outputs `.webp`
+  - `.jpg` / `.jpeg` on `/transmute/jpg-to-webp` → `transmutador_encode` → outputs `.webp`
 - **States:**
   - `idle` — Dropzone accepts interactions
   - `processing` — Spinner with file name; repeated drops disabled
@@ -750,7 +915,7 @@ type WorkerPurpose = "transmute" | "estimate";
 
 type WorkerRequest = {
   id: string;
-  module: "transmutador_jpg" | "transmutador_png";
+  module: "transmutador_jpg" | "transmutador_png" | "transmutador_webp" | "transmutador_encode"; // Tier 1 modules added as they ship
   bytes: ArrayBuffer;
   options?: TransmutationOptions;
   purpose?: WorkerPurpose;   // default "transmute"
@@ -782,18 +947,30 @@ type WorkerResponseSuccess = {
 ```
 frontend/public/wasm/
 ├── transmutador_jpg/
-│   ├── transmutador_jpg.js        ← JS glue (ES module)
-│   ├── transmutador_jpg_bg.wasm   ← Wasm binary
-│   ├── transmutador_jpg.d.ts      ← TypeScript declarations
+│   ├── transmutador_jpg.js             ← JS glue (ES module)
+│   ├── transmutador_jpg_bg.wasm        ← Wasm binary
+│   ├── transmutador_jpg.d.ts
 │   └── transmutador_jpg_bg.wasm.d.ts
-└── transmutador_png/
-    ├── transmutador_png.js        ← JS glue (ES module)
-    ├── transmutador_png_bg.wasm   ← Wasm binary
-    ├── transmutador_png.d.ts      ← TypeScript declarations
-    └── transmutador_png_bg.wasm.d.ts
+├── transmutador_png/
+│   ├── transmutador_png.js
+│   ├── transmutador_png_bg.wasm
+│   ├── transmutador_png.d.ts
+│   └── transmutador_png_bg.wasm.d.ts
+├── transmutador_webp/                  ← Tier 1 planned (§6.4)
+│   ├── transmutador_webp.js
+│   ├── transmutador_webp_bg.wasm
+│   ├── transmutador_webp.d.ts
+│   └── transmutador_webp_bg.wasm.d.ts
+└── transmutador_encode/                ← Tier 1 planned §6.5 (Phase 5.3+)
+    ├── transmutador_encode.js
+    ├── transmutador_encode_bg.wasm
+    ├── transmutador_encode.d.ts
+    └── transmutador_encode_bg.wasm.d.ts
 ```
 
-Generated by `wasm-pack build --target web`. Both modules built by `scripts/build-wasm.ps1`, `scripts/build-wasm.sh`, or `npm run build:wasm`. The `public/wasm/` directory is gitignored.
+Generated by `wasm-pack build --target web`. Active modules built by `scripts/build-wasm.ps1`, `scripts/build-wasm.sh`, or `npm run build:wasm`. The `public/wasm/` directory is gitignored.
+
+Build scripts must be extended to include new crates when they ship. Each new crate = one `wasm-pack build` invocation added to the scripts and to `package.json`'s `build:wasm` script.
 
 ---
 
@@ -948,6 +1125,8 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 | NFR-4 | Error clarity | User-facing errors in plain English |
 | NFR-5 | Modularity | New format = new crate + Wasm export + worker route |
 | NFR-6 | Code language | Source code and docs in **English** |
+| NFR-7 | Wasm bundle size | Each new transmutator crate `.wasm` binary target ≤ 3 MB uncompressed; aggregate `public/wasm/` ≤ 12 MB total. Measure after each Phase 5.x delivery and report in OpenCode technical report. |
+| NFR-8 | Format science honesty | UI copy for each new format must reflect correct lossless/lossy semantics per §5.12 and §12; no false "lossless" claims on lossy conversions. |
 
 ---
 
@@ -982,6 +1161,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 1.7.0-planned | 2026-06-07 | Chief Architect | §3 planned crates; §5.12 WebP science; §6.4 transmutador_webp API contract; §6.5 transmutador_encode stub; §7.1 Dropzone Tier 1 routing; §7.3 Wasm layout extended; NFR-7 bundle size; NFR-8 format honesty; §12 Format Expansion Program | — |
+| 1.6.1 | 2026-06-07 | Chief Architect | v1.6.1 hotfix: locale/theme FOUC (cookie SSR + bootstrap script); Scrollbar Camaleón overlay; landing shell unification; ToolCard min-heights; CommandPalette FormatChip alignment | — |
 | 1.6.0 | 2026-06-07 | Chief Architect | UI-9 header/footer polish; `TransmutationWorkerProvider`; restore v1.5.0 cache/metrics wiring after OpenCode regression | — |
 | 1.5.0-patch-2 | 2026-06-07 | Chief Architect | Metrics UX polish: badge delta pills, result view layout, `buildFingerprint` deep serialize fix, estimate flicker fixes | — |
 | 1.0.0-patch | 2026-06-03 | Chief Architect | Round-trip integration tests; CI triggers `master`; README/ROADMAP v1.0.0 alignment; ToolCard `h-full` restored | — |
@@ -1018,3 +1199,109 @@ Chief Architect validates SPEC diff during second-pass review.
 | 0.2.0-patch | 2026-06-02 | Chief Architect | Worker init race fix; hook `ready` state; Unix build script | — |
 | 0.2.0 | 2026-06-02 | OpenCode | Phase 1: Wasm pipeline + Worker bridge + core_utils implementation | `phase1_wasm_pipeline_done.md` |
 | 0.1.0 | 2026-06-02 | Chief Architect | Initial SPEC from v0.1.0 bootstrap | — |
+
+---
+
+## 12. Format Expansion Program
+
+> **Owned by Chief Architect.** This section documents the planned format expansion beyond the JPG/PNG MVP, organized by priority tier. Each tier's phases are executed one format at a time with QA gates between them. The tier classification is a product and engineering commitment — do not implement Tier 2+ until Tier 1 is complete and signed off.
+
+### 12.1 Expansion Principles
+
+All format expansion work follows these rules in addition to existing principles:
+
+| Rule | Detail |
+|------|--------|
+| **One format at a time** | Each new conversion direction is a separate OpenCode task with its own prompt, tests, and QA gate before moving to the next. |
+| **New crate per family** | Decoding crates group by source format (e.g., `transmutador_webp` handles all WebP-source conversions). Encoding crates group by target format where they share logic. |
+| **No Wasm feature flags that break WASM** | `default-features = false` on the `image` crate always. Explicitly enable only needed features. Never enable `rayon`. |
+| **Estimate-first** | Every new conversion **must** ship a `estimate_*_size` Wasm export using `CountingWriter` (§6.4 pattern) so `useFileMetrics` works immediately. |
+| **Metrics coverage** | `MetricsPanel` must display relevant size delta, fidelity badge, and science hint for every new tool. |
+| **StripAll default** | No source format's metadata chunks are copied to output (§5.10). |
+| **i18n day-one** | Both EN and ES strings shipped in the same task; no partial i18n. |
+| **Bundle size gate (NFR-7)** | Each new `.wasm` ≤ 3 MB uncompressed. Block merge if exceeded. |
+
+### 12.2 Tier 1 — WebP Suite (v1.7.x — Current Priority)
+
+Goal: make Camaleon the best browser-local WebP converter. Four conversion directions, each its own phase.
+
+| Phase | Task slug | Direction | Crate | Fidelity | Status |
+|-------|-----------|-----------|-------|----------|--------|
+| **5.1** | `phase5_webp_to_png` | WebP → PNG | `transmutador_webp` | Lossless (raster) | **Next** |
+| **5.2** | `phase5_webp_to_jpg` | WebP → JPEG | `transmutador_webp` (add export) | Lossy | Blocked on 5.1 |
+| **5.3** | `phase5_png_to_webp` | PNG → WebP | `transmutador_encode` | Lossless WebP | Blocked on 5.2 |
+| **5.4** | `phase5_jpg_to_webp` | JPEG → WebP | `transmutador_encode` (add export) | Lossless WebP | Blocked on 5.3 |
+
+**Version target:** v1.7.0 (all four phases). Each phase ships independently with a patch bump (v1.7.0-alpha.1 → … → v1.7.0).
+
+**QA gate between phases (Chief Architect):**
+1. `cargo test --workspace` passes
+2. Wasm binary built and loadable in browser (manual smoke test)
+3. E2E: drop real file, confirm correct output extension, download
+4. Metrics: estimated size shown before transmutation
+5. i18n: both EN and ES UI strings correct
+6. NFR-7: `.wasm` size reported and within budget
+7. StripAll: confirmed by test
+
+**Phase 5.3 spike required:** before implementing PNG→WebP (lossless `image` crate encode), validate actual output quality, size, and `.wasm` binary size in a spike task. If lossless WebP output is unacceptably large for photographic sources, reconsider lossy WebP encode using `webp` crate.
+
+### 12.3 Tier 2 — Raster Classics (v1.8.x — After Tier 1 complete)
+
+Low-risk, high-value conversions using the `image` crate without new native dependencies. All use the same `decode → re-encode` pipeline.
+
+| Direction | Crate | Notes |
+|-----------|-------|-------|
+| GIF → PNG | `transmutador_gif` | Palette/transparency notice required; first frame only for animated GIF MVP |
+| GIF → JPEG | `transmutador_gif` (add export) | Alpha flatten; first frame only |
+| BMP → PNG | `transmutador_bmp` | Uncompressed raster → lossless PNG; typically large source |
+| BMP → JPEG | `transmutador_bmp` (add export) | Quality slider |
+| TIFF → PNG | `transmutador_tiff` | Multi-page TIFF: MVP = first page only (documented constraint) |
+| TIFF → JPEG | `transmutador_tiff` (add export) | Quality slider |
+| ICO → PNG | `transmutador_ico` | Multi-size ICO: largest size extracted |
+| PNG → ICO | `transmutador_ico` (add export) | Resize to 256×256; standard favicon tool |
+| TGA → PNG | `transmutador_tga` | Gaming/asset niche |
+
+**Execution:** same pattern as Tier 1, one phase at a time, separate prompt per direction. Crates group by source format to minimize crate count.
+
+### 12.4 Tier 3 — Modern Formats (v2.0.x — After Tier 2 complete)
+
+These require careful Wasm bundle size analysis before commitment.
+
+| Format | Direction | Technical note |
+|--------|-----------|---------------|
+| **AVIF → PNG/JPEG** | Decode | `ravif` pure-Rust decoder; `avif-native` uses libdav1d (C) — spike required for Wasm feasibility |
+| **PNG/JPEG → AVIF** | Encode | `ravif` encode; known large bundle. Budget spike before commit. |
+| **SVG → PNG/JPEG** | Rasterize | `resvg` + `usvg`; adds ~2–4 MB to bundle; DPI/background parameters |
+| **HEIC/HEIF → JPEG** | Decode | No pure-Rust decoder; `libheif` WASM port fragile. Honest UI message recommended. |
+
+**Go/no-go criteria for each:** spike delivers working Wasm build + `.wasm` ≤ 4 MB + `cargo test --workspace` passes.
+
+### 12.5 Tier 4 — Raster Operations & New Categories (v2.x — After Tier 3 milestone)
+
+These extend Camaleon beyond format swap into raster operations and new content types.
+
+| Category | Tool | Implementation notes |
+|----------|------|---------------------|
+| **Optimization** | Compress (same-format re-encode) | Re-encode PNG or JPEG at user-chosen compression/quality; size delta as primary metric |
+| **Optimization** | Resize | `imageops::resize`; width/height + aspect-ratio lock; filter type (Nearest/Lanczos) |
+| **Editing** | Crop | Canvas/coordinate UI; Wasm crops raster before encode |
+| **Editing** | Rotate / Flip | 90°/180°/270° + horizontal/vertical flip; lossless when source is PNG |
+| **Favicon Suite** | PNG → ICO (multi-size) | Tier 2 ICO tool extended to emit standard sizes (16/32/48/256) |
+| **Documents** | Images → PDF | `printpdf` or `lopdf` crate; new output category; StripAll applies |
+| **Documents** | PDF → Images | `pdfium` WASM port; spike for bundle size before commit |
+
+**Governance note:** Tier 4 may introduce a new `category` value in `ToolDefinition` (`"optimize"`, `"edit"`, `"document"`). The ToolGrid, CommandPalette, and registry must be updated in a coordinated UI task before Tier 4 tools go live.
+
+### 12.6 Cross-Cutting Requirements for All Format Expansion
+
+These apply to every new tool regardless of tier:
+
+1. **ToolRegistry entry** — `status: "soon"` on trunk, `status: "active"` only when the crate ships and passes all QA gates.
+2. **Worker lazy-load** — new Wasm modules loaded on-demand (same pattern as `initJpgWasm` / `initPngWasm`).
+3. **`TransmutationModule` type** — `types.ts` must be updated to include the new module identifier.
+4. **Wasm type declarations** — `frontend/src/types/wasm-modules.d.ts` must declare the new module's exports.
+5. **Build scripts** — `scripts/build-wasm.ps1`, `scripts/build-wasm.sh`, and `package.json build:wasm` must include the new crate.
+6. **Estimate function** — `useFileMetrics` must be extended to dispatch to the new module's `estimate_*_size`.
+7. **i18n strings** — add to both `en.ts` and `es.ts` dictionaries: `actionTitle`, `description`, `fidelityHint`, and any option labels.
+8. **SPEC §6 stub** — Architect writes the module spec before implementation (done for §6.4 and §6.5 above).
+9. **ROADMAP update** — Architect updates ROADMAP after each phase completes (not OpenCode's job).

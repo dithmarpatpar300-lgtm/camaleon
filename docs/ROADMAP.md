@@ -11,15 +11,15 @@
 
 ---
 
-## Current Snapshot (2026-06-03)
+## Current Snapshot (2026-06-07)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.0.0 | Landing, per-tool routes, options UI, EN/ES i18n, UI-5 a11y baseline |
-| **Engine (Rust workspace)** | v1.0.0 | JPG↔PNG hardened, StripAll, output integrity (§5.11), round-trip tests |
-| **SPEC** | v1.0.0 | Authoritative architecture + transmutation science |
+| **Frontend (app)** | v1.6.1 | Full UI polish: glass header, footer, Command Palette, metrics, FOUC fix, Scrollbar Camaleón |
+| **Engine (Rust workspace)** | v1.2.0 | JPG↔PNG hardened, StripAll, output integrity, CountingWriter, result cache |
+| **SPEC** | v1.7.0-planned | WebP science + Tier 1–4 expansion program documented |
 
-**v1.0.0 shipped** (2026-06-03). Post-1.0: Playwright E2E, `refine_jpeg_encoder_swap`, UI/UX polish layer, new formats.
+**v1.6.1 shipped** (2026-06-07). Next: Phase 5.1 WebP→PNG (`phase5_webp_to_png`).
 
 ---
 
@@ -135,22 +135,64 @@ Goal: shippable MVP sign-off, not feature creep.
 
 ---
 
-## Post-MVP Horizon (Not Scheduled)
+## Phase 5 — Format Expansion Tier 1: WebP Suite (v1.7.x — Active)
 
-Prioritized backlog — **v1.1.0+**:
+> Full doctrine in **SPEC §12**. One conversion direction per task; QA gate between each.
 
-| Priority | Feature | Notes |
-|----------|---------|-------|
-| P1 | **Playwright E2E** | Smoke tests for both tool routes (deferred from v1.0.0 signoff) |
-| P2 | `refine_jpeg_encoder_swap` | Chroma subsampling 4:4:4 / 4:2:2 (§5.5.6); requires encoder backend swap |
-| P3 | WebP read/write | New crate `transmutador_webp`; registry entry already placeholder |
-| P4 | Locale-aware routing / metadata | `[locale]` segments, per-locale `generateMetadata` |
-| P5 | Batch transmutation | Queue in Worker; multi-file UI |
-| P6 | Pre-transmute transparency notice | UX when PNG has alpha (§5.11.6) |
-| P7 | PWA / offline shell | Service worker, installable app |
-| P8 | `CONTRIBUTING.md` + issue templates | Community onboarding |
+### Phase 5.1 — WebP → PNG `v1.7.0-alpha.1` ← **Next**
 
-**Delivered post-MVP items (moved out of backlog):** quality/compression sliders (UI-3), background color (v0.5.6), metadata strip (v0.5.3).
+Goal: first WebP conversion; proves `transmutador_webp` crate pattern.
+
+- [ ] Scaffold `motor_transmutacion/transmutador_webp/` (`image` feature `webp`, `default-features = false`)
+- [ ] `transmutar_webp_a_png`, `transmutar_webp_a_png_with_compression`, `estimate_webp_to_png_size`
+- [ ] 11+ integration tests (lossy/lossless/alpha/corrupt/StripAll/dimensions/estimate parity)
+- [ ] Worker lazy-load third Wasm module; `TransmutationModule` type extended
+- [ ] ToolRegistry `webp-to-png` → `status: "active"`; UI strings EN + ES
+- [ ] Wasm binary size reported (NFR-7 gate: ≤ 3 MB)
+- [ ] Prompt: `docs/prompts/phase5_webp_to_png.md`
+
+### Phase 5.2 — WebP → JPEG `v1.7.0-alpha.2`
+
+Goal: second WebP conversion; alpha-flatten reuse from `transmutador_png` pattern.
+
+- [ ] Add `transmutar_webp_a_jpg_with_options`, `estimate_webp_to_jpg_size` to `transmutador_webp`
+- [ ] Alpha flatten policy identical to §5.5.2
+- [ ] UI two-generation lossy warning
+- [ ] ToolRegistry `webp-to-jpg` → `active`
+
+### Phase 5.3 — PNG → WebP `v1.7.0-alpha.3`
+
+- [ ] Spike: validate `image` crate WebP lossless encode bundle size and quality
+- [ ] Scaffold `motor_transmutacion/transmutador_encode/` only if spike passes NFR-7
+- [ ] `transmutar_png_a_webp`, `estimate_png_to_webp_size`
+- [ ] `OutputFormat::WebP` added to `core_utils`; magic bytes validator
+- [ ] ToolRegistry `png-to-webp` → `active`
+
+### Phase 5.4 — JPEG → WebP `v1.7.0`
+
+- [ ] Add `transmutar_jpg_a_webp` to `transmutador_encode`
+- [ ] UI hint: lossless-of-lossy size inflation (§5.12.4)
+- [ ] ToolRegistry `jpg-to-webp` → `active`
+- [ ] v1.7.0 tag on completion of all four phases
+
+---
+
+## Post-v1.7 Horizon
+
+| Tier | Target | Features | Notes |
+|------|--------|----------|-------|
+| **Tier 2** | v1.8.x | GIF, BMP, TIFF, ICO, TGA | Classic raster; same pipeline pattern |
+| **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
+| **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
+
+| Backlog item | Notes |
+|-------------|-------|
+| `refine_jpeg_encoder_swap` | Chroma subsampling 4:4:4 / 4:2:2 (§5.5.6) — deferred |
+| Playwright E2E | Smoke tests; deferred from v1.0.0 |
+| PWA / offline shell | Service worker; post-Tier 1 |
+| `CONTRIBUTING.md` + issue templates | Community onboarding |
+
+**Delivered post-MVP items (moved out of backlog):** quality/compression sliders (UI-3), background color (v0.5.6), metadata strip (v0.5.3), UI-9 header/footer (v1.6.0), locale/theme FOUC fix + Scrollbar Camaleón (v1.6.1).
 
 ---
 
@@ -170,6 +212,9 @@ Prioritized backlog — **v1.1.0+**:
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-07 | Chief Architect (Cursor) | Phase 5 (Tier 1 WebP suite) planned; ROADMAP snapshot updated to v1.6.1; post-v1.7 horizon added |
+| 2026-06-07 | Chief Architect (Cursor) | v1.6.1 shipped: locale/theme FOUC, Scrollbar Camaleón, landing layout stability |
+| 2026-06-07 | Chief Architect (Cursor) | v1.6.0 shipped: UI-9 header/footer polish, metrics UX, result cache |
 | 2026-06-03 | Chief Architect (Cursor) | v1.0.0 shipped: Phase 4 complete, UI-5 baseline + CI; post-1.0 backlog (Playwright, encoder swap) |
 | 2026-06-03 | Chief Architect (Cursor) | MVP acceptance criteria marked met; Phase 3.5 engine hardening + UI track (UI-1..UI-4) documented; Phase 4 narrowed to UI-5 + sign-off; post-MVP backlog refreshed |
 | 2026-06-02 | Chief Architect (Cursor) | Phase 3 marked complete after OpenCode delivery review |
