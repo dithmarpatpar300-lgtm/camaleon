@@ -24,10 +24,11 @@ function sortKeysDeep(value: unknown): unknown {
 export function buildFingerprint(
   module: string,
   fileIdentity: string,
-  options: TransmutationOptions
+  options: TransmutationOptions,
+  outputExtension?: string
 ): string {
   return JSON.stringify(
-    sortKeysDeep({ module, fileIdentity, opts: options })
+    sortKeysDeep({ module, fileIdentity, outputExtension, opts: options })
   );
 }
 

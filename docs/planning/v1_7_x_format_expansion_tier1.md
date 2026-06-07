@@ -2,7 +2,7 @@
 
 > **Author:** Chief Architect (Cursor)  
 > **Date:** 2026-06-07  
-> **Status:** Planned — Phase 5.1 ready for OpenCode execution  
+> **Status:** Phase 5.1 ✅ complete — Phase 5.2 prompt ready for OpenCode  
 > **Target release:** Frontend + Engine **v1.7.0** (four phases)  
 > **Builds on:** v1.6.1 (FOUC fix, Scrollbar Camaleón, layout stability)  
 > **SPEC reference:** §5.12 (WebP science), §6.4, §6.5, §12.2  
@@ -118,6 +118,31 @@ Each new tool needs in `en.ts` / `es.ts`:
 }
 ```
 
+### 3.6 User-facing options matrix (Tier 1 + JPG/PNG pair)
+
+Not every conversion exposes the same controls. Option surface is driven by **output format science** (lossless vs lossy) and **alpha handling**, not symmetry between directions.
+
+| Route | Fidelity | UI controls (`optionSpecs`) | Engine auto-decisions (no UI) |
+|-------|----------|------------------------------|-------------------------------|
+| JPG → PNG | Lossless | **PNG compression** slider (1–9) | Always RGB; StripAll |
+| PNG → JPG | Lossy | **JPEG quality** (1–100) + **background color** (alpha only in UI) | Chroma 4:2:0 fixed; flatten formula §5.5.2 |
+| WebP → PNG | Lossless | **PNG compression** slider (1–9) | RGBA if alpha else RGB; StripAll |
+| WebP → JPG | Lossy | **JPEG quality** + **background color** (parity with PNG→JPG) | Same as PNG→JPG; §5.12.2 two-generation lossy warning |
+| PNG → WebP | Lossless | **None** (one-click) | VP8L lossless only in v1.7.x; alpha preserved |
+| JPG → WebP | Lossless | **None** (one-click) | Lossless-of-lossy inflation warning only |
+
+**Control families:**
+
+| Key | Affects pixels? | Used when |
+|-----|-----------------|-----------|
+| `compression` | No — DEFLATE level only | Lossless PNG output |
+| `quality` | Yes — irreversible | Lossy JPEG output |
+| `background` | Yes — alpha flatten | Lossy JPEG output **and** source has transparency |
+
+**Deferred (do NOT add in Tier 1 without Architect prompt):** chroma subsampling (`refine_jpeg_encoder_swap`), optimized Huffman, lossy WebP encode quality, indexed PNG palette, metadata preserve modes.
+
+**UI parity rule:** Any tool with `fidelity: "lossy"` and a `background` optionSpec must reuse the existing `TransparencyNotice` + `OptionsControls` split already implemented for `png-to-jpg` (`TransmutationPanel` filters `background` out of `OptionsControls`; background picker appears only when alpha is detected).
+
 ---
 
 ## 4. Phase 5.1 — WebP → PNG
@@ -196,9 +221,12 @@ Compression policy: same `validate_compression` from `core_utils` (1–9).
 
 ## 5. Phase 5.2 — WebP → JPEG
 
-**Blocked on:** Phase 5.1 QA gate approval.  
+**Blocked on:** ~~Phase 5.1 QA gate~~ ✅ approved.  
 **Task slug:** `phase5_webp_to_jpg`  
-**Target:** Engine v1.3.1 + Frontend v1.7.0-alpha.2
+**Target:** Engine v1.3.1 + Frontend v1.7.2  
+**Prompt:** `docs/prompts/phase5_webp_to_jpg.md` ← **ready to pass to OpenCode**
+
+**Options doctrine (§3.6):** WebP→JPG is the **lossy-output twin** of PNG→JPG — same two user levers (quality + background). Do not invent new knobs; mirror registry/i18n/UX from `png-to-jpg`. Fidelity copy must add §5.12.2 two-generation lossy warning (WebP source may already be lossy).
 
 ### 5.1 Engine deliverables
 

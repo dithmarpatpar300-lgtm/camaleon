@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.7.0 | WebP→PNG tool active; full UI polish stack from v1.6.x |
-| **Engine (Rust workspace)** | v1.3.0 | JPG↔PNG + WebP→PNG; StripAll, output integrity, CountingWriter, result cache |
-| **SPEC** | v1.7.0 | WebP science + Tier 1 Phase 5.1 implemented |
+| **Frontend (app)** | v1.7.2 | WebP→PNG + WebP→JPEG active; v1.7.1 filename truncation |
+| **Engine (Rust workspace)** | v1.3.1 | JPG↔PNG + WebP→PNG + WebP→JPEG |
+| **SPEC** | v1.7.0 | WebP science + Tier 1 Phase 5.1–5.2 implemented |
 
-**v1.7.0 shipped** (2026-06-07). Next: Phase 5.2 WebP→JPEG (`phase5_webp_to_jpg`).
+**v1.7.2 shipped** (2026-06-07). Next: Phase 5.3 PNG→WebP spike (`phase5_png_to_webp`).
 
 ---
 
@@ -151,14 +151,17 @@ Goal: first WebP conversion; proves `transmutador_webp` crate pattern.
 - [x] Wasm binary size: **401 KB** (NFR-7 gate: ≤ 3 MB)
 - [x] Report: `docs/reports/phase5_webp_to_png_done.md`
 
-### Phase 5.2 — WebP → JPEG `v1.7.0-alpha.2`
+### Phase 5.2 — WebP → JPEG `v1.7.2` ✅ (Complete)
 
 Goal: second WebP conversion; alpha-flatten reuse from `transmutador_png` pattern.
 
-- [ ] Add `transmutar_webp_a_jpg_with_options`, `estimate_webp_to_jpg_size` to `transmutador_webp`
-- [ ] Alpha flatten policy identical to §5.5.2
-- [ ] UI two-generation lossy warning
-- [ ] ToolRegistry `webp-to-jpg` → `active`
+- [x] Add `transmutar_webp_a_jpg_with_options`, `estimate_webp_to_jpg_size` to `transmutador_webp`
+- [x] Alpha flatten policy identical to §5.5.2
+- [x] Worker dual-route via `outputExtension`; fingerprint cache isolation
+- [x] UI two-generation lossy warning; `detectWebpAlpha` + `TransparencyNotice` parity
+- [x] ToolRegistry `webp-to-jpg` → `active`
+- [x] Wasm binary size: **626 KB** (NFR-7 gate: ≤ 3 MB)
+- [x] Report: `docs/reports/phase5_webp_to_jpg_done.md`
 
 ### Phase 5.3 — PNG → WebP `v1.7.0-alpha.3`
 

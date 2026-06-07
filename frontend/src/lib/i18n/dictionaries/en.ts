@@ -13,6 +13,10 @@ const en: Dictionary = {
         title: "PNG to JPG — Camaleon",
         description: "Convert PNG to JPG in your browser. Compressed for web — local and private.",
       },
+      "webp-to-jpg": {
+        title: "WebP to JPG — Camaleon",
+        description: "Convert WebP to JPG in your browser. Compressed for web — local and private.",
+      },
       "webp-to-png": {
         title: "WebP to PNG — Camaleon",
         description: "Convert WebP to PNG in your browser. Lossless raster storage — local and private.",
@@ -167,6 +171,15 @@ const en: Dictionary = {
             gray: "Gray",
           },
         },
+      },
+    },
+    "webp-to-jpg": {
+      actionTitle: "Compress for Web",
+      description: "Convert WebP to JPEG — smaller files at your chosen quality.",
+      fidelityHint: "JPEG is lossy — quality loss is irreversible. WebP was likely already compressed; re-encoding adds a second lossy generation. Transparency is flattened to your chosen background.",
+      options: {
+        quality: { label: "JPEG Quality", hint: "Higher quality = larger file. Quality loss is always irreversible.", lowerLabel: "Lighter", upperLabel: "Faithful", presets: { web: "Web", balanced: "Balanced", high: "High" } },
+        background: { label: "Background color", hint: "Only affects images with transparency.", customAria: "Custom background color", swatches: { white: "White", black: "Black", gray: "Gray" } },
       },
     },
     "webp-to-png": {

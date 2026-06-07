@@ -10,6 +10,7 @@ import { useAdaptiveResourceProfile } from "@/hooks/useAdaptiveResourceProfile";
 import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
 import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
+import { detectWebpAlpha } from "@/lib/format/detect-webp-alpha";
 import { useI18n } from "@/providers/I18nProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { usePageFileDrop } from "@/hooks/usePageFileDrop";
@@ -70,6 +71,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const metrics = useFileMetrics({
     file: staged?.file ?? null,
     module: tool.module,
+    outputExtension: tool.outputExtension as "png" | "jpg",
     options,
     ready,
     profile,
@@ -89,9 +91,14 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setErrorMessage(null);
     setResult(null);
 
-    if (tool.id === "png-to-jpg") {
-      const detection = detectPngAlpha(bytes);
-      setHasAlpha(detection.hasAlpha);
+    const hasBackgroundOption = tool.optionSpecs?.some(
+      (s) => s.kind === "color" && s.key === "background"
+    );
+
+    if (hasBackgroundOption && tool.id === "png-to-jpg") {
+      setHasAlpha(detectPngAlpha(bytes).hasAlpha);
+    } else if (hasBackgroundOption && tool.id === "webp-to-jpg") {
+      setHasAlpha(detectWebpAlpha(bytes));
     } else {
       setHasAlpha(false);
     }
@@ -106,7 +113,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         tool.module,
         staged.bytes,
         options,
-        metrics.transmuteMeta
+        metrics.transmuteMeta,
+        tool.outputExtension as "png" | "jpg"
       );
       if (response.ok) {
         metrics.setFinalSize(response.outputSize);
@@ -128,7 +136,17 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       const raw = err instanceof Error ? err.message : t("panel.unexpectedError");
       setErrorMessage(localizeError(raw, t));
     }
-  }, [staged, ready, tool.module, options, transmutate, metrics.setFinalSize, metrics.transmuteMeta, t]);
+  }, [
+    staged,
+    ready,
+    tool.module,
+    tool.outputExtension,
+    options,
+    transmutate,
+    metrics.setFinalSize,
+    metrics.transmuteMeta,
+    t,
+  ]);
 
   const handleDownload = useCallback(() => {
     if (!result) return;

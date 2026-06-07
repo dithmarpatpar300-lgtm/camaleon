@@ -773,7 +773,7 @@ pub fn transmutar_png_a_jpg_with_options(
 
 **Purpose:** WebP decoding crate. Handles all conversions **from** WebP: WebP→PNG (v1.7.0) and WebP→JPEG (planned Phase 5.2).
 
-**Status:** Implemented — Phase 5.1 (`phase5_webp_to_png`). WebP→JPEG exports planned for Phase 5.2.
+**Status:** Implemented — Phase 5.1 (`phase5_webp_to_png`) + Phase 5.2 (`phase5_webp_to_jpg`, v1.7.2).
 
 **Crate type:** `["cdylib", "rlib"]`
 
@@ -799,7 +799,7 @@ pub fn transmutar_webp_a_png_with_compression(
 pub fn estimate_webp_to_png_size(input_bytes: &[u8], compression: u8) -> Result<u32, String>
 // CountingWriter pattern — compression 1–9, mirrors estimate_jpg_to_png_size
 
-// Phase 5.2 — WebP → JPEG (planned, separate prompt)
+// Phase 5.2 — WebP → JPEG (implemented v1.7.2)
 #[wasm_bindgen]
 pub fn transmutar_webp_a_jpg_with_options(
     input_bytes: &[u8],

@@ -1,4 +1,8 @@
-import type { TransmutationModule, TransmutationOptions } from "@/workers/types";
+import type {
+  OutputExtension,
+  TransmutationModule,
+  TransmutationOptions,
+} from "@/workers/types";
 import { buildFingerprint } from "@/workers/result-cache";
 
 export function buildFileIdentity(file: File): string {
@@ -8,7 +12,13 @@ export function buildFileIdentity(file: File): string {
 export function buildTransmuteFingerprint(
   module: TransmutationModule,
   file: File,
-  options: TransmutationOptions
+  options: TransmutationOptions,
+  outputExtension?: OutputExtension
 ): string {
-  return buildFingerprint(module, buildFileIdentity(file), options);
+  return buildFingerprint(
+    module,
+    buildFileIdentity(file),
+    options,
+    outputExtension
+  );
 }

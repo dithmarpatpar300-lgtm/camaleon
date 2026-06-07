@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
-import type { TransmutationModule, TransmutationOptions } from "@/workers/types";
+import type {
+  OutputExtension,
+  TransmutationModule,
+  TransmutationOptions,
+} from "@/workers/types";
 import { computeSizeDelta, type SizeDelta } from "@/lib/format/metrics";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
 import {
@@ -14,6 +18,7 @@ import type { WorkerRequestMeta } from "@/workers/types";
 type UseFileMetricsArgs = {
   file: File | null;
   module: TransmutationModule;
+  outputExtension: OutputExtension;
   options: TransmutationOptions;
   ready: boolean;
   profile: ResourceProfile;
@@ -43,7 +48,7 @@ async function getEstimateBuffer(file: File): Promise<ArrayBuffer> {
 }
 
 export function useFileMetrics({
-  file, module, options, ready, profile,
+  file, module, outputExtension, options, ready, profile,
 }: UseFileMetricsArgs): FileMetrics {
   const { estimate } = useTransmutationWorker();
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null);
@@ -57,8 +62,9 @@ export function useFileMetrics({
   const originalSize = file?.size ?? 0;
 
   const fingerprint = useMemo(
-    () => (file ? buildTransmuteFingerprint(module, file, options) : null),
-    [file, module, options]
+    () =>
+      file ? buildTransmuteFingerprint(module, file, options, outputExtension) : null,
+    [file, module, options, outputExtension]
   );
 
   const cacheWarm =
@@ -110,7 +116,7 @@ export function useFileMetrics({
       if (thisId !== estimateIdRef.current) return;
       if (typeof document !== "undefined" && document.hidden) return;
 
-      const result = await estimate(module, buf, options, transmuteMeta);
+      const result = await estimate(module, buf, options, transmuteMeta, outputExtension);
       if (thisId !== estimateIdRef.current) return;
 
       setEstimatedSize((prev) =>
@@ -129,7 +135,7 @@ export function useFileMetrics({
         setEstimating(false);
       }
     }
-  }, [file, ready, module, options, estimate, transmuteMeta, fingerprint]);
+  }, [file, ready, module, outputExtension, options, estimate, transmuteMeta, fingerprint]);
 
   const runEstimateRef = useRef(runEstimate);
   runEstimateRef.current = runEstimate;

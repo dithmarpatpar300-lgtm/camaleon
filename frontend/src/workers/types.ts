@@ -1,5 +1,7 @@
 export type TransmutationModule = "transmutador_jpg" | "transmutador_png" | "transmutador_webp";
 
+export type OutputExtension = "png" | "jpg";
+
 export type RgbColor = { r: number; g: number; b: number };
 
 export type TransmutationOptions = {
@@ -22,6 +24,8 @@ export type WorkerRequest = {
   module: TransmutationModule;
   bytes: ArrayBuffer;
   options?: TransmutationOptions;
+  /** Required when module is transmutador_webp — disambiguates PNG vs JPEG output. */
+  outputExtension?: OutputExtension;
   purpose?: WorkerPurpose;
   fingerprint?: string;
   fileIdentity?: string;

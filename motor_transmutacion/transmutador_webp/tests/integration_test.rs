@@ -2,7 +2,10 @@ use std::io::Cursor;
 
 use image::{ImageBuffer, ImageReader, Rgb, Rgba};
 
-use transmutador_webp::{estimate_webp_to_png_size, transmutar_webp_a_png_inner};
+use transmutador_webp::{
+    estimate_webp_to_jpg_size, estimate_webp_to_png_size, transmutar_webp_a_jpg_inner,
+    transmutar_webp_a_png_inner,
+};
 
 fn create_lossless_webp_rgba() -> Vec<u8> {
     let img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_fn(16, 16, |x, y| {
@@ -134,4 +137,72 @@ fn large_webp_within_limit_passes() {
     let webp = buf.into_inner();
     let png = transmutar_webp_a_png_inner(&webp, 6).expect("should convert large");
     assert!(png.len() > 100);
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5.2 — WebP → JPEG tests
+// ---------------------------------------------------------------------------
+
+fn create_transparent_webp() -> Vec<u8> {
+    use image::Rgba;
+    let img: image::ImageBuffer<Rgba<u8>, Vec<u8>> = image::ImageBuffer::from_fn(1, 1, |_, _| Rgba([255, 0, 0, 128]));
+    let mut buf = std::io::Cursor::new(Vec::new());
+    img.write_to(&mut buf, image::ImageFormat::WebP).expect("encode transparent WebP");
+    buf.into_inner()
+}
+
+#[test]
+fn lossy_webp_to_jpg_produces_valid_jpeg() {
+    let webp = create_lossless_webp_rgba();
+    let jpg = transmutar_webp_a_jpg_inner(&webp, 85, 255, 255, 255).expect("should convert");
+    assert!(jpg.len() > 2);
+    assert_eq!(&jpg[0..2], &[0xFF, 0xD8]);
+}
+
+#[test]
+fn webp_with_alpha_flattened_on_white() {
+    let webp = create_transparent_webp();
+    let jpg = transmutar_webp_a_jpg_inner(&webp, 100, 255, 255, 255).expect("should convert");
+    let decoded = image::ImageReader::new(std::io::Cursor::new(&jpg))
+        .with_guessed_format().unwrap().decode().unwrap().to_rgb8();
+    let [r, g, b] = decoded.get_pixel(0, 0).0;
+    assert!(r > 200, "red should be high on white bg");
+    assert!(g > 100);
+    assert!(b > 100);
+}
+
+#[test]
+fn webp_with_alpha_custom_background_red() {
+    let webp = create_transparent_webp();
+    let jpg = transmutar_webp_a_jpg_inner(&webp, 100, 255, 0, 0).expect("should convert");
+    let decoded = image::ImageReader::new(std::io::Cursor::new(&jpg))
+        .with_guessed_format().unwrap().decode().unwrap().to_rgb8();
+    let [r, g, b] = decoded.get_pixel(0, 0).0;
+    assert!(r > 200);
+    assert!(g < 30);
+    assert!(b < 30);
+}
+
+#[test]
+fn quality_zero_rejected() {
+    let webp = create_lossless_webp_rgba();
+    let err = transmutar_webp_a_jpg_inner(&webp, 0, 255, 255, 255).unwrap_err();
+    assert!(err.contains("at least 1") || err.contains("0"));
+}
+
+#[test]
+fn quality_over_100_rejected() {
+    let webp = create_lossless_webp_rgba();
+    let err = transmutar_webp_a_jpg_inner(&webp, 101, 255, 255, 255).unwrap_err();
+    assert!(err.contains("exceeds") || err.contains("101"));
+}
+
+#[test]
+fn estimate_webp_to_jpg_within_5pct() {
+    let webp = create_lossless_webp_rgb();
+    let full = transmutar_webp_a_jpg_inner(&webp, 85, 255, 255, 255).expect("full");
+    let est = estimate_webp_to_jpg_size(&webp, 85, 255, 255, 255).expect("estimate");
+    let diff = (full.len() as f64 - est as f64).abs();
+    let pct = diff / full.len() as f64;
+    assert!(pct < 0.05, "est {} vs actual {} diff {:.2}%", est, full.len(), pct * 100.0);
 }

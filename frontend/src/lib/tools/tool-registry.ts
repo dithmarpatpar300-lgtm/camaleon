@@ -96,6 +96,45 @@ export const TOOLS: ToolDefinition[] = [
       },
     ],
   },
+  {
+    id: "webp-to-jpg",
+    slug: "webp-to-jpg",
+    title: "WebP → JPG",
+    fromFormat: "WEBP",
+    toFormat: "JPG",
+    module: "transmutador_webp",
+    category: "image",
+    fidelity: "lossy",
+    status: "active",
+    acceptExtensions: [".webp"],
+    outputExtension: "jpg",
+    optionSpecs: [
+      {
+        kind: "slider",
+        key: "quality",
+        min: 1,
+        max: 100,
+        step: 1,
+        defaultValue: 85,
+        presets: [
+          { label: "web", value: 60 },
+          { label: "balanced", value: 85 },
+          { label: "high", value: 95 },
+        ],
+      },
+      {
+        kind: "color",
+        key: "background",
+        defaultValue: { r: 255, g: 255, b: 255 },
+        swatches: [
+          { label: "white", value: { r: 255, g: 255, b: 255 } },
+          { label: "black", value: { r: 0, g: 0, b: 0 } },
+          { label: "gray", value: { r: 128, g: 128, b: 128 } },
+        ],
+        allowCustom: true,
+      },
+    ],
+  },
 ];
 
 export function getToolBySlug(slug: string): ToolDefinition | undefined {
