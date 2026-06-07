@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Locale, TranslateFn } from "@/lib/i18n/types";
-import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, createT } from "@/lib/i18n";
+import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, LOCALE_COOKIE_NAME, createT } from "@/lib/i18n";
 
 type I18nContextValue = {
   locale: Locale;
@@ -39,6 +39,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocaleState(l);
     localStorage.setItem(LOCALE_STORAGE_KEY, l);
     document.documentElement.lang = l;
+    document.cookie = `${LOCALE_COOKIE_NAME}=${l}; path=/; max-age=31536000; SameSite=Lax`;
   }, []);
 
   const t = createT(locale);

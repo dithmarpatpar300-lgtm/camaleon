@@ -7,13 +7,18 @@ import { fileMatchesExtensions } from "@/lib/tools/extensions";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
+import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
 import { useI18n } from "@/providers/I18nProvider";
+import { useToast } from "@/providers/ToastProvider";
+import { usePageFileDrop } from "@/hooks/usePageFileDrop";
 import { localizeError } from "@/lib/i18n/errors";
 import { resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { Dropzone } from "./Dropzone";
 import { OptionsControls } from "./OptionsControls";
+import { TransparencyNotice } from "./TransparencyNotice";
+import { PageDropOverlay } from "./PageDropOverlay";
 
 type PanelStatus = "idle" | "staged" | "processing" | "success" | "error";
 
@@ -51,8 +56,10 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [hasAlpha, setHasAlpha] = useState(false);
 
   const { transmutate, ready } = useTransmutationWorker();
+  const { toast } = useToast();
   const accept = tool.acceptExtensions.join(",");
   const hint = resolveToolFidelityHint(tool.id, t);
 
@@ -67,6 +74,13 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setStatus("staged");
     setErrorMessage(null);
     setResult(null);
+
+    if (tool.id === "png-to-jpg") {
+      const detection = detectPngAlpha(bytes);
+      setHasAlpha(detection.hasAlpha);
+    } else {
+      setHasAlpha(false);
+    }
   }, [tool, t]);
 
   const handleTransmutar = useCallback(async () => {
@@ -99,13 +113,16 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const handleDownload = useCallback(() => {
     if (!result) return;
     downloadResult(result.outputBytes, result.fileName, result.mime, result.extension);
-  }, [result]);
+    toast({ message: t("toast.downloadStarted"), variant: "success" });
+  }, [result, toast, t]);
 
   const handleReset = useCallback(() => {
     setStaged(null);
     setResult(null);
     setStatus("idle");
     setErrorMessage(null);
+    setHasAlpha(false);
+    setPreviewUrl(null);
     setOptions(buildDefaultOptions(tool.optionSpecs));
   }, [tool]);
 
@@ -138,6 +155,15 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   const hasOptions = (tool.optionSpecs?.length ?? 0) > 0;
 
+  const { active: dropOverlayActive } = usePageFileDrop({
+    enabled: status === "idle" || status === "staged",
+    onFile: handleFileSelect,
+    acceptExtensions: tool.acceptExtensions,
+  });
+
+  const currentBackground =
+    options.background ?? (tool.optionSpecs?.find((s) => s.key === "background")?.defaultValue as import("@/lib/tools/types").RgbColor | undefined) ?? { r: 255, g: 255, b: 255 };
+
   return (
     <div className="space-y-6">
       {status === "idle" && (
@@ -156,6 +182,11 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
             </div>
             <Button variant="ghost" size="sm" onClick={handleReset}>{t("panel.changeFile")}</Button>
           </div>
+          {hasAlpha && (
+            <div className="mb-4">
+              <TransparencyNotice background={currentBackground} />
+            </div>
+          )}
           {hasOptions && (
             <div className="mb-5 border-t border-border pt-4">
               <OptionsControls toolId={tool.id} specs={tool.optionSpecs!} values={options} onChange={setOptions} />
@@ -217,6 +248,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       <p className="text-center text-xs text-text-muted">
         {t("panel.engineLabel", { status: ready ? t("panel.engineReady") : t("panel.engineInit") })}
       </p>
+
+      <PageDropOverlay active={dropOverlayActive} />
     </div>
   );
 }

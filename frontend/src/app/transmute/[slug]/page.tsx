@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { getToolBySlug, getActiveTools } from "@/lib/tools/tool-registry";
+import { resolveLocaleFromCookie, getToolMetadata, LOCALE_COOKIE_NAME } from "@/lib/i18n/metadata";
 import { TransmutationPanel } from "@/components/transmute/TransmutationPanel";
 import { ToolPageStrings } from "./ToolPageStrings";
 import { ToolPageBack } from "./ToolPageBack";
@@ -19,9 +21,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!tool || tool.status !== "active") {
     return { title: "Not Found — Camaleon" };
   }
-  return {
-    title: `${tool.title} — Camaleon`,
-  };
+  const cookieStore = await cookies();
+  const locale = resolveLocaleFromCookie(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
+  return getToolMetadata(locale, tool.id, tool.title);
 }
 
 export default async function TransmuteToolPage({ params }: Props) {

@@ -4,6 +4,16 @@ const es: Dictionary = {
   meta: {
     title: "Camaleon — Transmuta archivos en tu navegador",
     description: "Transmutación de archivos local y privada",
+    tools: {
+      "jpg-to-png": {
+        title: "JPG a PNG — Camaleon",
+        description: "Conversión sin pérdida de JPG a PNG. Preserva cada píxel — local y privada.",
+      },
+      "png-to-jpg": {
+        title: "PNG a JPG — Camaleon",
+        description: "Convierte PNG a JPG en tu navegador. Comprimido para web — local y privado.",
+      },
+    },
   },
 
   nav: {
@@ -55,6 +65,7 @@ const es: Dictionary = {
     dragLabel: "Suelta para transmutar",
     processingLabel: "Transmutando...",
     ariaLabel: "Selecciona un archivo de imagen para transmutar",
+    pageOverlayLabel: "Suelta para transmutar este archivo",
   },
 
   panel: {
@@ -77,6 +88,10 @@ const es: Dictionary = {
     notReadyError: "El motor aún está inicializando. Espera un momento e inténtalo de nuevo.",
     unexpectedError: "Ocurrió un error inesperado",
     previewAlt: "Vista previa de {fileName}",
+    transparencyNotice: {
+      title: "Esta imagen tiene transparencia",
+      body: "Las áreas transparentes se aplanarán sobre {color} antes de codificar a JPEG. JPEG no soporta transparencia.",
+    },
   },
 
   tools: {
@@ -140,6 +155,11 @@ const es: Dictionary = {
     notAvailable: "Esta conversión aún no está disponible.",
     engineNotReady: "El motor de transmutación aún está iniciando. Inténtalo de nuevo.",
     generic: "La transmutación falló. Inténtalo de nuevo.",
+  },
+
+  toast: {
+    downloadStarted: "Descarga iniciada",
+    dismiss: "Cerrar",
   },
 };
 

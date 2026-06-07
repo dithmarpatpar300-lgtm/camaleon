@@ -9,7 +9,7 @@ export function Footer() {
     <footer className="border-t border-border">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-xs text-text-muted">
         <p>{t("footer.privacy")}</p>
-        <p>{t("footer.version", { version: "1.0.0" })}</p>
+        <p>{t("footer.version", { version: "1.1.0" })}</p>
       </div>
     </footer>
   );

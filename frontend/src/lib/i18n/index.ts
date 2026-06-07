@@ -4,6 +4,7 @@ import es from "./dictionaries/es";
 
 export const DEFAULT_LOCALE: Locale = "es";
 export const LOCALE_STORAGE_KEY = "camaleon-locale";
+export const LOCALE_COOKIE_NAME = "camaleon-locale";
 
 const dictionaries: Record<Locale, Record<string, unknown>> = { en, es };
 

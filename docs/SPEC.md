@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.0.0  
-**Last updated:** 2026-06-03  
-**Status:** MVP — Camaleon v1.0.0
+**Version:** 1.1.0  
+**Last updated:** 2026-06-04  
+**Status:** MVP — Camaleon v1.1.0 (UI-6 UX polish layer)
 
 ---
 
@@ -549,7 +549,7 @@ Historically, hardening (§5.7) validated only the **input**. **`refine_output_i
 | Truncated header / unknown magic | decoder panic | input | ✅ `with_guessed_format` + `map_err` |
 | **Empty / truncated output buffer** | corrupt downloaded file | **output** | ✅ `validate_output` (non-empty) |
 | **Wrong-format / headerless output** | unreadable file | **output** | ✅ `validate_output` (magic bytes) |
-| Silent alpha loss without notice | perceived corruption | UX | ⚠️ functional; no user feedback |
+| Silent alpha loss without notice | perceived corruption | UX | ✅ `TransparencyNotice` banner pre-transmute (UI-6) |
 
 The three exposed levers (quality, compression, background RGB) are **orthogonal** — no valid combination produces an invalid result. Background channels are `u8`, so they are always valid by construction.
 
@@ -823,20 +823,25 @@ Reusable, modular taxonomy under `frontend/src/`:
 ```
 components/
 ├── ui/         # ✅ Button, IconButton, Badge, Card, Spinner (UI-1)
-│               # □ Dropdown/Popover, SearchInput, Tooltip, Toast (later)
+│               # ✅ Toast (UI-6)
+│               # □ Dropdown/Popover, SearchInput, Tooltip (later)
 ├── layout/     # ✅ Header, ThemeToggle, LanguageSelector, Footer (UI-1)
 │               # □ Mega-menu (deferred per §7.7)
 ├── transmute/  # ✅ ToolCard, ToolGrid, Dropzone, TransmutationDropzone,
                 #   Hero, PrivacyBanner (UI-2)
                 # ✅ OptionsControls, TransmutationPanel (UI-3)
+                # ✅ TransparencyNotice, PageDropOverlay (UI-6)
 providers/      # ✅ ThemeProvider (UI-1)
                 # ✅ I18nProvider (UI-4)
+                # ✅ ToastProvider (UI-6)
 lib/            # ✅ utils.ts (cn helper), types.ts (UI-1)
                 # ✅ lib/tools/ types.ts + tool-registry.ts (UI-2)
                 # ✅ lib/transmutation/ download.ts (UI-2)
-                # ✅ lib/format/ bytes.ts (UI-3)
+                # ✅ lib/format/ bytes.ts (UI-3), detect-png-alpha.ts, color-label.ts (UI-6)
                 # ✅ lib/i18n/ dictionaries (EN+ES), tool-copy.ts, errors.ts (UI-4)
+                # ✅ lib/i18n/ metadata.ts — locale cookie bridge + OpenGraph (UI-6)
 hooks/          # ✅ useTransmutationWorker (existing), useTheme (UI-1)
+                # ✅ usePageFileDrop (UI-6)
 ```
 
 **ToolRegistry (scalability keystone — mirrors backend NFR-5):** every tool is declared once in a typed registry that drives the `ToolGrid`, routes, and (later) the menu/search. Adding a format = one registry entry + one Worker route + the crate; no UI rewrites.
@@ -885,7 +890,8 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | UI-2 | ✅ `ToolRegistry` + landing (`Hero`, `PrivacyBanner`, `ToolGrid`) + Dropzone extraction + `/transmute/[slug]` route shell (v0.6.2) | OptionsControls in UI-3 |
 | UI-3 | ✅ `/transmute/[slug]` + `TransmutationPanel` + atomic `OptionsControls` (slider + color) wired through extended worker protocol (v0.6.3) | Subsampling deferred |
 | UI-4 | ✅ Full bilingual EN/ES i18n via `I18nProvider` + typed dictionaries + `LanguageSelector` wired (v0.6.4) | UI-5 = a11y/responsive sign-off |
-| UI-5 | ✅ Accessibility + responsive sign-off: keyboard nav, focus-visible, ToolCard affordance visible without hover, `role="alert"`, reduced-motion, mobile 320px layout, `aria-pressed`/`aria-current` on interactive controls (v1.0.0) | — |
+| UI-5 | ✅ Accessibility + responsive sign-off (v1.0.0) | — |
+| UI-6 | ✅ UX polish layer: transparency pre-notice, page drag overlay, toasts, locale metadata cookie bridge (v1.1.0) | UI-7 = [locale] routing |
 
 This UI track runs after the §5.8 backend refinements (now complete) and feeds Phase 4 MVP polish per ROADMAP.
 
@@ -936,6 +942,7 @@ Chief Architect validates SPEC diff during second-pass review.
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
 | 1.0.0-patch | 2026-06-03 | Chief Architect | Round-trip integration tests; CI triggers `master`; README/ROADMAP v1.0.0 alignment; ToolCard `h-full` restored | — |
+| 1.1.0 | 2026-06-04 | OpenCode | UI-6: UX polish — transparency pre-notice, page drag overlay, toast system, locale metadata cookie bridge, detectPngAlpha | `ui_6_ux_polish_layer_done.md` |
 | 1.0.0 | 2026-06-03 | OpenCode | v1.0.0 MVP sign-off: UI-5 a11y baseline, CI workflow, version bump (encoder swap + Playwright deferred to v1.1.0) | `mvp_1_0_0_signoff_done.md` |
 | 0.6.6-docs | 2026-06-03 | Chief Architect | README + ROADMAP aligned to MVP-ready state; SPEC status/UI track notes; MVP acceptance criteria marked met | — |
 | 0.6.6 | 2026-06-03 | OpenCode | Backend output integrity: `validate_output` + `OutputFormat` mandatory checks, `Quality`/`Compression` bounded newtypes, post-encode validation wired in both `_inner` pipelines | `refine_output_integrity_done.md` |

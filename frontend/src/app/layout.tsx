@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { I18nProvider } from "@/providers/I18nProvider";
+import { ToastProvider } from "@/providers/ToastProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { resolveLocaleFromCookie, getRootMetadata, LOCALE_COOKIE_NAME } from "@/lib/i18n/metadata";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,10 +21,11 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Camaleon — Transmute files in your browser",
-  description: "Local, privacy-first file transmutation",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies();
+  const locale = resolveLocaleFromCookie(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
+  return getRootMetadata(locale);
+}
 
 export default function RootLayout({
   children,
@@ -49,6 +53,7 @@ export default function RootLayout({
                   } else {
                     document.documentElement.lang = 'es';
                   }
+                  document.cookie = 'camaleon-locale=' + (locale === 'en' || locale === 'es' ? locale : 'es') + '; path=/; max-age=31536000; SameSite=Lax';
                 } catch(e) {}
               })();
             `,
@@ -60,11 +65,13 @@ export default function RootLayout({
       >
         <I18nProvider>
           <ThemeProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
+            <ToastProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+            </ToastProvider>
           </ThemeProvider>
         </I18nProvider>
       </body>
