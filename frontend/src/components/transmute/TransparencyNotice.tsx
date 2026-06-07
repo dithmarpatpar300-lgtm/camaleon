@@ -10,7 +10,7 @@ type TransparencyNoticeProps = {
 
 export function TransparencyNotice({ background, className }: TransparencyNoticeProps) {
   const { t } = useI18n();
-  const label = colorLabel(background);
+  const label = colorLabel(background, t);
 
   return (
     <div

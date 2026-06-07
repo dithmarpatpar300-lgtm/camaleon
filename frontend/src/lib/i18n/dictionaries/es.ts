@@ -161,6 +161,12 @@ const es: Dictionary = {
     downloadStarted: "Descarga iniciada",
     dismiss: "Cerrar",
   },
+
+  colors: {
+    white: "Blanco",
+    black: "Negro",
+    gray: "Gris",
+  },
 };
 
 export default es;
