@@ -43,19 +43,27 @@ npm run deploy:cf
 | Field | Value |
 |-------|--------|
 | **Project name** | `camaleon` |
-| **Root directory** | `frontend` |
+| **Root directory** | `/` (repo root — leave empty or `.`) |
 | **Framework preset** | `None` (manual commands below) |
+
+> **Why repo root?** `package-lock.json` lives in `frontend/`. The build scripts `cd` into `frontend` automatically. If you set Root directory to `frontend` instead, use the alternate commands in [Troubleshooting](#npm-ci--package-lockjson).
 
 **Build command:**
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable && . "$HOME/.cargo/env" && cargo install wasm-pack --locked && npm ci && npm run build:wasm && npm run build:cf
+bash scripts/cloudflare-build.sh
 ```
 
 **Deploy command:**
 
 ```bash
-npx wrangler deploy
+bash scripts/cloudflare-deploy.sh
+```
+
+**Alternate build command** (if Root directory is already `frontend`):
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable && . "$HOME/.cargo/env" && cargo install wasm-pack --locked && npm ci && npm run build:wasm && npm run build:cf
 ```
 
 > First build may take 10–15 minutes (Rust toolchain + four Wasm crates). Retry if timeout occurs on Free plan.
@@ -87,6 +95,20 @@ None required for v1.7.8. Add `NEXT_PUBLIC_*` variables under **Build variables*
 ---
 
 ## Troubleshooting
+
+### `npm ci` — package-lock.json
+
+```
+npm error The npm ci command can only install with an existing package-lock.json
+```
+
+**Cause:** Build ran from repo root, but `npm ci` expected `frontend/package-lock.json`.
+
+**Fix (pick one):**
+
+1. **Recommended:** Root directory = `/` (empty) + build command `bash scripts/cloudflare-build.sh`
+2. **Or:** Root directory = `frontend` + keep the alternate inline build command above
+3. **Or:** Inline from repo root: `cd frontend && npm ci && npm run build:wasm && npm run build:cf`
 
 | Issue | Fix |
 |-------|-----|
