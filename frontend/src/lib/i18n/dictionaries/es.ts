@@ -13,6 +13,10 @@ const es: Dictionary = {
         title: "PNG a JPG — Camaleon",
         description: "Convierte PNG a JPG en tu navegador. Comprimido para web — local y privado.",
       },
+      "webp-to-png": {
+        title: "WebP a PNG — Camaleon",
+        description: "Convierte WebP a PNG en tu navegador. Almacenamiento sin pérdida — local y privado.",
+      },
     },
   },
 
@@ -166,7 +170,18 @@ const es: Dictionary = {
       },
     },
     "webp-to-png": {
-      description: "Convierte imágenes WebP modernas al formato PNG universal.",
+      actionTitle: "Convertir a PNG",
+      description: "Almacenamiento sin pérdida — preserva cada píxel del WebP original.",
+      fidelityHint: "El PNG resultante será más grande que el WebP fuente — PNG almacena el ráster sin comprimir.",
+      options: {
+        compression: {
+          label: "Compresión PNG",
+          hint: "Siempre sin pérdida — más compresión = archivo más pequeño + proceso más lento.",
+          lowerLabel: "Más rápido",
+          upperLabel: "Más pequeño",
+          presets: { fast: "Rápido", balanced: "Balanceado", minimal: "Mínimo" },
+        },
+      },
     },
   },
 

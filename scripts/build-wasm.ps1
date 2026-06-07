@@ -9,7 +9,8 @@ $wasmOutBase = Join-Path $workspaceRoot "frontend\public\wasm"
 
 $crates = @(
     @{ Name = "transmutador_jpg"; Path = "motor_transmutacion\transmutador_jpg" },
-    @{ Name = "transmutador_png"; Path = "motor_transmutacion\transmutador_png" }
+    @{ Name = "transmutador_png"; Path = "motor_transmutacion\transmutador_png" },
+    @{ Name = "transmutador_webp"; Path = "motor_transmutacion\transmutador_webp" }
 )
 
 foreach ($crate in $crates) {

@@ -4,21 +4,11 @@ import { ResultCache } from "./result-cache";
 type TransmutarFn = (input: Uint8Array) => Uint8Array;
 type TransmutarJpgWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
 type TransmutarPngWithQuality = (input: Uint8Array, quality: number) => Uint8Array;
-type TransmutarPngWithOptions = (
-  input: Uint8Array,
-  quality: number,
-  bg_r: number,
-  bg_g: number,
-  bg_b: number
-) => Uint8Array;
+type TransmutarPngWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
 type EstimateJpgSizeFn = (input: Uint8Array, compression: number) => number;
-type EstimatePngSizeFn = (
-  input: Uint8Array,
-  quality: number,
-  bg_r: number,
-  bg_g: number,
-  bg_b: number
-) => number;
+type EstimatePngSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
+type TransmutarWebpWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
+type EstimateWebpSizeFn = (input: Uint8Array, compression: number) => number;
 
 let initJpgPromise: Promise<void> | null = null;
 let transmutarJpg: TransmutarFn | null = null;
@@ -30,6 +20,11 @@ let transmutarPng: TransmutarFn | null = null;
 let transmutarPngWithQuality: TransmutarPngWithQuality | null = null;
 let transmutarPngWithOptions: TransmutarPngWithOptions | null = null;
 let estimatePngToJpgSize: EstimatePngSizeFn | null = null;
+
+let initWebpPromise: Promise<void> | null = null;
+let transmutarWebp: TransmutarFn | null = null;
+let transmutarWebpWithCompression: TransmutarWebpWithCompression | null = null;
+let estimateWebpToPngSize: EstimateWebpSizeFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
@@ -53,6 +48,14 @@ async function initPngWasm(): Promise<void> {
   estimatePngToJpgSize = module.estimate_png_to_jpg_size;
 }
 
+async function initWebpWasm(): Promise<void> {
+  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_webp/transmutador_webp.js");
+  await module.default();
+  transmutarWebp = module.transmutar_webp_a_png;
+  transmutarWebpWithCompression = module.transmutar_webp_a_png_with_compression;
+  estimateWebpToPngSize = module.estimate_webp_to_png_size;
+}
+
 function ensureJpgWasmInitialized(): Promise<void> {
   if (!initJpgPromise) initJpgPromise = initJpgWasm();
   return initJpgPromise;
@@ -61,6 +64,11 @@ function ensureJpgWasmInitialized(): Promise<void> {
 function ensurePngWasmInitialized(): Promise<void> {
   if (!initPngPromise) initPngPromise = initPngWasm();
   return initPngPromise;
+}
+
+function ensureWebpWasmInitialized(): Promise<void> {
+  if (!initWebpPromise) initWebpPromise = initWebpWasm();
+  return initWebpPromise;
 }
 
 function postResponse(response: WorkerResponse): void {
@@ -77,9 +85,17 @@ function supersedeEstimate(id: string): void {
 
 function runFullEncode(
   isJpg: boolean,
+  isWebp: boolean,
   input: Uint8Array,
   opts: WorkerRequest["options"]
 ): Uint8Array {
+  if (isWebp) {
+    if (opts?.compression != null && transmutarWebpWithCompression) {
+      return transmutarWebpWithCompression(input, opts.compression);
+    }
+    if (transmutarWebp) return transmutarWebp(input);
+    throw new Error("Wasm module not initialized");
+  }
   if (isJpg) {
     if (opts?.compression != null && transmutarJpgWithCompression) {
       return transmutarJpgWithCompression(input, opts.compression);
@@ -101,9 +117,15 @@ function runFullEncode(
 
 function runSizeEstimate(
   isJpg: boolean,
+  isWebp: boolean,
   input: Uint8Array,
   opts: WorkerRequest["options"]
 ): number {
+  if (isWebp) {
+    const compression = opts?.compression ?? 6;
+    if (!estimateWebpToPngSize) throw new Error("Wasm estimate export not initialized");
+    return estimateWebpToPngSize(input, compression);
+  }
   if (isJpg) {
     const compression = opts?.compression ?? 6;
     if (!estimateJpgToPngSize) throw new Error("Wasm estimate export not initialized");
@@ -117,18 +139,26 @@ function runSizeEstimate(
 }
 
 async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
-  if (req.module !== "transmutador_jpg" && req.module !== "transmutador_png") {
+  const knownModules = ["transmutador_jpg", "transmutador_png", "transmutador_webp"];
+  if (!knownModules.includes(req.module)) {
     return { id: req.id, ok: false, error: `Unknown module: ${req.module}` };
   }
 
   const isEstimate = req.purpose === "estimate";
   const isTransmute = req.purpose === "transmute" || req.purpose == null;
   const isJpg = req.module === "transmutador_jpg";
-  const mime = isJpg ? "image/png" : "image/jpeg";
-  const extension = isJpg ? "png" : "jpg";
+  const isWebp = req.module === "transmutador_webp";
+  const mime = isWebp ? "image/png" : isJpg ? "image/png" : "image/jpeg";
+  const extension = isWebp ? "png" : isJpg ? "png" : "jpg";
 
   try {
-    await (isJpg ? ensureJpgWasmInitialized() : ensurePngWasmInitialized());
+    if (isJpg) {
+      await ensureJpgWasmInitialized();
+    } else if (isWebp) {
+      await ensureWebpWasmInitialized();
+    } else {
+      await ensurePngWasmInitialized();
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err ?? "Wasm initialization failed");
     return { id: req.id, ok: false, error: message };
@@ -162,7 +192,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
         (req.cacheMaxOutputBytes ?? 0) > 0;
 
       if (useCache) {
-        const result = runFullEncode(isJpg, input, opts);
+        const result = runFullEncode(isJpg, isWebp, input, opts);
         const outputSize = result.byteLength;
         const output = result.buffer.slice(
           result.byteOffset,
@@ -190,11 +220,11 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
         };
       }
 
-      const outputSize = runSizeEstimate(isJpg, input, opts);
+      const outputSize = runSizeEstimate(isJpg, isWebp, input, opts);
       return { id: req.id, ok: true, purpose: "estimate", outputSize, cacheStored: false };
     }
 
-    const result = runFullEncode(isJpg, input, opts);
+    const result = runFullEncode(isJpg, isWebp, input, opts);
     const outputSize = result.byteLength;
     const output = result.buffer.slice(
       result.byteOffset,

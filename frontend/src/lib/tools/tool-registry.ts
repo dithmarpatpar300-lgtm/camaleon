@@ -74,12 +74,27 @@ export const TOOLS: ToolDefinition[] = [
     title: "WebP → PNG",
     fromFormat: "WEBP",
     toFormat: "PNG",
-    module: "transmutador_jpg",
+    module: "transmutador_webp",
     category: "image",
     fidelity: "lossless",
-    status: "soon",
+    status: "active",
     acceptExtensions: [".webp"],
     outputExtension: "png",
+    optionSpecs: [
+      {
+        kind: "slider",
+        key: "compression",
+        min: 1,
+        max: 9,
+        step: 1,
+        defaultValue: 6,
+        presets: [
+          { label: "fast", value: 1 },
+          { label: "balanced", value: 6 },
+          { label: "minimal", value: 9 },
+        ],
+      },
+    ],
   },
 ];
 

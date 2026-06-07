@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_ROOT="$(dirname "$SCRIPT_DIR")"
 WASM_OUT_BASE="$WORKSPACE_ROOT/frontend/public/wasm"
 
-crates=("transmutador_jpg" "transmutador_png")
+crates=("transmutador_jpg" "transmutador_png" "transmutador_webp")
 
 for crate in "${crates[@]}"; do
     crate_path="$WORKSPACE_ROOT/motor_transmutacion/$crate"

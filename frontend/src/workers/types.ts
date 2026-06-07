@@ -1,4 +1,4 @@
-export type TransmutationModule = "transmutador_jpg" | "transmutador_png";
+export type TransmutationModule = "transmutador_jpg" | "transmutador_png" | "transmutador_webp";
 
 export type RgbColor = { r: number; g: number; b: number };
 

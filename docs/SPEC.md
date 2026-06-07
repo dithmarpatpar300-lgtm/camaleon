@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.7.0-planned  
+**Version:** 1.7.0  
 **Last updated:** 2026-06-07  
-**Status:** v1.6.1 shipped — Format Expansion Tier 1 (WebP suite) planned; Engine v1.2.0 active
+**Status:** v1.7.0 shipped — WebP→PNG (Phase 5.1); Engine v1.3.0; Tier 1 phases 5.2–5.4 planned
 
 ---
 
@@ -78,7 +78,7 @@ camaleon/
     ├── core_utils/
     ├── transmutador_jpg/    ← JPEG → PNG  (v0.5.5 — active)
     ├── transmutador_png/    ← PNG → JPEG  (v0.5.6 — active)
-    ├── transmutador_webp/   ← WebP → PNG/JPEG  (Tier 1 — planned §6.4)
+    ├── transmutador_webp/   ← WebP → PNG  (v1.7.0 — active); WebP → JPEG (Phase 5.2)
     └── transmutador_encode/ ← PNG/JPEG → WebP  (Tier 1 — planned §6.5)
 ```
 
@@ -769,11 +769,11 @@ pub fn transmutar_png_a_jpg_with_options(
 
 ---
 
-### 6.4 `transmutador_webp` (Planned — Tier 1)
+### 6.4 `transmutador_webp` (Implemented — Phase 5.1, v1.7.0)
 
-**Purpose:** WebP decoding crate. Handles all conversions **from** WebP: WebP→PNG and WebP→JPEG.
+**Purpose:** WebP decoding crate. Handles all conversions **from** WebP: WebP→PNG (v1.7.0) and WebP→JPEG (planned Phase 5.2).
 
-**Status:** Planned. No code yet. First task: `phase5_webp_to_png`.
+**Status:** Implemented — Phase 5.1 (`phase5_webp_to_png`). WebP→JPEG exports planned for Phase 5.2.
 
 **Crate type:** `["cdylib", "rlib"]`
 
@@ -796,8 +796,8 @@ pub fn transmutar_webp_a_png_with_compression(
 ) -> Result<Vec<u8>, String>
 
 #[wasm_bindgen]
-pub fn estimate_webp_to_png_size(input_bytes: &[u8]) -> Result<u32, String>
-// CountingWriter pattern — no actual allocation of output (§5.12 Phase 5.1)
+pub fn estimate_webp_to_png_size(input_bytes: &[u8], compression: u8) -> Result<u32, String>
+// CountingWriter pattern — compression 1–9, mirrors estimate_jpg_to_png_size
 
 // Phase 5.2 — WebP → JPEG (planned, separate prompt)
 #[wasm_bindgen]
@@ -1161,6 +1161,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 1.7.0 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.1: `transmutador_webp` WebP→PNG + estimate(compression) + worker/registry/i18n; §6.4 implemented | `phase5_webp_to_png_done.md` |
 | 1.7.0-planned | 2026-06-07 | Chief Architect | §3 planned crates; §5.12 WebP science; §6.4 transmutador_webp API contract; §6.5 transmutador_encode stub; §7.1 Dropzone Tier 1 routing; §7.3 Wasm layout extended; NFR-7 bundle size; NFR-8 format honesty; §12 Format Expansion Program | — |
 | 1.6.1 | 2026-06-07 | Chief Architect | v1.6.1 hotfix: locale/theme FOUC (cookie SSR + bootstrap script); Scrollbar Camaleón overlay; landing shell unification; ToolCard min-heights; CommandPalette FormatChip alignment | — |
 | 1.6.0 | 2026-06-07 | Chief Architect | UI-9 header/footer polish; `TransmutationWorkerProvider`; restore v1.5.0 cache/metrics wiring after OpenCode regression | — |

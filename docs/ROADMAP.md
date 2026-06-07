@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.6.1 | Full UI polish: glass header, footer, Command Palette, metrics, FOUC fix, Scrollbar Camaleón |
-| **Engine (Rust workspace)** | v1.2.0 | JPG↔PNG hardened, StripAll, output integrity, CountingWriter, result cache |
-| **SPEC** | v1.7.0-planned | WebP science + Tier 1–4 expansion program documented |
+| **Frontend (app)** | v1.7.0 | WebP→PNG tool active; full UI polish stack from v1.6.x |
+| **Engine (Rust workspace)** | v1.3.0 | JPG↔PNG + WebP→PNG; StripAll, output integrity, CountingWriter, result cache |
+| **SPEC** | v1.7.0 | WebP science + Tier 1 Phase 5.1 implemented |
 
-**v1.6.1 shipped** (2026-06-07). Next: Phase 5.1 WebP→PNG (`phase5_webp_to_png`).
+**v1.7.0 shipped** (2026-06-07). Next: Phase 5.2 WebP→JPEG (`phase5_webp_to_jpg`).
 
 ---
 
@@ -139,17 +139,17 @@ Goal: shippable MVP sign-off, not feature creep.
 
 > Full doctrine in **SPEC §12**. One conversion direction per task; QA gate between each.
 
-### Phase 5.1 — WebP → PNG `v1.7.0-alpha.1` ← **Next**
+### Phase 5.1 — WebP → PNG `v1.7.0` ✅ (Complete)
 
 Goal: first WebP conversion; proves `transmutador_webp` crate pattern.
 
-- [ ] Scaffold `motor_transmutacion/transmutador_webp/` (`image` feature `webp`, `default-features = false`)
-- [ ] `transmutar_webp_a_png`, `transmutar_webp_a_png_with_compression`, `estimate_webp_to_png_size`
-- [ ] 11+ integration tests (lossy/lossless/alpha/corrupt/StripAll/dimensions/estimate parity)
-- [ ] Worker lazy-load third Wasm module; `TransmutationModule` type extended
-- [ ] ToolRegistry `webp-to-png` → `status: "active"`; UI strings EN + ES
-- [ ] Wasm binary size reported (NFR-7 gate: ≤ 3 MB)
-- [ ] Prompt: `docs/prompts/phase5_webp_to_png.md`
+- [x] Scaffold `motor_transmutacion/transmutador_webp/` (`image` feature `webp`, `default-features = false`)
+- [x] `transmutar_webp_a_png`, `transmutar_webp_a_png_with_compression`, `estimate_webp_to_png_size(compression)`
+- [x] 13 integration tests (lossy/lossless/alpha/corrupt/StripAll/dimensions/estimate parity)
+- [x] Worker lazy-load third Wasm module; `TransmutationModule` type extended
+- [x] ToolRegistry `webp-to-png` → `status: "active"`; UI strings EN + ES
+- [x] Wasm binary size: **401 KB** (NFR-7 gate: ≤ 3 MB)
+- [x] Report: `docs/reports/phase5_webp_to_png_done.md`
 
 ### Phase 5.2 — WebP → JPEG `v1.7.0-alpha.2`
 
