@@ -91,7 +91,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       const response = await transmutate(tool.module, staged.bytes, options);
       if (response.ok) {
         setResult({
-          inputSize: staged.bytes.byteLength,
+          inputSize: staged.file.size,
           outputBytes: response.bytes,
           outputSize: response.bytes.byteLength,
           mime: response.mime,

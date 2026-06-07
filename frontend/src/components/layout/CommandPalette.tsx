@@ -54,9 +54,9 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
                   onClick={onClose}
                   className="flex items-center gap-4 rounded-xl px-3 py-3 text-left transition-colors hover:bg-bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
-                  <div className="flex h-10 w-14 shrink-0 items-center justify-center gap-0.5 rounded-lg border border-border bg-bg-elevated font-mono text-xs text-text-muted">
+                  <div className="flex h-10 w-auto shrink-0 items-center justify-center gap-1 rounded-md border border-border bg-bg-elevated px-2 font-mono text-[10px] font-bold uppercase tracking-tight text-text-muted">
                     <span>{tool.fromFormat}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5 shrink-0" aria-hidden="true">
                       <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" clipRule="evenodd" />
                     </svg>
                     <span>{tool.toFormat}</span>
@@ -102,9 +102,9 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
                     key={tool.id}
                     className="flex cursor-not-allowed items-center gap-4 rounded-xl px-3 py-3 opacity-40"
                   >
-                    <div className="flex h-10 w-14 shrink-0 items-center justify-center gap-0.5 rounded-lg border border-border bg-bg-elevated font-mono text-xs text-text-muted">
+                    <div className="flex h-10 w-auto shrink-0 items-center justify-center gap-1 rounded-md border border-border bg-bg-elevated px-2 font-mono text-[10px] font-bold uppercase tracking-tight text-text-muted">
                       <span>{tool.fromFormat}</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden="true">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5 shrink-0" aria-hidden="true">
                         <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06l-3.25 3.25a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" clipRule="evenodd" />
                       </svg>
                       <span>{tool.toFormat}</span>
