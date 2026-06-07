@@ -4,12 +4,17 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react";
 import type { Locale, TranslateFn } from "@/lib/i18n/types";
-import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, LOCALE_COOKIE_NAME, createT } from "@/lib/i18n";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_STORAGE_KEY,
+  LOCALE_COOKIE_NAME,
+  createT,
+} from "@/lib/i18n";
 
 type I18nContextValue = {
   locale: Locale;
@@ -19,21 +24,33 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-function getStoredLocale(): Locale | null {
-  if (typeof window === "undefined") return null;
-  const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
-  if (stored === "en" || stored === "es") return stored;
+type I18nProviderProps = {
+  children: ReactNode;
+  initialLocale: Locale;
+};
+
+function readStoredLocale(): Locale | null {
+  try {
+    const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (stored === "en" || stored === "es") return stored;
+  } catch {
+    /* private mode / blocked storage */
+  }
   return null;
 }
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
-  useEffect(() => {
-    const resolved = getStoredLocale() ?? DEFAULT_LOCALE;
-    setLocaleState(resolved);
-    document.documentElement.lang = resolved;
-  }, []);
+  // Align React with localStorage before first paint when SSR cookie lags (e.g. first load after upgrade).
+  useLayoutEffect(() => {
+    const stored = readStoredLocale();
+    if (stored && stored !== initialLocale) {
+      setLocaleState(stored);
+      document.documentElement.lang = stored;
+      document.cookie = `${LOCALE_COOKIE_NAME}=${stored}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+  }, [initialLocale]);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);

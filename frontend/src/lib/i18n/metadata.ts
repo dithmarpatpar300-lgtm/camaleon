@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
 import type { Locale } from "./types";
-import { DEFAULT_LOCALE } from "./index";
-import { getDictionary } from "./index";
+import { LOCALE_COOKIE_NAME, getDictionary } from "./index";
+import { resolveLocaleFromCookie } from "@/lib/prefs";
 
-export const LOCALE_COOKIE_NAME = "camaleon-locale";
-
-export function resolveLocaleFromCookie(value: string | undefined): Locale {
-  if (value === "en" || value === "es") return value as Locale;
-  return DEFAULT_LOCALE;
-}
+export { LOCALE_COOKIE_NAME, resolveLocaleFromCookie };
 
 function t(locale: Locale, key: string, params?: Record<string, string>): string {
   const dict = getDictionary(locale);

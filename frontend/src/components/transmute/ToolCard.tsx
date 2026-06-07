@@ -37,8 +37,8 @@ export function ToolCard({ tool }: ToolCardProps) {
             {!isActive && <Badge variant="neutral">{t("badges.soon")}</Badge>}
           </div>
         </div>
-        <p className="mt-2 text-sm text-text-secondary flex-1">{copy.description}</p>
-        {hint && <p className="mt-2 text-xs text-text-muted">{hint}</p>}
+        <p className="mt-2 min-h-[2.5rem] text-sm text-text-secondary flex-1">{copy.description}</p>
+        {hint && <p className="mt-2 min-h-[2rem] text-xs text-text-muted">{hint}</p>}
         <div className="mt-3 flex h-5 items-center gap-1 text-xs text-accent opacity-60 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
           <span>{t("toolCard.transmute")}</span>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden="true">

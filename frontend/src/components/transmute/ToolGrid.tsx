@@ -10,7 +10,7 @@ export function ToolGrid() {
   const soonTools = getSoonTools();
 
   return (
-    <section className="mx-auto max-w-4xl px-6 pb-20">
+    <section className="pb-20">
       <h2 className="mb-6 text-xl font-semibold text-text-primary">
         {t("landing.tools.available")}
       </h2>

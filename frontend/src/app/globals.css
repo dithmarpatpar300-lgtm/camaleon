@@ -146,3 +146,37 @@ dialog.command-palette::backdrop {
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Scrollbar Camaleón                                                   */
+/* ------------------------------------------------------------------ */
+
+/*
+ * On desktop (fine pointer, no reduced motion): hide the native scrollbar.
+ * The class is added by the bootstrap script only when conditions are met,
+ * so this rule never fires on touch devices or reduced-motion users.
+ */
+@media (hover: hover) and (pointer: fine) {
+  html.camaleon-overlay-scroll {
+    scrollbar-width: none; /* Firefox */
+  }
+  html.camaleon-overlay-scroll::-webkit-scrollbar {
+    display: none; /* Chrome / Edge / Safari */
+  }
+}
+
+/*
+ * Reduced-motion fallback for desktop: keep the native scrollbar but
+ * reserve its gutter so the layout never shifts when it appears.
+ * scrollbar-width:none is never set in this case (class not added by script).
+ */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: reduce) {
+  html {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(155, 161, 168, 0.4) transparent;
+  }
+  html.light {
+    scrollbar-color: rgba(107, 107, 107, 0.35) transparent;
+  }
+}

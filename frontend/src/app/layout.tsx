@@ -8,7 +8,14 @@ import { TransmutationWorkerProvider } from "@/providers/TransmutationWorkerProv
 import { ToastProvider } from "@/providers/ToastProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { resolveLocaleFromCookie, getRootMetadata, LOCALE_COOKIE_NAME } from "@/lib/i18n/metadata";
+import { OverlayScrollbar } from "@/components/layout/OverlayScrollbar";
+import { getRootMetadata, LOCALE_COOKIE_NAME } from "@/lib/i18n/metadata";
+import {
+  PREFERENCES_BOOTSTRAP_SCRIPT,
+  resolveLocaleFromCookie,
+  resolveThemeFromCookie,
+  THEME_COOKIE_NAME,
+} from "@/lib/prefs";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,44 +35,36 @@ export async function generateMetadata(): Promise<Metadata> {
   return getRootMetadata(locale);
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const initialLocale = resolveLocaleFromCookie(
+    cookieStore.get(LOCALE_COOKIE_NAME)?.value
+  );
+  const initialTheme = resolveThemeFromCookie(
+    cookieStore.get(THEME_COOKIE_NAME)?.value
+  );
+
   return (
-    <html lang="es" className="dark" suppressHydrationWarning>
+    <html
+      lang={initialLocale}
+      className={initialTheme}
+      suppressHydrationWarning
+    >
       <head>
         <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('camaleon-theme');
-                  if (!theme) {
-                    theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-                  }
-                  var root = document.documentElement;
-                  root.classList.remove('dark', 'light');
-                  root.classList.add(theme);
-                  var locale = localStorage.getItem('camaleon-locale');
-                  if (locale === 'en' || locale === 'es') {
-                    document.documentElement.lang = locale;
-                  } else {
-                    document.documentElement.lang = 'es';
-                  }
-                  document.cookie = 'camaleon-locale=' + (locale === 'en' || locale === 'es' ? locale : 'es') + '; path=/; max-age=31536000; SameSite=Lax';
-                } catch(e) {}
-              })();
-            `,
-          }}
+          dangerouslySetInnerHTML={{ __html: PREFERENCES_BOOTSTRAP_SCRIPT }}
         />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <I18nProvider>
-          <ThemeProvider>
+        <I18nProvider initialLocale={initialLocale}>
+          <ThemeProvider initialTheme={initialTheme}>
+            <OverlayScrollbar />
             <TransmutationWorkerProvider>
               <ToastProvider>
                 <div className="flex min-h-screen flex-col">
