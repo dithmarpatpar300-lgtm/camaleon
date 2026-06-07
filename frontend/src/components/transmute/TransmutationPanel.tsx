@@ -16,7 +16,9 @@ import { usePageFileDrop } from "@/hooks/usePageFileDrop";
 import { localizeError } from "@/lib/i18n/errors";
 import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
 import { Button } from "@/components/ui/Button";
+import { DisplayFilename } from "@/components/ui/DisplayFilename";
 import { Spinner } from "@/components/ui/Spinner";
+import { truncateFilenameMiddle } from "@/lib/format/filename";
 import { cn } from "@/lib/utils";
 import { Dropzone } from "./Dropzone";
 import { OptionsControls } from "./OptionsControls";
@@ -201,12 +203,17 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
       {status === "staged" && staged && (
         <div className="rounded-2xl border border-border bg-bg-surface p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-text-primary">{staged.file.name}</p>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <DisplayFilename
+                name={staged.file.name}
+                className="text-sm font-medium text-text-primary"
+              />
               <p className="text-xs text-text-muted">{formatBytes(staged.file.size)}</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={handleReset}>{t("panel.changeFile")}</Button>
+            <Button variant="ghost" size="sm" className="shrink-0" onClick={handleReset}>
+              {t("panel.changeFile")}
+            </Button>
           </div>
           {hasAlpha && backgroundSpec && (
             <div className="mb-4">
@@ -246,7 +253,11 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         <div className="flex flex-col items-center gap-3 py-12">
           <Spinner label={t("panel.processingFallback")} />
           <p className="text-sm text-text-secondary">
-            {staged ? t("panel.processing", { fileName: staged.file.name }) : t("panel.processingFallback")}
+            {staged
+              ? t("panel.processing", {
+                  fileName: truncateFilenameMiddle(staged.file.name, 36),
+                })
+              : t("panel.processingFallback")}
           </p>
         </div>
       )}
