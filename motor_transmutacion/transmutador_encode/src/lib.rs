@@ -8,7 +8,7 @@
 
 use std::io::Cursor;
 
-use core_utils::counting_writer::CountingWriter;
+use core_utils::counting_writer::count_webp_bytes;
 use image::ImageReader;
 use wasm_bindgen::prelude::*;
 
@@ -55,17 +55,11 @@ pub fn estimate_png_to_webp_size(input_bytes: &[u8]) -> Result<u32, String> {
         .decode()
         .map_err(|e| format!("Failed to decode PNG: {}", e))?;
 
-    let mut writer = CountingWriter::default();
-
-    if img.color().has_alpha() {
-        img.to_rgba8()
-            .write_to(&mut writer, image::ImageFormat::WebP)
-            .map_err(|e| format!("Failed to encode WebP: {}", e))?;
+    let bytes = if img.color().has_alpha() {
+        count_webp_bytes(&img.to_rgba8())?
     } else {
-        img.to_rgb8()
-            .write_to(&mut writer, image::ImageFormat::WebP)
-            .map_err(|e| format!("Failed to encode WebP: {}", e))?;
-    }
+        count_webp_bytes(&img.to_rgb8())?
+    };
 
-    Ok(writer.bytes_written as u32)
+    Ok(bytes as u32)
 }

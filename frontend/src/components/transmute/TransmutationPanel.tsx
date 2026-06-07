@@ -250,7 +250,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
               <OptionsControls toolId={tool.id} specs={panelOptionSpecs} values={options} onChange={setOptions} />
             </div>
           )}
-          {hasOptions && (
+          <div className={hasOptions ? "mb-5" : "mb-5 border-t border-border pt-4"}>
             <MetricsPanel
               originalSize={metrics.originalSize}
               estimateDelta={metrics.estimateDelta}
@@ -260,7 +260,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
               ready={ready}
               onRequestEstimate={metrics.requestEstimate}
             />
-          )}
+          </div>
           <Button onClick={handleTransmutar} disabled={!ready} className="w-full">
             {ready ? t("panel.transmuteButton") : t("panel.initializing")}
           </Button>
