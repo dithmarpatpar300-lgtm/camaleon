@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.7.5 | Five active tools; ScrollVeil + theme/header UX polish |
-| **Engine (Rust workspace)** | v1.4.0 | Four Wasm crates + `transmutador_encode` |
-| **SPEC** | v1.7.0 | Tier 1 Phase 5.1–5.3 implemented; v1.7.4–5 UX hotfixes shipped |
+| **Frontend (app)** | v1.7.6 | Six active tools — Tier 1 WebP Suite complete |
+| **Engine (Rust workspace)** | v1.4.1 | Four Wasm crates; `transmutador_encode` PNG+JPEG→WebP |
+| **SPEC** | v1.7.0 | Tier 1 Phases 5.1–5.4 implemented |
 
-**v1.7.5 shipped** (2026-06-07): bounded scroll veils, smooth theme crossfade, animated language/theme controls, scroll-lock for overlays. **v1.7.4** hotfix: MetricsPanel for lossless encode tools. Next: Phase 5.4 JPEG→WebP (`phase5_jpg_to_webp`).
+**v1.7.6 shipped** (2026-06-07): JPEG→WebP lossless encode — final Tier 1 route. **v1.7.5** UX polish + **v1.7.4** MetricsPanel hotfix precede this release. Next: Tier 2 raster classics (v1.8.x).
 
 ---
 
@@ -175,12 +175,15 @@ Goal: first encode-direction crate; lossless VP8L only; spike gate embedded in p
 - [x] ToolRegistry `png-to-webp` → `active`; zero option sliders; Lossless WebP copy EN+ES
 - [x] Report: `docs/reports/phase5_png_to_webp_done.md`
 
-### Phase 5.4 — JPEG → WebP `v1.7.0`
+### Phase 5.4 — JPEG → WebP `v1.7.6`
 
-- [ ] Add `transmutar_jpg_a_webp` to `transmutador_encode`
-- [ ] UI hint: lossless-of-lossy size inflation (§5.12.4)
-- [ ] ToolRegistry `jpg-to-webp` → `active`
-- [ ] v1.7.0 tag on completion of all four phases
+- [x] Add `transmutar_jpg_a_webp` + `estimate_jpg_to_webp_size` to `transmutador_encode`
+- [x] Dual `encodeSource` worker routing (PNG vs JPEG on same Wasm module)
+- [x] UI hint: lossless-of-lossy size inflation (§5.12.4) EN+ES
+- [x] ToolRegistry `jpg-to-webp` → `active`
+- [x] Wasm size gate: **649 KB** (≤ 3 MB)
+- [x] Report: `docs/reports/phase5_jpg_to_webp_done.md`
+- [x] **Tier 1 WebP Suite complete** (four conversion directions)
 
 ---
 

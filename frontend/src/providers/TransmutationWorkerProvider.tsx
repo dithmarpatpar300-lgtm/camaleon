@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type {
+  EncodeSource,
   OutputExtension,
   TransmutationModule,
   TransmutationOptions,
@@ -30,7 +31,8 @@ type TransmutateFn = (
   bytes: ArrayBuffer,
   options?: TransmutationOptions,
   meta?: WorkerRequestMeta,
-  outputExtension?: OutputExtension
+  outputExtension?: OutputExtension,
+  encodeSource?: EncodeSource
 ) => Promise<WorkerResponse>;
 
 type EstimateFn = (
@@ -38,7 +40,8 @@ type EstimateFn = (
   bytes: ArrayBuffer,
   options?: TransmutationOptions,
   meta?: WorkerRequestMeta,
-  outputExtension?: OutputExtension
+  outputExtension?: OutputExtension,
+  encodeSource?: EncodeSource
 ) => Promise<EstimateResult>;
 
 type WorkerContextValue = {
@@ -95,7 +98,8 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
       options?: TransmutationOptions,
       purpose?: WorkerPurpose,
       meta?: WorkerRequestMeta,
-      outputExtension?: OutputExtension
+      outputExtension?: OutputExtension,
+      encodeSource?: EncodeSource
     ): Promise<WorkerResponse> => {
       return new Promise((resolve, reject) => {
         const worker = workerRef.current;
@@ -112,6 +116,7 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
             bytes,
             options,
             outputExtension,
+            encodeSource,
             purpose,
             fingerprint: meta?.fingerprint,
             fileIdentity: meta?.fileIdentity,
@@ -126,14 +131,22 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
   );
 
   const transmutate = useCallback<TransmutateFn>(
-    (module, bytes, options, meta, outputExtension) =>
-      sendMessage(module, bytes, options, "transmute", meta, outputExtension),
+    (module, bytes, options, meta, outputExtension, encodeSource) =>
+      sendMessage(module, bytes, options, "transmute", meta, outputExtension, encodeSource),
     [sendMessage]
   );
 
   const estimate = useCallback<EstimateFn>(
-    async (module, bytes, options, meta, outputExtension) => {
-      const response = await sendMessage(module, bytes, options, "estimate", meta, outputExtension);
+    async (module, bytes, options, meta, outputExtension, encodeSource) => {
+      const response = await sendMessage(
+        module,
+        bytes,
+        options,
+        "estimate",
+        meta,
+        outputExtension,
+        encodeSource
+      );
       if (response.ok) {
         return {
           outputSize: response.outputSize,

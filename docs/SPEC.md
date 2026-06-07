@@ -8,7 +8,7 @@
 
 **Version:** 1.7.0  
 **Last updated:** 2026-06-07  
-**Status:** v1.7.5 shipped — v1.7.4 hotfix (MetricsPanel + `count_webp_bytes`) + v1.7.5 UX polish (ScrollVeil, theme fade, header controls); Engine v1.4.0; Phase 5.4 JPEG→WebP next
+**Status:** v1.7.6 shipped — Tier 1 WebP Suite complete (Phases 5.1–5.4); Engine v1.4.1; v1.7.5 UX polish (ScrollVeil, theme fade, header controls)
 
 ---
 
@@ -839,11 +839,11 @@ pub fn estimate_webp_to_jpg_size(input_bytes: &[u8], quality: u8) -> Result<u32,
 
 ---
 
-### 6.5 `transmutador_encode` (Planned — Tier 1, Phase 5.3–5.4)
+### 6.5 `transmutador_encode` (Implemented — Tier 1, Phase 5.3–5.4)
 
 **Purpose:** WebP encoding crate. Handles conversions **to** WebP: PNG→WebP and JPEG→WebP.
 
-**Status:** Implemented — Phase 5.3 (`phase5_png_to_webp`, v1.7.3). JPEG→WebP export planned Phase 5.4.
+**Status:** Implemented — Phase 5.3 (`phase5_png_to_webp`, v1.7.3) + Phase 5.4 (`phase5_jpg_to_webp`, v1.7.6).
 
 **Crate type:** `["cdylib", "rlib"]`
 
@@ -859,10 +859,13 @@ pub fn transmutar_png_a_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String>
 #[wasm_bindgen]
 pub fn estimate_png_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 
-// Phase 5.4 — JPEG → WebP lossless (planned)
+// Phase 5.4 — JPEG → WebP lossless (implemented v1.7.6)
 #[wasm_bindgen]
 pub fn transmutar_jpg_a_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String>
-// Warning: lossless of lossy source. UI must surface "Two-generation" hint.
+
+#[wasm_bindgen]
+pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
+// Warning: lossless of lossy source. UI surfaces §5.12.4 inflation hint.
 ```
 
 **Policies:** StripAll (§5.10). PNG→WebP preserves alpha via RGBA lossless. JPEG→WebP warns in UI about size inflation (§5.12.4). `validate_output` must verify RIFF `WEBP` magic (`52 49 46 46 xx xx xx xx 57 45 42 50`).
@@ -1162,6 +1165,7 @@ Chief Architect validates SPEC diff during second-pass review.
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
 | 1.7.0 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.1: `transmutador_webp` WebP→PNG + estimate(compression) + worker/registry/i18n; §6.4 implemented | `phase5_webp_to_png_done.md` |
+| 1.7.6 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.4 JPEG→WebP: `transmutar_jpg_a_webp` + estimate; dual `encodeSource` worker routing (Architect patch); Tier 1 WebP Suite complete | `phase5_jpg_to_webp_done.md` |
 | 1.7.5 | 2026-06-07 | Chief Architect | v1.7.5 UX polish: `ScrollVeil` bounded scroll (main + palette), scroll-lock for modals, overlay scrollbar rAF sync, animated language pill + circular theme toggle, `camaleon-theme-fade` theme crossfade, veil tokens use `background-color` for theme transition | `v1_7_5_ux_polish_done.md` |
 | 1.7.4 | 2026-06-07 | Chief Architect | v1.7.4 hotfix: `MetricsPanel` for zero-option tools; `count_webp_bytes` centralized in `core_utils` | — |
 | 1.7.0-planned | 2026-06-07 | Chief Architect | §3 planned crates; §5.12 WebP science; §6.4 transmutador_webp API contract; §6.5 transmutador_encode stub; §7.1 Dropzone Tier 1 routing; §7.3 Wasm layout extended; NFR-7 bundle size; NFR-8 format honesty; §12 Format Expansion Program | — |
@@ -1233,7 +1237,7 @@ Goal: make Camaleon the best browser-local WebP converter. Four conversion direc
 | **5.1** | `phase5_webp_to_png` | WebP → PNG | `transmutador_webp` | Lossless (raster) | ✅ v1.7.0 |
 | **5.2** | `phase5_webp_to_jpg` | WebP → JPEG | `transmutador_webp` (add export) | Lossy | ✅ v1.7.2 |
 | **5.3** | `phase5_png_to_webp` | PNG → WebP | `transmutador_encode` | Lossless WebP | ✅ v1.7.3 |
-| **5.4** | `phase5_jpg_to_webp` | JPEG → WebP | `transmutador_encode` (add export) | Lossless WebP | Blocked on 5.3 |
+| **5.4** | `phase5_jpg_to_webp` | JPEG → WebP | `transmutador_encode` (add export) | Lossless WebP | ✅ v1.7.6 |
 
 **Version target:** v1.7.x (four phases). Each phase ships independently: v1.7.0 (5.1) → v1.7.2 (5.2) → v1.7.3 (5.3) → v1.7.4 (5.4).
 

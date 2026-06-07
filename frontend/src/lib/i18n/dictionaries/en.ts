@@ -25,6 +25,10 @@ const en: Dictionary = {
         title: "PNG to WebP — Camaleon",
         description: "Convert PNG to lossless WebP in your browser. Smaller files for web graphics — local and private.",
       },
+      "jpg-to-webp": {
+        title: "JPEG to WebP — Camaleon",
+        description: "Convert JPEG to lossless WebP in your browser. Local and private — note output may be larger than the source.",
+      },
     },
   },
 
@@ -204,6 +208,11 @@ const en: Dictionary = {
       actionTitle: "Convert to Lossless WebP",
       description: "Lossless WebP — preserves every pixel including transparency.",
       fidelityHint: "Output is lossless VP8L WebP. Graphics and screenshots often shrink 20–30%; photographic PNGs may end up larger than the source.",
+    },
+    "jpg-to-webp": {
+      actionTitle: "Convert to Lossless WebP",
+      description: "Lossless WebP from JPEG — every decoded pixel preserved in VP8L format.",
+      fidelityHint: "Lossless WebP from an already-compressed JPEG usually produces a significantly larger file (often 2x-10x). Best for archival round-trips, not for shrinking photos.",
     },
   },
 

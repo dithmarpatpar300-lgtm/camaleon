@@ -1,4 +1,4 @@
-import type { OutputExtension, WorkerRequest, WorkerResponse } from "./types";
+import type { EncodeSource, OutputExtension, WorkerRequest, WorkerResponse } from "./types";
 import { ResultCache } from "./result-cache";
 
 type TransmutarFn = (input: Uint8Array) => Uint8Array;
@@ -34,6 +34,8 @@ let estimateWebpToJpgSize: EstimateWebpToJpgSizeFn | null = null;
 let initEncodePromise: Promise<void> | null = null;
 let transmutarPngToWebp: TransmutarFn | null = null;
 let estimatePngToWebpSize: EstimatePngToWebpSizeFn | null = null;
+let transmutarJpgToWebp: TransmutarFn | null = null;
+let estimateJpgToWebpSize: EstimatePngToWebpSizeFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
@@ -87,6 +89,8 @@ async function initEncodeWasm(): Promise<void> {
   await module.default();
   transmutarPngToWebp = module.transmutar_png_a_webp;
   estimatePngToWebpSize = module.estimate_png_to_webp_size;
+  transmutarJpgToWebp = module.transmutar_jpg_a_webp;
+  estimateJpgToWebpSize = module.estimate_jpg_to_webp_size;
 }
 
 function ensureEncodeWasmInitialized(): Promise<void> {
@@ -112,6 +116,7 @@ type RouteFlags = {
   isWebpToPng: boolean;
   isWebpToJpg: boolean;
   isEncode: boolean;
+  encodeSource?: EncodeSource;
 };
 
 function resolveRoute(req: WorkerRequest): RouteFlags {
@@ -122,7 +127,14 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     req.module === "transmutador_webp" && (req.outputExtension ?? "png") === "png";
   const isWebpToJpg =
     req.module === "transmutador_webp" && req.outputExtension === "jpg";
-  return { isJpg, isPng, isWebpToPng, isWebpToJpg, isEncode };
+  return {
+    isJpg,
+    isPng,
+    isWebpToPng,
+    isWebpToJpg,
+    isEncode,
+    encodeSource: isEncode ? req.encodeSource : undefined,
+  };
 }
 
 function resolveMimeExtension(route: RouteFlags): { mime: string; extension: OutputExtension } {
@@ -141,6 +153,13 @@ function runFullEncode(
   opts: WorkerRequest["options"]
 ): Uint8Array {
   if (route.isEncode) {
+    if (!route.encodeSource) {
+      throw new Error("encodeSource is required for transmutador_encode");
+    }
+    if (route.encodeSource === "jpeg") {
+      if (!transmutarJpgToWebp) throw new Error("Wasm module not initialized");
+      return transmutarJpgToWebp(input);
+    }
     if (!transmutarPngToWebp) throw new Error("Wasm module not initialized");
     return transmutarPngToWebp(input);
   }
@@ -182,6 +201,13 @@ function runSizeEstimate(
   opts: WorkerRequest["options"]
 ): number {
   if (route.isEncode) {
+    if (!route.encodeSource) {
+      throw new Error("encodeSource is required for transmutador_encode");
+    }
+    if (route.encodeSource === "jpeg") {
+      if (!estimateJpgToWebpSize) throw new Error("Wasm estimate export not initialized");
+      return estimateJpgToWebpSize(input);
+    }
     if (!estimatePngToWebpSize) throw new Error("Wasm estimate export not initialized");
     return estimatePngToWebpSize(input);
   }

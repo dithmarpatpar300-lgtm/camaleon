@@ -148,6 +148,19 @@ export const TOOLS: ToolDefinition[] = [
     acceptExtensions: [".png"],
     outputExtension: "webp",
   },
+  {
+    id: "jpg-to-webp",
+    slug: "jpg-to-webp",
+    title: "JPEG → WebP",
+    fromFormat: "JPEG",
+    toFormat: "WEBP",
+    module: "transmutador_encode",
+    category: "image",
+    fidelity: "lossless",
+    status: "active",
+    acceptExtensions: [".jpg", ".jpeg"],
+    outputExtension: "webp",
+  },
 ];
 
 export function getToolBySlug(slug: string): ToolDefinition | undefined {

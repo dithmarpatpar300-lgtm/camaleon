@@ -26,5 +26,7 @@ declare module "*/transmutador_webp/transmutador_webp.js" {
 declare module "*/transmutador_encode/transmutador_encode.js" {
   export function transmutar_png_a_webp(input_bytes: Uint8Array): Uint8Array;
   export function estimate_png_to_webp_size(input_bytes: Uint8Array): number;
+  export function transmutar_jpg_a_webp(input_bytes: Uint8Array): Uint8Array;
+  export function estimate_jpg_to_webp_size(input_bytes: Uint8Array): number;
   export default function init(): Promise<void>;
 }

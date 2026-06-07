@@ -63,3 +63,46 @@ pub fn estimate_png_to_webp_size(input_bytes: &[u8]) -> Result<u32, String> {
 
     Ok(bytes as u32)
 }
+
+// ---------------------------------------------------------------------------
+// JPEG → WebP exports
+// ---------------------------------------------------------------------------
+
+fn jpg_bytes_to_webp_bytes(input: &[u8]) -> Result<Vec<u8>, String> {
+    let img = ImageReader::new(Cursor::new(input))
+        .with_guessed_format()
+        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?
+        .decode()
+        .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
+
+    let rgb = img.to_rgb8();
+    let mut buf = Cursor::new(Vec::new());
+    rgb.write_to(&mut buf, image::ImageFormat::WebP)
+        .map_err(|e| format!("Failed to encode WebP: {}", e))?;
+    Ok(buf.into_inner())
+}
+
+pub fn transmutar_jpg_a_webp_inner(input: &[u8]) -> Result<Vec<u8>, String> {
+    core_utils::validate_input(input)?;
+    let output = jpg_bytes_to_webp_bytes(input)?;
+    core_utils::validate_output(&output, core_utils::OutputFormat::WebP)?;
+    Ok(output)
+}
+
+#[wasm_bindgen]
+pub fn transmutar_jpg_a_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    transmutar_jpg_a_webp_inner(input_bytes)
+}
+
+#[wasm_bindgen]
+pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String> {
+    core_utils::validate_input(input_bytes)?;
+    let img = ImageReader::new(Cursor::new(input_bytes))
+        .with_guessed_format()
+        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?
+        .decode()
+        .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
+
+    let bytes = count_webp_bytes(&img.to_rgb8())?;
+    Ok(bytes as u32)
+}

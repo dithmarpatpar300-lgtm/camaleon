@@ -22,8 +22,7 @@ const BTN_W = "2.25rem" as const;
 
 function getAriaLabel(l: Locale, t: (key: string) => string): string {
   if (l === "en") return t("lang.switchToEn");
-  if (l === "es") return t("lang.switchToEs");
-  return l.toUpperCase();
+  return t("lang.switchToEs");
 }
 
 export function LanguageSelector() {

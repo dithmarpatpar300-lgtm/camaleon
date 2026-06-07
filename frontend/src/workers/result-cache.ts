@@ -25,10 +25,11 @@ export function buildFingerprint(
   module: string,
   fileIdentity: string,
   options: TransmutationOptions,
-  outputExtension?: string
+  outputExtension?: string,
+  encodeSource?: string
 ): string {
   return JSON.stringify(
-    sortKeysDeep({ module, fileIdentity, outputExtension, opts: options })
+    sortKeysDeep({ module, fileIdentity, outputExtension, encodeSource, opts: options })
   );
 }
 

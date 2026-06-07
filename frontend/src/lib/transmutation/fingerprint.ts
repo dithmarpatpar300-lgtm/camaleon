@@ -1,4 +1,5 @@
 import type {
+  EncodeSource,
   OutputExtension,
   TransmutationModule,
   TransmutationOptions,
@@ -13,12 +14,14 @@ export function buildTransmuteFingerprint(
   module: TransmutationModule,
   file: File,
   options: TransmutationOptions,
-  outputExtension?: OutputExtension
+  outputExtension?: OutputExtension,
+  encodeSource?: EncodeSource
 ): string {
   return buildFingerprint(
     module,
     buildFileIdentity(file),
     options,
-    outputExtension
+    outputExtension,
+    encodeSource
   );
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
-import type { OutputExtension, TransmutationOptions } from "@/workers/types";
+import type { EncodeSource, OutputExtension, TransmutationOptions } from "@/workers/types";
 import { fileMatchesExtensions } from "@/lib/tools/extensions";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import { useFileMetrics } from "@/hooks/useFileMetrics";
@@ -68,10 +68,17 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const { transmutate, ready } = useTransmutationWorker();
   const { toast } = useToast();
   const profile = useAdaptiveResourceProfile(staged?.file?.size ?? 0);
+  const encodeSource: EncodeSource | undefined =
+    tool.module === "transmutador_encode"
+      ? tool.fromFormat === "PNG"
+        ? "png"
+        : "jpeg"
+      : undefined;
   const metrics = useFileMetrics({
     file: staged?.file ?? null,
     module: tool.module,
     outputExtension: tool.outputExtension as OutputExtension,
+    encodeSource,
     options,
     ready,
     profile,
@@ -114,7 +121,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         staged.bytes,
         options,
         metrics.transmuteMeta,
-        tool.outputExtension as OutputExtension
+        tool.outputExtension as OutputExtension,
+        encodeSource
       );
       if (response.ok) {
         metrics.setFinalSize(response.outputSize);
@@ -141,6 +149,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     ready,
     tool.module,
     tool.outputExtension,
+    encodeSource,
     options,
     transmutate,
     metrics.setFinalSize,

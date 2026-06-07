@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTransmutationWorker } from "@/hooks/useTransmutationWorker";
 import type {
+  EncodeSource,
   OutputExtension,
   TransmutationModule,
   TransmutationOptions,
@@ -19,6 +20,7 @@ type UseFileMetricsArgs = {
   file: File | null;
   module: TransmutationModule;
   outputExtension: OutputExtension;
+  encodeSource?: EncodeSource;
   options: TransmutationOptions;
   ready: boolean;
   profile: ResourceProfile;
@@ -48,7 +50,7 @@ async function getEstimateBuffer(file: File): Promise<ArrayBuffer> {
 }
 
 export function useFileMetrics({
-  file, module, outputExtension, options, ready, profile,
+  file, module, outputExtension, encodeSource, options, ready, profile,
 }: UseFileMetricsArgs): FileMetrics {
   const { estimate } = useTransmutationWorker();
   const [estimatedSize, setEstimatedSize] = useState<number | null>(null);
@@ -63,8 +65,10 @@ export function useFileMetrics({
 
   const fingerprint = useMemo(
     () =>
-      file ? buildTransmuteFingerprint(module, file, options, outputExtension) : null,
-    [file, module, options, outputExtension]
+      file
+        ? buildTransmuteFingerprint(module, file, options, outputExtension, encodeSource)
+        : null,
+    [file, module, options, outputExtension, encodeSource]
   );
 
   const cacheWarm =
@@ -116,7 +120,14 @@ export function useFileMetrics({
       if (thisId !== estimateIdRef.current) return;
       if (typeof document !== "undefined" && document.hidden) return;
 
-      const result = await estimate(module, buf, options, transmuteMeta, outputExtension);
+      const result = await estimate(
+        module,
+        buf,
+        options,
+        transmuteMeta,
+        outputExtension,
+        encodeSource
+      );
       if (thisId !== estimateIdRef.current) return;
 
       setEstimatedSize((prev) =>
@@ -135,7 +146,7 @@ export function useFileMetrics({
         setEstimating(false);
       }
     }
-  }, [file, ready, module, outputExtension, options, estimate, transmuteMeta, fingerprint]);
+  }, [file, ready, module, outputExtension, encodeSource, options, estimate, transmuteMeta, fingerprint]);
 
   const runEstimateRef = useRef(runEstimate);
   runEstimateRef.current = runEstimate;

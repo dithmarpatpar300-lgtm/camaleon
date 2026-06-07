@@ -2,6 +2,9 @@ export type TransmutationModule = "transmutador_jpg" | "transmutador_png" | "tra
 
 export type OutputExtension = "png" | "jpg" | "webp";
 
+/** Discriminates PNG vs JPEG source when module is `transmutador_encode`. */
+export type EncodeSource = "png" | "jpeg";
+
 export type RgbColor = { r: number; g: number; b: number };
 
 export type TransmutationOptions = {
@@ -24,8 +27,10 @@ export type WorkerRequest = {
   module: TransmutationModule;
   bytes: ArrayBuffer;
   options?: TransmutationOptions;
-  /** Required when module is transmutador_webp (png vs jpg). Optional for transmutador_encode (webp). */
+  /** Required when module is transmutador_webp (png vs jpg). */
   outputExtension?: OutputExtension;
+  /** Required when module is transmutador_encode — which encode export to call. */
+  encodeSource?: EncodeSource;
   purpose?: WorkerPurpose;
   fingerprint?: string;
   fileIdentity?: string;
