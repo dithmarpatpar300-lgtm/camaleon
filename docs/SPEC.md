@@ -8,7 +8,7 @@
 
 **Version:** 1.7.0  
 **Last updated:** 2026-06-07  
-**Status:** v1.7.6 shipped — Tier 1 WebP Suite complete (Phases 5.1–5.4); Engine v1.4.1; v1.7.5 UX polish (ScrollVeil, theme fade, header controls)
+**Status:** v1.7.7 shipped — Tier 1 WebP Suite complete (Phases 5.1–5.4); Engine v1.4.1; v1.7.7 scroll UX (PanelScrollFade + ScrollVeil flash fix)
 
 ---
 
@@ -1165,6 +1165,7 @@ Chief Architect validates SPEC diff during second-pass review.
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
 | 1.7.0 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.1: `transmutador_webp` WebP→PNG + estimate(compression) + worker/registry/i18n; §6.4 implemented | `phase5_webp_to_png_done.md` |
+| 1.7.7 | 2026-06-07 | Chief Architect | v1.7.7 scroll UX: `PanelScrollFade` for acrylic panels (mask-based); `ScrollVeil` optimistic SSR defaults (no F5 flash); glass-palette transparency | — |
 | 1.7.6 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.4 JPEG→WebP: `transmutar_jpg_a_webp` + estimate; dual `encodeSource` worker routing (Architect patch); Tier 1 WebP Suite complete | `phase5_jpg_to_webp_done.md` |
 | 1.7.5 | 2026-06-07 | Chief Architect | v1.7.5 UX polish: `ScrollVeil` bounded scroll (main + palette), scroll-lock for modals, overlay scrollbar rAF sync, animated language pill + circular theme toggle, `camaleon-theme-fade` theme crossfade, veil tokens use `background-color` for theme transition | `v1_7_5_ux_polish_done.md` |
 | 1.7.4 | 2026-06-07 | Chief Architect | v1.7.4 hotfix: `MetricsPanel` for zero-option tools; `count_webp_bytes` centralized in `core_utils` | — |

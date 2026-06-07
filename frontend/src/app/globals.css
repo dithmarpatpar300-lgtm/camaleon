@@ -92,24 +92,24 @@ body {
   }
 }
 
-/* Command Palette glass panel */
+/* Command Palette glass panel (acrylic) — content fade handled by PanelScrollFade */
 .glass-palette {
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  background-color: rgba(21, 23, 26, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  background-color: rgba(21, 23, 26, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.55),
-    0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    0 24px 64px rgba(0, 0, 0, 0.50),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
   border-radius: 1.25rem;
 }
 
 .light .glass-palette {
-  background-color: rgba(245, 247, 250, 0.88);
-  border: 1px solid rgba(0, 0, 0, 0.07);
+  background-color: rgba(245, 247, 250, 0.72);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.12),
-    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+    0 24px 64px rgba(0, 0, 0, 0.10),
+    0 1px 0 rgba(255, 255, 255, 0.90) inset;
 }
 
 .glass-header {
@@ -302,47 +302,11 @@ html.camaleon-scroll-locked {
   );
 }
 
-/* ─── palette bottom ─────────────────────────────────────────────── */
-.scroll-veil-palette-bot {
-  background-color: var(--color-bg-surface);
-  background-image: linear-gradient(
-    to bottom,
-    rgba(34, 197, 94, 0.05) 0%,
-    transparent             38%
-  );
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 50%);
-          mask-image: linear-gradient(to bottom, transparent 0%, black 50%);
-  backdrop-filter:         blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-.light .scroll-veil-palette-bot {
-  background-image: linear-gradient(
-    to bottom,
-    rgba(34, 197, 94, 0.03) 0%,
-    transparent             38%
-  );
-}
-
-/* ─── palette top ────────────────────────────────────────────────── */
-.scroll-veil-palette-top {
-  background-color: var(--color-bg-surface);
-  background-image: linear-gradient(
-    to top,
-    rgba(34, 197, 94, 0.05) 0%,
-    transparent             38%
-  );
-  -webkit-mask-image: linear-gradient(to top, transparent 0%, black 50%);
-          mask-image: linear-gradient(to top, transparent 0%, black 50%);
-  backdrop-filter:         blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-.light .scroll-veil-palette-top {
-  background-image: linear-gradient(
-    to top,
-    rgba(34, 197, 94, 0.03) 0%,
-    transparent             38%
-  );
-}
+/*
+ * NOTE: Floating glass panels (command palette, popovers) no longer use overlay
+ * veils — they use `PanelScrollFade`, which masks the scroller itself (no overlay
+ * element, no backdrop-filter rectangle). See PanelScrollFade.tsx.
+ */
 
 /* ------------------------------------------------------------------ */
 /* Scrollbar Camaleón                                                   */

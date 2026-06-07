@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import Link from "next/link";
 import { TOOLS } from "@/lib/tools/tool-registry";
 import { Badge } from "@/components/ui/Badge";
-import { ScrollVeil } from "@/components/ui/ScrollVeil";
+import { PanelScrollFade } from "@/components/ui/PanelScrollFade";
 import { useI18n } from "@/providers/I18nProvider";
 import { getToolStrings, resolveToolActionTitle } from "@/lib/i18n/tool-copy";
 
@@ -70,8 +70,8 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
             <p className="mb-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
               {t("commandPalette.categoryImage")}
             </p>
-            {/* ScrollVeil: shows 5 rows + peek of 6th when list grows */}
-            <ScrollVeil variant="palette">
+            {/* PanelScrollFade: masks the scroller for clean fade on acrylic glass */}
+            <PanelScrollFade maxHeightClass="max-h-[316px]" ariaLabel={t("commandPalette.ariaLabel")}>
               {/* pb-1 breathing room so last item's focus ring isn't clipped */}
               <div className="flex flex-col gap-1.5 pb-1">
                 {activeTools.map((tool) => {
@@ -112,7 +112,7 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
                   );
                 })}
               </div>
-            </ScrollVeil>
+            </PanelScrollFade>
           </div>
 
           {/* ── Coming soon ─────────────────────────────────────────── */}

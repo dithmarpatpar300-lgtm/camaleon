@@ -16,7 +16,7 @@ export function ToolGrid() {
         {t("landing.tools.available")}
       </h2>
 
-      <ScrollVeil variant="main">
+      <ScrollVeil>
         <div className="grid gap-4 pb-2 sm:grid-cols-2">
           {activeTools.map((tool) => (
             <ToolCard key={tool.id} tool={tool} />

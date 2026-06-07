@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.7.6 | Six active tools — Tier 1 WebP Suite complete |
+| **Frontend (app)** | v1.7.7 | Six active tools — Tier 1 WebP Suite complete |
 | **Engine (Rust workspace)** | v1.4.1 | Four Wasm crates; `transmutador_encode` PNG+JPEG→WebP |
 | **SPEC** | v1.7.0 | Tier 1 Phases 5.1–5.4 implemented |
 
-**v1.7.6 shipped** (2026-06-07): JPEG→WebP lossless encode — final Tier 1 route. **v1.7.5** UX polish + **v1.7.4** MetricsPanel hotfix precede this release. Next: Tier 2 raster classics (v1.8.x).
+**v1.7.7 shipped** (2026-06-07): `PanelScrollFade` for command palette + ScrollVeil flash-free reload. **v1.7.6** closed Tier 1 (JPEG→WebP). Next: Tier 2 raster classics (v1.8.x).
 
 ---
 
