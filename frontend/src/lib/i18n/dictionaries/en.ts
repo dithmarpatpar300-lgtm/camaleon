@@ -126,6 +126,7 @@ const en: Dictionary = {
       analyzeBmp: "Reading bitmap header…",
       analyzeSkippedLimit: "Skipping deep analysis — file exceeds engine limit",
       finalize: "Preparing workspace…",
+      resizing: "Resizing image…",
       transmuting: "Transmuting…",
     },
   },
@@ -141,6 +142,7 @@ const en: Dictionary = {
   panel: {
     stagedFileSize: "{size}",
     changeFile: "Change",
+    cancel: "Cancel",
     transmuteButton: "Transmute",
     initializing: "Initializing...",
     processing: "Transmuting {fileName}...",
@@ -185,6 +187,31 @@ const en: Dictionary = {
       body: "{width} × {height} ({megapixels} MP) exceeds the {maxMp} MP limit for in-browser conversion.",
       astroHint: "Science and space imagery (Hubble, JWST, etc.) often exceeds browser limits. Resize or tile the image with an astronomy pipeline before converting here.",
       action: "Reduce dimensions in a desktop editor, or export a smaller preview from your source archive.",
+      resizeHint: "You can downscale in your browser to continue — resolution is reduced, but tone and color are preserved.",
+      resizeCta: "Resize to continue",
+    },
+    astroResize: {
+      title: "Downscale to continue",
+      body: "Choose a maximum edge length. The image is resized locally in your browser before conversion.",
+      target: "Target: {width} × {height} ({megapixels} MP) · peak RAM ~{peakRam}",
+      extendedConsent: "I understand — 12K downscale may use significant memory on this device",
+      extendedHint:
+        "12K is for desktop devices with enough RAM. The result must still fit the {maxMp} MP browser limit — wide images may need a smaller preset.",
+      exceedsPixelLimit:
+        "{width} × {height} ({megapixels} MP) exceeds the {maxMp} MP limit — choose a smaller preset.",
+      presetOverLimit: "Exceeds the {maxMp} MP browser limit for this image aspect ratio",
+      privacy: "Your original file is unchanged. Downscaling happens entirely on this device.",
+      apply: "Apply resize",
+      applying: "Resizing…",
+      presets: {
+        "4k": "4K (4096 px)",
+        "6k": "6K (6144 px)",
+        "8k": "8K (8192 px)",
+        "12k": "12K (12288 px)",
+      },
+    },
+    resizedMeta: {
+      notice: "Resized from {width} × {height} — original file unchanged",
     },
     outputSizeNotice: {
       body: "Estimated output is {size} — above the usual {limit} threshold. Conversion can continue; processing may take longer and use more memory.",
@@ -362,6 +389,8 @@ const en: Dictionary = {
     wrongFormat: "Unsupported file format. Please use {formats}.",
     corrupt: "The file appears to be corrupt. Please select a valid image.",
     dimensionsTooLarge: "{width} × {height} ({megapixels} MP) exceeds the {maxMp} MP browser limit.",
+    dimensionsTooLargeGeneric:
+      "Target dimensions exceed the browser megapixel limit. Choose a smaller resize preset.",
     notAvailable: "This conversion is not yet available.",
     engineNotReady: "The transmutation engine is still starting. Please try again.",
     generic: "Transmutation failed. Please try again.",

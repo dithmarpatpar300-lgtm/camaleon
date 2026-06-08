@@ -23,19 +23,44 @@ const matchers: ErrorMatcher[] = [
   { pattern: /corrupt|invalid/i, key: "errors.corrupt" },
 ];
 
+function formatMp(pixels: number): string {
+  return (pixels / 1_000_000).toFixed(1);
+}
+
+function formatMaxMp(pixels: number): string {
+  return (pixels / 1_000_000).toFixed(0);
+}
+
 function parseDimensionsError(raw: string): Record<string, string | number> | null {
-  const m = raw.match(
+  const rust = raw.match(
     /(\d+)x(\d+)\s*\((\d+)\s*pixels\)\s*exceed maximum allowed\s*\((\d+)\s*pixels\)/i
   );
-  if (!m) return null;
-  const pixelCount = Number(m[3]);
-  const maxPixels = Number(m[4]);
-  return {
-    width: Number(m[1]),
-    height: Number(m[2]),
-    megapixels: (pixelCount / 1_000_000).toFixed(1),
-    maxMp: (maxPixels / 1_000_000).toFixed(0),
-  };
+  if (rust) {
+    const pixelCount = Number(rust[3]);
+    const maxPixels = Number(rust[4]);
+    return {
+      width: Number(rust[1]),
+      height: Number(rust[2]),
+      megapixels: formatMp(pixelCount),
+      maxMp: formatMaxMp(maxPixels),
+    };
+  }
+
+  const js = raw.match(
+    /Target dimensions (\d+)[×x](\d+) \((\d+) px\) exceed the (\d+) pixel limit/i
+  );
+  if (js) {
+    const pixelCount = Number(js[3]);
+    const maxPixels = Number(js[4]);
+    return {
+      width: Number(js[1]),
+      height: Number(js[2]),
+      megapixels: formatMp(pixelCount),
+      maxMp: formatMaxMp(maxPixels),
+    };
+  }
+
+  return null;
 }
 
 function parseInputSizeError(raw: string): Record<string, string | number> | null {
@@ -54,6 +79,7 @@ export function localizeError(rawError: string, t: TranslateFn): string {
       if (m.key === "errors.dimensionsTooLarge") {
         const params = parseDimensionsError(rawError);
         if (params) return t(m.key, params);
+        return t("errors.dimensionsTooLargeGeneric");
       }
       if (m.key === "errors.inputTooLarge") {
         const params = parseInputSizeError(rawError);

@@ -6,8 +6,9 @@ import type {
 } from "@/workers/types";
 import { buildFingerprint } from "@/workers/result-cache";
 
-export function buildFileIdentity(file: File): string {
-  return `${file.size}:${file.lastModified}:${file.name}`;
+export function buildFileIdentity(file: File, resizeMaxEdge?: number): string {
+  const base = `${file.size}:${file.lastModified}:${file.name}`;
+  return resizeMaxEdge != null ? `${base}:r${resizeMaxEdge}` : base;
 }
 
 export function buildTransmuteFingerprint(
@@ -15,11 +16,12 @@ export function buildTransmuteFingerprint(
   file: File,
   options: TransmutationOptions,
   outputExtension?: OutputExtension,
-  encodeSource?: EncodeSource
+  encodeSource?: EncodeSource,
+  resizeMaxEdge?: number
 ): string {
   return buildFingerprint(
     module,
-    buildFileIdentity(file),
+    buildFileIdentity(file, resizeMaxEdge),
     options,
     outputExtension,
     encodeSource

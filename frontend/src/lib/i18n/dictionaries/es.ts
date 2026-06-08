@@ -126,6 +126,7 @@ const es: Dictionary = {
       analyzeBmp: "Leyendo cabecera del bitmap…",
       analyzeSkippedLimit: "Analisis profundo omitido — archivo supera el limite del motor",
       finalize: "Preparando espacio de trabajo…",
+      resizing: "Redimensionando imagen…",
       transmuting: "Transmutando…",
     },
   },
@@ -141,6 +142,7 @@ const es: Dictionary = {
   panel: {
     stagedFileSize: "{size}",
     changeFile: "Cambiar",
+    cancel: "Cancelar",
     transmuteButton: "Transmutar",
     initializing: "Inicializando...",
     processing: "Transmutando {fileName}...",
@@ -185,6 +187,31 @@ const es: Dictionary = {
       body: "{width} × {height} ({megapixels} MP) supera el limite de {maxMp} MP para conversion en el navegador.",
       astroHint: "Imagenes cientificas y espaciales (Hubble, JWST, etc.) suelen superar los limites del navegador. Reduce o divide la imagen con un pipeline astronomico antes de convertir aqui.",
       action: "Reduce dimensiones en un editor de escritorio, o exporta una vista previa mas pequena desde tu archivo fuente.",
+      resizeHint: "Puedes reducir en el navegador para continuar — se pierde resolucion, pero se conservan tono y color.",
+      resizeCta: "Redimensionar para continuar",
+    },
+    astroResize: {
+      title: "Reducir para continuar",
+      body: "Elige una longitud maxima del lado. La imagen se redimensiona localmente en tu navegador antes de convertir.",
+      target: "Objetivo: {width} × {height} ({megapixels} MP) · RAM pico ~{peakRam}",
+      extendedConsent: "Entiendo — redimensionar a 12K puede usar mucha memoria en este dispositivo",
+      extendedHint:
+        "12K es para equipos de escritorio con RAM suficiente. El resultado debe caber en el limite de {maxMp} MP — imagenes muy anchas pueden necesitar un preset menor.",
+      exceedsPixelLimit:
+        "{width} × {height} ({megapixels} MP) supera el limite de {maxMp} MP — elige un preset menor.",
+      presetOverLimit: "Supera el limite de {maxMp} MP del navegador con esta proporcion de imagen",
+      privacy: "Tu archivo original no cambia. El redimensionado ocurre solo en este dispositivo.",
+      apply: "Aplicar redimension",
+      applying: "Redimensionando…",
+      presets: {
+        "4k": "4K (4096 px)",
+        "6k": "6K (6144 px)",
+        "8k": "8K (8192 px)",
+        "12k": "12K (12288 px)",
+      },
+    },
+    resizedMeta: {
+      notice: "Redimensionado desde {width} × {height} — archivo original sin cambios",
     },
     outputSizeNotice: {
       body: "La salida estimada es {size} — por encima del umbral habitual de {limit}. La conversion puede continuar; el proceso puede tardar mas y usar mas memoria.",
@@ -348,6 +375,8 @@ const es: Dictionary = {
     wrongFormat: "Formato no soportado. Usa {formats}.",
     corrupt: "El archivo parece estar danado. Selecciona una imagen valida.",
     dimensionsTooLarge: "{width} × {height} ({megapixels} MP) supera el limite de {maxMp} MP del navegador.",
+    dimensionsTooLargeGeneric:
+      "Las dimensiones objetivo superan el limite de megapixeles del navegador. Elige un preset de redimension menor.",
     notAvailable: "Esta conversion aun no esta disponible.",
     engineNotReady: "El motor de transmutacion aun esta iniciando. Intentalo de nuevo.",
     generic: "La transmutacion fallo. Intentalo de nuevo.",

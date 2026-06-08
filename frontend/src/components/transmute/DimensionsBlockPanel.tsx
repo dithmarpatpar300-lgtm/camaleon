@@ -6,16 +6,21 @@ import {
   formatMegapixels,
   pixelCountFromMeta,
 } from "@/lib/transmutation/limit-context";
+import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/providers/I18nProvider";
 
 type DimensionsBlockPanelProps = {
   sourceMeta: SourceImageMeta | null;
   isAstronomicalScale: boolean;
+  canResize?: boolean;
+  onStartResize?: () => void;
 };
 
 export function DimensionsBlockPanel({
   sourceMeta,
   isAstronomicalScale,
+  canResize = false,
+  onStartResize,
 }: DimensionsBlockPanelProps) {
   const { t } = useI18n();
   const pixelCount = pixelCountFromMeta(sourceMeta);
@@ -42,9 +47,25 @@ export function DimensionsBlockPanel({
           {t("panel.dimensionsBlock.astroHint")}
         </p>
       )}
-      <p className="mt-2 text-xs text-error/80">
-        {t("panel.dimensionsBlock.action")}
-      </p>
+      {canResize && onStartResize ? (
+        <>
+          <p className="mt-2 text-xs text-error/80">
+            {t("panel.dimensionsBlock.resizeHint")}
+          </p>
+          <Button
+            variant="subtle"
+            size="sm"
+            className="mt-3 border-error/40 bg-error/15 text-error hover:bg-error/25"
+            onClick={onStartResize}
+          >
+            {t("panel.dimensionsBlock.resizeCta")}
+          </Button>
+        </>
+      ) : (
+        <p className="mt-2 text-xs text-error/80">
+          {t("panel.dimensionsBlock.action")}
+        </p>
+      )}
     </div>
   );
 }

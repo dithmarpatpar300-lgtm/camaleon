@@ -16,9 +16,11 @@ import { TransparencyNotice } from "./TransparencyNotice";
 import { GifFrameScrubber } from "./GifFrameScrubber";
 import { OversizeConsentPanel } from "./OversizeConsentPanel";
 import { DimensionsBlockPanel } from "./DimensionsBlockPanel";
+import { AstroResizePanel } from "./AstroResizePanel";
 import { OutputSizeNotice } from "./OutputSizeNotice";
 import { BmpPngGrowthNotice } from "./BmpPngGrowthNotice";
 import { SourceImageMetaLine } from "./SourceImageMetaLine";
+import { ResizedMetaNotice } from "./ResizedMetaNotice";
 import { useI18n } from "@/providers/I18nProvider";
 
 type StagedWorkspaceProps = {
@@ -30,7 +32,15 @@ type StagedWorkspaceProps = {
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
   sourceMeta: SourceImageMeta | null;
+  originalSourceMeta?: SourceImageMeta | null;
   limitContext: LimitContext;
+  canClientResize: boolean;
+  astroResizeMode: boolean;
+  resizing?: boolean;
+  deviceMemoryGb?: number;
+  onStartResize: () => void;
+  onApplyResize: (maxEdge: number) => void;
+  onCancelResize: () => void;
   panelOptionSpecs: NonNullable<ToolDefinition["optionSpecs"]>;
   hasOptions: boolean;
   backgroundSpec?: ColorOptionSpec;
@@ -60,7 +70,15 @@ export function StagedWorkspace({
   hasAlpha,
   gifSession,
   sourceMeta,
+  originalSourceMeta,
   limitContext,
+  canClientResize,
+  astroResizeMode,
+  resizing = false,
+  deviceMemoryGb,
+  onStartResize,
+  onApplyResize,
+  onCancelResize,
   panelOptionSpecs,
   hasOptions,
   backgroundSpec,
@@ -98,16 +116,30 @@ export function StagedWorkspace({
           />
           <p className="text-xs text-text-muted">{formatBytes(fileSize)}</p>
           <SourceImageMetaLine meta={sourceMeta} />
+          {originalSourceMeta && <ResizedMetaNotice originalMeta={originalSourceMeta} />}
         </div>
         <Button variant="ghost" size="sm" className="shrink-0" onClick={onReset}>
           {t("panel.changeFile")}
         </Button>
       </div>
 
-      {dimensionBlocked && (
+      {dimensionBlocked && !astroResizeMode && (
         <DimensionsBlockPanel
           sourceMeta={sourceMeta}
           isAstronomicalScale={limitContext.isAstronomicalScale}
+          canResize={canClientResize}
+          onStartResize={canClientResize ? onStartResize : undefined}
+        />
+      )}
+
+      {dimensionBlocked && astroResizeMode && sourceMeta && (
+        <AstroResizePanel
+          sourceMeta={sourceMeta}
+          fileSize={fileSize}
+          deviceMemoryGb={deviceMemoryGb}
+          applying={resizing}
+          onApply={onApplyResize}
+          onCancel={onCancelResize}
         />
       )}
 

@@ -26,6 +26,10 @@ import type { WorkerRequestMeta } from "@/workers/types";
 
 type UseFileMetricsArgs = {
   file: File | null;
+  /** Byte length used for limits (resized buffer when applicable). */
+  effectiveFileSize?: number | null;
+  /** In-memory bytes for estimate/transmute (resized PNG when applicable). */
+  inputBytes?: ArrayBuffer | null;
   module: TransmutationModule;
   outputExtension: OutputExtension;
   encodeSource?: EncodeSource;
@@ -35,6 +39,7 @@ type UseFileMetricsArgs = {
   deviceMemoryGb?: number;
   oversizeConsented: boolean;
   sourceMeta: SourceImageMeta | null;
+  resizeMaxEdge?: number;
   holdEstimate?: boolean;
 };
 
@@ -75,6 +80,9 @@ export function useFileMetrics({
   deviceMemoryGb,
   oversizeConsented,
   sourceMeta,
+  effectiveFileSize,
+  inputBytes,
+  resizeMaxEdge,
   holdEstimate = false,
 }: UseFileMetricsArgs): FileMetrics {
   const { t } = useI18n();
@@ -88,13 +96,16 @@ export function useFileMetrics({
   const estimateInFlightRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manualEstimateRef = useRef(false);
+  const prevFingerprintRef = useRef<string | null>(null);
 
-  const originalSize = file?.size ?? 0;
+  const uploadSize = file?.size ?? 0;
+  const limitFileSize = effectiveFileSize ?? uploadSize;
+  const originalSize = limitFileSize;
 
   const limitContext = useMemo(
     () =>
       computeLimitContext({
-        fileSize: originalSize,
+        fileSize: limitFileSize,
         sourceMeta,
         deviceMemoryGb,
         oversizeConsented,
@@ -102,7 +113,7 @@ export function useFileMetrics({
         workerReady: ready,
       }),
     [
-      originalSize,
+      limitFileSize,
       sourceMeta,
       deviceMemoryGb,
       oversizeConsented,
@@ -114,9 +125,16 @@ export function useFileMetrics({
   const fingerprint = useMemo(
     () =>
       file
-        ? buildTransmuteFingerprint(module, file, options, outputExtension, encodeSource)
+        ? buildTransmuteFingerprint(
+            module,
+            file,
+            options,
+            outputExtension,
+            encodeSource,
+            resizeMaxEdge
+          )
         : null,
-    [file, module, options, outputExtension, encodeSource]
+    [file, module, options, outputExtension, encodeSource, resizeMaxEdge]
   );
 
   const cacheWarm =
@@ -129,7 +147,7 @@ export function useFileMetrics({
 
   const transmuteMeta = useMemo((): WorkerRequestMeta | undefined => {
     if (!file || !fingerprint || !fileIdentity) return undefined;
-    const largeInput = file.size > SOFT_LIMIT_BYTES;
+    const largeInput = limitFileSize > SOFT_LIMIT_BYTES;
     return {
       fingerprint,
       fileIdentity,
@@ -146,6 +164,7 @@ export function useFileMetrics({
     profile.cacheMaxOutputBytes,
     limitContext.sessionInputLimitBytes,
     oversizeConsented,
+    limitFileSize,
   ]);
 
   useEffect(() => {
@@ -154,6 +173,7 @@ export function useFileMetrics({
     setCachedFingerprint(null);
     setEstimateError(null);
     estimateIdRef.current++;
+    prevFingerprintRef.current = null;
   }, [file]);
 
   const estimateDelta =
@@ -183,7 +203,9 @@ export function useFileMetrics({
       setEstimating(true);
       setEstimateError(null);
       try {
-        const buf = await getEstimateBuffer(file);
+        const buf = inputBytes
+          ? inputBytes.slice(0)
+          : await getEstimateBuffer(file);
         if (thisId !== estimateIdRef.current) return;
         if (typeof document !== "undefined" && document.hidden) return;
 
@@ -224,6 +246,7 @@ export function useFileMetrics({
     },
     [
       file,
+      inputBytes,
       ready,
       limitContext.canEstimate,
       limitContext.blockReason,
@@ -295,6 +318,42 @@ export function useFileMetrics({
     if (!limitContext.canEstimate) return;
     void runEstimateRef.current({ manual: true });
   }, [oversizeConsented, file, ready, limitContext.canEstimate]);
+
+  // Large files: re-estimate when options change (quality, compression, etc.).
+  useEffect(() => {
+    if (!file || !ready || !fingerprint) return;
+    if (profile.autoEstimate) return;
+    if (!limitContext.canEstimate) return;
+    if (holdEstimate) return;
+    if (typeof document !== "undefined" && document.hidden) return;
+
+    const prev = prevFingerprintRef.current;
+    prevFingerprintRef.current = fingerprint;
+
+    if (prev === null || prev === fingerprint) return;
+    if (estimatedSize === null && !oversizeConsented) return;
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const debounceMs = Math.max(profile.debounceMs, 800);
+
+    timerRef.current = setTimeout(() => {
+      void runEstimateRef.current({ manual: false });
+    }, debounceMs);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [
+    file,
+    ready,
+    fingerprint,
+    profile.autoEstimate,
+    profile.debounceMs,
+    limitContext.canEstimate,
+    holdEstimate,
+    estimatedSize,
+    oversizeConsented,
+  ]);
 
   const setFinalSize = useCallback(
     (bytes: number) => setFinalDelta(computeSizeDelta(originalSize, bytes)),

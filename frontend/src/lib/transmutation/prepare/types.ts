@@ -6,6 +6,7 @@ export type PreparePhaseId =
   | "engine"
   | "analyze"
   | "finalize"
+  | "resizing"
   | "transmuting";
 
 export type PrepareProgress = {
@@ -23,7 +24,11 @@ export type PrepareProgress = {
 export type PreparedFileContext = {
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
+  /** Effective dimensions after optional client resize. */
   sourceMeta: SourceImageMeta | null;
+  /** Original header meta before downscale (science imagery path). */
+  originalSourceMeta?: SourceImageMeta | null;
+  resizeMaxEdge?: number;
 };
 
 export function releasePreparedContext(ctx: PreparedFileContext | null): void {

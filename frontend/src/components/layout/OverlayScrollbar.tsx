@@ -92,7 +92,7 @@ export function OverlayScrollbar() {
           backgroundColor: thumbColor,
           opacity: thumbOpacity,
           transition: appearTransition,
-          cursor: dragging ? "grabbing" : "grab",
+          cursor: "default",
           touchAction: "none",
           willChange: "top, height",
         }}

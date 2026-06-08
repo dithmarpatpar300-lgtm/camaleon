@@ -13,7 +13,7 @@ import type {
   PrepareProgress,
 } from "./types";
 
-type PreparePipelinePhase = Exclude<PreparePhaseId, "transmuting">;
+type PreparePipelinePhase = Exclude<PreparePhaseId, "transmuting" | "resizing">;
 
 const PHASE_WEIGHT: Record<PreparePipelinePhase, number> = {
   reading: 0.08,

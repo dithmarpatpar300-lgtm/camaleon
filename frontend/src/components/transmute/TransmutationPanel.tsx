@@ -26,6 +26,11 @@ import { useToast } from "@/providers/ToastProvider";
 import { usePageFileDrop } from "@/hooks/usePageFileDrop";
 import { localizeError } from "@/lib/i18n/errors";
 import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
+import { downscaleImageBytes } from "@/lib/imaging/downscale";
+import { resolvePostResizeWasmConfig, supportsClientResize } from "@/lib/imaging/post-resize-route";
+import { mimeTypeForTool } from "@/lib/imaging/supports-client-resize";
+import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
+import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { Dropzone } from "./Dropzone";
@@ -35,7 +40,7 @@ import { StagedWorkspace } from "./StagedWorkspace";
 
 type PanelStatus = "idle" | "preparing" | "staged" | "processing" | "success" | "error";
 
-type StagedFile = { file: File; bytes: ArrayBuffer };
+type StagedFile = { file: File; bytes: ArrayBuffer; effectiveSize?: number };
 type Result = {
   inputSize: number;
   outputBytes: ArrayBuffer;
@@ -88,6 +93,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [hasAlpha, setHasAlpha] = useState(false);
   const [oversizeConsented, setOversizeConsented] = useState(false);
+  const [astroResizeMode, setAstroResizeMode] = useState(false);
+  const [resizing, setResizing] = useState(false);
 
   const deviceMemoryGb =
     typeof navigator !== "undefined"
@@ -99,19 +106,38 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const preparedRef = useRef(prepared);
   preparedRef.current = prepared;
 
+  useEffect(() => {
+    return () => {
+      prepareIdRef.current += 1;
+      releasePreparedContext(preparedRef.current);
+      preparedRef.current = null;
+    };
+  }, []);
+
   const { transmutate, ready } = useTransmutationWorker();
   const { toast } = useToast();
-  const profile = useAdaptiveResourceProfile(staged?.file?.size ?? pendingFile?.file.size ?? 0);
-  const encodeSource: EncodeSource | undefined =
-    tool.module === "transmutador_encode"
+  const stagedByteSize =
+    staged?.effectiveSize ?? staged?.file.size ?? pendingFile?.file.size ?? 0;
+  const profile = useAdaptiveResourceProfile(stagedByteSize);
+  const wasResized = prepared?.resizeMaxEdge != null;
+  const postResizeWasm = wasResized ? resolvePostResizeWasmConfig(tool) : null;
+  const effectiveModule = postResizeWasm?.module ?? tool.module;
+  const effectiveOutputExtension = (postResizeWasm?.outputExtension ??
+    tool.outputExtension) as OutputExtension;
+  const encodeSource: EncodeSource | undefined = postResizeWasm?.encodeSource
+    ? postResizeWasm.encodeSource
+    : tool.module === "transmutador_encode"
       ? tool.fromFormat === "PNG"
         ? "png"
         : "jpeg"
       : undefined;
+  const canClientResize = supportsClientResize(tool);
   const metrics = useFileMetrics({
     file: staged?.file ?? null,
-    module: tool.module,
-    outputExtension: tool.outputExtension as OutputExtension,
+    effectiveFileSize: staged?.effectiveSize ?? null,
+    inputBytes: staged?.bytes ?? null,
+    module: effectiveModule,
+    outputExtension: effectiveOutputExtension,
     encodeSource,
     options,
     ready,
@@ -119,7 +145,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     deviceMemoryGb,
     oversizeConsented,
     sourceMeta: prepared?.sourceMeta ?? null,
-    holdEstimate: crossfading,
+    resizeMaxEdge: prepared?.resizeMaxEdge,
+    holdEstimate: crossfading || resizing,
   });
   const accept = tool.acceptExtensions.join(",");
 
@@ -145,6 +172,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setResult(null);
     setCrossfading(false);
     setOversizeConsented(false);
+    setAstroResizeMode(false);
+    setResizing(false);
     setErrorMessage(null);
 
     let bytes: ArrayBuffer;
@@ -208,6 +237,75 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     }
   }, [tool, t, hardLimit]);
 
+  const handleStartResize = useCallback(() => {
+    setAstroResizeMode(true);
+  }, []);
+
+  const handleCancelResize = useCallback(() => {
+    setAstroResizeMode(false);
+  }, []);
+
+  const handleApplyResize = useCallback(
+    async (maxEdge: number) => {
+      if (!staged || !prepared?.sourceMeta) return;
+
+      setResizing(true);
+      setStatus("preparing");
+      setPrepareProgress(0);
+      setPreparePhase("resizing");
+      setPreparePhaseLabelKey("prepare.phases.resizing");
+      setPrepareIndeterminate(false);
+      setPrepareDetailLabel(undefined);
+      setOversizeConsented(false);
+      setErrorMessage(null);
+
+      try {
+        const result = await downscaleImageBytes(
+          staged.bytes,
+          mimeTypeForTool(tool),
+          maxEdge,
+          (p) => setPrepareProgress(p)
+        );
+
+        const originalMeta = prepared.originalSourceMeta ?? prepared.sourceMeta;
+        const newSourceMeta: SourceImageMeta = {
+          width: result.width,
+          height: result.height,
+          bitDepthLabel: "8-bit",
+        };
+
+        const resizedOutput = resolvePostResizeWasmConfig(tool)?.outputExtension;
+        const alpha =
+          resizedOutput === "jpg" ? detectPngAlpha(result.bytes).hasAlpha : false;
+
+        setPrepared({
+          ...prepared,
+          hasAlpha: alpha,
+          sourceMeta: newSourceMeta,
+          originalSourceMeta: originalMeta,
+          resizeMaxEdge: maxEdge,
+        });
+        setHasAlpha(alpha);
+        setStaged({
+          file: staged.file,
+          bytes: result.bytes,
+          effectiveSize: result.bytes.byteLength,
+        });
+        setAstroResizeMode(false);
+        metrics.resetMetrics();
+        setStatus("staged");
+      } catch (err) {
+        setStatus("staged");
+        setAstroResizeMode(true);
+        const raw = err instanceof Error ? err.message : t("panel.unexpectedError");
+        toast({ message: localizeError(raw, t), variant: "info" });
+      } finally {
+        setResizing(false);
+      }
+    },
+    [staged, prepared, tool, metrics, t, toast]
+  );
+
   const handleTransmutar = useCallback(async () => {
     if (!staged || !ready || !metrics.limitContext.canTransmute) return;
     setProcessingProgress(0.08);
@@ -215,17 +313,17 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setErrorMessage(null);
     try {
       const response = await transmutate(
-        tool.module,
+        effectiveModule,
         staged.bytes,
         options,
         metrics.transmuteMeta,
-        tool.outputExtension as OutputExtension,
+        effectiveOutputExtension,
         encodeSource
       );
       if (response.ok) {
         metrics.setFinalSize(response.outputSize);
         setResult({
-          inputSize: staged.file.size,
+          inputSize: staged.effectiveSize ?? staged.file.size,
           outputBytes: response.bytes!,
           outputSize: response.outputSize,
           mime: response.mime!,
@@ -245,8 +343,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   }, [
     staged,
     ready,
-    tool.module,
-    tool.outputExtension,
+    effectiveModule,
+    effectiveOutputExtension,
     encodeSource,
     options,
     transmutate,
@@ -265,15 +363,25 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       try {
         const bytes = await staged.file.arrayBuffer();
         setStaged({ file: staged.file, bytes });
+        if (prepared?.originalSourceMeta) {
+          setPrepared({
+            ...prepared,
+            sourceMeta: prepared.originalSourceMeta,
+            originalSourceMeta: undefined,
+            resizeMaxEdge: undefined,
+          });
+          setHasAlpha(prepared.hasAlpha);
+        }
       } catch {
         setErrorMessage(t("panel.unexpectedError"));
         return;
       }
     }
+    setAstroResizeMode(false);
     metrics.resetMetrics();
     setStatus("staged");
     setErrorMessage(null);
-  }, [staged, metrics, t]);
+  }, [staged, prepared, metrics, t]);
 
   const handleDownload = useCallback(() => {
     if (!result) return;
@@ -294,6 +402,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setPreviewUrl(null);
     setCrossfading(false);
     setOversizeConsented(false);
+    setAstroResizeMode(false);
+    setResizing(false);
     setOptions(buildDefaultOptions(tool.optionSpecs));
     metrics.resetMetrics();
   }, [tool, metrics, prepared]);
@@ -379,18 +489,26 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
               <StagedWorkspace
                 tool={tool}
                 fileName={staged.file.name}
-                fileSize={staged.file.size}
+                fileSize={staged.effectiveSize ?? staged.file.size}
                 options={options}
                 onOptionsChange={setOptions}
                 hasAlpha={hasAlpha}
                 gifSession={prepared.gifSession}
                 sourceMeta={prepared.sourceMeta}
+                originalSourceMeta={prepared.originalSourceMeta}
+                limitContext={metrics.limitContext}
+                canClientResize={canClientResize}
+                astroResizeMode={astroResizeMode}
+                resizing={resizing}
+                deviceMemoryGb={deviceMemoryGb}
+                onStartResize={handleStartResize}
+                onApplyResize={(edge) => void handleApplyResize(edge)}
+                onCancelResize={handleCancelResize}
                 panelOptionSpecs={panelOptionSpecs}
                 hasOptions={hasOptions}
                 backgroundSpec={backgroundSpec}
                 backgroundSwatches={backgroundSwatches}
                 currentBackground={currentBackground}
-                limitContext={metrics.limitContext}
                 metrics={{
                   originalSize: metrics.originalSize,
                   estimateDelta: metrics.estimateDelta,
@@ -408,7 +526,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
             </div>
           )}
 
-          {(status === "preparing" || crossfading) && (
+          {(status === "preparing" || crossfading || resizing) && (
             <div
               className={cn(
                 "bg-bg-surface",
