@@ -54,7 +54,9 @@ export function LegalDocument({ pageId }: LegalDocumentProps) {
               href={action.href}
               target={action.external ? "_blank" : undefined}
               rel={action.external ? "noopener noreferrer" : undefined}
-              className="legal-action-link"
+              className={
+                action.primary ? "legal-action-link legal-action-link-primary" : "legal-action-link"
+              }
             >
               {action.label}
               {action.external && (

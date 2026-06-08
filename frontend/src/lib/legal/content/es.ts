@@ -1,6 +1,11 @@
 import type { LegalPageId } from "../types";
 import type { LegalPageContent } from "../types";
-import { SITE_CONTACT_ISSUES_URL, SITE_REPO_URL } from "@/lib/site";
+import {
+  SITE_CONTACT_BUG_URL,
+  SITE_CONTACT_FEATURE_URL,
+  SITE_REPO_URL,
+  SITE_SECURITY_ADVISORY_URL,
+} from "@/lib/site";
 
 export const legalPagesEs: Record<LegalPageId, LegalPageContent> = {
   about: {
@@ -83,7 +88,17 @@ export const legalPagesEs: Record<LegalPageId, LegalPageContent> = {
       },
     ],
     actions: [
-      { label: "Abrir un Issue en GitHub", href: SITE_CONTACT_ISSUES_URL, external: true },
+      { label: "Reportar un bug", href: SITE_CONTACT_BUG_URL, external: true, primary: true },
+      {
+        label: "Sugerir una mejora",
+        href: SITE_CONTACT_FEATURE_URL,
+        external: true,
+      },
+      {
+        label: "Vulnerabilidad de seguridad (privado)",
+        href: SITE_SECURITY_ADVISORY_URL,
+        external: true,
+      },
       { label: "Ver codigo fuente", href: SITE_REPO_URL, external: true },
     ],
   },

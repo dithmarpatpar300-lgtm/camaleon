@@ -31,6 +31,7 @@
 | 1.3 | Issue templates | `.github/ISSUE_TEMPLATE/*.yml` (bug, feature, security) | ✅ this branch |
 | 1.4 | README links | Security + how to report | ✅ this branch |
 | 1.5 | Secret hygiene doc | `docs/SECURITY_CHECKLIST.md` one-time audit steps | ✅ this branch |
+| 1.6 | Contact feedback buttons | `/contact` → bug + feature GitHub templates | ✅ this branch |
 
 ### Acceptance
 

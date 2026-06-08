@@ -10,6 +10,7 @@ export type LegalAction = {
   label: string;
   href: string;
   external?: boolean;
+  primary?: boolean;
 };
 
 export type LegalPageContent = {
