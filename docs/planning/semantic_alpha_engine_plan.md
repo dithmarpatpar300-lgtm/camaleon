@@ -1,8 +1,8 @@
 # Semantic Alpha Engine — Implementation Plan
 
-**Status:** **Implementation in progress on `dev`** — core engine shipped; release polish pending  
-**Target release:** v1.11.0 (`main` when stable)  
-**Branch:** `dev` only until QA + SPEC + release notes complete  
+**Status:** **Shipped on `main` (v1.11.0)**  
+**Target release:** v1.11.0 ✅  
+**Branch:** merged `dev` → `main`  
 **Supersedes:** open questions in `transparency_engine_proposal.md`  
 **Prerequisite doc:** [transparency_engine_proposal.md](./transparency_engine_proposal.md) (problem analysis)
 
@@ -326,10 +326,11 @@ Shared `flatten_rgba_on_background` may move to `core_utils` in Phase 2 (optiona
 - [x] Release entry `v1.11.0` + What's New (EN / ES): "Honest transparency detection"
 - [x] `docs/releases/v1.11.0.md`, `GITHUB_v1.11.0.md`, `GITHUB_v1.11.0-body.md`
 - [x] README + ROADMAP: v1.11.0 release-ready on `dev`
-- [ ] Full manual QA matrix (§8.4) before merge
-- [ ] Merge `dev` → `main`, tag `v1.11.0`, GitHub release, production deploy
+- [x] Full manual QA matrix (§8.4)
+- [x] Merge `dev` → `main`, tag `v1.11.0`, GitHub release
+- [ ] Production deploy (footer **v1.11.0**)
 
-**Remaining work:** Manual QA matrix → merge to `main`.
+**Remaining work:** Production deploy via Cloudflare.
 
 ---
 

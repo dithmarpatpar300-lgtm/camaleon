@@ -2,11 +2,11 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v1.11.0** (App, `dev`) · **v1.10.4** (live on `main`) · Engine v1.4.2 · [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v1.11.0** (App) · Engine v1.4.2 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v1.10.4)
+## What works today (v1.11.0)
 
 | Capability | Status |
 |------------|--------|
@@ -132,7 +132,7 @@ camaleon/
 | **Tier 2 Wave 1** | v1.8.3–v1.8.7 | ✅ GIF + BMP + limits polish |
 | **Astro downscale + memory** | **v1.9.0** | ✅ **Shipped on `main`** |
 | **Tier 2 Wave 2** | v1.10.4 (`main`) | ✅ Shipped — TIFF, ICO↔PNG, TGA→PNG (five new tools) |
-| **Semantic Alpha Engine** | v1.11.0 (`dev`) | ✅ Ready to ship — merge `dev` → `main` + tag (see `docs/releases/GITHUB_v1.11.0.md`) |
+| **Semantic Alpha Engine** | v1.11.0 (`main`) | ✅ Shipped — honest transparency across lossy → JPEG tools |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Engine plan: **[docs/planning/semantic_alpha_engine_plan.md](docs/planning/semantic_alpha_engine_plan.md)**
 
