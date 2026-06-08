@@ -1,5 +1,5 @@
 [workspace]
-members = ["core_utils", "transmutador_jpg", "transmutador_png", "transmutador_webp", "transmutador_encode", "transmutador_gif", "transmutador_bmp", "transmutador_tiff"]
+members = ["core_utils", "transmutador_jpg", "transmutador_png", "transmutador_webp", "transmutador_encode", "transmutador_gif", "transmutador_bmp", "transmutador_tiff", "transmutador_ico"]
 resolver = "2"
 
 [workspace.package]

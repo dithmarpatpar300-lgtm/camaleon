@@ -53,6 +53,14 @@ const en: Dictionary = {
         title: "TIFF to JPG — Camaleon",
         description: "Convert TIFF to JPEG in your browser. Smaller files for web sharing from archival TIFFs.",
       },
+      "ico-to-png": {
+        title: "ICO to PNG — Camaleon",
+        description: "Extract a PNG from ICO or CUR favicon files in your browser. Pick a size when the pack has more than one.",
+      },
+      "png-to-ico": {
+        title: "PNG to ICO — Camaleon",
+        description: "Build a Windows favicon (.ico) from PNG in your browser. Pick 16, 32, 48, or 256 px — downscale only.",
+      },
     },
   },
 
@@ -108,8 +116,8 @@ const en: Dictionary = {
           body: "Nothing is uploaded. Your images never leave this tab.",
         },
         tools: {
-          title: "12 conversion tools",
-          body: "PNG, JPEG, WebP, GIF, BMP, and TIFF — lossless and lossy paths where it matters.",
+          title: "14 conversion tools",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, and ICO — lossless and lossy paths where it matters.",
         },
         limits: {
           title: "Honest limits",
@@ -140,6 +148,30 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v1103: {
+        title: "PNG → ICO",
+        summary: "Build favicons from PNG — pick 16, 32, 48, or 256 px with honest downscale-only sizing.",
+        technical:
+          "transmutador_ico encode path: Lanczos3 downscale when max edge exceeds target, no upscale beyond source, IcoEncoder PNG-in-ICO single entry, validate_icon_size presets.",
+        highlights: {
+          pngIco: {
+            title: "PNG → ICO",
+            body: "Export a single-resolution favicon for Windows and legacy browsers — presets match common icon sizes.",
+          },
+        },
+      },
+      v1102: {
+        title: "ICO → PNG",
+        summary: "Extract favicon and cursor bitmaps as PNG — multi-size picker included.",
+        technical:
+          "New transmutador_ico Wasm module (image 0.25 ico+png). ICONDIR probe, entry_index decode for PNG-in-ICO entries, default largest size, .ico and .cur accepted.",
+        highlights: {
+          icoPng: {
+            title: "ICO → PNG",
+            body: "Pull a specific size from favicon packs — scrubber when the file embeds more than one resolution.",
+          },
+        },
+      },
       v1101: {
         title: "TIFF → JPEG",
         summary: "Lossy web export from archival TIFF — quality slider and alpha flattening.",
@@ -376,6 +408,14 @@ const en: Dictionary = {
       previewAlt: "Preview of page {index}",
       loadingPreview: "Rendering preview…",
     },
+    icoEntry: {
+      title: "Icon size",
+      counter: "{current} / {total} · {size}px",
+      hint: "Scrub to preview another embedded size — release to refresh the estimate.",
+      sliderAria: "ICO size selector",
+      previewAlt: "Preview of {size}px entry {index}",
+      loadingPreview: "Rendering preview…",
+    },
   },
 
   tools: {
@@ -521,6 +561,36 @@ const en: Dictionary = {
         },
       },
     },
+    "ico-to-png": {
+      actionTitle: "Extract as PNG",
+      description: "Lossless PNG from an icon or cursor file — pick which embedded size to export.",
+      fidelityHint:
+        "Modern PNG-in-ICO entries are fully supported. Legacy BMP-style ICO layers are rejected with a clear error. .cur files use the same container as .ico.",
+      options: {
+        compression: {
+          label: "PNG Compression",
+          hint: "Always lossless — higher compression = smaller file + slower processing.",
+          lowerLabel: "Faster",
+          upperLabel: "Smaller",
+          presets: { fast: "Fast", balanced: "Balanced", minimal: "Minimal" },
+        },
+      },
+    },
+    "png-to-ico": {
+      actionTitle: "Build ICO",
+      description: "Single-resolution favicon from PNG — embedded as modern PNG-in-ICO.",
+      fidelityHint:
+        "Output is downscaled when the source is larger than your preset. Smaller sources are never upscaled — the ICO keeps the original pixel dimensions.",
+      options: {
+        iconSize: {
+          label: "Icon size",
+          hint: "Square edge length for the favicon. Common presets: 16, 32, 48, and 256 px.",
+          lowerLabel: "",
+          upperLabel: "",
+          presets: { "16": "16", "32": "32", "48": "48", "256": "256" },
+        },
+      },
+    },
     "tiff-to-jpg": {
       actionTitle: "Compress for Web",
       description: "Convert TIFF to JPEG — much smaller files for sharing scans and print masters online.",
@@ -557,6 +627,9 @@ const en: Dictionary = {
     tiffPalette: "Indexed-color (palette) TIFF is not supported. Re-export as RGB or grayscale first.",
     tiffCmyk: "CMYK TIFF is not supported. Re-export as RGB from your print tool first.",
     tiffPageRange: "That TIFF page does not exist. Pick a page within the file.",
+    icoEntryRange: "That icon size entry does not exist. Pick a size within the file.",
+    icoBmpLegacy:
+      "Legacy BMP-style ICO layer is not supported. Re-save the icon with a modern tool (PNG-in-ICO).",
     engineNotReady: "The transmutation engine is still starting. Please try again.",
     generic: "Transmutation failed. Please try again.",
   },

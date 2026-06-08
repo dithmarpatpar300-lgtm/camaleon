@@ -31,6 +31,7 @@ import { resolvePostResizeWasmConfig, supportsClientResize } from "@/lib/imaging
 import { mimeTypeForTool } from "@/lib/imaging/supports-client-resize";
 import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
+import { icoMetaForEntry } from "@/lib/ico/ico-wasm-client";
 import { tiffMetaForPage } from "@/lib/tiff/tiff-wasm-client";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -176,8 +177,25 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
           setHasAlpha(pageHasAlpha);
         }
       }
+      if (
+        tool.id === "ico-to-png" &&
+        prepared?.icoMeta &&
+        next.entryIndex != null &&
+        next.entryIndex !== options.entryIndex
+      ) {
+        const entry = icoMetaForEntry(prepared.icoMeta, next.entryIndex);
+        setPrepared({
+          ...prepared,
+          sourceMeta: {
+            width: entry.width,
+            height: entry.height,
+            bitDepthLabel: entry.bitDepthLabel,
+            entryCount: entry.entryCount > 1 ? entry.entryCount : undefined,
+          },
+        });
+      }
     },
-    [tool.id, prepared, options.pageIndex]
+    [tool.id, prepared, options.pageIndex, options.entryIndex]
   );
 
   const handleFileSelect = useCallback(async (file: File) => {
@@ -259,6 +277,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         ...buildDefaultOptions(tool.optionSpecs),
         frameIndex: 0,
         pageIndex: 0,
+        entryIndex: ctx.icoMeta?.defaultEntryIndex ?? 0,
       });
       setStatus("staged");
       setCrossfading(true);
@@ -530,6 +549,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 hasAlpha={hasAlpha}
                 gifSession={prepared.gifSession}
                 tiffMeta={prepared.tiffMeta}
+                icoMeta={prepared.icoMeta}
                 fileBytes={new Uint8Array(staged.bytes)}
                 sourceMeta={prepared.sourceMeta}
                 originalSourceMeta={prepared.originalSourceMeta}

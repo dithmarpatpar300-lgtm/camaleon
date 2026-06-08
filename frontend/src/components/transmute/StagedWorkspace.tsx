@@ -3,7 +3,9 @@
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
+import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
+import { IcoEntryScrubber } from "./IcoEntryScrubber";
 import { TiffPageScrubber } from "./TiffPageScrubber";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import type { LimitContext } from "@/lib/transmutation/limit-context";
@@ -34,6 +36,7 @@ type StagedWorkspaceProps = {
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
   tiffMeta: TiffMeta | null;
+  icoMeta: IcoMeta | null;
   fileBytes: Uint8Array | null;
   sourceMeta: SourceImageMeta | null;
   originalSourceMeta?: SourceImageMeta | null;
@@ -74,6 +77,7 @@ export function StagedWorkspace({
   hasAlpha,
   gifSession,
   tiffMeta,
+  icoMeta,
   fileBytes,
   sourceMeta,
   originalSourceMeta,
@@ -101,9 +105,11 @@ export function StagedWorkspace({
   const { t } = useI18n();
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
   const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
+  const isIcoTool = tool.id === "ico-to-png";
   const isBmpToPng = tool.id === "bmp-to-png";
   const frameIndex = options.frameIndex ?? 0;
   const pageIndex = options.pageIndex ?? 0;
+  const entryIndex = options.entryIndex ?? 0;
   const dimensionBlocked = limitContext.blockReason === "pixels";
   const canTransmute = limitContext.canTransmute;
   const showBmpGrowthWarning =
@@ -180,6 +186,21 @@ export function StagedWorkspace({
             pageIndex={pageIndex}
             onPageIndexChange={(index) =>
               onOptionsChange({ ...options, pageIndex: index })
+            }
+          />
+        )}
+
+      {!dimensionBlocked &&
+        isIcoTool &&
+        icoMeta &&
+        icoMeta.entryCount > 1 &&
+        fileBytes && (
+          <IcoEntryScrubber
+            bytes={fileBytes}
+            meta={icoMeta}
+            entryIndex={entryIndex}
+            onEntryIndexChange={(index) =>
+              onOptionsChange({ ...options, entryIndex: index })
             }
           />
         )}

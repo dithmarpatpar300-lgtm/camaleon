@@ -5,9 +5,10 @@ export type TransmutationModule =
   | "transmutador_encode"
   | "transmutador_gif"
   | "transmutador_bmp"
-  | "transmutador_tiff";
+  | "transmutador_tiff"
+  | "transmutador_ico";
 
-export type OutputExtension = "png" | "jpg" | "webp";
+export type OutputExtension = "png" | "jpg" | "webp" | "ico";
 
 /** Discriminates PNG vs JPEG source when module is `transmutador_encode`. */
 export type EncodeSource = "png" | "jpeg";
@@ -22,6 +23,10 @@ export type TransmutationOptions = {
   frameIndex?: number;
   /** TIFF IFD page to export (0-based). */
   pageIndex?: number;
+  /** ICO/CUR directory entry to export (0-based). */
+  entryIndex?: number;
+  /** PNG → ICO target edge length (16, 32, 48, or 256). */
+  iconSize?: number;
 };
 
 export type WorkerPurpose = "transmute" | "estimate" | "purge";

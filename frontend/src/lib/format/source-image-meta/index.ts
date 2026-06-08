@@ -3,6 +3,12 @@ import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
 import { inspectBmpMeta, setBmpSessionInputLimit } from "@/lib/bmp/bmp-wasm-client";
 import { setGifSessionInputLimit } from "@/lib/gif/gif-wasm-client";
 import {
+  inspectIcoMeta,
+  icoMetaForEntry,
+  setIcoSessionInputLimit,
+  type IcoMeta,
+} from "@/lib/ico/ico-wasm-client";
+import {
   inspectTiffMeta,
   setTiffSessionInputLimit,
   tiffMetaForPage,
@@ -20,6 +26,8 @@ export type ResolveSourceMetaContext = {
   gifSession: GifSessionHandle | null;
   tiffMeta?: TiffMeta | null;
   tiffPageIndex?: number;
+  icoMeta?: IcoMeta | null;
+  icoEntryIndex?: number;
   /** When set, temporarily raises Wasm input limit for header/decode probes during prepare. */
   sessionInputLimitBytes?: number;
 };
@@ -35,6 +43,7 @@ export async function resolveSourceImageMeta(
     if (format === "BMP") await setBmpSessionInputLimit(ctx.sessionInputLimitBytes);
     if (format === "GIF") await setGifSessionInputLimit(ctx.sessionInputLimitBytes);
     if (format === "TIFF") await setTiffSessionInputLimit(ctx.sessionInputLimitBytes);
+    if (format === "ICO") await setIcoSessionInputLimit(ctx.sessionInputLimitBytes);
   }
 
   switch (format) {
@@ -92,6 +101,30 @@ export async function resolveSourceImageMeta(
         return null;
       }
     }
+    case "ICO": {
+      const entryIndex = ctx.icoEntryIndex ?? ctx.icoMeta?.defaultEntryIndex ?? 0;
+      if (ctx.icoMeta) {
+        const entry = icoMetaForEntry(ctx.icoMeta, entryIndex);
+        return {
+          width: entry.width,
+          height: entry.height,
+          bitDepthLabel: entry.bitDepthLabel,
+          entryCount: entry.entryCount > 1 ? entry.entryCount : undefined,
+        };
+      }
+      try {
+        const meta = await inspectIcoMeta(new Uint8Array(bytes));
+        const entry = icoMetaForEntry(meta, meta.defaultEntryIndex);
+        return {
+          width: entry.width,
+          height: entry.height,
+          bitDepthLabel: entry.bitDepthLabel,
+          entryCount: entry.entryCount > 1 ? entry.entryCount : undefined,
+        };
+      } catch {
+        return null;
+      }
+    }
     default:
       return null;
   }
@@ -103,6 +136,9 @@ export function formatSourceImageMetaLine(meta: SourceImageMeta): string {
   }
   if (meta.pageCount != null && meta.pageCount > 1) {
     return `${meta.width} × ${meta.height} · ${meta.bitDepthLabel} · ${meta.pageCount} pages`;
+  }
+  if (meta.entryCount != null && meta.entryCount > 1) {
+    return `${meta.width} × ${meta.height} · ${meta.bitDepthLabel} · ${meta.entryCount} sizes`;
   }
   return `${meta.width} × ${meta.height} · ${meta.bitDepthLabel}`;
 }

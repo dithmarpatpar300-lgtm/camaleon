@@ -362,6 +362,63 @@ export const TOOLS: ToolDefinition[] = [
       },
     ],
   },
+  {
+    id: "ico-to-png",
+    slug: "ico-to-png",
+    title: "ICO → PNG",
+    fromFormat: "ICO",
+    toFormat: "PNG",
+    module: "transmutador_ico",
+    category: "image",
+    fidelity: "lossless",
+    status: "active",
+    acceptExtensions: [".ico", ".cur"],
+    outputExtension: "png",
+    optionSpecs: [
+      {
+        kind: "slider",
+        key: "compression",
+        min: 1,
+        max: 9,
+        step: 1,
+        defaultValue: 6,
+        presets: [
+          { label: "fast", value: 1 },
+          { label: "balanced", value: 6 },
+          { label: "minimal", value: 9 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "png-to-ico",
+    slug: "png-to-ico",
+    title: "PNG → ICO",
+    fromFormat: "PNG",
+    toFormat: "ICO",
+    module: "transmutador_ico",
+    category: "image",
+    fidelity: "lossless",
+    status: "active",
+    acceptExtensions: [".png"],
+    outputExtension: "ico",
+    optionSpecs: [
+      {
+        kind: "slider",
+        key: "iconSize",
+        min: 256,
+        max: 256,
+        step: 1,
+        defaultValue: 256,
+        presets: [
+          { label: "16", value: 16 },
+          { label: "32", value: 32 },
+          { label: "48", value: 48 },
+          { label: "256", value: 256 },
+        ],
+      },
+    ],
+  },
 ];
 
 export function getToolBySlug(slug: string): ToolDefinition | undefined {

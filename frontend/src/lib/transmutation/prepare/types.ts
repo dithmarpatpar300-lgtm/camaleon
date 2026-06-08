@@ -1,4 +1,5 @@
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
+import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 
@@ -26,6 +27,7 @@ export type PreparedFileContext = {
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
   tiffMeta: TiffMeta | null;
+  icoMeta: IcoMeta | null;
   /** Effective dimensions after optional client resize. */
   sourceMeta: SourceImageMeta | null;
   /** Original header meta before downscale (science imagery path). */

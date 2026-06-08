@@ -5,6 +5,7 @@ import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
 import { detectWebpAlpha } from "@/lib/format/detect-webp-alpha";
 import { resolveSourceImageMeta } from "@/lib/format/source-image-meta";
 import { setGifSessionInputLimit, openGifSessionWithProgress } from "@/lib/gif/gif-wasm-client";
+import { inspectIcoMeta, setIcoSessionInputLimit } from "@/lib/ico/ico-wasm-client";
 import { inspectTiffMeta, setTiffSessionInputLimit } from "@/lib/tiff/tiff-wasm-client";
 import { warmupTransmutatorModule } from "@/lib/transmutation/prepare/warmup-wasm";
 import type {
@@ -67,6 +68,10 @@ function isTiffTool(toolId: string): boolean {
   return toolId === "tiff-to-png" || toolId === "tiff-to-jpg";
 }
 
+function isIcoTool(toolId: string): boolean {
+  return toolId === "ico-to-png";
+}
+
 function needsAlphaScan(tool: ToolDefinition): boolean {
   return tool.optionSpecs?.some((s) => s.kind === "color" && s.key === "background") ?? false;
 }
@@ -97,6 +102,7 @@ export async function prepareFileForTool(
   // ── Phase: analyze ───────────────────────────────────────────────────
   let gifSession = null;
   let tiffMeta = null;
+  let icoMeta = null;
 
   if (isGifTool(tool.id)) {
     emit(onProgress, "analyze", 0, {
@@ -130,6 +136,14 @@ export async function prepareFileForTool(
     }
     tiffMeta = await inspectTiffMeta(new Uint8Array(bytes));
     emit(onProgress, "analyze", 1);
+  } else if (isIcoTool(tool.id)) {
+    emit(onProgress, "analyze", 0);
+    await yieldToMain();
+    if (sessionLimit != null) {
+      await setIcoSessionInputLimit(sessionLimit);
+    }
+    icoMeta = await inspectIcoMeta(new Uint8Array(bytes));
+    emit(onProgress, "analyze", 1);
   } else if (needsAlphaScan(tool)) {
     emit(onProgress, "analyze", 0);
     await yieldToMain();
@@ -145,6 +159,8 @@ export async function prepareFileForTool(
     gifSession,
     tiffMeta,
     tiffPageIndex: 0,
+    icoMeta,
+    icoEntryIndex: icoMeta?.defaultEntryIndex ?? 0,
     sessionInputLimitBytes: sessionLimit,
   });
 
@@ -165,6 +181,7 @@ export async function prepareFileForTool(
     hasAlpha,
     gifSession,
     tiffMeta,
+    icoMeta,
     sourceMeta,
   };
 }

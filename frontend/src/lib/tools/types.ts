@@ -1,6 +1,6 @@
 import type { TransmutationModule } from "@/workers/types";
 
-export type ImageFormat = "JPG" | "JPEG" | "PNG" | "WEBP" | "GIF" | "BMP" | "TIFF";
+export type ImageFormat = "JPG" | "JPEG" | "PNG" | "WEBP" | "GIF" | "BMP" | "TIFF" | "ICO";
 export type ToolCategory = "image";
 export type ToolFidelity = "lossless" | "lossy";
 export type ToolStatus = "active" | "soon";
@@ -9,7 +9,7 @@ export type RgbColor = { r: number; g: number; b: number };
 
 export type SliderOptionSpec = {
   kind: "slider";
-  key: "quality" | "compression";
+  key: "quality" | "compression" | "iconSize";
   min: number;
   max: number;
   step: number;

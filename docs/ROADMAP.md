@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.10.1** (`dev`) | **Tier 2 Wave 2 in progress** — TIFF suite (PNG + JPEG), Release Comms manifest |
-| **Engine (Rust workspace)** | v1.4.2 | Seven Wasm crates (`jpg`, `png`, `webp`, `encode`, `gif`, `bmp`, `tiff` + `core_utils`) |
+| **Frontend (app)** | **v1.10.3** (`dev`) | **Tier 2 Wave 2 in progress** — TIFF suite + ICO↔PNG, Release Comms manifest |
+| **Engine (Rust workspace)** | v1.4.2 | Eight Wasm crates (`jpg`, `png`, `webp`, `encode`, `gif`, `bmp`, `tiff`, `ico` + `core_utils`) |
 | **SPEC** | v1.9.0-comms | Tier 1 + Tier 2 Wave 1 on `main`; Wave 2 TIFF phases on `dev` |
 
-**v1.10.1** (`dev`): Phase 7.0 TIFF spike, **TIFF → PNG** (v1.10.0), **TIFF → JPEG** (v1.10.1) — multi-page picker, 16-bit normalization, palette/CMYK rejection. **Twelve active tools.** **Next:** Phase 7.3 ICO → PNG on `dev`.
+**v1.10.3** (`dev`): TIFF suite + **ICO ↔ PNG** (v1.10.2–3) with multi-size picker, `.cur` support, and PNG→ICO presets (16/32/48/256, downscale only). **Fourteen active tools.** **Next:** Phase 7.5 TGA → PNG on `dev`.
 
 ---
 
@@ -223,8 +223,8 @@ Planning docs: `docs/planning/gif_premium_roadmap.md`, `bmp_premium_roadmap.md`,
 | 7.0 TIFF spike | — | `transmutador_tiff` crate, fixtures, Wasm size gate | ✅ |
 | 7.1 TIFF → PNG | v1.10.0 | Multi-page picker, 16-bit policy, palette/CMYK rejection | ✅ |
 | 7.2 TIFF → JPEG | v1.10.1 | Quality + background flatten, per-page alpha | ✅ |
-| 7.3 ICO → PNG | v1.10.2 | `transmutador_ico` | pending |
-| 7.4 PNG → ICO | v1.10.3 | Single-size ICO MVP | pending |
+| 7.3 ICO → PNG | v1.10.2 | `transmutador_ico` | ✅ |
+| 7.4 PNG → ICO | v1.10.3 | Single-size ICO MVP | ✅ |
 | 7.5 TGA → PNG | v1.10.4 | `transmutador_tga` | pending |
 
 Planning: `docs/planning/tier2_wave2_plan.md`, spike results `docs/planning/tier2_wave2_spike_results.md`.

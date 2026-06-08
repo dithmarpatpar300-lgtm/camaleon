@@ -23,6 +23,8 @@ const matchers: ErrorMatcher[] = [
   { pattern: /TIFF palette/i, key: "errors.tiffPalette" },
   { pattern: /TIFF CMYK/i, key: "errors.tiffCmyk" },
   { pattern: /page index \d+ out of range/i, key: "errors.tiffPageRange" },
+  { pattern: /ICO entry index \d+ is out of range/i, key: "errors.icoEntryRange" },
+  { pattern: /Legacy BMP-style ICO/i, key: "errors.icoBmpLegacy" },
   { pattern: /corrupt|invalid/i, key: "errors.corrupt" },
 ];
 

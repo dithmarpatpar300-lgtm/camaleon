@@ -104,6 +104,35 @@ declare module "*/transmutador_tiff/transmutador_tiff.js" {
   export default function init(): Promise<void>;
 }
 
+declare module "*/transmutador_ico/transmutador_ico.js" {
+  export class IcoMeta {
+    readonly entry_count: number;
+    readonly default_entry_index: number;
+    readonly is_cursor: boolean;
+    entry_width(entry_index: number): number;
+    entry_height(entry_index: number): number;
+    entry_bits_per_pixel(entry_index: number): number;
+    entry_is_png(entry_index: number): boolean;
+    entry_has_alpha(entry_index: number): boolean;
+  }
+  export function inspect_ico_meta(input_bytes: Uint8Array): IcoMeta;
+  export function transmutar_ico_a_png(input_bytes: Uint8Array, entry_index: number): Uint8Array;
+  export function transmutar_ico_a_png_with_compression(
+    input_bytes: Uint8Array,
+    compression: number,
+    entry_index: number
+  ): Uint8Array;
+  export function render_ico_entry_preview_png(input_bytes: Uint8Array, entry_index: number): Uint8Array;
+  export function estimate_ico_to_png_size(
+    input_bytes: Uint8Array,
+    compression: number,
+    entry_index: number
+  ): number;
+  export function transmutar_png_a_ico(input_bytes: Uint8Array, target_size: number): Uint8Array;
+  export function estimate_png_to_ico_size(input_bytes: Uint8Array, target_size: number): number;
+  export default function init(): Promise<void>;
+}
+
 declare module "*/transmutador_bmp/transmutador_bmp.js" {
   export class BmpMeta {
     readonly width: number;

@@ -68,7 +68,9 @@ function SliderControl({
     <div>
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium text-text-secondary">{strings.label}</span>
-        <span className="font-mono text-xs tabular-nums text-text-primary">{value}</span>
+        <span className="font-mono text-xs tabular-nums text-text-primary">
+          {spec.key === "iconSize" ? `${value}px` : value}
+        </span>
       </div>
       {strings.presets.length > 0 && (
         <div className="mb-2 flex gap-1" role="group" aria-label={`${strings.label} presets`}>
@@ -84,13 +86,15 @@ function SliderControl({
           ))}
         </div>
       )}
-      <div className="flex items-center gap-3">
-        {strings.lowerLabel && <span className="shrink-0 text-xs text-text-muted">{strings.lowerLabel}</span>}
-        <input type="range" min={spec.min} max={spec.max} step={spec.step} value={value}
-          onChange={(e) => onChange(Number(e.target.value))} aria-label={strings.label}
-          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-bg-elevated accent-accent" />
-        {strings.upperLabel && <span className="shrink-0 text-xs text-text-muted">{strings.upperLabel}</span>}
-      </div>
+      {spec.key !== "iconSize" && (
+        <div className="flex items-center gap-3">
+          {strings.lowerLabel && <span className="shrink-0 text-xs text-text-muted">{strings.lowerLabel}</span>}
+          <input type="range" min={spec.min} max={spec.max} step={spec.step} value={value}
+            onChange={(e) => onChange(Number(e.target.value))} aria-label={strings.label}
+            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-bg-elevated accent-accent" />
+          {strings.upperLabel && <span className="shrink-0 text-xs text-text-muted">{strings.upperLabel}</span>}
+        </div>
+      )}
       <p className="mt-1.5 text-xs text-text-muted">{strings.hint}</p>
     </div>
   );

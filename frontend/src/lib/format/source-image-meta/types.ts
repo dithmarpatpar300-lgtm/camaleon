@@ -8,6 +8,8 @@ export type SourceImageMeta = {
   frameCount?: number;
   /** Present for multi-page TIFF sources. */
   pageCount?: number;
+  /** Present for multi-size ICO/CUR sources. */
+  entryCount?: number;
   /** BMP semantic alpha — set when probed via Wasm. */
   hasMeaningfulAlpha?: boolean;
 };
