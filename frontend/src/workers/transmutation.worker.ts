@@ -12,10 +12,10 @@ type EstimateWebpSizeFn = (input: Uint8Array, compression: number) => number;
 type TransmutarWebpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
 type EstimateWebpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
 type EstimatePngToWebpSizeFn = (input: Uint8Array) => number;
-type TransmutarGifWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
-type EstimateGifToPngSizeFn = (input: Uint8Array, compression: number) => number;
-type TransmutarGifJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
-type EstimateGifToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
+type TransmutarGifWithCompression = (input: Uint8Array, compression: number, frame_index: number) => Uint8Array;
+type EstimateGifToPngSizeFn = (input: Uint8Array, compression: number, frame_index: number) => number;
+type TransmutarGifJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number, frame_index: number) => Uint8Array;
+type EstimateGifToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number, frame_index: number) => number;
 type TransmutarBmpWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
 type EstimateBmpToPngSizeFn = (input: Uint8Array, compression: number) => number;
 type TransmutarBmpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
@@ -252,15 +252,15 @@ function runFullEncode(
   if (route.isGifToJpg) {
     const quality = opts?.quality ?? 85;
     const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    const frameIndex = opts?.frameIndex ?? 0;
     if (!transmutarGifJpgWithOptions) throw new Error("Wasm module not initialized");
-    return transmutarGifJpgWithOptions(input, quality, bg.r, bg.g, bg.b);
+    return transmutarGifJpgWithOptions(input, quality, bg.r, bg.g, bg.b, frameIndex);
   }
   if (route.isGifToPng) {
-    if (opts?.compression != null && transmutarGifWithCompression) {
-      return transmutarGifWithCompression(input, opts.compression);
-    }
-    if (transmutarGif) return transmutarGif(input);
-    throw new Error("Wasm module not initialized");
+    const compression = opts?.compression ?? 6;
+    const frameIndex = opts?.frameIndex ?? 0;
+    if (!transmutarGifWithCompression) throw new Error("Wasm module not initialized");
+    return transmutarGifWithCompression(input, compression, frameIndex);
   }
   if (route.isBmpToJpg) {
     const quality = opts?.quality ?? 85;
@@ -324,13 +324,15 @@ function runSizeEstimate(
   if (route.isGifToJpg) {
     const quality = opts?.quality ?? 85;
     const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    const frameIndex = opts?.frameIndex ?? 0;
     if (!estimateGifToJpgSize) throw new Error("Wasm estimate export not initialized");
-    return estimateGifToJpgSize(input, quality, bg.r, bg.g, bg.b);
+    return estimateGifToJpgSize(input, quality, bg.r, bg.g, bg.b, frameIndex);
   }
   if (route.isGifToPng) {
     const compression = opts?.compression ?? 6;
+    const frameIndex = opts?.frameIndex ?? 0;
     if (!estimateGifToPngSize) throw new Error("Wasm estimate export not initialized");
-    return estimateGifToPngSize(input, compression);
+    return estimateGifToPngSize(input, compression, frameIndex);
   }
   if (route.isBmpToJpg) {
     const quality = opts?.quality ?? 85;

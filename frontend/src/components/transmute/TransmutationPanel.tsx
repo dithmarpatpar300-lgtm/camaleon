@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { EncodeSource, OutputExtension, TransmutationOptions } from "@/workers/types";
 import { fileMatchesExtensions } from "@/lib/tools/extensions";
@@ -9,27 +9,25 @@ import { useFileMetrics } from "@/hooks/useFileMetrics";
 import { useAdaptiveResourceProfile } from "@/hooks/useAdaptiveResourceProfile";
 import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
-import { detectBmpAlpha } from "@/lib/format/detect-bmp-alpha";
-import { detectGifAlpha } from "@/lib/format/detect-gif-alpha";
-import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
-import { detectWebpAlpha } from "@/lib/format/detect-webp-alpha";
+import { prepareFileForTool } from "@/lib/transmutation/prepare/run-prepare";
+import {
+  releasePreparedContext,
+  type PreparedFileContext,
+  type PreparePhaseId,
+} from "@/lib/transmutation/prepare/types";
 import { useI18n } from "@/providers/I18nProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { usePageFileDrop } from "@/hooks/usePageFileDrop";
 import { localizeError } from "@/lib/i18n/errors";
 import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
 import { Button } from "@/components/ui/Button";
-import { DisplayFilename } from "@/components/ui/DisplayFilename";
-import { Spinner } from "@/components/ui/Spinner";
-import { truncateFilenameMiddle } from "@/lib/format/filename";
 import { cn } from "@/lib/utils";
 import { Dropzone } from "./Dropzone";
-import { OptionsControls } from "./OptionsControls";
-import { MetricsPanel } from "./MetricsPanel";
-import { TransparencyNotice } from "./TransparencyNotice";
 import { PageDropOverlay } from "./PageDropOverlay";
+import { FilePrepareGate } from "./FilePrepareGate";
+import { StagedWorkspace } from "./StagedWorkspace";
 
-type PanelStatus = "idle" | "staged" | "processing" | "success" | "error";
+type PanelStatus = "idle" | "preparing" | "staged" | "processing" | "success" | "error";
 
 type StagedFile = { file: File; bytes: ArrayBuffer };
 type Result = {
@@ -42,6 +40,9 @@ type Result = {
 };
 
 type TransmutationPanelProps = { tool: ToolDefinition };
+
+/** Duration that gate and workspace crossfade simultaneously. */
+const CROSSFADE_MS = 460;
 
 function buildDefaultOptions(specs: ToolDefinition["optionSpecs"]): TransmutationOptions {
   const opts: TransmutationOptions = {};
@@ -56,20 +57,38 @@ function buildDefaultOptions(specs: ToolDefinition["optionSpecs"]): Transmutatio
   return opts;
 }
 
+
 export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const { t } = useI18n();
   const [status, setStatus] = useState<PanelStatus>("idle");
   const [dragging, setDragging] = useState(false);
   const [staged, setStaged] = useState<StagedFile | null>(null);
+  const [pendingFile, setPendingFile] = useState<StagedFile | null>(null);
+  const [prepared, setPrepared] = useState<PreparedFileContext | null>(null);
+  const [prepareProgress, setPrepareProgress] = useState(0);
+  const [preparePhase, setPreparePhase] = useState<PreparePhaseId>("reading");
+  const [preparePhaseLabelKey, setPreparePhaseLabelKey] = useState<string | undefined>();
+  const [prepareDetailLabel, setPrepareDetailLabel] = useState<string | undefined>();
+  const [prepareIndeterminate, setPrepareIndeterminate] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0.1);
+  /**
+   * When true, both gate (exiting) and workspace (entering) are rendered
+   * simultaneously so they can crossfade. Cleared after CROSSFADE_MS.
+   */
+  const [crossfading, setCrossfading] = useState(false);
   const [options, setOptions] = useState<TransmutationOptions>(() => buildDefaultOptions(tool.optionSpecs));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [hasAlpha, setHasAlpha] = useState(false);
 
+  const prepareIdRef = useRef(0);
+  const preparedRef = useRef(prepared);
+  preparedRef.current = prepared;
+
   const { transmutate, ready } = useTransmutationWorker();
   const { toast } = useToast();
-  const profile = useAdaptiveResourceProfile(staged?.file?.size ?? 0);
+  const profile = useAdaptiveResourceProfile(staged?.file?.size ?? pendingFile?.file.size ?? 0);
   const encodeSource: EncodeSource | undefined =
     tool.module === "transmutador_encode"
       ? tool.fromFormat === "PNG"
@@ -84,9 +103,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     options,
     ready,
     profile,
+    holdEstimate: crossfading,
   });
   const accept = tool.acceptExtensions.join(",");
-  const hint = resolveToolFidelityHint(tool.id, t);
 
   const handleFileSelect = useCallback(async (file: File) => {
     if (!fileMatchesExtensions(file.name, tool.acceptExtensions)) {
@@ -94,31 +113,71 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setErrorMessage(t("panel.fmtError", { formats: tool.acceptExtensions.join(", ") }));
       return;
     }
-    const bytes = await file.arrayBuffer();
-    setStaged({ file, bytes });
-    setStatus("staged");
-    setErrorMessage(null);
+
+    const prepareId = ++prepareIdRef.current;
+    releasePreparedContext(preparedRef.current);
+    setPrepared(null);
+    setStaged(null);
     setResult(null);
+    setCrossfading(false);
+    setErrorMessage(null);
 
-    const hasBackgroundOption = tool.optionSpecs?.some(
-      (s) => s.kind === "color" && s.key === "background"
-    );
+    let bytes: ArrayBuffer;
+    try {
+      bytes = await file.arrayBuffer();
+    } catch {
+      setStatus("error");
+      setErrorMessage(t("panel.unexpectedError"));
+      return;
+    }
 
-    if (hasBackgroundOption && tool.id === "png-to-jpg") {
-      setHasAlpha(detectPngAlpha(bytes).hasAlpha);
-    } else if (hasBackgroundOption && tool.id === "webp-to-jpg") {
-      setHasAlpha(detectWebpAlpha(bytes));
-    } else if (hasBackgroundOption && tool.id === "gif-to-jpg") {
-      setHasAlpha(detectGifAlpha(bytes));
-    } else if (hasBackgroundOption && tool.id === "bmp-to-jpg") {
-      setHasAlpha(detectBmpAlpha(bytes));
-    } else {
-      setHasAlpha(false);
+    const pending = { file, bytes };
+    setPendingFile(pending);
+    setStatus("preparing");
+    setPrepareProgress(0);
+    setPreparePhase("reading");
+    setPreparePhaseLabelKey(undefined);
+    setPrepareDetailLabel(undefined);
+
+    try {
+      const ctx = await prepareFileForTool(tool, bytes, (p) => {
+        if (prepareId !== prepareIdRef.current) return;
+        setPrepareProgress(p.progress);
+        setPreparePhase(p.phase);
+        setPreparePhaseLabelKey(p.phaseLabelKey);
+        setPrepareIndeterminate(p.indeterminate ?? false);
+        if (p.detailLabelKey) {
+          setPrepareDetailLabel(t(p.detailLabelKey, p.detailParams ?? {}));
+        } else {
+          setPrepareDetailLabel(undefined);
+        }
+      });
+
+      if (prepareId !== prepareIdRef.current) {
+        releasePreparedContext(ctx);
+        return;
+      }
+
+      // Transition: simultaneously crossfade gate out and workspace in — no dead gap.
+      setPrepared(ctx);
+      setHasAlpha(ctx.hasAlpha);
+      setStaged(pending);
+      setPendingFile(null);
+      setOptions({ ...buildDefaultOptions(tool.optionSpecs), frameIndex: 0 });
+      setStatus("staged");
+      setCrossfading(true);
+      setTimeout(() => setCrossfading(false), CROSSFADE_MS);
+    } catch {
+      if (prepareId !== prepareIdRef.current) return;
+      setPendingFile(null);
+      setStatus("error");
+      setErrorMessage(t("panel.prepareFailed"));
     }
   }, [tool, t]);
 
   const handleTransmutar = useCallback(async () => {
-    if (!staged || !ready) return;
+    if (!staged || !ready || metrics.engineLimitExceeded) return;
+    setProcessingProgress(0.08);
     setStatus("processing");
     setErrorMessage(null);
     try {
@@ -160,8 +219,24 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     transmutate,
     metrics.setFinalSize,
     metrics.transmuteMeta,
+    metrics.engineLimitExceeded,
     t,
   ]);
+
+  const handleAdjustAndRetry = useCallback(async () => {
+    if (staged?.file) {
+      try {
+        const bytes = await staged.file.arrayBuffer();
+        setStaged({ file: staged.file, bytes });
+      } catch {
+        setErrorMessage(t("panel.unexpectedError"));
+        return;
+      }
+    }
+    metrics.resetMetrics();
+    setStatus("staged");
+    setErrorMessage(null);
+  }, [staged, metrics, t]);
 
   const handleDownload = useCallback(() => {
     if (!result) return;
@@ -170,24 +245,38 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   }, [result, toast, t]);
 
   const handleReset = useCallback(() => {
+    prepareIdRef.current++;
+    releasePreparedContext(prepared);
+    setPrepared(null);
+    setPendingFile(null);
     setStaged(null);
     setResult(null);
     setStatus("idle");
     setErrorMessage(null);
     setHasAlpha(false);
     setPreviewUrl(null);
+    setCrossfading(false);
     setOptions(buildDefaultOptions(tool.optionSpecs));
     metrics.resetMetrics();
-  }, [tool, metrics]);
+  }, [tool, metrics, prepared]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true); }, []);
   const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(false); }, []);
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragging(false);
-    if (status === "processing") return;
+    if (status === "processing" || status === "preparing") return;
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) handleFileSelect(files[0]);
   }, [status, handleFileSelect]);
+
+  useEffect(() => {
+    if (status !== "processing") return;
+    setProcessingProgress(0.08);
+    const interval = setInterval(() => {
+      setProcessingProgress((p) => Math.min(0.92, p + 0.025));
+    }, 200);
+    return () => clearInterval(interval);
+  }, [status]);
 
   useEffect(() => {
     if (!result) {
@@ -225,6 +314,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     ? getOptionSpecStrings(tool.id, backgroundSpec, t).swatches
     : [];
 
+  const activeFile = pendingFile ?? staged;
+
   return (
     <div className="space-y-6">
       {status === "idle" && (
@@ -234,64 +325,82 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         />
       )}
 
-      {status === "staged" && staged && (
-        <div className="rounded-2xl border border-border bg-bg-surface p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <DisplayFilename
-                name={staged.file.name}
-                className="text-sm font-medium text-text-primary"
-              />
-              <p className="text-xs text-text-muted">{formatBytes(staged.file.size)}</p>
-            </div>
-            <Button variant="ghost" size="sm" className="shrink-0" onClick={handleReset}>
-              {t("panel.changeFile")}
-            </Button>
-          </div>
-          {hasAlpha && backgroundSpec && (
-            <div className="mb-4">
-              <TransparencyNotice
-                background={currentBackground}
-                swatches={backgroundSwatches}
-                allowCustom={backgroundSpec.allowCustom}
-                onBackgroundChange={(bg) =>
-                  setOptions((prev) => ({ ...prev, background: bg }))
-                }
+      {/*
+       * Single shell: workspace sizes the card in normal flow; gate overlays on top
+       * during crossfade (absolute) so both never stack vertically in the document.
+       */}
+      {(status === "preparing" || status === "staged") && activeFile && (
+        <div
+          className={cn(
+            "relative overflow-hidden rounded-2xl border border-border bg-bg-surface",
+            status === "preparing" && "min-h-[22rem]"
+          )}
+        >
+          {status === "staged" && staged && prepared && (
+            <div className={cn(crossfading && "workspace-crossfade-in")}>
+              <StagedWorkspace
+                tool={tool}
+                fileName={staged.file.name}
+                fileSize={staged.file.size}
+                options={options}
+                onOptionsChange={setOptions}
+                hasAlpha={hasAlpha}
+                gifSession={prepared.gifSession}
+                panelOptionSpecs={panelOptionSpecs}
+                hasOptions={hasOptions}
+                backgroundSpec={backgroundSpec}
+                backgroundSwatches={backgroundSwatches}
+                currentBackground={currentBackground}
+                metrics={{
+                  originalSize: metrics.originalSize,
+                  estimateDelta: metrics.estimateDelta,
+                  estimating: metrics.estimating,
+                  estimateError: metrics.estimateError,
+                  engineLimitExceeded: metrics.engineLimitExceeded,
+                  cacheWarm: metrics.cacheWarm,
+                }}
+                profile={profile}
+                ready={ready}
+                onRequestEstimate={metrics.requestEstimate}
+                onTransmutar={handleTransmutar}
+                onReset={handleReset}
               />
             </div>
           )}
-          {hasOptions && (
-            <div className="mb-5 border-t border-border pt-4">
-              <OptionsControls toolId={tool.id} specs={panelOptionSpecs} values={options} onChange={setOptions} />
+
+          {(status === "preparing" || crossfading) && (
+            <div
+              className={cn(
+                "bg-bg-surface",
+                status === "preparing"
+                  ? "relative"
+                  : "absolute inset-0 z-10 flex items-center justify-center",
+                crossfading && "gate-crossfade-out pointer-events-none"
+              )}
+            >
+              <FilePrepareGate
+                fileName={activeFile.file.name}
+                fileSize={activeFile.file.size}
+                progress={prepareProgress}
+                phase={preparePhase}
+                phaseLabelKey={preparePhaseLabelKey}
+                indeterminate={prepareIndeterminate}
+                detailLabel={prepareDetailLabel}
+              />
             </div>
           )}
-          <div className={hasOptions ? "mb-5" : "mb-5 border-t border-border pt-4"}>
-            <MetricsPanel
-              originalSize={metrics.originalSize}
-              estimateDelta={metrics.estimateDelta}
-              estimating={metrics.estimating}
-              cacheWarm={metrics.cacheWarm}
-              autoEstimate={profile.autoEstimate}
-              ready={ready}
-              onRequestEstimate={metrics.requestEstimate}
-            />
-          </div>
-          <Button onClick={handleTransmutar} disabled={!ready} className="w-full">
-            {ready ? t("panel.transmuteButton") : t("panel.initializing")}
-          </Button>
         </div>
       )}
 
-      {status === "processing" && (
-        <div className="flex flex-col items-center gap-3 py-12">
-          <Spinner label={t("panel.processingFallback")} />
-          <p className="text-sm text-text-secondary">
-            {staged
-              ? t("panel.processing", {
-                  fileName: truncateFilenameMiddle(staged.file.name, 36),
-                })
-              : t("panel.processingFallback")}
-          </p>
+      {status === "processing" && staged && (
+        <div className="overflow-hidden rounded-2xl border border-border bg-bg-surface">
+          <FilePrepareGate
+            fileName={staged.file.name}
+            fileSize={staged.file.size}
+            progress={processingProgress}
+            phase="transmuting"
+            phaseLabelKey="prepare.phases.transmuting"
+          />
         </div>
       )}
 
@@ -346,7 +455,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
           <p className="mt-1">{errorMessage}</p>
           <div className="mt-3 flex gap-2">
             {staged && (
-              <Button variant="subtle" size="sm" onClick={() => setStatus("staged")}>{t("panel.adjustAndRetry")}</Button>
+              <Button variant="subtle" size="sm" onClick={() => void handleAdjustAndRetry()}>
+                {t("panel.adjustAndRetry")}
+              </Button>
             )}
             <Button variant="ghost" size="sm" onClick={handleReset}>{t("panel.startOver")}</Button>
           </div>

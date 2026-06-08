@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.8.3 | **Tier 2 Wave 1** — 10 active tools |
-| **Engine (Rust workspace)** | v1.4.1 | Six Wasm crates (+ `transmutador_gif`, `transmutador_bmp`) |
+| **Frontend (app)** | v1.8.4 | **GIF Premium** — frame picker + compositing |
+| **Engine (Rust workspace)** | v1.4.2 | Six Wasm crates (+ `transmutador_gif`, `transmutador_bmp`) |
 | **SPEC** | v1.7.0 | Tier 1 complete; Tier 2 Wave 1 complete |
 
-**v1.8.3** (Tier 2 Wave 1): GIF→PNG/JPG, BMP→PNG/JPG — four new tools on `dev`. **v1.7.9** live on `main`. Wave 2 (TIFF/ICO/TGA) next — see `docs/planning/tier2_wave1_plan.md`.
+**v1.8.4** (GIF Premium): frame scrubber, `frame_index` API, GIF89a compositing via `image`. **v1.8.3** Tier 2 Wave 1 on `main`. Wave 2 (TIFF/ICO/TGA) after GIF polish — see `docs/planning/gif_premium_roadmap.md`.
 
 ---
 

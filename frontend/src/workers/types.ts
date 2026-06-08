@@ -17,6 +17,8 @@ export type TransmutationOptions = {
   quality?: number;
   compression?: number;
   background?: RgbColor;
+  /** Composited GIF frame to export (0-based). */
+  frameIndex?: number;
 };
 
 export type WorkerPurpose = "transmute" | "estimate";

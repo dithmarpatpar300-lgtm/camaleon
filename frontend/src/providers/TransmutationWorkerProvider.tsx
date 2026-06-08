@@ -109,11 +109,13 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
         }
         const id = crypto.randomUUID();
         pendingRef.current.set(id, { resolve, reject });
+        // Always transfer a clone so the caller's ArrayBuffer is never detached.
+        const transferBytes = bytes.slice(0);
         worker.postMessage(
           {
             id,
             module,
-            bytes,
+            bytes: transferBytes,
             options,
             outputExtension,
             encodeSource,
@@ -123,7 +125,7 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
             enableResultCache: meta?.enableResultCache,
             cacheMaxOutputBytes: meta?.cacheMaxOutputBytes,
           },
-          [bytes]
+          [transferBytes]
         );
       });
     },

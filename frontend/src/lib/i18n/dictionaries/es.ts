@@ -31,11 +31,11 @@ const es: Dictionary = {
       },
       "gif-to-png": {
         title: "GIF a PNG — Camaleon",
-        description: "Convierte GIF a PNG en tu navegador. Raster sin perdida — solo el primer fotograma de animacion.",
+        description: "Convierte GIF a PNG en tu navegador. Elige cualquier fotograma — exportacion raster sin perdida.",
       },
       "gif-to-jpg": {
         title: "GIF a JPG — Camaleon",
-        description: "Convierte GIF a JPG en tu navegador. Comprimido para web — solo el primer fotograma.",
+        description: "Convierte GIF a JPG en tu navegador. Elige cualquier fotograma — comprimido para web.",
       },
       "bmp-to-png": {
         title: "BMP a PNG — Camaleon",
@@ -111,6 +111,23 @@ const es: Dictionary = {
     transmute: "Transmutar",
   },
 
+  prepare: {
+    ariaLabel: "Preparando archivo: {phase}, {percent}% completado",
+    progressLabel: "Progreso",
+    switchToBar: "Cambiar a vista de barra",
+    switchToRing: "Cambiar a vista de anillo",
+    gifFrameProgress: "Fotograma {current}",
+    phases: {
+      reading: "Leyendo archivo…",
+      engine: "Cargando motor de conversion…",
+      analyze: "Analizando imagen…",
+      analyzeGif: "Leyendo fotogramas de animacion…",
+      analyzeSkippedLimit: "Analisis profundo omitido — archivo supera el limite del motor",
+      finalize: "Preparando espacio de trabajo…",
+      transmuting: "Transmutando…",
+    },
+  },
+
   dropzone: {
     idleLabel: "Arrastra una imagen aqui, o haz clic para seleccionar",
     dragLabel: "Suelta para transmutar",
@@ -141,6 +158,12 @@ const es: Dictionary = {
     fmtError: "Esta herramienta acepta: {formats}",
     notReadyError: "El motor aun esta inicializando. Espera un momento e intentalo de nuevo.",
     unexpectedError: "Ocurrio un error inesperado",
+    prepareFailed: "No se pudo preparar este archivo. Prueba otra imagen o un formato distinto.",
+    transmuteUnavailable: "Archivo supera el limite del motor",
+    largeFile: {
+      title: "Archivo supera el limite del motor",
+      body: "Este archivo es mayor que el limite de {limit}. Puedes ajustar opciones, pero la conversion esta deshabilitada hasta usar un archivo mas pequeno.",
+    },
     previewAlt: "Vista previa de {fileName}",
     transparencyNotice: {
       title: "Esta imagen tiene transparencia",
@@ -156,7 +179,18 @@ const es: Dictionary = {
       calculating: "Calculando",
       calculate: "Calcular estimacion",
       largeFileHint: "Archivo grande — toca para calcular el peso estimado.",
+      estimateUnavailable: "Estimacion no disponible — el archivo supera el limite de 50 MB del motor.",
       cacheReady: "Listo para transmutar",
+    },
+    gifFrame: {
+      title: "Fotograma de animacion",
+      counter: "{current} / {total}",
+      hint: "Desliza para vista previa instantanea — suelta para actualizar la estimacion de peso. Se aplican los metodos de disposicion GIF89a.",
+      sliderAria: "Selector de fotograma GIF",
+      previewAlt: "Vista previa del fotograma {index}",
+      loadingMeta: "Leyendo fotogramas del GIF…",
+      loadingPreview: "Generando vista previa…",
+      noPreview: "Vista previa no disponible",
     },
   },
 
@@ -231,7 +265,7 @@ const es: Dictionary = {
     "gif-to-png": {
       actionTitle: "Convertir a PNG",
       description: "PNG sin perdida desde GIF — paleta y transparencia como pixels raster.",
-      fidelityHint: "GIFs animados usan solo el primer fotograma. El PNG resultante puede ser mucho mas grande que el GIF.",
+      fidelityHint: "GIFs animados: elige cualquier fotograma con el deslizador. El PNG resultante puede ser mucho mas grande que el GIF.",
       options: {
         compression: {
           label: "Compresion PNG",
@@ -245,7 +279,7 @@ const es: Dictionary = {
     "gif-to-jpg": {
       actionTitle: "Comprimir para Web",
       description: "Convierte GIF a JPEG — archivos mas pequenos a la calidad elegida.",
-      fidelityHint: "GIFs animados usan solo el primer fotograma. JPEG tiene perdida — la transparencia se aplana al fondo elegido.",
+      fidelityHint: "GIFs animados: elige cualquier fotograma con el deslizador. JPEG tiene perdida — la transparencia se aplana al fondo elegido.",
       options: {
         quality: { label: "Calidad JPEG", hint: "Mayor calidad = archivo mas grande. La perdida de calidad siempre es irreversible.", lowerLabel: "Mas liviano", upperLabel: "Mas fiel", presets: { web: "Web", balanced: "Balanceado", high: "Alto" } },
         background: { label: "Color de fondo", hint: "Solo afecta imagenes con transparencia.", customAria: "Color de fondo personalizado", swatches: { white: "Blanco", black: "Negro", gray: "Gris" } },

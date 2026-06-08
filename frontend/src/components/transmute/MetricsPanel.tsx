@@ -11,6 +11,8 @@ type MetricsPanelProps = {
   originalSize: number;
   estimateDelta: SizeDelta | null;
   estimating: boolean;
+  estimateError: string | null;
+  engineLimitExceeded: boolean;
   cacheWarm: boolean;
   autoEstimate: boolean;
   ready: boolean;
@@ -21,6 +23,8 @@ export function MetricsPanel({
   originalSize,
   estimateDelta,
   estimating,
+  estimateError,
+  engineLimitExceeded,
   cacheWarm,
   autoEstimate,
   ready,
@@ -43,6 +47,8 @@ export function MetricsPanel({
           <EstimatedMetricsValue
             delta={estimateDelta}
             estimating={estimating}
+            estimateError={estimateError}
+            engineLimitExceeded={engineLimitExceeded}
             cacheWarm={cacheWarm}
             autoEstimate={autoEstimate}
             ready={ready}
@@ -50,10 +56,15 @@ export function MetricsPanel({
           />
         </span>
       </div>
-      {!autoEstimate && !estimateDelta && !estimating && (
+      {engineLimitExceeded && !estimateDelta && (
+        <p className="py-1 text-warning">{t("panel.metrics.estimateUnavailable")}</p>
+      )}
+      {!engineLimitExceeded && !autoEstimate && !estimateDelta && !estimating && !estimateError && (
         <p className="py-1 text-text-muted">{t("panel.metrics.largeFileHint")}</p>
       )}
-      {/* Always in DOM — opacity toggle prevents the button from jumping */}
+      {estimateError && (
+        <p className="py-1 text-error" role="alert">{estimateError}</p>
+      )}
       <p
         className={cn(
           "py-1 text-center text-text-muted transition-opacity duration-300",
@@ -71,6 +82,8 @@ export function MetricsPanel({
 type EstimatedMetricsValueProps = {
   delta: SizeDelta | null;
   estimating: boolean;
+  estimateError: string | null;
+  engineLimitExceeded: boolean;
   cacheWarm: boolean;
   autoEstimate: boolean;
   ready: boolean;
@@ -84,6 +97,8 @@ function estimateValueKey(delta: SizeDelta): string {
 function EstimatedMetricsValue({
   delta,
   estimating,
+  estimateError,
+  engineLimitExceeded,
   cacheWarm,
   autoEstimate,
   ready,
@@ -109,6 +124,9 @@ function EstimatedMetricsValue({
   if (!delta) {
     if (estimating) {
       return <span className="text-text-muted">{t("panel.metrics.calculating")}</span>;
+    }
+    if (engineLimitExceeded) {
+      return <span className="text-text-muted">—</span>;
     }
     if (!autoEstimate) {
       return (

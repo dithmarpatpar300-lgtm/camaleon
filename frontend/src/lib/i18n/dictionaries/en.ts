@@ -31,11 +31,11 @@ const en: Dictionary = {
       },
       "gif-to-png": {
         title: "GIF to PNG — Camaleon",
-        description: "Convert GIF to PNG in your browser. Lossless raster — first animation frame only.",
+        description: "Convert GIF to PNG in your browser. Pick any animation frame — lossless raster export.",
       },
       "gif-to-jpg": {
         title: "GIF to JPG — Camaleon",
-        description: "Convert GIF to JPG in your browser. Compressed for web — first animation frame only.",
+        description: "Convert GIF to JPG in your browser. Pick any frame — compressed for web.",
       },
       "bmp-to-png": {
         title: "BMP to PNG — Camaleon",
@@ -111,6 +111,23 @@ const en: Dictionary = {
     transmute: "Transmute",
   },
 
+  prepare: {
+    ariaLabel: "Preparing file: {phase}, {percent}% complete",
+    progressLabel: "Progress",
+    switchToBar: "Switch to bar view",
+    switchToRing: "Switch to ring view",
+    gifFrameProgress: "Frame {current}",
+    phases: {
+      reading: "Reading file…",
+      engine: "Loading conversion engine…",
+      analyze: "Analyzing image…",
+      analyzeGif: "Reading animation frames…",
+      analyzeSkippedLimit: "Skipping deep analysis — file exceeds engine limit",
+      finalize: "Preparing workspace…",
+      transmuting: "Transmuting…",
+    },
+  },
+
   dropzone: {
     idleLabel: "Drag & drop an image here, or click to select",
     dragLabel: "Release to transmute",
@@ -141,6 +158,12 @@ const en: Dictionary = {
     fmtError: "This tool accepts: {formats}",
     notReadyError: "Engine is still initializing. Please wait a moment and try again.",
     unexpectedError: "An unexpected error occurred",
+    prepareFailed: "Could not prepare this file. Try another image or a different format.",
+    transmuteUnavailable: "File exceeds engine limit",
+    largeFile: {
+      title: "File exceeds engine limit",
+      body: "This file is larger than the {limit} limit. You can adjust options, but conversion is disabled until you use a smaller file.",
+    },
     previewAlt: "Preview of {fileName}",
     transparencyNotice: {
       title: "This image has transparency",
@@ -156,7 +179,18 @@ const en: Dictionary = {
       calculating: "Calculating",
       calculate: "Calculate estimate",
       largeFileHint: "Large file — tap to calculate estimated size.",
+      estimateUnavailable: "Estimate unavailable — file exceeds the 50 MB engine limit.",
       cacheReady: "Ready to transmute",
+    },
+    gifFrame: {
+      title: "Animation frame",
+      counter: "{current} / {total}",
+      hint: "Scrub for instant preview — release to update the size estimate. Disposal methods are applied for an accurate composite.",
+      sliderAria: "GIF frame selector",
+      previewAlt: "Preview of frame {index}",
+      loadingMeta: "Reading GIF frames…",
+      loadingPreview: "Rendering preview…",
+      noPreview: "Preview unavailable",
     },
   },
 
@@ -245,7 +279,7 @@ const en: Dictionary = {
     "gif-to-png": {
       actionTitle: "Convert to PNG",
       description: "Lossless PNG from GIF — palette and transparency preserved as raster pixels.",
-      fidelityHint: "Animated GIFs use the first frame only. Output PNG may be much larger than the GIF source.",
+      fidelityHint: "Animated GIFs: pick any frame with the scrubber. Output PNG may be much larger than the GIF source.",
       options: {
         compression: {
           label: "PNG Compression",
@@ -259,7 +293,7 @@ const en: Dictionary = {
     "gif-to-jpg": {
       actionTitle: "Compress for Web",
       description: "Convert GIF to JPEG — smaller files at your chosen quality.",
-      fidelityHint: "Animated GIFs use the first frame only. JPEG is lossy — transparency is flattened to your chosen background.",
+      fidelityHint: "Animated GIFs: pick any frame with the scrubber. JPEG is lossy — transparency is flattened to your chosen background.",
       options: {
         quality: { label: "JPEG Quality", hint: "Higher quality = larger file. Quality loss is always irreversible.", lowerLabel: "Lighter", upperLabel: "Faithful", presets: { web: "Web", balanced: "Balanced", high: "High" } },
         background: { label: "Background color", hint: "Only affects images with transparency.", customAria: "Custom background color", swatches: { white: "White", black: "Black", gray: "Gray" } },

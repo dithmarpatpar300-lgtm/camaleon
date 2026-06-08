@@ -126,6 +126,60 @@ dialog.command-palette::backdrop {
   backdrop-filter: blur(2px);
 }
 
+/* Gate de carga y workspace */
+@keyframes prepareGateIn {
+  from { opacity: 0; transform: scale(0.97) translateY(6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+.prepare-gate-in {
+  animation: prepareGateIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Ring indeterminado — gira cuando el progreso está bloqueado en Wasm */
+@keyframes ring-spin {
+  from { transform: rotate(-90deg); }
+  to   { transform: rotate(270deg); }
+}
+
+.ring-indeterminate {
+  animation: ring-spin 1.1s linear infinite;
+}
+
+/* Crossfade gate → workspace: ambos ocurren sobre el mismo contenedor */
+.gate-crossfade-out {
+  animation: gateCrossfadeOut 280ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes gateCrossfadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; pointer-events: none; }
+}
+
+.workspace-crossfade-in {
+  animation: workspaceCrossfadeIn 340ms cubic-bezier(0.22, 1, 0.36, 1) 60ms both;
+}
+
+@keyframes workspaceCrossfadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes barIndeterminate {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(200%); }
+  100% { transform: translateX(-100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prepare-gate-in,
+  .gate-crossfade-out,
+  .workspace-crossfade-in,
+  .ring-indeterminate {
+    animation: none;
+  }
+}
+
 @keyframes metricsValueIn {
   from {
     opacity: 0;
