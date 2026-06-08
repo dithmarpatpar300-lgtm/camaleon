@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.10.4** (`main`) | **Tier 2 Wave 2 tool-complete** — TIFF, ICO↔PNG, TGA→PNG; Phase 7.6 polish optional |
-| **Engine (Rust workspace)** | v1.4.2 | Nine Wasm crates (`jpg`, `png`, `webp`, `encode`, `gif`, `bmp`, `tiff`, `ico`, `tga` + `core_utils`) |
-| **SPEC** | v1.9.0-comms | Tier 1 + Tier 2 Wave 1 on `main`; Wave 2 TIFF phases on `dev` |
+| **Frontend (app)** | **v1.10.4** (`main`) · **v1.11.0 WIP** (`dev`) | Wave 2 shipped on `main`; **Semantic Alpha Engine** in progress on `dev` |
+| **Engine (Rust workspace)** | v1.4.2 | Nine Wasm crates + **`core_utils::semantic_alpha`** (new on `dev`) |
+| **SPEC** | v1.9.0-comms | §5.5.3 Semantic Alpha Engine — **pending** |
 
-**v1.10.4** (`main`): Tier 2 Wave 2 **tool-complete** — TIFF suite, ICO ↔ PNG, **TGA → PNG**. **Fifteen active tools.** Optional: Phase 7.6 polish (GitHub release notes, SPEC snapshot).
+**v1.10.4** (`main`): Tier 2 Wave 2 **shipped** — fifteen active tools.
+
+**v1.11.0** (`dev`, in progress): **Semantic Alpha Engine** — centralized meaningful-transparency detection for all lossy-input tools (PNG/WebP/GIF/BMP/TIFF → JPG). Core Rust + Wasm assess + frontend prepare wired; TIFF false-positive fixed. Release blocked on SPEC, contract tests, full QA. Plan: `docs/planning/semantic_alpha_engine_plan.md`.
 
 ---
 
@@ -216,7 +218,7 @@ Planning docs: `docs/planning/gif_premium_roadmap.md`, `bmp_premium_roadmap.md`,
 
 ---
 
-## Tier 2 Wave 2 — In progress on `dev` (v1.10.x)
+## Tier 2 Wave 2 — Shipped on `main` (v1.10.x)
 
 | Phase | Version | Deliverable | Status |
 |-------|---------|-------------|--------|
@@ -231,6 +233,25 @@ Planning: `docs/planning/tier2_wave2_plan.md`, spike results `docs/planning/tier
 
 ---
 
+## Semantic Alpha Engine — In progress on `dev` (v1.11.0)
+
+Cross-cutting honesty fix: UI and encode both use **meaningful alpha** (pixels with α &lt; 255), not structural container flags.
+
+| Phase | Deliverable | Status |
+|-------|-------------|--------|
+| 1 | `core_utils::semantic_alpha` + encode alignment (all flatten paths) | ✅ |
+| 2 | Wasm `assess_alpha` / `assess_page_alpha` per lossy crate | ✅ |
+| 3 | Frontend `lib/semantic-alpha/` + prepare/panel integration | ✅ |
+| 0 | SPEC §5.5.3 + fixture catalog | ⏳ |
+| 4 | Contract tests, cleanup (`pageHasAlpha` deprecate), full QA matrix | ⏳ |
+| 5 | Release v1.11.0 on `main` | ⏳ |
+
+**Verified:** opaque RGBA TIFF (e.g. `file_example_TIFF_10MB.tiff`) no longer shows `TransparencyNotice` on TIFF→JPG.
+
+Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/planning/transparency_engine_proposal.md`.
+
+---
+
 ## Post-v1.9 Horizon
 
 | Tier | Target | Features | Notes |
@@ -238,6 +259,7 @@ Planning: `docs/planning/tier2_wave2_plan.md`, spike results `docs/planning/tier
 | **Tier 2 Wave 1** | v1.9.0 | GIF, BMP, limits, astro | ✅ **Shipped on `main`** |
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
+| **Semantic Alpha Engine** | **v1.11.0** (`dev`) | Honest transparency across lossy tools | 🚧 Phases 1–3 done — `docs/planning/semantic_alpha_engine_plan.md` |
 | **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
 | **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
 
@@ -268,6 +290,7 @@ Planning: `docs/planning/tier2_wave2_plan.md`, spike results `docs/planning/tier
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-08 | Chief Architect (Cursor) | **Semantic Alpha Engine (v1.11 WIP on `dev`):** `core_utils::semantic_alpha`, Wasm assess exports, frontend prepare integration; TIFF opaque RGBA false-positive fixed; Phases 0/4/5 remain before `main` |
 | 2026-06-08 | Chief Architect (Cursor) | **v1.10.2–1.10.4 merged to `main`:** ICO↔PNG (`transmutador_ico`), TGA→PNG (`transmutador_tga`); 15 active tools; Wave 2 tool-complete |
 | 2026-06-08 | Chief Architect (Cursor) | **v1.10.0–1.10.1 on `dev`:** `transmutador_tiff`, TIFF→PNG + TIFF→JPEG, 12 active tools; spike doc + Wave 2 plan phases 7.0–7.2 complete |
 | 2026-06-08 | Chief Architect (Cursor) | Release Comms shipped (folded v1.9.0); SPEC §7.10–7.11 release policy; Tier 2 Wave 2 planning doc started |

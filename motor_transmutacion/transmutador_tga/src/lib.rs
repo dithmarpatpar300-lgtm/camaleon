@@ -5,6 +5,7 @@ mod tga_probe;
 use std::io::Cursor;
 
 use core_utils::counting_writer::CountingWriter;
+use core_utils::semantic_alpha::dynamic_image_has_meaningful_alpha;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::codecs::tga::TgaDecoder;
 use image::{DynamicImage, ExtendedColorType, ImageEncoder};
@@ -96,24 +97,13 @@ fn decode_tga(input: &[u8]) -> Result<image::DynamicImage, String> {
         .map_err(|e| format!("Failed to decode TGA: {}", e))
 }
 
-fn rgba_has_meaningful_alpha(rgba: &image::RgbaImage) -> bool {
-    rgba.pixels().any(|p| p[3] < 255)
-}
-
-fn tga_has_meaningful_alpha(img: &image::DynamicImage) -> bool {
-    if !img.color().has_alpha() {
-        return false;
-    }
-    rgba_has_meaningful_alpha(&img.to_rgba8())
-}
-
 pub fn transmutar_tga_a_png_inner(input: &[u8], compression: u8) -> Result<Vec<u8>, String> {
     core_utils::validate_input(input)?;
     validate_compression(compression)?;
     inspect_and_validate(input)?;
 
     let img = decode_tga(input)?;
-    let meaningful_alpha = tga_has_meaningful_alpha(&img);
+    let meaningful_alpha = dynamic_image_has_meaningful_alpha(&img);
 
     let mut buf = Cursor::new(Vec::new());
     let encoder = PngEncoder::new_with_quality(
@@ -180,7 +170,7 @@ pub fn estimate_tga_to_png_size(input_bytes: &[u8], compression: u8) -> Result<u
         FilterType::Adaptive,
     );
     let img = decode_tga(input_bytes)?;
-    if tga_has_meaningful_alpha(&img) {
+    if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         encoder
             .write_image(

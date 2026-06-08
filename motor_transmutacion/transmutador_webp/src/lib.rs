@@ -16,6 +16,10 @@
 use std::io::Cursor;
 
 use core_utils::counting_writer::CountingWriter;
+use core_utils::semantic_alpha::{
+    assess_dynamic_image_probe, dynamic_image_has_meaningful_alpha, webp_has_alpha_channel,
+    AlphaAssessment, AlphaAssessmentJs,
+};
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::{ExtendedColorType, ImageEncoder, ImageReader};
@@ -64,7 +68,7 @@ fn webp_bytes_to_png_bytes(input: &[u8], compression: u8) -> Result<Vec<u8>, Str
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
 
-    let has_alpha = img.color().has_alpha();
+    let has_alpha = dynamic_image_has_meaningful_alpha(&img);
 
     let mut buf = Cursor::new(Vec::new());
     let encoder = PngEncoder::new_with_quality(
@@ -96,6 +100,23 @@ pub fn transmutar_webp_a_png_inner(input: &[u8], compression: u8) -> Result<Vec<
     Ok(output)
 }
 
+pub fn assess_webp_alpha(input: &[u8]) -> Result<AlphaAssessment, String> {
+    core_utils::validate_input(input)?;
+    let structural = webp_has_alpha_channel(input);
+    let img = ImageReader::new(Cursor::new(input))
+        .with_guessed_format()
+        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?
+        .decode()
+        .map_err(|e| format!("Failed to decode WebP: {}", e))?;
+    let has_channel = structural || img.color().has_alpha();
+    Ok(assess_dynamic_image_probe(&img, has_channel))
+}
+
+#[wasm_bindgen]
+pub fn assess_alpha(input_bytes: &[u8]) -> Result<AlphaAssessmentJs, String> {
+    Ok(AlphaAssessmentJs::from_assessment(assess_webp_alpha(input_bytes)?))
+}
+
 #[wasm_bindgen]
 pub fn transmutar_webp_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
     transmutar_webp_a_png_inner(input_bytes, DEFAULT_COMPRESSION)
@@ -122,7 +143,7 @@ pub fn estimate_webp_to_png_size(
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
 
-    let has_alpha = img.color().has_alpha();
+    let has_alpha = dynamic_image_has_meaningful_alpha(&img);
     let mut writer = CountingWriter::default();
     let encoder = PngEncoder::new_with_quality(
         &mut writer,
@@ -156,7 +177,7 @@ fn webp_bytes_to_jpg_bytes(input: &[u8], quality: u8, bg_r: u8, bg_g: u8, bg_b: 
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
 
-    let rgb = if img.color().has_alpha() {
+    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {
@@ -201,7 +222,7 @@ pub fn estimate_webp_to_jpg_size(
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
 
-    let rgb = if img.color().has_alpha() {
+    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {

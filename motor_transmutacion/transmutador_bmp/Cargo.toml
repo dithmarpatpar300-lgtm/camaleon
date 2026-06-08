@@ -9,5 +9,5 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = "0.2"
-core_utils = { path = "../core_utils" }
+core_utils = { path = "../core_utils", features = ["wasm"] }
 image = { version = "0.25", default-features = false, features = ["bmp", "png", "jpeg"] }

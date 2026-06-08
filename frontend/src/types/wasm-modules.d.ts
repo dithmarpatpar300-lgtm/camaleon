@@ -68,6 +68,7 @@ declare module "*/transmutador_tiff/transmutador_tiff.js" {
     page_width(page_index: number): number;
     page_height(page_index: number): number;
     page_bit_depth(page_index: number): number;
+    /** @deprecated Structural only — use `assess_page_alpha` for UI transparency. */
     page_has_alpha(page_index: number): boolean;
     page_photometric(page_index: number): number;
   }

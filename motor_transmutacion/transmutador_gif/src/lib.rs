@@ -7,6 +7,10 @@ mod gif_decode;
 use std::io::Cursor;
 
 use core_utils::counting_writer::CountingWriter;
+use core_utils::semantic_alpha::{
+    assess_dynamic_image_probe, gif_has_alpha_channel, rgba_has_meaningful_alpha, AlphaAssessment,
+    AlphaAssessmentJs,
+};
 use gif_decode::{
     composite_to_dynamic_image, load_composited_frames, load_composited_frames_with_progress,
     validate_frame_index,
@@ -195,8 +199,31 @@ fn decode_gif_frame(input: &[u8], frame_index: u32) -> Result<image::DynamicImag
     composite_to_dynamic_image(input, frame_index)
 }
 
-fn rgba_has_alpha(rgba: &image::RgbaImage) -> bool {
-    rgba.pixels().any(|p| p[3] < 255)
+pub fn assess_gif_alpha(input: &[u8]) -> Result<AlphaAssessment, String> {
+    core_utils::validate_input(input)?;
+    let structural = gif_has_alpha_channel(input);
+    let info = inspect_gif(input)?;
+    let frames_to_scan = info.frame_count.min(4);
+    let mut has_channel = structural;
+    for frame_index in 0..frames_to_scan {
+        let img = decode_gif_frame(input, frame_index)?;
+        if img.color().has_alpha() {
+            has_channel = true;
+        }
+        let assessment = assess_dynamic_image_probe(&img, true);
+        if assessment.has_meaningful_alpha {
+            return Ok(assessment);
+        }
+    }
+    if !has_channel {
+        return Ok(AlphaAssessment::OPAQUE);
+    }
+    Ok(AlphaAssessment::sampled(true, false))
+}
+
+#[wasm_bindgen]
+pub fn assess_alpha(input_bytes: &[u8]) -> Result<AlphaAssessmentJs, String> {
+    Ok(AlphaAssessmentJs::from_assessment(assess_gif_alpha(input_bytes)?))
 }
 
 fn gif_bytes_to_png_bytes(
@@ -206,7 +233,7 @@ fn gif_bytes_to_png_bytes(
 ) -> Result<Vec<u8>, String> {
     let img = decode_gif_frame(input, frame_index)?;
     let rgba = img.to_rgba8();
-    let has_alpha = rgba_has_alpha(&rgba);
+    let has_alpha = rgba_has_meaningful_alpha(&rgba);
 
     let mut buf = Cursor::new(Vec::new());
     let encoder = PngEncoder::new_with_quality(
@@ -279,7 +306,7 @@ pub fn estimate_gif_to_png_size(
     validate_frame_index(info.frame_count, frame_index)?;
     let img = decode_gif_frame(input_bytes, frame_index)?;
     let rgba = img.to_rgba8();
-    let has_alpha = rgba_has_alpha(&rgba);
+    let has_alpha = rgba_has_meaningful_alpha(&rgba);
 
     let mut writer = CountingWriter::default();
     let encoder = PngEncoder::new_with_quality(
@@ -332,7 +359,7 @@ fn gif_bytes_to_jpg_bytes(
     let img = decode_gif_frame(input, frame_index)?;
     let rgba = img.to_rgba8();
 
-    let rgb = if rgba_has_alpha(&rgba) {
+    let rgb = if rgba_has_meaningful_alpha(&rgba) {
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {
         img.to_rgb8()
@@ -396,7 +423,7 @@ pub fn estimate_gif_to_jpg_size(
     let img = decode_gif_frame(input_bytes, frame_index)?;
     let rgba = img.to_rgba8();
 
-    let rgb = if rgba_has_alpha(&rgba) {
+    let rgb = if rgba_has_meaningful_alpha(&rgba) {
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {
         img.to_rgb8()

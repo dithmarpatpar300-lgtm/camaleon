@@ -2,6 +2,7 @@ import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
 import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
+import type { AlphaAssessment } from "@/lib/semantic-alpha";
 
 export type PreparePhaseId =
   | "reading"
@@ -24,7 +25,9 @@ export type PrepareProgress = {
 };
 
 export type PreparedFileContext = {
+  /** @deprecated Use alphaAssessment.hasMeaningfulAlpha */
   hasAlpha: boolean;
+  alphaAssessment: AlphaAssessment | null;
   gifSession: GifSessionHandle | null;
   tiffMeta: TiffMeta | null;
   icoMeta: IcoMeta | null;

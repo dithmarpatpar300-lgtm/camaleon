@@ -29,7 +29,7 @@ import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-c
 import { downscaleImageBytes } from "@/lib/imaging/downscale";
 import { resolvePostResizeWasmConfig, supportsClientResize } from "@/lib/imaging/post-resize-route";
 import { mimeTypeForTool } from "@/lib/imaging/supports-client-resize";
-import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
+import { assessSemanticAlpha, needsSemanticAlpha } from "@/lib/semantic-alpha";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import { icoMetaForEntry } from "@/lib/ico/ico-wasm-client";
 import { tiffMetaForPage } from "@/lib/tiff/tiff-wasm-client";
@@ -162,10 +162,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         next.pageIndex !== options.pageIndex
       ) {
         const page = tiffMetaForPage(prepared.tiffMeta, next.pageIndex);
-        const pageHasAlpha = prepared.tiffMeta.pageHasAlpha(next.pageIndex);
         setPrepared({
           ...prepared,
-          hasAlpha: tool.id === "tiff-to-jpg" ? pageHasAlpha : prepared.hasAlpha,
           sourceMeta: {
             width: page.width,
             height: page.height,
@@ -173,8 +171,28 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
             pageCount: page.pageCount > 1 ? page.pageCount : undefined,
           },
         });
-        if (tool.id === "tiff-to-jpg") {
-          setHasAlpha(pageHasAlpha);
+        if (tool.id === "tiff-to-jpg" && staged?.bytes) {
+          void (async () => {
+            const assessment = await assessSemanticAlpha(tool, staged.bytes, {
+              pageIndex: next.pageIndex,
+            });
+            setPrepared((current) =>
+              current
+                ? {
+                    ...current,
+                    hasAlpha: assessment.hasMeaningfulAlpha,
+                    alphaAssessment: assessment,
+                    sourceMeta: current.sourceMeta
+                      ? {
+                          ...current.sourceMeta,
+                          hasMeaningfulAlpha: assessment.hasMeaningfulAlpha,
+                        }
+                      : current.sourceMeta,
+                  }
+                : current
+            );
+            setHasAlpha(assessment.hasMeaningfulAlpha);
+          })();
         }
       }
       if (
@@ -195,7 +213,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         });
       }
     },
-    [tool.id, prepared, options.pageIndex, options.entryIndex]
+    [tool, prepared, staged?.bytes, options.pageIndex, options.entryIndex]
   );
 
   const handleFileSelect = useCallback(async (file: File) => {
@@ -328,18 +346,21 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         };
 
         const resizedOutput = resolvePostResizeWasmConfig(tool)?.outputExtension;
-        const alpha =
-          resizedOutput === "jpg" ? detectPngAlpha(result.bytes).hasAlpha : false;
+        const alphaAssessment =
+          needsSemanticAlpha(tool) && resizedOutput === "jpg"
+            ? await assessSemanticAlpha(tool, result.bytes)
+            : prepared.alphaAssessment;
 
         setPrepared({
           ...prepared,
-          hasAlpha: alpha,
+          hasAlpha: alphaAssessment?.hasMeaningfulAlpha ?? false,
+          alphaAssessment,
           tiffMeta: tool.fromFormat === "TIFF" ? null : prepared.tiffMeta,
           sourceMeta: newSourceMeta,
           originalSourceMeta: originalMeta,
           resizeMaxEdge: maxEdge,
         });
-        setHasAlpha(alpha);
+        setHasAlpha(alphaAssessment?.hasMeaningfulAlpha ?? false);
         setStaged({
           file: staged.file,
           bytes: result.bytes,
@@ -418,13 +439,23 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         const bytes = await staged.file.arrayBuffer();
         setStaged({ file: staged.file, bytes });
         if (prepared?.originalSourceMeta) {
+          const pageIndex = options.pageIndex ?? 0;
+          const alphaAssessment = needsSemanticAlpha(tool)
+            ? await assessSemanticAlpha(tool, bytes, { pageIndex })
+            : prepared.alphaAssessment;
+          const hasMeaningfulAlpha = alphaAssessment?.hasMeaningfulAlpha ?? false;
           setPrepared({
             ...prepared,
-            sourceMeta: prepared.originalSourceMeta,
+            sourceMeta: {
+              ...prepared.originalSourceMeta,
+              hasMeaningfulAlpha: alphaAssessment?.hasMeaningfulAlpha,
+            },
             originalSourceMeta: undefined,
             resizeMaxEdge: undefined,
+            alphaAssessment,
+            hasAlpha: hasMeaningfulAlpha,
           });
-          setHasAlpha(prepared.hasAlpha);
+          setHasAlpha(hasMeaningfulAlpha);
         }
       } catch {
         setErrorMessage(t("panel.unexpectedError"));
@@ -435,7 +466,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     metrics.resetMetrics();
     setStatus("staged");
     setErrorMessage(null);
-  }, [staged, prepared, metrics, t]);
+  }, [staged, prepared, tool, options.pageIndex, metrics, t]);
 
   const handleDownload = useCallback(() => {
     if (!result) return;

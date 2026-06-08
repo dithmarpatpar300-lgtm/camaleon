@@ -2,8 +2,8 @@ mod spike_fixtures;
 
 use spike_fixtures::all_fixtures;
 use transmutador_tiff::{
-    downshift_u16_sample_to_u8, estimate_tiff_to_png_size, inspect_tiff, inspect_tiff_meta,
-    is_palette_page, transmutar_tiff_a_png_inner,
+    assess_tiff_page_alpha, downshift_u16_sample_to_u8, estimate_tiff_to_png_size, inspect_tiff,
+    inspect_tiff_meta, is_palette_page, transmutar_tiff_a_png_inner,
 };
 
 #[test]
@@ -35,6 +35,29 @@ fn lzw_rgb8_decodes() {
         .find(|f| f.name == "lzw_rgb8")
         .expect("fixture");
     transmutar_tiff_a_png_inner(&fixture.bytes, 6, 0).expect("convert");
+}
+
+#[test]
+fn opaque_rgba_tiff_has_channel_but_not_meaningful_alpha() {
+    let fixture = all_fixtures()
+        .into_iter()
+        .find(|f| f.name == "rgba_opaque")
+        .expect("fixture");
+    let meta = inspect_tiff_meta(&fixture.bytes).expect("inspect");
+    assert!(meta.page_has_alpha(0).expect("page_has_alpha"));
+    let assessment = assess_tiff_page_alpha(&fixture.bytes, 0).expect("assess");
+    assert!(assessment.has_alpha_channel);
+    assert!(!assessment.has_meaningful_alpha);
+}
+
+#[test]
+fn real_rgba_tiff_has_meaningful_alpha() {
+    let fixture = all_fixtures()
+        .into_iter()
+        .find(|f| f.name == "rgba_alpha")
+        .expect("fixture");
+    let assessment = assess_tiff_page_alpha(&fixture.bytes, 0).expect("assess");
+    assert!(assessment.has_meaningful_alpha);
 }
 
 #[test]

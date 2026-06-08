@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:semantic-alpha": "node scripts/verify-needs-semantic-alpha.mjs",
     "build:wasm": "node scripts/build-wasm.mjs",
     "build:cf": "opennextjs-cloudflare build && node scripts/sync-wasm-assets.mjs",
     "preview:cf": "npm run build:wasm && opennextjs-cloudflare build && opennextjs-cloudflare preview",

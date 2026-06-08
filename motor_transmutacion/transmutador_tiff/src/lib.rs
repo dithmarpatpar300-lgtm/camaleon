@@ -2,10 +2,12 @@
 
 mod tiff_decode;
 mod tiff_probe;
+mod tiff_semantic_alpha;
 
 use std::io::Cursor;
 
 use core_utils::counting_writer::CountingWriter;
+use core_utils::semantic_alpha::{dynamic_image_has_meaningful_alpha, AlphaAssessmentJs};
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::{ExtendedColorType, ImageEncoder};
@@ -26,6 +28,7 @@ pub use tiff_probe::{
     inspect_tiff, is_cmyk_page, is_palette_page, page_compression_name, page_photometric_name,
     TiffInfo, TiffPageInfo,
 };
+pub use tiff_semantic_alpha::assess_tiff_page_alpha;
 
 #[wasm_bindgen]
 pub struct TiffMeta {
@@ -77,6 +80,14 @@ pub fn inspect_tiff_meta(input_bytes: &[u8]) -> Result<TiffMeta, String> {
     })
 }
 
+#[wasm_bindgen]
+pub fn assess_page_alpha(input_bytes: &[u8], page_index: u32) -> Result<AlphaAssessmentJs, String> {
+    Ok(AlphaAssessmentJs::from_assessment(assess_tiff_page_alpha(
+        input_bytes,
+        page_index,
+    )?))
+}
+
 fn validate_quality(q: u8) -> Result<u8, String> {
     if q == 0 {
         return Err("JPEG quality must be at least 1".into());
@@ -98,10 +109,6 @@ fn validate_compression(c: u8) -> Result<u8, String> {
         ));
     }
     Ok(c)
-}
-
-fn rgba_has_meaningful_alpha(rgba: &image::RgbaImage) -> bool {
-    rgba.pixels().any(|p| p[3] < 255)
 }
 
 pub fn flatten_rgba_on_background(
@@ -131,15 +138,8 @@ pub fn flatten_rgba_on_background(
     rgb
 }
 
-fn tiff_has_meaningful_alpha(img: &image::DynamicImage) -> bool {
-    if !img.color().has_alpha() {
-        return false;
-    }
-    rgba_has_meaningful_alpha(&img.to_rgba8())
-}
-
 fn dynamic_to_png_bytes(img: &image::DynamicImage, compression: u8) -> Result<Vec<u8>, String> {
-    let meaningful_alpha = tiff_has_meaningful_alpha(img);
+    let meaningful_alpha = dynamic_image_has_meaningful_alpha(img);
     let mut buf = Cursor::new(Vec::new());
     let encoder = PngEncoder::new_with_quality(
         &mut buf,
@@ -216,7 +216,7 @@ pub fn estimate_tiff_to_png_size(
     core_utils::validate_input(input_bytes)?;
     validate_compression(compression)?;
     let img = decode_tiff_page(input_bytes, page_index)?;
-    let meaningful_alpha = tiff_has_meaningful_alpha(&img);
+    let meaningful_alpha = dynamic_image_has_meaningful_alpha(&img);
 
     let mut writer = CountingWriter::default();
     let encoder = PngEncoder::new_with_quality(
@@ -257,7 +257,7 @@ fn dynamic_to_jpg_bytes(
     bg_g: u8,
     bg_b: u8,
 ) -> Result<Vec<u8>, String> {
-    let rgb = if tiff_has_meaningful_alpha(img) {
+    let rgb = if dynamic_image_has_meaningful_alpha(img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {
@@ -321,7 +321,7 @@ pub fn estimate_tiff_to_jpg_size(
     validate_quality(quality)?;
     let img = decode_tiff_page(input_bytes, page_index)?;
 
-    let rgb = if tiff_has_meaningful_alpha(&img) {
+    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {

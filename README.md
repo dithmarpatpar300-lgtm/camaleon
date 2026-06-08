@@ -131,9 +131,10 @@ camaleon/
 | **Launch baseline** | v1.7.9 | ✅ Legal + deploy |
 | **Tier 2 Wave 1** | v1.8.3–v1.8.7 | ✅ GIF + BMP + limits polish |
 | **Astro downscale + memory** | **v1.9.0** | ✅ **Shipped on `main`** |
-| **Tier 2 Wave 2** | v1.10.4 (`dev`) | All five Wave 2 tools shipped; release polish pending |
+| **Tier 2 Wave 2** | v1.10.4 (`main`) | ✅ Shipped — TIFF, ICO↔PNG, TGA→PNG (five new tools) |
+| **Semantic Alpha Engine** | v1.11.0 (`dev`) | 🚧 In progress — honest transparency detection across lossy tools |
 
-Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
+Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Engine plan: **[docs/planning/semantic_alpha_engine_plan.md](docs/planning/semantic_alpha_engine_plan.md)**
 
 ## Contributing
 

@@ -12,7 +12,8 @@ fn create_lossless_webp_rgba() -> Vec<u8> {
         let r = (x * 16) as u8;
         let g = (y * 16) as u8;
         let b = 128u8;
-        Rgba([r, g, b, 255])
+        let a = if x < 8 { 255 } else { 128 };
+        Rgba([r, g, b, a])
     });
     let mut buf = Cursor::new(Vec::new());
     img.write_to(&mut buf, image::ImageFormat::WebP)

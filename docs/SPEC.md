@@ -274,15 +274,33 @@ When source PNG contains transparency, JPEG encoding requires **flattening** ont
 | Policy | Status |
 |--------|--------|
 | **Explicit `BackgroundFill` policy** (default: white `#FFFFFF`; compositing via `C_out = round((α·C_fg + (255-α)·C_bg) / 255)` per channel) | ✅ Implemented (v0.5.4) |
-| Document in errors/UI when alpha is detected and flattened | Recommended (Phase 4) |
+| Document in errors/UI when alpha is detected and flattened | ✅ Semantic Alpha Engine (v1.11, §5.5.3) |
 
-#### 5.5.3 Quality and encoder levers
+#### 5.5.3 Semantic Alpha Engine (meaningful transparency)
+
+Lossy transmutators that flatten alpha (PNG/WebP/GIF/BMP/TIFF → JPEG) must distinguish **structural alpha** (container says a channel may exist) from **meaningful alpha** (at least one pixel with α &lt; 255, or GIF equivalent after composite).
+
+| Term | Definition | Drives |
+|------|------------|--------|
+| **Structural alpha** | Header/tags indicate alpha capability (RGBA IHDR, TIFF samples ≥ 4, BMP 32-bit, VP8X bit, GIF GCE flag) | Internal diagnostics only |
+| **Meaningful alpha** | Pixel data would change if alpha were ignored | `TransparencyNotice`, background picker, flatten at encode |
+
+**Policy:**
+
+1. **UI / prepare** — Wasm `assess_alpha` / `assess_page_alpha` returns `AlphaAssessment.has_meaningful_alpha`. `TransparencyNotice` is shown **only** when meaningful alpha is true. False positives (opaque RGBA TIFF) are forbidden.
+2. **Encode** — Full raster scan via `core_utils::semantic_alpha::dynamic_image_has_meaningful_alpha`. Flatten runs only when meaningful; opaque RGBA skips flatten (RGB JPEG path).
+3. **Probe tier** — Prepare may downscale to max **512 px** edge and sample up to **8192** pixels. Encode tier is authoritative on the full decoded image.
+4. **Opt-in** — Tools with `background` color option spec consume the engine automatically (`frontend/src/lib/semantic-alpha/`).
+
+**Implementation:** `motor_transmutacion/core_utils/src/semantic_alpha/`; per-crate Wasm assess exports; plan: `docs/planning/semantic_alpha_engine_plan.md`.
+
+#### 5.5.4 Quality and encoder levers
 
 | Lever | Role | Current / target |
 |-------|------|------------------|
 | **Quality factor** | Scales quantizer matrix; primary perceptual control | `DEFAULT_JPEG_QUALITY = 85`; `MIN=1`, `MAX=100`; `transmutar_png_a_jpg_with_quality(bytes, quality)` Wasm export ✅ (v0.5.4) |
-| **Chroma subsampling** | `4:2:0` max compression vs `4:4:4` color fidelity | `JpegEncoder` (image v0.25) defaults to **4:2:0** and **does not expose** a sampling-factor setter in its public API. `4:4:4`/`4:2:2` control **requires an encoder swap** (see §5.5.6). Deferred to `refine_jpeg_encoder_swap`. |
-| **Optimized Huffman** | Smaller files at same quality | `image` crate uses fixed standard tables and exposes no optimization toggle. Requires encoder swap (mozjpeg/jpeg-encoder, §5.5.6). |
+| **Chroma subsampling** | `4:2:0` max compression vs `4:4:4` color fidelity | `JpegEncoder` (image v0.25) defaults to **4:2:0** and **does not expose** a sampling-factor setter in its public API. `4:4:4`/`4:2:2` control **requires an encoder swap** (see §5.5.7). Deferred to `refine_jpeg_encoder_swap`. |
+| **Optimized Huffman** | Smaller files at same quality | `image` crate uses fixed standard tables and exposes no optimization toggle. Requires encoder swap (mozjpeg/jpeg-encoder, §5.5.7). |
 | **Progressive JPEG** | Perceived faster load on web | Future optional |
 | **Metadata strip** | Privacy + bytes (EXIF, ICC) | ✅ StripAll verified (v0.5.3) |
 
@@ -294,7 +312,7 @@ When source PNG contains transparency, JPEG encoding requires **flattening** ont
 | `75–85` | Sweet spot for web delivery ("visually near-lossless") |
 | `> 95` | Diminishing returns; file size spikes |
 
-#### 5.5.4 Module objectives (priority order)
+#### 5.5.5 Module objectives (priority order)
 
 | Priority | Objective | Requirement |
 |----------|-----------|-------------|
@@ -311,14 +329,14 @@ When source PNG contains transparency, JPEG encoding requires **flattening** ont
 - JPEG for sharp text / flat color logos (ringing, muddy edges).
 - Claiming lossless or reversible conversion.
 
-#### 5.5.5 Current implementation alignment (v0.5.4)
+#### 5.5.6 Current implementation alignment (v0.5.4)
 
 - `JpegEncoder::new_with_quality(..., quality)` — **P1/P2 ✅** (quality configurable via `transmutar_png_a_jpg_with_quality`; default 85 via `transmutar_png_a_jpg`).
 - Alpha flatten onto `BackgroundFill::WHITE` — **P3 ✅** (manual compositing with `(α·C_fg + (255-α)·C_bg + 127) / 255`; `BackgroundFill` is configurable).
-- Subsampling — **P4 ✅ documented** (`4:2:0` via `image` crate `JpegEncoder` default; `4:4:4` toggle deferred — see §5.5.6).
-- Optimized Huffman — **P5 deferred** (see §5.5.6).
+- Subsampling — **P4 ✅ documented** (`4:2:0` via `image` crate `JpegEncoder` default; `4:4:4` toggle deferred — see §5.5.7).
+- Optimized Huffman — **P5 deferred** (see §5.5.7).
 
-#### 5.5.6 Encoder-swap doctrine
+#### 5.5.7 Encoder-swap doctrine
 
 The `image` crate `JpegEncoder` (v0.25) is intentionally minimal: it exposes **only** a quality factor (`new_with_quality`). It does **not** expose chroma subsampling selection, Huffman table optimization, or progressive scan mode. These are **encoder-level capabilities** that cannot be unlocked from the `image` API — they require replacing the JPEG encode backend. This is a deliberate architectural boundary, **not** a Camaleon defect.
 
@@ -417,9 +435,9 @@ Tactical pause after Phase 3 to align code with this doctrine. These are **not**
 | `refine_transmutador_png` | Alpha flatten policy, quality as parameter, subsampling explicit | §5.5 | v0.5.4 ✅ |
 | `refine_png_background_option` | Selectable background fill for alpha flatten (`_with_options`) | §5.5.2 | v0.5.6 ✅ |
 | `refine_output_integrity` | Post-encode output validation (non-empty + magic bytes + optional round-trip) + bounded-parameter newtypes | §5.11 | v0.6.6 ✅ |
-| `refine_jpeg_encoder_swap` | Replace JPEG encode backend to unlock chroma subsampling / optimized Huffman; `ChromaSubsampling` enum | §5.5.6 | **Planned** |
+| `refine_jpeg_encoder_swap` | Replace JPEG encode backend to unlock chroma subsampling / optimized Huffman; `ChromaSubsampling` enum | §5.5.7 | **Planned** |
 
-§5.8 backend refinements through v0.6.6 are **complete**. **v1.0.0 shipped** (UI-5 baseline + CI). Post-1.0: `refine_jpeg_encoder_swap` (§5.5.6), Playwright E2E, UI/UX polish layer.
+§5.8 backend refinements through v0.6.6 are **complete**. **v1.0.0 shipped** (UI-5 baseline + CI). Post-1.0: `refine_jpeg_encoder_swap` (§5.5.7), Playwright E2E, UI/UX polish layer.
 
 ---
 

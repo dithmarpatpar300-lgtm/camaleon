@@ -35,6 +35,10 @@ pub fn all_fixtures() -> Vec<Fixture> {
             bytes: rgba_alpha(16, 16),
         },
         Fixture {
+            name: "rgba_opaque",
+            bytes: rgba_opaque(16, 16),
+        },
+        Fixture {
             name: "multipage_2_ifd",
             bytes: multipage_two_ifd(),
         },
@@ -72,6 +76,17 @@ fn lzw_rgb8(w: u32, h: u32) -> Vec<u8> {
     enc.with_compression(Compression::Lzw)
         .write_image::<colortype::RGB8>(w, h, &data)
         .expect("lzw rgb8");
+    buf.into_inner()
+}
+
+fn rgba_opaque(w: u32, h: u32) -> Vec<u8> {
+    let img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_fn(w, h, |x, y| {
+        Rgba([(x * 16) as u8, (y * 16) as u8, 64, 255])
+    });
+    let mut buf = Cursor::new(Vec::new());
+    let enc = ImageTiffEncoder::new(&mut buf);
+    enc.write_image(img.as_raw(), w, h, ExtendedColorType::Rgba8)
+        .expect("rgba opaque encode");
     buf.into_inner()
 }
 

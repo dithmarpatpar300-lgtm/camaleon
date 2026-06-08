@@ -5,6 +5,10 @@ export type TiffMeta = {
   pageWidth: (pageIndex: number) => number;
   pageHeight: (pageIndex: number) => number;
   pageBitDepth: (pageIndex: number) => number;
+  /**
+   * @deprecated Structural alpha only (`samples_per_pixel >= 4`). Use Semantic Alpha Engine
+   * (`assess_page_alpha` / `assessSemanticAlpha`) for UI transparency notices.
+   */
   pageHasAlpha: (pageIndex: number) => boolean;
 };
 
@@ -16,9 +20,16 @@ type TiffMetaHandle = {
   page_has_alpha: (pageIndex: number) => boolean;
 };
 
+type AlphaAssessmentHandle = {
+  has_alpha_channel: boolean;
+  has_meaningful_alpha: boolean;
+  confidence: number;
+};
+
 type TiffWasmModule = {
   default: () => Promise<void>;
   inspect_tiff_meta: (input: Uint8Array) => TiffMetaHandle;
+  assess_page_alpha: (input: Uint8Array, pageIndex: number) => AlphaAssessmentHandle;
   render_tiff_page_preview_png: (input: Uint8Array, pageIndex: number) => Uint8Array;
   set_session_input_limit?: (maxBytes: number) => void;
   reset_session_input_limit?: () => void;

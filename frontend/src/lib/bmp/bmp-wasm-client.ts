@@ -8,9 +8,16 @@ export type BmpMeta = {
   hasMeaningfulAlpha: boolean;
 };
 
+type AlphaAssessmentHandle = {
+  has_alpha_channel: boolean;
+  has_meaningful_alpha: boolean;
+  confidence: number;
+};
+
 type BmpWasmModule = {
   default: () => Promise<void>;
   inspect_bmp_meta: (input: Uint8Array) => BmpMetaHandle;
+  assess_alpha: (input: Uint8Array) => AlphaAssessmentHandle;
   set_session_input_limit?: (maxBytes: number) => void;
   reset_session_input_limit?: () => void;
 };

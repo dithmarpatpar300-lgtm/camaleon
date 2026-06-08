@@ -1,6 +1,7 @@
 use core::fmt;
 
 pub mod counting_writer;
+pub mod semantic_alpha;
 
 // ---------------------------------------------------------------------------
 // Error types

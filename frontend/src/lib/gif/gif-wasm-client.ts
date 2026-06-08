@@ -7,6 +7,12 @@ export type GifMeta = {
   isAnimated: boolean;
 };
 
+type AlphaAssessmentHandle = {
+  has_alpha_channel: boolean;
+  has_meaningful_alpha: boolean;
+  confidence: number;
+};
+
 type GifWasmModule = {
   default: () => Promise<void>;
   inspect_gif_meta: (input: Uint8Array) => GifMetaHandle;
@@ -16,6 +22,7 @@ type GifWasmModule = {
     onProgress: (current: number, total: number) => void
   ) => GifSessionHandle;
   render_gif_frame_preview_png: (input: Uint8Array, frameIndex: number) => Uint8Array;
+  assess_alpha: (input: Uint8Array) => AlphaAssessmentHandle;
   set_session_input_limit?: (maxBytes: number) => void;
   reset_session_input_limit?: () => void;
 };

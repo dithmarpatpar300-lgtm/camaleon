@@ -19,6 +19,7 @@ import {
   tiffMetaForPage,
   type TiffMeta,
 } from "@/lib/tiff/tiff-wasm-client";
+import type { AlphaAssessment } from "@/lib/semantic-alpha";
 import type { SourceImageMeta } from "./types";
 import {
   probeGifSourceMeta,
@@ -33,9 +34,23 @@ export type ResolveSourceMetaContext = {
   tiffPageIndex?: number;
   icoMeta?: IcoMeta | null;
   icoEntryIndex?: number;
+  /** From Semantic Alpha Engine when tool has background flatten option. */
+  alphaAssessment?: AlphaAssessment | null;
   /** When set, temporarily raises Wasm input limit for header/decode probes during prepare. */
   sessionInputLimitBytes?: number;
 };
+
+function withSemanticAlpha(
+  meta: SourceImageMeta | null,
+  alphaAssessment?: AlphaAssessment | null
+): SourceImageMeta | null {
+  if (!meta) return null;
+  if (!alphaAssessment) return meta;
+  return {
+    ...meta,
+    hasMeaningfulAlpha: alphaAssessment.hasMeaningfulAlpha,
+  };
+}
 
 export async function resolveSourceImageMeta(
   tool: ToolDefinition,
@@ -54,31 +69,36 @@ export async function resolveSourceImageMeta(
 
   switch (format) {
     case "PNG":
-      return probePngSourceMeta(bytes);
+      return withSemanticAlpha(probePngSourceMeta(bytes), ctx.alphaAssessment);
     case "JPG":
       return probeJpegSourceMeta(bytes);
     case "WEBP":
-      return probeWebpSourceMeta(bytes);
+      return withSemanticAlpha(probeWebpSourceMeta(bytes), ctx.alphaAssessment);
     case "GIF": {
       if (ctx.gifSession) {
-        return {
-          width: ctx.gifSession.width,
-          height: ctx.gifSession.height,
-          bitDepthLabel: "8-bit",
-          frameCount: ctx.gifSession.frame_count,
-        };
+        return withSemanticAlpha(
+          {
+            width: ctx.gifSession.width,
+            height: ctx.gifSession.height,
+            bitDepthLabel: "8-bit",
+            frameCount: ctx.gifSession.frame_count,
+          },
+          ctx.alphaAssessment
+        );
       }
-      return probeGifSourceMeta(bytes);
+      return withSemanticAlpha(probeGifSourceMeta(bytes), ctx.alphaAssessment);
     }
     case "BMP": {
       try {
         const meta = await inspectBmpMeta(new Uint8Array(bytes));
-        return {
-          width: meta.width,
-          height: meta.height,
-          bitDepthLabel: `${meta.bitCount}-bit`,
-          hasMeaningfulAlpha: meta.hasMeaningfulAlpha,
-        };
+        return withSemanticAlpha(
+          {
+            width: meta.width,
+            height: meta.height,
+            bitDepthLabel: `${meta.bitCount}-bit`,
+          },
+          ctx.alphaAssessment
+        );
       } catch {
         return null;
       }
@@ -87,22 +107,28 @@ export async function resolveSourceImageMeta(
       if (ctx.tiffMeta) {
         const pageIndex = ctx.tiffPageIndex ?? 0;
         const page = tiffMetaForPage(ctx.tiffMeta, pageIndex);
-        return {
-          width: page.width,
-          height: page.height,
-          bitDepthLabel: page.bitDepthLabel,
-          pageCount: page.pageCount > 1 ? page.pageCount : undefined,
-        };
+        return withSemanticAlpha(
+          {
+            width: page.width,
+            height: page.height,
+            bitDepthLabel: page.bitDepthLabel,
+            pageCount: page.pageCount > 1 ? page.pageCount : undefined,
+          },
+          ctx.alphaAssessment
+        );
       }
       try {
         const meta = await inspectTiffMeta(new Uint8Array(bytes));
         const page = tiffMetaForPage(meta, 0);
-        return {
-          width: page.width,
-          height: page.height,
-          bitDepthLabel: page.bitDepthLabel,
-          pageCount: page.pageCount > 1 ? page.pageCount : undefined,
-        };
+        return withSemanticAlpha(
+          {
+            width: page.width,
+            height: page.height,
+            bitDepthLabel: page.bitDepthLabel,
+            pageCount: page.pageCount > 1 ? page.pageCount : undefined,
+          },
+          ctx.alphaAssessment
+        );
       } catch {
         return null;
       }
@@ -110,12 +136,14 @@ export async function resolveSourceImageMeta(
     case "TGA": {
       try {
         const meta = await inspectTgaMeta(new Uint8Array(bytes));
-        return {
-          width: meta.width,
-          height: meta.height,
-          bitDepthLabel: formatTgaBitDepthLabel(meta),
-          hasMeaningfulAlpha: meta.hasAlphaChannel,
-        };
+        return withSemanticAlpha(
+          {
+            width: meta.width,
+            height: meta.height,
+            bitDepthLabel: formatTgaBitDepthLabel(meta),
+          },
+          ctx.alphaAssessment
+        );
       } catch {
         return null;
       }

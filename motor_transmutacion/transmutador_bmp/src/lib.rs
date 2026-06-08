@@ -8,6 +8,7 @@ mod bmp_probe;
 use std::io::Cursor;
 
 use core_utils::counting_writer::CountingWriter;
+use core_utils::semantic_alpha::{dynamic_image_has_meaningful_alpha, AlphaAssessment, AlphaAssessmentJs};
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::{ExtendedColorType, ImageEncoder, ImageReader};
@@ -76,6 +77,21 @@ pub fn inspect_bmp_meta(input_bytes: &[u8]) -> Result<BmpMeta, String> {
     Ok(info_to_meta(inspect_bmp(input_bytes)?))
 }
 
+pub fn assess_bmp_alpha(input: &[u8]) -> Result<AlphaAssessment, String> {
+    core_utils::validate_input(input)?;
+    let info = inspect_bmp(input)?;
+    let has_channel = info.bit_count == 32;
+    if !has_channel {
+        return Ok(AlphaAssessment::OPAQUE);
+    }
+    Ok(AlphaAssessment::sampled(true, info.has_meaningful_alpha))
+}
+
+#[wasm_bindgen]
+pub fn assess_alpha(input_bytes: &[u8]) -> Result<AlphaAssessmentJs, String> {
+    Ok(AlphaAssessmentJs::from_assessment(assess_bmp_alpha(input_bytes)?))
+}
+
 fn validate_compression(c: u8) -> Result<u8, String> {
     if c == 0 {
         return Err("PNG compression level must be at least 1".into());
@@ -134,21 +150,9 @@ fn decode_bmp(input: &[u8]) -> Result<image::DynamicImage, String> {
         .map_err(|e| format!("Failed to decode BMP: {}", e))
 }
 
-/// True when any pixel has alpha below 255 (semantic transparency, not just 32-bit storage).
-fn rgba_has_meaningful_alpha(rgba: &image::RgbaImage) -> bool {
-    rgba.pixels().any(|p| p[3] < 255)
-}
-
-fn bmp_has_meaningful_alpha(img: &image::DynamicImage) -> bool {
-    if !img.color().has_alpha() {
-        return false;
-    }
-    rgba_has_meaningful_alpha(&img.to_rgba8())
-}
-
 fn bmp_bytes_to_png_bytes(input: &[u8], compression: u8) -> Result<Vec<u8>, String> {
     let img = decode_bmp(input)?;
-    let meaningful_alpha = bmp_has_meaningful_alpha(&img);
+    let meaningful_alpha = dynamic_image_has_meaningful_alpha(&img);
 
     let mut buf = Cursor::new(Vec::new());
     let encoder = PngEncoder::new_with_quality(
@@ -208,7 +212,7 @@ pub fn estimate_bmp_to_png_size(input_bytes: &[u8], compression: u8) -> Result<u
     core_utils::validate_input(input_bytes)?;
     validate_compression(compression)?;
     let img = decode_bmp(input_bytes)?;
-    let meaningful_alpha = bmp_has_meaningful_alpha(&img);
+    let meaningful_alpha = dynamic_image_has_meaningful_alpha(&img);
 
     let mut writer = CountingWriter::default();
     let encoder = PngEncoder::new_with_quality(
@@ -251,7 +255,7 @@ fn bmp_bytes_to_jpg_bytes(
 ) -> Result<Vec<u8>, String> {
     let img = decode_bmp(input)?;
 
-    let rgb = if bmp_has_meaningful_alpha(&img) {
+    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {
@@ -308,7 +312,7 @@ pub fn estimate_bmp_to_jpg_size(
     validate_quality(quality)?;
     let img = decode_bmp(input_bytes)?;
 
-    let rgb = if bmp_has_meaningful_alpha(&img) {
+    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {

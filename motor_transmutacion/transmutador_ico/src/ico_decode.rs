@@ -69,6 +69,5 @@ fn matches_dimensions(expected_w: u32, expected_h: u32, width: u32, height: u32)
 }
 
 pub fn entry_has_meaningful_alpha(img: &DynamicImage) -> bool {
-    let rgba = img.to_rgba8();
-    rgba.pixels().any(|p| p[3] < 255)
+    core_utils::semantic_alpha::dynamic_image_has_meaningful_alpha(img)
 }

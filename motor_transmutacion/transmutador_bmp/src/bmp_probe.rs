@@ -4,7 +4,7 @@ const BMP_MAGIC: [u8; 2] = [0x42, 0x4D];
 const BI_RGB: u32 = 0;
 const BI_RLE8: u32 = 1;
 const BI_RLE4: u32 = 2;
-const MAX_ALPHA_SAMPLES: u32 = 8192;
+use core_utils::semantic_alpha::{sample_bgra_bytes_meaningful_alpha, MAX_ALPHA_PROBE_SAMPLES};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BmpInfo {
@@ -29,46 +29,6 @@ fn read_i32_le(bytes: &[u8], offset: usize) -> Option<i32> {
     bytes
         .get(offset..offset + 4)
         .map(|s| i32::from_le_bytes([s[0], s[1], s[2], s[3]]))
-}
-
-fn sample_bgra_alpha(
-    bytes: &[u8],
-    pixel_offset: usize,
-    width: u32,
-    height: u32,
-    top_down: bool,
-) -> bool {
-    let w = width as usize;
-    let h = height as usize;
-    if w == 0 || h == 0 {
-        return false;
-    }
-
-    let stride = ((32 * w + 31) / 32) * 4;
-    let total_pixels = w * h;
-    let step = (total_pixels / MAX_ALPHA_SAMPLES as usize).max(1);
-    let mut sampled = 0usize;
-
-    for i in (0..total_pixels).step_by(step) {
-        if sampled >= MAX_ALPHA_SAMPLES as usize {
-            break;
-        }
-        let x = i % w;
-        let row = if top_down {
-            i / w
-        } else {
-            h - 1 - (i / w)
-        };
-        let alpha_offset = pixel_offset + row * stride + x * 4 + 3;
-        if alpha_offset >= bytes.len() {
-            break;
-        }
-        if bytes[alpha_offset] < 255 {
-            return true;
-        }
-        sampled += 1;
-    }
-    false
 }
 
 pub fn inspect_bmp(input: &[u8]) -> Result<BmpInfo, String> {
@@ -96,7 +56,14 @@ pub fn inspect_bmp(input: &[u8]) -> Result<BmpInfo, String> {
     let has_meaningful_alpha = if bit_count == 32
         && (compression == BI_RGB || compression == BI_RLE8 || compression == BI_RLE4)
     {
-        sample_bgra_alpha(input, pixel_offset, width, height, raw_height < 0)
+        sample_bgra_bytes_meaningful_alpha(
+            input,
+            pixel_offset,
+            width,
+            height,
+            raw_height < 0,
+            MAX_ALPHA_PROBE_SAMPLES,
+        )
     } else {
         false
     };

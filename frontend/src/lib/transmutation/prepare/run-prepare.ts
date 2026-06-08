@@ -1,11 +1,8 @@
 import type { ToolDefinition } from "@/lib/tools/types";
-import { bmpHasMeaningfulAlpha } from "@/lib/format/detect-bmp-alpha";
-import { detectGifAlpha } from "@/lib/format/detect-gif-alpha";
-import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
-import { detectWebpAlpha } from "@/lib/format/detect-webp-alpha";
 import { resolveSourceImageMeta } from "@/lib/format/source-image-meta";
 import { setGifSessionInputLimit, openGifSessionWithProgress } from "@/lib/gif/gif-wasm-client";
 import { inspectIcoMeta, setIcoSessionInputLimit } from "@/lib/ico/ico-wasm-client";
+import { assessSemanticAlpha, needsSemanticAlpha } from "@/lib/semantic-alpha";
 import { inspectTiffMeta, setTiffSessionInputLimit } from "@/lib/tiff/tiff-wasm-client";
 import { warmupTransmutatorModule } from "@/lib/transmutation/prepare/warmup-wasm";
 import type {
@@ -45,21 +42,6 @@ function emit(
   onProgress({ phase, progress, ...extras });
 }
 
-function detectAlphaForTool(toolId: string, bytes: ArrayBuffer): boolean {
-  switch (toolId) {
-    case "png-to-jpg":
-      return detectPngAlpha(bytes).hasAlpha;
-    case "webp-to-jpg":
-      return detectWebpAlpha(bytes);
-    case "gif-to-jpg":
-      return detectGifAlpha(bytes);
-    case "bmp-to-jpg":
-      return bmpHasMeaningfulAlpha(bytes);
-    default:
-      return false;
-  }
-}
-
 function isGifTool(toolId: string): boolean {
   return toolId === "gif-to-png" || toolId === "gif-to-jpg";
 }
@@ -70,10 +52,6 @@ function isTiffTool(toolId: string): boolean {
 
 function isIcoTool(toolId: string): boolean {
   return toolId === "ico-to-png";
-}
-
-function needsAlphaScan(tool: ToolDefinition): boolean {
-  return tool.optionSpecs?.some((s) => s.kind === "color" && s.key === "background") ?? false;
 }
 
 /** Yields to the main thread via rAF, allowing React to flush pending state. */
@@ -103,6 +81,7 @@ export async function prepareFileForTool(
   let gifSession = null;
   let tiffMeta = null;
   let icoMeta = null;
+  let alphaAssessment = null;
 
   if (isGifTool(tool.id)) {
     emit(onProgress, "analyze", 0, {
@@ -144,15 +123,14 @@ export async function prepareFileForTool(
     }
     icoMeta = await inspectIcoMeta(new Uint8Array(bytes));
     emit(onProgress, "analyze", 1);
-  } else if (needsAlphaScan(tool)) {
-    emit(onProgress, "analyze", 0);
-    await yieldToMain();
-    detectAlphaForTool(tool.id, bytes);
-    emit(onProgress, "analyze", 1);
   } else {
     emit(onProgress, "analyze", 0);
     await yieldToMain();
     emit(onProgress, "analyze", 1);
+  }
+
+  if (needsSemanticAlpha(tool)) {
+    alphaAssessment = await assessSemanticAlpha(tool, bytes, { pageIndex: 0 });
   }
 
   const sourceMeta = await resolveSourceImageMeta(tool, bytes, {
@@ -161,6 +139,7 @@ export async function prepareFileForTool(
     tiffPageIndex: 0,
     icoMeta,
     icoEntryIndex: icoMeta?.defaultEntryIndex ?? 0,
+    alphaAssessment,
     sessionInputLimitBytes: sessionLimit,
   });
 
@@ -169,16 +148,11 @@ export async function prepareFileForTool(
   await yieldToMain();
   emit(onProgress, "finalize", 1);
 
-  const hasAlpha = needsAlphaScan(tool)
-    ? tool.fromFormat === "BMP"
-      ? sourceMeta?.hasMeaningfulAlpha ?? bmpHasMeaningfulAlpha(bytes)
-      : tool.id === "tiff-to-jpg" && tiffMeta
-        ? tiffMeta.pageHasAlpha(0)
-        : detectAlphaForTool(tool.id, bytes)
-    : false;
+  const hasAlpha = alphaAssessment?.hasMeaningfulAlpha ?? false;
 
   return {
     hasAlpha,
+    alphaAssessment,
     gifSession,
     tiffMeta,
     icoMeta,

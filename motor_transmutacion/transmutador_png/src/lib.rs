@@ -32,6 +32,10 @@
 
 use std::io::Cursor;
 
+use core_utils::semantic_alpha::{
+    assess_dynamic_image_probe, dynamic_image_has_meaningful_alpha, png_has_alpha_channel,
+    AlphaAssessment, AlphaAssessmentJs,
+};
 use image::codecs::jpeg::JpegEncoder;
 use image::ImageReader;
 use wasm_bindgen::prelude::*;
@@ -164,7 +168,7 @@ pub fn png_bytes_to_jpg_bytes(
         .decode()
         .map_err(|e| format!("Failed to decode PNG: {}", e))?;
 
-    let encoded = if img.color().has_alpha() {
+    let encoded = if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         let rgb = flatten_rgba_on_background(&rgba, options.background);
         encode_rgb_to_jpeg(&rgb, options.quality)?
@@ -201,6 +205,25 @@ pub fn transmutar_png_a_jpg_inner(
 // ---------------------------------------------------------------------------
 // Wasm exports (backward-compatible)
 // ---------------------------------------------------------------------------
+
+pub fn assess_png_alpha(input: &[u8]) -> Result<AlphaAssessment, String> {
+    core_utils::validate_input(input)?;
+    let has_channel = png_has_alpha_channel(input);
+    if !has_channel {
+        return Ok(AlphaAssessment::OPAQUE);
+    }
+    let img = ImageReader::new(Cursor::new(input))
+        .with_guessed_format()
+        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?
+        .decode()
+        .map_err(|e| format!("Failed to decode PNG: {}", e))?;
+    Ok(assess_dynamic_image_probe(&img, true))
+}
+
+#[wasm_bindgen]
+pub fn assess_alpha(input_bytes: &[u8]) -> Result<AlphaAssessmentJs, String> {
+    Ok(AlphaAssessmentJs::from_assessment(assess_png_alpha(input_bytes)?))
+}
 
 #[wasm_bindgen]
 pub fn transmutar_png_a_jpg(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
@@ -264,7 +287,7 @@ pub fn estimate_png_to_jpg_size(
         .map_err(|e| format!("Failed to decode PNG: {}", e))?;
 
     let bg = BackgroundFill { r: bg_r, g: bg_g, b: bg_b };
-    let rgb = if img.color().has_alpha() {
+    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg)
     } else {
