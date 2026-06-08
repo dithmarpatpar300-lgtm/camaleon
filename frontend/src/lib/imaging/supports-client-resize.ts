@@ -12,6 +12,8 @@ export function mimeTypeForTool(tool: ToolDefinition): string {
       return "image/webp";
     case "BMP":
       return "image/bmp";
+    case "TIFF":
+      return "image/tiff";
     default:
       return "application/octet-stream";
   }

@@ -5,6 +5,7 @@ import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
 import { detectWebpAlpha } from "@/lib/format/detect-webp-alpha";
 import { resolveSourceImageMeta } from "@/lib/format/source-image-meta";
 import { setGifSessionInputLimit, openGifSessionWithProgress } from "@/lib/gif/gif-wasm-client";
+import { inspectTiffMeta, setTiffSessionInputLimit } from "@/lib/tiff/tiff-wasm-client";
 import { warmupTransmutatorModule } from "@/lib/transmutation/prepare/warmup-wasm";
 import type {
   PreparedFileContext,
@@ -62,6 +63,10 @@ function isGifTool(toolId: string): boolean {
   return toolId === "gif-to-png" || toolId === "gif-to-jpg";
 }
 
+function isTiffTool(toolId: string): boolean {
+  return toolId === "tiff-to-png" || toolId === "tiff-to-jpg";
+}
+
 function needsAlphaScan(tool: ToolDefinition): boolean {
   return tool.optionSpecs?.some((s) => s.kind === "color" && s.key === "background") ?? false;
 }
@@ -91,6 +96,7 @@ export async function prepareFileForTool(
 
   // ── Phase: analyze ───────────────────────────────────────────────────
   let gifSession = null;
+  let tiffMeta = null;
 
   if (isGifTool(tool.id)) {
     emit(onProgress, "analyze", 0, {
@@ -116,6 +122,14 @@ export async function prepareFileForTool(
       detailLabelKey: "prepare.gifFrameProgress",
       detailParams: { current: lastRafFrame || gifSession.frame_count },
     });
+  } else if (isTiffTool(tool.id)) {
+    emit(onProgress, "analyze", 0);
+    await yieldToMain();
+    if (sessionLimit != null) {
+      await setTiffSessionInputLimit(sessionLimit);
+    }
+    tiffMeta = await inspectTiffMeta(new Uint8Array(bytes));
+    emit(onProgress, "analyze", 1);
   } else if (needsAlphaScan(tool)) {
     emit(onProgress, "analyze", 0);
     await yieldToMain();
@@ -129,6 +143,8 @@ export async function prepareFileForTool(
 
   const sourceMeta = await resolveSourceImageMeta(tool, bytes, {
     gifSession,
+    tiffMeta,
+    tiffPageIndex: 0,
     sessionInputLimitBytes: sessionLimit,
   });
 
@@ -140,12 +156,15 @@ export async function prepareFileForTool(
   const hasAlpha = needsAlphaScan(tool)
     ? tool.fromFormat === "BMP"
       ? sourceMeta?.hasMeaningfulAlpha ?? bmpHasMeaningfulAlpha(bytes)
-      : detectAlphaForTool(tool.id, bytes)
+      : tool.id === "tiff-to-jpg" && tiffMeta
+        ? tiffMeta.pageHasAlpha(0)
+        : detectAlphaForTool(tool.id, bytes)
     : false;
 
   return {
     hasAlpha,
     gifSession,
+    tiffMeta,
     sourceMeta,
   };
 }

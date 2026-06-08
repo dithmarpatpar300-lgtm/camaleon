@@ -6,6 +6,8 @@ export type SourceImageMeta = {
   bitDepthLabel: string;
   /** Present for animated GIF sources. */
   frameCount?: number;
+  /** Present for multi-page TIFF sources. */
+  pageCount?: number;
   /** BMP semantic alpha — set when probed via Wasm. */
   hasMeaningfulAlpha?: boolean;
 };

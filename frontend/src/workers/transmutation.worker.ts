@@ -22,6 +22,32 @@ type TransmutarBmpWithCompression = (input: Uint8Array, compression: number) => 
 type EstimateBmpToPngSizeFn = (input: Uint8Array, compression: number) => number;
 type TransmutarBmpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
 type EstimateBmpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
+type TransmutarTiffWithCompression = (
+  input: Uint8Array,
+  compression: number,
+  page_index: number
+) => Uint8Array;
+type EstimateTiffToPngSizeFn = (
+  input: Uint8Array,
+  compression: number,
+  page_index: number
+) => number;
+type TransmutarTiffJpgWithOptions = (
+  input: Uint8Array,
+  quality: number,
+  bg_r: number,
+  bg_g: number,
+  bg_b: number,
+  page_index: number
+) => Uint8Array;
+type EstimateTiffToJpgSizeFn = (
+  input: Uint8Array,
+  quality: number,
+  bg_r: number,
+  bg_g: number,
+  bg_b: number,
+  page_index: number
+) => number;
 
 type SessionLimitFn = (maxBytes: number) => void;
 
@@ -68,6 +94,13 @@ let estimateBmpToPngSize: EstimateBmpToPngSizeFn | null = null;
 let transmutarBmpJpgWithOptions: TransmutarBmpJpgWithOptions | null = null;
 let estimateBmpToJpgSize: EstimateBmpToJpgSizeFn | null = null;
 
+let setTiffSessionLimit: SessionLimitFn | null = null;
+let transmutarTiff: ((input: Uint8Array, page_index: number) => Uint8Array) | null = null;
+let transmutarTiffWithCompression: TransmutarTiffWithCompression | null = null;
+let estimateTiffToPngSize: EstimateTiffToPngSizeFn | null = null;
+let transmutarTiffJpgWithOptions: TransmutarTiffJpgWithOptions | null = null;
+let estimateTiffToJpgSize: EstimateTiffToJpgSizeFn | null = null;
+
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
 
@@ -79,6 +112,7 @@ let initWebpPromise: Promise<void> | null = null;
 let initEncodePromise: Promise<void> | null = null;
 let initGifPromise: Promise<void> | null = null;
 let initBmpPromise: Promise<void> | null = null;
+let initTiffPromise: Promise<void> | null = null;
 
 async function initJpgWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_jpg");
@@ -199,6 +233,37 @@ function ensureBmpWasmInitialized(): Promise<void> {
   return initBmpPromise;
 }
 
+async function initTiffWasm(): Promise<void> {
+  const module = await importWasmGlue("transmutador_tiff");
+  await module.default();
+  transmutarTiff = wasmExport<(input: Uint8Array, page_index: number) => Uint8Array>(
+    module,
+    "transmutar_tiff_a_png"
+  );
+  transmutarTiffWithCompression = wasmExport<TransmutarTiffWithCompression>(
+    module,
+    "transmutar_tiff_a_png_with_compression"
+  );
+  estimateTiffToPngSize = wasmExport<EstimateTiffToPngSizeFn>(
+    module,
+    "estimate_tiff_to_png_size"
+  );
+  transmutarTiffJpgWithOptions = wasmExport<TransmutarTiffJpgWithOptions>(
+    module,
+    "transmutar_tiff_a_jpg_with_options"
+  );
+  estimateTiffToJpgSize = wasmExport<EstimateTiffToJpgSizeFn>(
+    module,
+    "estimate_tiff_to_jpg_size"
+  );
+  setTiffSessionLimit = pickSessionLimit(module);
+}
+
+function ensureTiffWasmInitialized(): Promise<void> {
+  if (!initTiffPromise) initTiffPromise = initTiffWasm();
+  return initTiffPromise;
+}
+
 function postResponse(response: WorkerResponse): void {
   if (response.ok && response.bytes) {
     self.postMessage(response, { transfer: [response.bytes] });
@@ -218,6 +283,7 @@ function resetAllSessionLimits(): void {
   setEncodeSessionLimit?.(SOFT_LIMIT_BYTES);
   setGifSessionLimit?.(SOFT_LIMIT_BYTES);
   setBmpSessionLimit?.(SOFT_LIMIT_BYTES);
+  setTiffSessionLimit?.(SOFT_LIMIT_BYTES);
 }
 
 function purgeWorkerState(id: string): WorkerResponse {
@@ -239,6 +305,8 @@ type RouteFlags = {
   isGifToJpg: boolean;
   isBmpToPng: boolean;
   isBmpToJpg: boolean;
+  isTiffToPng: boolean;
+  isTiffToJpg: boolean;
   isEncode: boolean;
   encodeSource?: EncodeSource;
 };
@@ -259,6 +327,10 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     req.module === "transmutador_bmp" && (req.outputExtension ?? "png") === "png";
   const isBmpToJpg =
     req.module === "transmutador_bmp" && req.outputExtension === "jpg";
+  const isTiffToPng =
+    req.module === "transmutador_tiff" && (req.outputExtension ?? "png") === "png";
+  const isTiffToJpg =
+    req.module === "transmutador_tiff" && req.outputExtension === "jpg";
   return {
     isJpg,
     isPng,
@@ -268,6 +340,8 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     isGifToJpg,
     isBmpToPng,
     isBmpToJpg,
+    isTiffToPng,
+    isTiffToJpg,
     isEncode,
     encodeSource: isEncode ? req.encodeSource : undefined,
   };
@@ -281,7 +355,8 @@ function resolveMimeExtension(route: RouteFlags): { mime: string; extension: Out
     route.isWebpToJpg ||
     route.isPng ||
     route.isGifToJpg ||
-    route.isBmpToJpg
+    route.isBmpToJpg ||
+    route.isTiffToJpg
   ) {
     return { mime: "image/jpeg", extension: "jpg" };
   }
@@ -341,6 +416,22 @@ function runFullEncode(
       return transmutarBmpWithCompression(input, opts.compression);
     }
     if (transmutarBmp) return transmutarBmp(input);
+    throw new Error("Wasm module not initialized");
+  }
+  if (route.isTiffToJpg) {
+    const quality = opts?.quality ?? 85;
+    const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    const pageIndex = opts?.pageIndex ?? 0;
+    if (!transmutarTiffJpgWithOptions) throw new Error("Wasm module not initialized");
+    return transmutarTiffJpgWithOptions(input, quality, bg.r, bg.g, bg.b, pageIndex);
+  }
+  if (route.isTiffToPng) {
+    const pageIndex = opts?.pageIndex ?? 0;
+    const compression = opts?.compression ?? 6;
+    if (transmutarTiffWithCompression) {
+      return transmutarTiffWithCompression(input, compression, pageIndex);
+    }
+    if (transmutarTiff) return transmutarTiff(input, pageIndex);
     throw new Error("Wasm module not initialized");
   }
   if (route.isJpg) {
@@ -413,6 +504,19 @@ function runSizeEstimate(
     if (!estimateBmpToPngSize) throw new Error("Wasm estimate export not initialized");
     return estimateBmpToPngSize(input, compression);
   }
+  if (route.isTiffToJpg) {
+    const quality = opts?.quality ?? 85;
+    const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    const pageIndex = opts?.pageIndex ?? 0;
+    if (!estimateTiffToJpgSize) throw new Error("Wasm estimate export not initialized");
+    return estimateTiffToJpgSize(input, quality, bg.r, bg.g, bg.b, pageIndex);
+  }
+  if (route.isTiffToPng) {
+    const compression = opts?.compression ?? 6;
+    const pageIndex = opts?.pageIndex ?? 0;
+    if (!estimateTiffToPngSize) throw new Error("Wasm estimate export not initialized");
+    return estimateTiffToPngSize(input, compression, pageIndex);
+  }
   if (route.isJpg) {
     const compression = opts?.compression ?? 6;
     if (!estimateJpgToPngSize) throw new Error("Wasm estimate export not initialized");
@@ -442,6 +546,10 @@ function applySessionInputLimit(route: RouteFlags, maxBytes: number): void {
     setBmpSessionLimit?.(maxBytes);
     return;
   }
+  if (route.isTiffToPng || route.isTiffToJpg) {
+    setTiffSessionLimit?.(maxBytes);
+    return;
+  }
   if (route.isEncode) {
     setEncodeSessionLimit?.(maxBytes);
     return;
@@ -457,6 +565,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     "transmutador_encode",
     "transmutador_gif",
     "transmutador_bmp",
+    "transmutador_tiff",
   ];
   if (!req.module || !knownModules.includes(req.module)) {
     return { id: req.id, ok: false, error: `Unknown module: ${req.module ?? "none"}` };
@@ -480,6 +589,8 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       await ensureGifWasmInitialized();
     } else if (route.isBmpToPng || route.isBmpToJpg) {
       await ensureBmpWasmInitialized();
+    } else if (route.isTiffToPng || route.isTiffToJpg) {
+      await ensureTiffWasmInitialized();
     } else if (route.isEncode) {
       await ensureEncodeWasmInitialized();
     } else {

@@ -1,6 +1,7 @@
 import type { TransmutationModule } from "@/workers/types";
 import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
+import { ensureTiffWasm } from "@/lib/tiff/tiff-wasm-client";
 import { importWasmGlue } from "@/lib/wasm/load-glue";
 
 async function warmupCrate(crate: Parameters<typeof importWasmGlue>[0]): Promise<void> {
@@ -22,6 +23,8 @@ export async function warmupTransmutatorModule(module: TransmutationModule): Pro
       return ensureGifWasm().then(() => undefined);
     case "transmutador_bmp":
       return ensureBmpWasm().then(() => undefined);
+    case "transmutador_tiff":
+      return ensureTiffWasm().then(() => undefined);
     default:
       throw new Error(`Unknown module: ${module}`);
   }

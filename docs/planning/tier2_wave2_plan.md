@@ -1,7 +1,7 @@
 # Tier 2 — Wave 2 (TIFF, ICO, TGA)
 
-> **Branch:** `dev` → target **v1.10.0** on `main`  
-> **Status:** Planning (science + phase breakdown)  
+> **Branch:** `dev` → target **v1.10.x** on `main`  
+> **Status:** Phase 7.0 spike ✅ · Phase 7.1 TIFF→PNG ✅ (v1.10.0) · Phase 7.2 TIFF→JPEG ✅ (v1.10.1) · Phase 7.3+ pending  
 > **Prerequisite:** Tier 2 Wave 1 ✅ · Release Comms ✅ · LimitContext + astro downscale ✅  
 > **Doctrine:** Same pipeline as Wave 1 — decode → honest options → re-encode → StripAll → estimate-first
 
@@ -138,11 +138,11 @@ estimate_tiff_to_jpg_size(bytes, quality, bg_r, bg_g, bg_b, page_index)
 
 ### 2.8 Spike checklist (Phase 7.0 — before coding)
 
-- [ ] `wasm-pack` with `image` feature `tiff` only — report `.wasm` KB
-- [ ] Fixture set: 8-bit RGB, 16-bit gray, palette, LZW, uncompressed, multi-page (2 IFDs), alpha RGBA
-- [ ] Document which fixtures fail in `image` 0.25
-- [ ] Decide 16-bit → 8-bit algorithm (match science honesty in SPEC §5)
-- [ ] Confirm `estimate_*` via `CountingWriter` parity
+- [x] `wasm-pack` with `image` feature `tiff` only — **919 KB** (see `tier2_wave2_spike_results.md`)
+- [x] Fixture set: 8-bit RGB, 16-bit gray, palette, LZW, uncompressed, multi-page (2 IFDs), alpha RGBA
+- [x] Document which fixtures fail in `image` 0.25 — **palette fails**; rest pass
+- [x] Decide 16-bit → 8-bit algorithm — **`(u16 + 128) / 257`** via `DynamicImage::to_rgb8()` (match `image` 0.25)
+- [x] Confirm `estimate_*` via `CountingWriter` parity — within 5% on rgb8 fixture
 
 ---
 

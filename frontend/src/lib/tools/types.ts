@@ -1,6 +1,6 @@
 import type { TransmutationModule } from "@/workers/types";
 
-export type ImageFormat = "JPG" | "JPEG" | "PNG" | "WEBP" | "GIF" | "BMP";
+export type ImageFormat = "JPG" | "JPEG" | "PNG" | "WEBP" | "GIF" | "BMP" | "TIFF";
 export type ToolCategory = "image";
 export type ToolFidelity = "lossless" | "lossy";
 export type ToolStatus = "active" | "soon";

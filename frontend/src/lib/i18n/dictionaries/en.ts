@@ -45,6 +45,14 @@ const en: Dictionary = {
         title: "BMP to JPG — Camaleon",
         description: "Convert BMP to JPG in your browser. Smaller files for photos and web use.",
       },
+      "tiff-to-png": {
+        title: "TIFF to PNG — Camaleon",
+        description: "Convert TIFF to PNG in your browser. Lossless export for scans, print, and archives.",
+      },
+      "tiff-to-jpg": {
+        title: "TIFF to JPG — Camaleon",
+        description: "Convert TIFF to JPEG in your browser. Smaller files for web sharing from archival TIFFs.",
+      },
     },
   },
 
@@ -100,8 +108,8 @@ const en: Dictionary = {
           body: "Nothing is uploaded. Your images never leave this tab.",
         },
         tools: {
-          title: "10 conversion tools",
-          body: "PNG, JPEG, WebP, AVIF, GIF, and BMP — lossless and lossy paths where it matters.",
+          title: "12 conversion tools",
+          body: "PNG, JPEG, WebP, GIF, BMP, and TIFF — lossless and lossy paths where it matters.",
         },
         limits: {
           title: "Honest limits",
@@ -132,6 +140,34 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v1101: {
+        title: "TIFF → JPEG",
+        summary: "Lossy web export from archival TIFF — quality slider and alpha flattening.",
+        technical:
+          "transmutador_tiff JPEG path: flatten_rgba_on_background, quality validation, page_index on transmute/estimate, alpha detection per IFD for background picker.",
+        highlights: {
+          tiffJpg: {
+            title: "TIFF → JPEG",
+            body: "Shrink scans and print masters for web — same multi-page picker, quality presets, and background color when alpha is present.",
+          },
+        },
+      },
+      v1100: {
+        title: "TIFF → PNG",
+        summary: "Archival TIFF support with multi-page picker and 16-bit normalization.",
+        technical:
+          "New transmutador_tiff Wasm module (image 0.25 + tiff 0.11). IFD probe for page_count, palette/CMYK rejection, page_index on transmute/estimate, and 8-bit downshift matching image cast policy.",
+        highlights: {
+          tiff: {
+            title: "TIFF → PNG",
+            body: "Convert scans, print masters, and multi-page TIFFs locally — pick a page when the file has more than one IFD.",
+          },
+          bitdepth: {
+            title: "16-bit honesty",
+            body: "High bit-depth sources normalize to 8-bit PNG with documented tone mapping — preview matches output.",
+          },
+        },
+      },
       v190: {
         title: "Tier 2 Wave 1",
         summary: "GIF & BMP suites, smarter limits, and science-image downscale.",
@@ -332,6 +368,14 @@ const en: Dictionary = {
     bmpEstimate: {
       growthWarning: "Estimated PNG is larger than this BMP — noisy or high-entropy content may not compress well with DEFLATE.",
     },
+    tiffPage: {
+      title: "TIFF page",
+      counter: "{current} / {total}",
+      hint: "Scrub to preview another IFD — release to refresh the size estimate.",
+      sliderAria: "TIFF page selector",
+      previewAlt: "Preview of page {index}",
+      loadingPreview: "Rendering preview…",
+    },
   },
 
   tools: {
@@ -462,6 +506,42 @@ const en: Dictionary = {
         background: { label: "Background color", hint: "Only affects images with transparency.", customAria: "Custom background color", swatches: { white: "White", black: "Black", gray: "Gray" } },
       },
     },
+    "tiff-to-png": {
+      actionTitle: "Convert to PNG",
+      description: "Lossless PNG from TIFF — DEFLATE compression for archival and print masters.",
+      fidelityHint:
+        "16-bit and float sources normalize to 8-bit PNG. Multi-page files: pick one page. Palette and CMYK TIFFs are not supported.",
+      options: {
+        compression: {
+          label: "PNG Compression",
+          hint: "Always lossless — higher compression = smaller file + slower processing.",
+          lowerLabel: "Faster",
+          upperLabel: "Smaller",
+          presets: { fast: "Fast", balanced: "Balanced", minimal: "Minimal" },
+        },
+      },
+    },
+    "tiff-to-jpg": {
+      actionTitle: "Compress for Web",
+      description: "Convert TIFF to JPEG — much smaller files for sharing scans and print masters online.",
+      fidelityHint:
+        "JPEG is lossy — irreversible. 16-bit sources normalize to 8-bit. Multi-page TIFF: pick one page. Alpha flattens to your chosen background.",
+      options: {
+        quality: {
+          label: "JPEG Quality",
+          hint: "Higher quality = larger file. Quality loss is always irreversible.",
+          lowerLabel: "Lighter",
+          upperLabel: "Faithful",
+          presets: { web: "Web", balanced: "Balanced", high: "High" },
+        },
+        background: {
+          label: "Background color",
+          hint: "Only affects images with transparency.",
+          customAria: "Custom background color",
+          swatches: { white: "White", black: "Black", gray: "Gray" },
+        },
+      },
+    },
   },
 
   errors: {
@@ -474,6 +554,9 @@ const en: Dictionary = {
     dimensionsTooLargeGeneric:
       "Target dimensions exceed the browser megapixel limit. Choose a smaller resize preset.",
     notAvailable: "This conversion is not yet available.",
+    tiffPalette: "Indexed-color (palette) TIFF is not supported. Re-export as RGB or grayscale first.",
+    tiffCmyk: "CMYK TIFF is not supported. Re-export as RGB from your print tool first.",
+    tiffPageRange: "That TIFF page does not exist. Pick a page within the file.",
     engineNotReady: "The transmutation engine is still starting. Please try again.",
     generic: "Transmutation failed. Please try again.",
   },

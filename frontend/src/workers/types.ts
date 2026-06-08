@@ -4,7 +4,8 @@ export type TransmutationModule =
   | "transmutador_webp"
   | "transmutador_encode"
   | "transmutador_gif"
-  | "transmutador_bmp";
+  | "transmutador_bmp"
+  | "transmutador_tiff";
 
 export type OutputExtension = "png" | "jpg" | "webp";
 
@@ -19,6 +20,8 @@ export type TransmutationOptions = {
   background?: RgbColor;
   /** Composited GIF frame to export (0-based). */
   frameIndex?: number;
+  /** TIFF IFD page to export (0-based). */
+  pageIndex?: number;
 };
 
 export type WorkerPurpose = "transmute" | "estimate" | "purge";

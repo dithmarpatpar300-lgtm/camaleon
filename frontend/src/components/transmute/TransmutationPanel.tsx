@@ -31,6 +31,7 @@ import { resolvePostResizeWasmConfig, supportsClientResize } from "@/lib/imaging
 import { mimeTypeForTool } from "@/lib/imaging/supports-client-resize";
 import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
+import { tiffMetaForPage } from "@/lib/tiff/tiff-wasm-client";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { Dropzone } from "./Dropzone";
@@ -150,6 +151,35 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   });
   const accept = tool.acceptExtensions.join(",");
 
+  const handleOptionsChange = useCallback(
+    (next: TransmutationOptions) => {
+      setOptions(next);
+      if (
+        (tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg") &&
+        prepared?.tiffMeta &&
+        next.pageIndex != null &&
+        next.pageIndex !== options.pageIndex
+      ) {
+        const page = tiffMetaForPage(prepared.tiffMeta, next.pageIndex);
+        const pageHasAlpha = prepared.tiffMeta.pageHasAlpha(next.pageIndex);
+        setPrepared({
+          ...prepared,
+          hasAlpha: tool.id === "tiff-to-jpg" ? pageHasAlpha : prepared.hasAlpha,
+          sourceMeta: {
+            width: page.width,
+            height: page.height,
+            bitDepthLabel: page.bitDepthLabel,
+            pageCount: page.pageCount > 1 ? page.pageCount : undefined,
+          },
+        });
+        if (tool.id === "tiff-to-jpg") {
+          setHasAlpha(pageHasAlpha);
+        }
+      }
+    },
+    [tool.id, prepared, options.pageIndex]
+  );
+
   const handleFileSelect = useCallback(async (file: File) => {
     if (!fileMatchesExtensions(file.name, tool.acceptExtensions)) {
       setStatus("error");
@@ -225,7 +255,11 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setHasAlpha(ctx.hasAlpha);
       setStaged(pending);
       setPendingFile(null);
-      setOptions({ ...buildDefaultOptions(tool.optionSpecs), frameIndex: 0 });
+      setOptions({
+        ...buildDefaultOptions(tool.optionSpecs),
+        frameIndex: 0,
+        pageIndex: 0,
+      });
       setStatus("staged");
       setCrossfading(true);
       setTimeout(() => setCrossfading(false), CROSSFADE_MS);
@@ -281,6 +315,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         setPrepared({
           ...prepared,
           hasAlpha: alpha,
+          tiffMeta: tool.fromFormat === "TIFF" ? null : prepared.tiffMeta,
           sourceMeta: newSourceMeta,
           originalSourceMeta: originalMeta,
           resizeMaxEdge: maxEdge,
@@ -491,9 +526,11 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 fileName={staged.file.name}
                 fileSize={staged.effectiveSize ?? staged.file.size}
                 options={options}
-                onOptionsChange={setOptions}
+                onOptionsChange={handleOptionsChange}
                 hasAlpha={hasAlpha}
                 gifSession={prepared.gifSession}
+                tiffMeta={prepared.tiffMeta}
+                fileBytes={new Uint8Array(staged.bytes)}
                 sourceMeta={prepared.sourceMeta}
                 originalSourceMeta={prepared.originalSourceMeta}
                 limitContext={metrics.limitContext}

@@ -20,6 +20,9 @@ const matchers: ErrorMatcher[] = [
     parseParams: true,
   },
   { pattern: /not yet available/i, key: "errors.notAvailable" },
+  { pattern: /TIFF palette/i, key: "errors.tiffPalette" },
+  { pattern: /TIFF CMYK/i, key: "errors.tiffCmyk" },
+  { pattern: /page index \d+ out of range/i, key: "errors.tiffPageRange" },
   { pattern: /corrupt|invalid/i, key: "errors.corrupt" },
 ];
 

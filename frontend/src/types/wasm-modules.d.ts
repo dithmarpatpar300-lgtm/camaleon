@@ -62,6 +62,48 @@ declare module "*/transmutador_gif/transmutador_gif.js" {
   export default function init(): Promise<void>;
 }
 
+declare module "*/transmutador_tiff/transmutador_tiff.js" {
+  export class TiffMeta {
+    readonly page_count: number;
+    page_width(page_index: number): number;
+    page_height(page_index: number): number;
+    page_bit_depth(page_index: number): number;
+    page_has_alpha(page_index: number): boolean;
+    page_photometric(page_index: number): number;
+  }
+  export function inspect_tiff_meta(input_bytes: Uint8Array): TiffMeta;
+  export function render_tiff_page_preview_png(input_bytes: Uint8Array, page_index: number): Uint8Array;
+  export function transmutar_tiff_a_png(input_bytes: Uint8Array, page_index: number): Uint8Array;
+  export function transmutar_tiff_a_png_with_compression(
+    input_bytes: Uint8Array,
+    compression: number,
+    page_index: number
+  ): Uint8Array;
+  export function estimate_tiff_to_png_size(
+    input_bytes: Uint8Array,
+    compression: number,
+    page_index: number
+  ): number;
+  export function transmutar_tiff_a_jpg(input_bytes: Uint8Array, page_index: number): Uint8Array;
+  export function transmutar_tiff_a_jpg_with_options(
+    input_bytes: Uint8Array,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number,
+    page_index: number
+  ): Uint8Array;
+  export function estimate_tiff_to_jpg_size(
+    input_bytes: Uint8Array,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number,
+    page_index: number
+  ): number;
+  export default function init(): Promise<void>;
+}
+
 declare module "*/transmutador_bmp/transmutador_bmp.js" {
   export class BmpMeta {
     readonly width: number;

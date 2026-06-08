@@ -45,6 +45,14 @@ const es: Dictionary = {
         title: "BMP a JPG — Camaleon",
         description: "Convierte BMP a JPG en tu navegador. Archivos mas pequenos para fotos y web.",
       },
+      "tiff-to-png": {
+        title: "TIFF a PNG — Camaleon",
+        description: "Convierte TIFF a PNG en tu navegador. Exportacion sin perdida para escaneos, impresion y archivos.",
+      },
+      "tiff-to-jpg": {
+        title: "TIFF a JPG — Camaleon",
+        description: "Convierte TIFF a JPEG en tu navegador. Archivos mas pequenos para compartir TIFFs de archivo en web.",
+      },
     },
   },
 
@@ -100,8 +108,8 @@ const es: Dictionary = {
           body: "No se sube nada. Tus imágenes nunca salen de esta pestaña.",
         },
         tools: {
-          title: "10 herramientas de conversión",
-          body: "PNG, JPEG, WebP, AVIF, GIF y BMP — rutas con y sin pérdida donde importa.",
+          title: "12 herramientas de conversión",
+          body: "PNG, JPEG, WebP, GIF, BMP y TIFF — rutas con y sin pérdida donde importa.",
         },
         limits: {
           title: "Límites honestos",
@@ -132,6 +140,34 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v1101: {
+        title: "TIFF → JPEG",
+        summary: "Exportacion web con perdida desde TIFF de archivo — calidad y aplanado de alpha.",
+        technical:
+          "Ruta JPEG en transmutador_tiff: flatten_rgba_on_background, validacion de calidad, page_index en transmute/estimate, deteccion de alpha por IFD para el selector de fondo.",
+        highlights: {
+          tiffJpg: {
+            title: "TIFF → JPEG",
+            body: "Reduce escaneos y masters de impresion para web — mismo selector multipagina, presets de calidad y color de fondo cuando hay alpha.",
+          },
+        },
+      },
+      v1100: {
+        title: "TIFF → PNG",
+        summary: "Soporte TIFF de archivo con selector de paginas y normalizacion 16-bit.",
+        technical:
+          "Nuevo modulo Wasm transmutador_tiff (image 0.25 + tiff 0.11). Sonda IFD para page_count, rechazo palette/CMYK, page_index en transmute/estimate, y downshift 8-bit alineado con image.",
+        highlights: {
+          tiff: {
+            title: "TIFF → PNG",
+            body: "Convierte escaneos, masters de impresion y TIFF multipagina en local — elige una pagina cuando hay mas de un IFD.",
+          },
+          bitdepth: {
+            title: "Honestidad 16-bit",
+            body: "Fuentes de alta profundidad se normalizan a PNG 8-bit con mapeo documentado — la vista previa coincide con la salida.",
+          },
+        },
+      },
       v190: {
         title: "Tier 2 Ola 1",
         summary: "Suites GIF y BMP, límites más inteligentes y reducción para imágenes científicas.",
@@ -332,6 +368,14 @@ const es: Dictionary = {
     bmpEstimate: {
       growthWarning: "El PNG estimado es mayor que este BMP — contenido ruidoso o de alta entropia puede comprimirse peor con DEFLATE.",
     },
+    tiffPage: {
+      title: "Pagina TIFF",
+      counter: "{current} / {total}",
+      hint: "Desliza para previsualizar otro IFD — suelta para actualizar la estimacion de tamano.",
+      sliderAria: "Selector de pagina TIFF",
+      previewAlt: "Vista previa de la pagina {index}",
+      loadingPreview: "Generando vista previa…",
+    },
   },
 
   tools: {
@@ -448,6 +492,42 @@ const es: Dictionary = {
         background: { label: "Color de fondo", hint: "Solo afecta imagenes con transparencia.", customAria: "Color de fondo personalizado", swatches: { white: "Blanco", black: "Negro", gray: "Gris" } },
       },
     },
+    "tiff-to-png": {
+      actionTitle: "Convertir a PNG",
+      description: "PNG sin perdida desde TIFF — compresion DEFLATE para archivos e impresion.",
+      fidelityHint:
+        "Fuentes 16-bit y float se normalizan a PNG 8-bit. TIFF multipagina: elige una pagina. Palette y CMYK no soportados.",
+      options: {
+        compression: {
+          label: "Compresion PNG",
+          hint: "Siempre sin perdida — mas compresion = archivo mas pequeno + proceso mas lento.",
+          lowerLabel: "Mas rapido",
+          upperLabel: "Mas pequeno",
+          presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+      },
+    },
+    "tiff-to-jpg": {
+      actionTitle: "Comprimir para Web",
+      description: "Convierte TIFF a JPEG — archivos mucho mas pequenos para compartir escaneos y masters en linea.",
+      fidelityHint:
+        "JPEG tiene perdida — irreversible. Fuentes 16-bit se normalizan a 8-bit. TIFF multipagina: elige una pagina. El alpha se aplana al fondo elegido.",
+      options: {
+        quality: {
+          label: "Calidad JPEG",
+          hint: "Mayor calidad = archivo mas grande. La perdida de calidad siempre es irreversible.",
+          lowerLabel: "Mas liviano",
+          upperLabel: "Mas fiel",
+          presets: { web: "Web", balanced: "Balanceado", high: "Alto" },
+        },
+        background: {
+          label: "Color de fondo",
+          hint: "Solo afecta imagenes con transparencia.",
+          customAria: "Color de fondo personalizado",
+          swatches: { white: "Blanco", black: "Negro", gray: "Gris" },
+        },
+      },
+    },
   },
 
   errors: {
@@ -460,6 +540,9 @@ const es: Dictionary = {
     dimensionsTooLargeGeneric:
       "Las dimensiones objetivo superan el limite de megapixeles del navegador. Elige un preset de redimension menor.",
     notAvailable: "Esta conversion aun no esta disponible.",
+    tiffPalette: "TIFF con paleta (color indexado) no soportado. Reexporta como RGB o escala de grises.",
+    tiffCmyk: "TIFF CMYK no soportado. Reexporta como RGB desde tu herramienta de impresion.",
+    tiffPageRange: "Esa pagina TIFF no existe. Elige una pagina dentro del archivo.",
     engineNotReady: "El motor de transmutacion aun esta iniciando. Intentalo de nuevo.",
     generic: "La transmutacion fallo. Intentalo de nuevo.",
   },

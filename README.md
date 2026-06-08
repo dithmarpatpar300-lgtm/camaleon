@@ -25,7 +25,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 
-**Shipped with v1.9.0:** Tier 2 Wave 1 complete (GIF + BMP premium polish, `LimitContext`, astro downscale). **Deferred:** Tier 2 Wave 2 (TIFF, ICO, TGA) — see [docs/ROADMAP.md](docs/ROADMAP.md).
+**Shipped with v1.9.0 on `main`:** Tier 2 Wave 1 (GIF + BMP premium polish, `LimitContext`, astro downscale). **In progress on `dev`:** Tier 2 Wave 2 — TIFF → PNG (v1.10.0) + TIFF → JPEG (v1.10.1); ICO/TGA pending — see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 
@@ -128,7 +128,7 @@ camaleon/
 | **Launch baseline** | v1.7.9 | ✅ Legal + deploy |
 | **Tier 2 Wave 1** | v1.8.3–v1.8.7 | ✅ GIF + BMP + limits polish |
 | **Astro downscale + memory** | **v1.9.0** | ✅ **Shipped on `main`** |
-| **Tier 2 Wave 2** | v1.10+ | TIFF, ICO, TGA — planned |
+| **Tier 2 Wave 2** | v1.10.x (`dev`) | TIFF PNG+JPEG shipped; ICO, TGA pending |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 

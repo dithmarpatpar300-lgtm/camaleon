@@ -3,6 +3,8 @@
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
+import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
+import { TiffPageScrubber } from "./TiffPageScrubber";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import type { LimitContext } from "@/lib/transmutation/limit-context";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
@@ -31,6 +33,8 @@ type StagedWorkspaceProps = {
   onOptionsChange: (next: TransmutationOptions) => void;
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
+  tiffMeta: TiffMeta | null;
+  fileBytes: Uint8Array | null;
   sourceMeta: SourceImageMeta | null;
   originalSourceMeta?: SourceImageMeta | null;
   limitContext: LimitContext;
@@ -69,6 +73,8 @@ export function StagedWorkspace({
   onOptionsChange,
   hasAlpha,
   gifSession,
+  tiffMeta,
+  fileBytes,
   sourceMeta,
   originalSourceMeta,
   limitContext,
@@ -94,8 +100,10 @@ export function StagedWorkspace({
 }: StagedWorkspaceProps) {
   const { t } = useI18n();
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
+  const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
   const isBmpToPng = tool.id === "bmp-to-png";
   const frameIndex = options.frameIndex ?? 0;
+  const pageIndex = options.pageIndex ?? 0;
   const dimensionBlocked = limitContext.blockReason === "pixels";
   const canTransmute = limitContext.canTransmute;
   const showBmpGrowthWarning =
@@ -160,6 +168,21 @@ export function StagedWorkspace({
           }
         />
       )}
+
+      {!dimensionBlocked &&
+        isTiffTool &&
+        tiffMeta &&
+        tiffMeta.pageCount > 1 &&
+        fileBytes && (
+          <TiffPageScrubber
+            bytes={fileBytes}
+            meta={tiffMeta}
+            pageIndex={pageIndex}
+            onPageIndexChange={(index) =>
+              onOptionsChange({ ...options, pageIndex: index })
+            }
+          />
+        )}
 
       {!dimensionBlocked && hasAlpha && backgroundSpec && (
         <div className="mb-4">
