@@ -221,7 +221,8 @@ Planning docs: `docs/planning/gif_premium_roadmap.md`, `bmp_premium_roadmap.md`,
 | Tier | Target | Features | Notes |
 |------|--------|----------|-------|
 | **Tier 2 Wave 1** | v1.9.0 | GIF, BMP, limits, astro | ✅ **Shipped on `main`** |
-| **Tier 2 Wave 2** | v1.10+ | TIFF, ICO, TGA | Next format expansion track |
+| **Release Comms** | v1.10.0 | Onboarding panel + version changelog + What's New drawer | Planned — `release_comms_module.md` |
+| **Tier 2 Wave 2** | v1.10+ | TIFF, ICO, TGA | After Release Comms or parallel track |
 | **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
 | **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
 
