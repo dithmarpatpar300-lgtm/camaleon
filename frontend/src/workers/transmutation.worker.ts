@@ -1,5 +1,6 @@
 import type { EncodeSource, OutputExtension, WorkerRequest, WorkerResponse } from "./types";
 import { SOFT_LIMIT_BYTES } from "@/lib/transmutation/limits";
+import { importWasmGlue, wasmExport, type WasmGlueModule } from "@/lib/wasm/load-glue";
 import { ResultCache } from "./result-cache";
 
 type TransmutarFn = (input: Uint8Array) => Uint8Array;
@@ -24,7 +25,7 @@ type EstimateBmpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number,
 
 type SessionLimitFn = (maxBytes: number) => void;
 
-function pickSessionLimit(mod: Record<string, unknown>): SessionLimitFn | null {
+function pickSessionLimit(mod: WasmGlueModule): SessionLimitFn | null {
   const fn = mod.set_session_input_limit;
   return typeof fn === "function" ? (fn as SessionLimitFn) : null;
 }
@@ -80,33 +81,48 @@ let initGifPromise: Promise<void> | null = null;
 let initBmpPromise: Promise<void> | null = null;
 
 async function initJpgWasm(): Promise<void> {
-  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_jpg/transmutador_jpg.js");
+  const module = await importWasmGlue("transmutador_jpg");
   await module.default();
-  transmutarJpg = module.transmutar_jpg_a_png;
-  transmutarJpgWithCompression = module.transmutar_jpg_a_png_with_compression;
-  estimateJpgToPngSize = module.estimate_jpg_to_png_size;
-  setJpgSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
+  transmutarJpg = wasmExport<TransmutarFn>(module, "transmutar_jpg_a_png");
+  transmutarJpgWithCompression = wasmExport<TransmutarJpgWithCompression>(
+    module,
+    "transmutar_jpg_a_png_with_compression"
+  );
+  estimateJpgToPngSize = wasmExport<EstimateJpgSizeFn>(module, "estimate_jpg_to_png_size");
+  setJpgSessionLimit = pickSessionLimit(module);
 }
 
 async function initPngWasm(): Promise<void> {
-  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_png/transmutador_png.js");
+  const module = await importWasmGlue("transmutador_png");
   await module.default();
-  transmutarPng = module.transmutar_png_a_jpg;
-  transmutarPngWithQuality = module.transmutar_png_a_jpg_with_quality;
-  transmutarPngWithOptions = module.transmutar_png_a_jpg_with_options;
-  estimatePngToJpgSize = module.estimate_png_to_jpg_size;
-  setPngSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
+  transmutarPng = wasmExport<TransmutarFn>(module, "transmutar_png_a_jpg");
+  transmutarPngWithQuality = wasmExport<TransmutarPngWithQuality>(
+    module,
+    "transmutar_png_a_jpg_with_quality"
+  );
+  transmutarPngWithOptions = wasmExport<TransmutarPngWithOptions>(
+    module,
+    "transmutar_png_a_jpg_with_options"
+  );
+  estimatePngToJpgSize = wasmExport<EstimatePngSizeFn>(module, "estimate_png_to_jpg_size");
+  setPngSessionLimit = pickSessionLimit(module);
 }
 
 async function initWebpWasm(): Promise<void> {
-  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_webp/transmutador_webp.js");
+  const module = await importWasmGlue("transmutador_webp");
   await module.default();
-  transmutarWebp = module.transmutar_webp_a_png;
-  transmutarWebpWithCompression = module.transmutar_webp_a_png_with_compression;
-  estimateWebpToPngSize = module.estimate_webp_to_png_size;
-  transmutarWebpJpgWithOptions = module.transmutar_webp_a_jpg_with_options;
-  estimateWebpToJpgSize = module.estimate_webp_to_jpg_size;
-  setWebpSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
+  transmutarWebp = wasmExport<TransmutarFn>(module, "transmutar_webp_a_png");
+  transmutarWebpWithCompression = wasmExport<TransmutarWebpWithCompression>(
+    module,
+    "transmutar_webp_a_png_with_compression"
+  );
+  estimateWebpToPngSize = wasmExport<EstimateWebpSizeFn>(module, "estimate_webp_to_png_size");
+  transmutarWebpJpgWithOptions = wasmExport<TransmutarWebpJpgWithOptions>(
+    module,
+    "transmutar_webp_a_jpg_with_options"
+  );
+  estimateWebpToJpgSize = wasmExport<EstimateWebpToJpgSizeFn>(module, "estimate_webp_to_jpg_size");
+  setWebpSessionLimit = pickSessionLimit(module);
 }
 
 function ensureJpgWasmInitialized(): Promise<void> {
@@ -125,13 +141,13 @@ function ensureWebpWasmInitialized(): Promise<void> {
 }
 
 async function initEncodeWasm(): Promise<void> {
-  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_encode/transmutador_encode.js");
+  const module = await importWasmGlue("transmutador_encode");
   await module.default();
-  transmutarPngToWebp = module.transmutar_png_a_webp;
-  estimatePngToWebpSize = module.estimate_png_to_webp_size;
-  transmutarJpgToWebp = module.transmutar_jpg_a_webp;
-  estimateJpgToWebpSize = module.estimate_jpg_to_webp_size;
-  setEncodeSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
+  transmutarPngToWebp = wasmExport<TransmutarFn>(module, "transmutar_png_a_webp");
+  estimatePngToWebpSize = wasmExport<EstimatePngToWebpSizeFn>(module, "estimate_png_to_webp_size");
+  transmutarJpgToWebp = wasmExport<TransmutarFn>(module, "transmutar_jpg_a_webp");
+  estimateJpgToWebpSize = wasmExport<EstimatePngToWebpSizeFn>(module, "estimate_jpg_to_webp_size");
+  setEncodeSessionLimit = pickSessionLimit(module);
 }
 
 function ensureEncodeWasmInitialized(): Promise<void> {
@@ -140,14 +156,20 @@ function ensureEncodeWasmInitialized(): Promise<void> {
 }
 
 async function initGifWasm(): Promise<void> {
-  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_gif/transmutador_gif.js");
+  const module = await importWasmGlue("transmutador_gif");
   await module.default();
-  transmutarGif = module.transmutar_gif_a_png;
-  transmutarGifWithCompression = module.transmutar_gif_a_png_with_compression;
-  estimateGifToPngSize = module.estimate_gif_to_png_size;
-  transmutarGifJpgWithOptions = module.transmutar_gif_a_jpg_with_options;
-  estimateGifToJpgSize = module.estimate_gif_to_jpg_size;
-  setGifSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
+  transmutarGif = wasmExport<TransmutarFn>(module, "transmutar_gif_a_png");
+  transmutarGifWithCompression = wasmExport<TransmutarGifWithCompression>(
+    module,
+    "transmutar_gif_a_png_with_compression"
+  );
+  estimateGifToPngSize = wasmExport<EstimateGifToPngSizeFn>(module, "estimate_gif_to_png_size");
+  transmutarGifJpgWithOptions = wasmExport<TransmutarGifJpgWithOptions>(
+    module,
+    "transmutar_gif_a_jpg_with_options"
+  );
+  estimateGifToJpgSize = wasmExport<EstimateGifToJpgSizeFn>(module, "estimate_gif_to_jpg_size");
+  setGifSessionLimit = pickSessionLimit(module);
 }
 
 function ensureGifWasmInitialized(): Promise<void> {
@@ -156,14 +178,20 @@ function ensureGifWasmInitialized(): Promise<void> {
 }
 
 async function initBmpWasm(): Promise<void> {
-  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_bmp/transmutador_bmp.js");
+  const module = await importWasmGlue("transmutador_bmp");
   await module.default();
-  transmutarBmp = module.transmutar_bmp_a_png;
-  transmutarBmpWithCompression = module.transmutar_bmp_a_png_with_compression;
-  estimateBmpToPngSize = module.estimate_bmp_to_png_size;
-  transmutarBmpJpgWithOptions = module.transmutar_bmp_a_jpg_with_options;
-  estimateBmpToJpgSize = module.estimate_bmp_to_jpg_size;
-  setBmpSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
+  transmutarBmp = wasmExport<TransmutarFn>(module, "transmutar_bmp_a_png");
+  transmutarBmpWithCompression = wasmExport<TransmutarBmpWithCompression>(
+    module,
+    "transmutar_bmp_a_png_with_compression"
+  );
+  estimateBmpToPngSize = wasmExport<EstimateBmpToPngSizeFn>(module, "estimate_bmp_to_png_size");
+  transmutarBmpJpgWithOptions = wasmExport<TransmutarBmpJpgWithOptions>(
+    module,
+    "transmutar_bmp_a_jpg_with_options"
+  );
+  estimateBmpToJpgSize = wasmExport<EstimateBmpToJpgSizeFn>(module, "estimate_bmp_to_jpg_size");
+  setBmpSessionLimit = pickSessionLimit(module);
 }
 
 function ensureBmpWasmInitialized(): Promise<void> {

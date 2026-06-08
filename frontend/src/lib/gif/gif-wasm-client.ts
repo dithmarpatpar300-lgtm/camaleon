@@ -1,3 +1,5 @@
+import { importWasmGlue } from "@/lib/wasm/load-glue";
+
 export type GifMeta = {
   frameCount: number;
   width: number;
@@ -37,9 +39,7 @@ export type GifSessionHandle = {
 let initPromise: Promise<GifWasmModule> | null = null;
 
 async function loadGifWasm(): Promise<GifWasmModule> {
-  const module = (await import(
-    /* webpackIgnore: true */ "/wasm/transmutador_gif/transmutador_gif.js"
-  )) as GifWasmModule;
+  const module = (await importWasmGlue("transmutador_gif")) as GifWasmModule;
   await module.default();
   return module;
 }

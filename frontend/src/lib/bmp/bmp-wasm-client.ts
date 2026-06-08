@@ -1,3 +1,5 @@
+import { importWasmGlue } from "@/lib/wasm/load-glue";
+
 export type BmpMeta = {
   width: number;
   height: number;
@@ -24,9 +26,7 @@ type BmpMetaHandle = {
 let initPromise: Promise<BmpWasmModule> | null = null;
 
 async function loadBmpWasm(): Promise<BmpWasmModule> {
-  const module = (await import(
-    /* webpackIgnore: true */ "/wasm/transmutador_bmp/transmutador_bmp.js"
-  )) as BmpWasmModule;
+  const module = (await importWasmGlue("transmutador_bmp")) as BmpWasmModule;
   await module.default();
   return module;
 }

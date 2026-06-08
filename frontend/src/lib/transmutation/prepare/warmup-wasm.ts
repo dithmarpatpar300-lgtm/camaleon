@@ -1,37 +1,23 @@
 import type { TransmutationModule } from "@/workers/types";
 import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
+import { importWasmGlue } from "@/lib/wasm/load-glue";
 
-async function warmupJpg(): Promise<void> {
-  const m = await import(/* webpackIgnore: true */ "/wasm/transmutador_jpg/transmutador_jpg.js");
-  await m.default();
-}
-
-async function warmupPng(): Promise<void> {
-  const m = await import(/* webpackIgnore: true */ "/wasm/transmutador_png/transmutador_png.js");
-  await m.default();
-}
-
-async function warmupWebp(): Promise<void> {
-  const m = await import(/* webpackIgnore: true */ "/wasm/transmutador_webp/transmutador_webp.js");
-  await m.default();
-}
-
-async function warmupEncode(): Promise<void> {
-  const m = await import(/* webpackIgnore: true */ "/wasm/transmutador_encode/transmutador_encode.js");
+async function warmupCrate(crate: Parameters<typeof importWasmGlue>[0]): Promise<void> {
+  const m = await importWasmGlue(crate);
   await m.default();
 }
 
 export async function warmupTransmutatorModule(module: TransmutationModule): Promise<void> {
   switch (module) {
     case "transmutador_jpg":
-      return warmupJpg();
+      return warmupCrate("transmutador_jpg");
     case "transmutador_png":
-      return warmupPng();
+      return warmupCrate("transmutador_png");
     case "transmutador_webp":
-      return warmupWebp();
+      return warmupCrate("transmutador_webp");
     case "transmutador_encode":
-      return warmupEncode();
+      return warmupCrate("transmutador_encode");
     case "transmutador_gif":
       return ensureGifWasm().then(() => undefined);
     case "transmutador_bmp":
