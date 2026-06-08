@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useOverlayScrollbar } from "@/hooks/useOverlayScrollbar";
+import { syncOverlayScrollClass } from "@/lib/prefs";
 import { useTheme } from "@/providers/ThemeProvider";
 import { subscribeScrollLock } from "@/lib/scroll-lock";
 
@@ -15,10 +16,21 @@ export function OverlayScrollbar() {
   const { state, handlers, thumbRef } = useOverlayScrollbar();
   const { theme } = useTheme();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setEligible(finePointer.matches && !reducedMotion.matches);
+
+    const update = () => {
+      setEligible(syncOverlayScrollClass());
+    };
+
+    update();
+    finePointer.addEventListener("change", update);
+    reducedMotion.addEventListener("change", update);
+    return () => {
+      finePointer.removeEventListener("change", update);
+      reducedMotion.removeEventListener("change", update);
+    };
   }, []);
 
   useEffect(() => subscribeScrollLock(setScrollLocked), []);
@@ -27,7 +39,7 @@ export function OverlayScrollbar() {
   if (!state.hasOverflow) return null;
 
   const isDark = theme === "dark";
-  const { visibility, dragging } = state;
+  const { visibility } = state;
 
   const THUMB_W_IDLE = 2;
   const THUMB_W_ACTIVE = 6;
