@@ -3,7 +3,7 @@ use std::io::Cursor;
 use image::{ImageBuffer, Rgb, Rgba};
 
 use transmutador_bmp::{
-    estimate_bmp_to_jpg_size, estimate_bmp_to_png_size, transmutar_bmp_a_jpg_inner,
+    estimate_bmp_to_jpg_size, estimate_bmp_to_png_size, inspect_bmp, transmutar_bmp_a_jpg_inner,
     transmutar_bmp_a_png_inner,
 };
 
@@ -24,6 +24,26 @@ fn create_bmp_rgba() -> Vec<u8> {
     let mut buf = Cursor::new(Vec::new());
     img.write_to(&mut buf, image::ImageFormat::Bmp)
         .expect("fixture: encode BMP");
+    buf.into_inner()
+}
+
+fn create_bmp_32_opaque() -> Vec<u8> {
+    let img: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::from_fn(16, 16, |x, y| {
+        Rgba([(x * 16) as u8, (y * 16) as u8, 128, 255])
+    });
+    let mut buf = Cursor::new(Vec::new());
+    img.write_to(&mut buf, image::ImageFormat::Bmp)
+        .expect("fixture: encode opaque 32-bit BMP");
+    buf.into_inner()
+}
+
+fn create_bmp_8bit() -> Vec<u8> {
+    let img: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::from_fn(16, 16, |x, y| {
+        Rgb([((x + y) * 8) as u8, 64, 192])
+    });
+    let mut buf = Cursor::new(Vec::new());
+    img.write_to(&mut buf, image::ImageFormat::Bmp)
+        .expect("fixture: encode 8-bit BMP");
     buf.into_inner()
 }
 
@@ -111,6 +131,53 @@ fn bmp_alpha_flatten() {
     let bmp = create_bmp_rgba();
     let jpg = transmutar_bmp_a_jpg_inner(&bmp, 85, 255, 255, 255).expect("convert");
     assert_eq!(&jpg[0..2], [0xff, 0xd8]);
+}
+
+#[test]
+fn bmp_8bit_palette_produces_valid_png() {
+    let bmp = create_bmp_8bit();
+    let png = transmutar_bmp_a_png_inner(&bmp, 6).expect("convert");
+    assert_eq!(&png[0..8], b"\x89PNG\r\n\x1a\n");
+    let decoded = image::load_from_memory(&png).expect("decode");
+    assert_eq!(decoded.width(), 16);
+}
+
+#[test]
+fn bmp_32_opaque_produces_rgb_png() {
+    let bmp = create_bmp_32_opaque();
+    let png = transmutar_bmp_a_png_inner(&bmp, 6).expect("convert");
+    assert_eq!(png_ihdr_color_type(&png), Some(2));
+}
+
+#[test]
+fn compression_level_affects_png_size() {
+    let bmp = create_bmp_rgb();
+    let fast = transmutar_bmp_a_png_inner(&bmp, 1).expect("fast");
+    let max = transmutar_bmp_a_png_inner(&bmp, 9).expect("max");
+    assert!(max.len() <= fast.len());
+}
+
+#[test]
+fn bmp_rgba_jpg_with_black_background() {
+    let bmp = create_bmp_rgba();
+    let jpg = transmutar_bmp_a_jpg_inner(&bmp, 85, 0, 0, 0).expect("convert");
+    assert_eq!(&jpg[0..2], [0xff, 0xd8]);
+}
+
+#[test]
+fn inspect_bmp_header_without_full_decode() {
+    let bmp = create_bmp_rgba();
+    let info = inspect_bmp(&bmp).expect("inspect");
+    assert_eq!(info.width, 16);
+    assert_eq!(info.height, 16);
+    assert!(info.bit_count == 24 || info.bit_count == 32);
+}
+
+#[test]
+fn inspect_bmp_opaque_reports_no_alpha() {
+    let bmp = create_bmp_32_opaque();
+    let info = inspect_bmp(&bmp).expect("inspect");
+    assert!(!info.has_meaningful_alpha);
 }
 
 #[test]

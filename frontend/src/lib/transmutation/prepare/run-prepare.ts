@@ -1,5 +1,6 @@
 import type { ToolDefinition } from "@/lib/tools/types";
-import { detectBmpAlpha } from "@/lib/format/detect-bmp-alpha";
+import { bmpHasMeaningfulAlpha } from "@/lib/format/detect-bmp-alpha";
+import { inspectBmpMeta } from "@/lib/bmp/bmp-wasm-client";
 import { detectGifAlpha } from "@/lib/format/detect-gif-alpha";
 import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
 import { detectWebpAlpha } from "@/lib/format/detect-webp-alpha";
@@ -47,10 +48,14 @@ function detectAlphaForTool(toolId: string, bytes: ArrayBuffer): boolean {
     case "gif-to-jpg":
       return detectGifAlpha(bytes);
     case "bmp-to-jpg":
-      return detectBmpAlpha(bytes);
+      return bmpHasMeaningfulAlpha(bytes);
     default:
       return false;
   }
+}
+
+function isBmpTool(toolId: string): boolean {
+  return toolId === "bmp-to-png" || toolId === "bmp-to-jpg";
 }
 
 function isGifTool(toolId: string): boolean {
@@ -84,6 +89,7 @@ export async function prepareFileForTool(
   // ── Phase: analyze ───────────────────────────────────────────────────
   const overEngineLimit = exceedsEngineLimit(bytes.byteLength);
   let gifSession = null;
+  let bmpMeta = null;
 
   if (isGifTool(tool.id)) {
     if (overEngineLimit) {
@@ -122,6 +128,23 @@ export async function prepareFileForTool(
         detailParams: { current: lastRafFrame || gifSession.frame_count },
       });
     }
+  } else if (isBmpTool(tool.id)) {
+    emit(onProgress, "analyze", 0, { phaseLabelKey: "prepare.phases.analyzeBmp" });
+    await yieldToMain();
+    if (!overEngineLimit) {
+      try {
+        bmpMeta = await inspectBmpMeta(new Uint8Array(bytes));
+      } catch {
+        bmpMeta = null;
+      }
+    }
+    emit(onProgress, "analyze", 1, {
+      phaseLabelKey: "prepare.phases.analyzeBmp",
+      detailLabelKey: bmpMeta ? "prepare.bmpMeta" : undefined,
+      detailParams: bmpMeta
+        ? { width: bmpMeta.width, height: bmpMeta.height, bpp: bmpMeta.bitCount }
+        : undefined,
+    });
   } else if (needsAlphaScan(tool)) {
     emit(onProgress, "analyze", 0);
     await yieldToMain();
@@ -139,7 +162,12 @@ export async function prepareFileForTool(
   emit(onProgress, "finalize", 1);
 
   return {
-    hasAlpha: needsAlphaScan(tool) ? detectAlphaForTool(tool.id, bytes) : false,
+    hasAlpha: needsAlphaScan(tool)
+      ? tool.id === "bmp-to-jpg"
+        ? bmpMeta?.hasMeaningfulAlpha ?? bmpHasMeaningfulAlpha(bytes)
+        : detectAlphaForTool(tool.id, bytes)
+      : false,
     gifSession,
+    bmpMeta,
   };
 }

@@ -3,6 +3,8 @@
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
+import type { BmpMeta } from "@/lib/bmp/bmp-wasm-client";
+import { formatBmpMetaLine } from "@/lib/bmp/bmp-wasm-client";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
 import type { SizeDelta } from "@/lib/format/metrics";
 import { formatBytes } from "@/lib/format/bytes";
@@ -14,6 +16,7 @@ import { MetricsPanel } from "./MetricsPanel";
 import { TransparencyNotice } from "./TransparencyNotice";
 import { GifFrameScrubber } from "./GifFrameScrubber";
 import { LargeFileNotice } from "./LargeFileNotice";
+import { BmpPngGrowthNotice } from "./BmpPngGrowthNotice";
 import { useI18n } from "@/providers/I18nProvider";
 
 type StagedWorkspaceProps = {
@@ -24,6 +27,7 @@ type StagedWorkspaceProps = {
   onOptionsChange: (next: TransmutationOptions) => void;
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
+  bmpMeta: BmpMeta | null;
   panelOptionSpecs: NonNullable<ToolDefinition["optionSpecs"]>;
   hasOptions: boolean;
   backgroundSpec?: ColorOptionSpec;
@@ -52,6 +56,7 @@ export function StagedWorkspace({
   onOptionsChange,
   hasAlpha,
   gifSession,
+  bmpMeta,
   panelOptionSpecs,
   hasOptions,
   backgroundSpec,
@@ -66,8 +71,13 @@ export function StagedWorkspace({
 }: StagedWorkspaceProps) {
   const { t } = useI18n();
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
+  const isBmpToPng = tool.id === "bmp-to-png";
   const frameIndex = options.frameIndex ?? 0;
   const canTransmute = ready && !metrics.engineLimitExceeded;
+  const showBmpGrowthWarning =
+    isBmpToPng &&
+    metrics.estimateDelta != null &&
+    metrics.estimateDelta.deltaPct > 0;
 
   return (
     <div className="p-5">
@@ -78,13 +88,16 @@ export function StagedWorkspace({
             className="text-sm font-medium text-text-primary"
           />
           <p className="text-xs text-text-muted">{formatBytes(fileSize)}</p>
+          {bmpMeta && (
+            <p className="text-xs text-text-muted">{formatBmpMetaLine(bmpMeta)}</p>
+          )}
         </div>
         <Button variant="ghost" size="sm" className="shrink-0" onClick={onReset}>
           {t("panel.changeFile")}
         </Button>
       </div>
 
-      {metrics.engineLimitExceeded && <LargeFileNotice />}
+      {metrics.engineLimitExceeded && <LargeFileNotice toolId={tool.id} />}
 
       {isGifTool && gifSession?.is_animated && (
         <GifFrameScrubber
@@ -133,6 +146,7 @@ export function StagedWorkspace({
           onRequestEstimate={onRequestEstimate}
         />
       </div>
+      {showBmpGrowthWarning && <BmpPngGrowthNotice />}
 
       <Button onClick={onTransmutar} disabled={!canTransmute} className="w-full">
         {!ready

@@ -1,4 +1,5 @@
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
+import type { BmpMeta } from "@/lib/bmp/bmp-wasm-client";
 
 export type PreparePhaseId =
   | "reading"
@@ -22,6 +23,7 @@ export type PrepareProgress = {
 export type PreparedFileContext = {
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
+  bmpMeta: BmpMeta | null;
 };
 
 export function releasePreparedContext(ctx: PreparedFileContext | null): void {

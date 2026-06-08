@@ -3,8 +3,14 @@
 import { ENGINE_MAX_INPUT_LABEL } from "@/lib/transmutation/limits";
 import { useI18n } from "@/providers/I18nProvider";
 
-export function LargeFileNotice() {
+type LargeFileNoticeProps = {
+  /** When set to a BMP tool id, shows a format-specific hint. */
+  toolId?: string;
+};
+
+export function LargeFileNotice({ toolId }: LargeFileNoticeProps) {
   const { t } = useI18n();
+  const isBmp = toolId === "bmp-to-png" || toolId === "bmp-to-jpg";
 
   return (
     <div
@@ -13,7 +19,9 @@ export function LargeFileNotice() {
     >
       <p className="font-medium">{t("panel.largeFile.title")}</p>
       <p className="mt-1 text-warning/90">
-        {t("panel.largeFile.body", { limit: ENGINE_MAX_INPUT_LABEL })}
+        {isBmp
+          ? t("panel.largeFile.bmpBody", { limit: ENGINE_MAX_INPUT_LABEL })
+          : t("panel.largeFile.body", { limit: ENGINE_MAX_INPUT_LABEL })}
       </p>
     </div>
   );

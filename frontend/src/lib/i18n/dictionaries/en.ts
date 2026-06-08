@@ -117,11 +117,13 @@ const en: Dictionary = {
     switchToBar: "Switch to bar view",
     switchToRing: "Switch to ring view",
     gifFrameProgress: "Frame {current}",
+    bmpMeta: "{width} × {height} · {bpp}-bit",
     phases: {
       reading: "Reading file…",
       engine: "Loading conversion engine…",
       analyze: "Analyzing image…",
       analyzeGif: "Reading animation frames…",
+      analyzeBmp: "Reading bitmap header…",
       analyzeSkippedLimit: "Skipping deep analysis — file exceeds engine limit",
       finalize: "Preparing workspace…",
       transmuting: "Transmuting…",
@@ -163,6 +165,7 @@ const en: Dictionary = {
     largeFile: {
       title: "File exceeds engine limit",
       body: "This file is larger than the {limit} limit. You can adjust options, but conversion is disabled until you use a smaller file.",
+      bmpBody: "Uncompressed BMP files grow quickly — this file exceeds the {limit} limit. Resize or re-export from source before converting.",
     },
     previewAlt: "Preview of {fileName}",
     transparencyNotice: {
@@ -191,6 +194,9 @@ const en: Dictionary = {
       loadingMeta: "Reading GIF frames…",
       loadingPreview: "Rendering preview…",
       noPreview: "Preview unavailable",
+    },
+    bmpEstimate: {
+      growthWarning: "Estimated PNG is larger than this BMP — noisy or high-entropy content may not compress well with DEFLATE.",
     },
   },
 

@@ -63,6 +63,14 @@ declare module "*/transmutador_gif/transmutador_gif.js" {
 }
 
 declare module "*/transmutador_bmp/transmutador_bmp.js" {
+  export class BmpMeta {
+    readonly width: number;
+    readonly height: number;
+    readonly bit_count: number;
+    readonly compression: number;
+    readonly has_meaningful_alpha: boolean;
+  }
+  export function inspect_bmp_meta(input_bytes: Uint8Array): BmpMeta;
   export function transmutar_bmp_a_png(input_bytes: Uint8Array): Uint8Array;
   export function transmutar_bmp_a_png_with_compression(input_bytes: Uint8Array, compression: number): Uint8Array;
   export function estimate_bmp_to_png_size(input_bytes: Uint8Array, compression: number): number;

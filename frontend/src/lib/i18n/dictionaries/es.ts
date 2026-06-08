@@ -117,11 +117,13 @@ const es: Dictionary = {
     switchToBar: "Cambiar a vista de barra",
     switchToRing: "Cambiar a vista de anillo",
     gifFrameProgress: "Fotograma {current}",
+    bmpMeta: "{width} × {height} · {bpp} bits",
     phases: {
       reading: "Leyendo archivo…",
       engine: "Cargando motor de conversion…",
       analyze: "Analizando imagen…",
       analyzeGif: "Leyendo fotogramas de animacion…",
+      analyzeBmp: "Leyendo cabecera del bitmap…",
       analyzeSkippedLimit: "Analisis profundo omitido — archivo supera el limite del motor",
       finalize: "Preparando espacio de trabajo…",
       transmuting: "Transmutando…",
@@ -163,6 +165,7 @@ const es: Dictionary = {
     largeFile: {
       title: "Archivo supera el limite del motor",
       body: "Este archivo es mayor que el limite de {limit}. Puedes ajustar opciones, pero la conversion esta deshabilitada hasta usar un archivo mas pequeno.",
+      bmpBody: "Los BMP sin comprimir crecen rapido — este archivo supera el limite de {limit}. Reduce dimensiones o reexporta desde el origen antes de convertir.",
     },
     previewAlt: "Vista previa de {fileName}",
     transparencyNotice: {
@@ -191,6 +194,9 @@ const es: Dictionary = {
       loadingMeta: "Leyendo fotogramas del GIF…",
       loadingPreview: "Generando vista previa…",
       noPreview: "Vista previa no disponible",
+    },
+    bmpEstimate: {
+      growthWarning: "El PNG estimado es mayor que este BMP — contenido ruidoso o de alta entropia puede comprimirse peor con DEFLATE.",
     },
   },
 

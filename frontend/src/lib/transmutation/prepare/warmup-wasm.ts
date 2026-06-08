@@ -1,4 +1,5 @@
 import type { TransmutationModule } from "@/workers/types";
+import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
 
 async function warmupJpg(): Promise<void> {
@@ -21,11 +22,6 @@ async function warmupEncode(): Promise<void> {
   await m.default();
 }
 
-async function warmupBmp(): Promise<void> {
-  const m = await import(/* webpackIgnore: true */ "/wasm/transmutador_bmp/transmutador_bmp.js");
-  await m.default();
-}
-
 export async function warmupTransmutatorModule(module: TransmutationModule): Promise<void> {
   switch (module) {
     case "transmutador_jpg":
@@ -39,7 +35,7 @@ export async function warmupTransmutatorModule(module: TransmutationModule): Pro
     case "transmutador_gif":
       return ensureGifWasm().then(() => undefined);
     case "transmutador_bmp":
-      return warmupBmp();
+      return ensureBmpWasm().then(() => undefined);
     default:
       throw new Error(`Unknown module: ${module}`);
   }

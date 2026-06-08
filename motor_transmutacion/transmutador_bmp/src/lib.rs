@@ -3,6 +3,8 @@
 //! BMP sources are typically uncompressed; PNG output may be larger or smaller
 //! depending on content. JPEG output is always lossy.
 
+mod bmp_probe;
+
 use std::io::Cursor;
 
 use core_utils::counting_writer::CountingWriter;
@@ -18,6 +20,61 @@ pub const MAX_COMPRESSION: u8 = 9;
 pub const DEFAULT_QUALITY: u8 = 85;
 pub const MIN_QUALITY: u8 = 1;
 pub const MAX_QUALITY: u8 = 100;
+
+pub use bmp_probe::{inspect_bmp, BmpInfo};
+
+#[wasm_bindgen]
+pub struct BmpMeta {
+    width: u32,
+    height: u32,
+    bit_count: u16,
+    compression: u32,
+    has_meaningful_alpha: bool,
+}
+
+#[wasm_bindgen]
+impl BmpMeta {
+    #[wasm_bindgen(getter)]
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn bit_count(&self) -> u16 {
+        self.bit_count
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn compression(&self) -> u32 {
+        self.compression
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn has_meaningful_alpha(&self) -> bool {
+        self.has_meaningful_alpha
+    }
+}
+
+fn info_to_meta(info: BmpInfo) -> BmpMeta {
+    BmpMeta {
+        width: info.width,
+        height: info.height,
+        bit_count: info.bit_count,
+        compression: info.compression,
+        has_meaningful_alpha: info.has_meaningful_alpha,
+    }
+}
+
+#[wasm_bindgen]
+pub fn inspect_bmp_meta(input_bytes: &[u8]) -> Result<BmpMeta, String> {
+    core_utils::validate_input(input_bytes)?;
+    Ok(info_to_meta(inspect_bmp(input_bytes)?))
+}
 
 fn validate_compression(c: u8) -> Result<u8, String> {
     if c == 0 {
@@ -77,9 +134,21 @@ fn decode_bmp(input: &[u8]) -> Result<image::DynamicImage, String> {
         .map_err(|e| format!("Failed to decode BMP: {}", e))
 }
 
+/// True when any pixel has alpha below 255 (semantic transparency, not just 32-bit storage).
+fn rgba_has_meaningful_alpha(rgba: &image::RgbaImage) -> bool {
+    rgba.pixels().any(|p| p[3] < 255)
+}
+
+fn bmp_has_meaningful_alpha(img: &image::DynamicImage) -> bool {
+    if !img.color().has_alpha() {
+        return false;
+    }
+    rgba_has_meaningful_alpha(&img.to_rgba8())
+}
+
 fn bmp_bytes_to_png_bytes(input: &[u8], compression: u8) -> Result<Vec<u8>, String> {
     let img = decode_bmp(input)?;
-    let has_alpha = img.color().has_alpha();
+    let meaningful_alpha = bmp_has_meaningful_alpha(&img);
 
     let mut buf = Cursor::new(Vec::new());
     let encoder = PngEncoder::new_with_quality(
@@ -88,7 +157,7 @@ fn bmp_bytes_to_png_bytes(input: &[u8], compression: u8) -> Result<Vec<u8>, Stri
         FilterType::Adaptive,
     );
 
-    if has_alpha {
+    if meaningful_alpha {
         let rgba = img.to_rgba8();
         encoder
             .write_image(
@@ -139,7 +208,7 @@ pub fn estimate_bmp_to_png_size(input_bytes: &[u8], compression: u8) -> Result<u
     core_utils::validate_input(input_bytes)?;
     validate_compression(compression)?;
     let img = decode_bmp(input_bytes)?;
-    let has_alpha = img.color().has_alpha();
+    let meaningful_alpha = bmp_has_meaningful_alpha(&img);
 
     let mut writer = CountingWriter::default();
     let encoder = PngEncoder::new_with_quality(
@@ -148,7 +217,7 @@ pub fn estimate_bmp_to_png_size(input_bytes: &[u8], compression: u8) -> Result<u
         FilterType::Adaptive,
     );
 
-    if has_alpha {
+    if meaningful_alpha {
         let rgba = img.to_rgba8();
         encoder
             .write_image(
@@ -182,7 +251,7 @@ fn bmp_bytes_to_jpg_bytes(
 ) -> Result<Vec<u8>, String> {
     let img = decode_bmp(input)?;
 
-    let rgb = if img.color().has_alpha() {
+    let rgb = if bmp_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {
@@ -239,7 +308,7 @@ pub fn estimate_bmp_to_jpg_size(
     validate_quality(quality)?;
     let img = decode_bmp(input_bytes)?;
 
-    let rgb = if img.color().has_alpha() {
+    let rgb = if bmp_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {

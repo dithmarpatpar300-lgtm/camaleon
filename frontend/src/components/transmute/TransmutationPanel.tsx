@@ -346,6 +346,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 onOptionsChange={setOptions}
                 hasAlpha={hasAlpha}
                 gifSession={prepared.gifSession}
+                bmpMeta={prepared.bmpMeta}
                 panelOptionSpecs={panelOptionSpecs}
                 hasOptions={hasOptions}
                 backgroundSpec={backgroundSpec}
