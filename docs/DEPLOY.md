@@ -117,6 +117,7 @@ npm error The npm ci command can only install with an existing package-lock.json
 | `nodejs_compat` error | Verify `compatibility_flags` in `wrangler.jsonc` |
 | Wrong repo links in app | Update `SITE_REPO_URL` in `frontend/src/lib/site.ts` |
 | `Failed to fetch dynamically imported module: .../wasm/...` | Wasm not in deploy assets — ensure `build:cf` runs `sync-wasm-assets.mjs`; redeploy |
+| `sync-wasm-assets: missing public/wasm` | Old `build:wasm` wrote to wrong path — use `node scripts/build-wasm.mjs` (fixed in repo) |
 | Peso estimado shows `—` | Same root cause — estimate runs in worker after Wasm init |
 
 ---

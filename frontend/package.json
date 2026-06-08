@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build:wasm": "wasm-pack build --target web --out-dir ../public/wasm/transmutador_jpg --out-name transmutador_jpg ../motor_transmutacion/transmutador_jpg && wasm-pack build --target web --out-dir ../public/wasm/transmutador_png --out-name transmutador_png ../motor_transmutacion/transmutador_png && wasm-pack build --target web --out-dir ../public/wasm/transmutador_webp --out-name transmutador_webp ../motor_transmutacion/transmutador_webp && wasm-pack build --target web --out-dir ../public/wasm/transmutador_encode --out-name transmutador_encode ../motor_transmutacion/transmutador_encode",
+    "build:wasm": "node scripts/build-wasm.mjs",
     "build:cf": "opennextjs-cloudflare build && node scripts/sync-wasm-assets.mjs",
     "preview:cf": "npm run build:wasm && opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy:cf": "npm run build:wasm && opennextjs-cloudflare build && opennextjs-cloudflare deploy"

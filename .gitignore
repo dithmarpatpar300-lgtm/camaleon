@@ -29,6 +29,7 @@ Thumbs.db
 
 # Wasm build artifacts (generated)
 /frontend/public/wasm/
+/motor_transmutacion/public/wasm/
 
 # Debug
 npm-debug.log*

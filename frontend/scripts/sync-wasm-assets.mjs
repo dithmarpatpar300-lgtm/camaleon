@@ -6,15 +6,29 @@ import { cpSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
-const src = join(root, "public", "wasm");
 const dest = join(root, ".open-next", "assets", "wasm");
-const sentinel = join(src, "transmutador_jpg", "transmutador_jpg.js");
 
-if (!existsSync(sentinel)) {
+const candidates = [
+  join(root, "public", "wasm"),
+  join(root, "..", "motor_transmutacion", "public", "wasm"),
+];
+
+const src = candidates.find((dir) =>
+  existsSync(join(dir, "transmutador_jpg", "transmutador_jpg.js"))
+);
+
+if (!src) {
   console.error(
-    "sync-wasm-assets: missing public/wasm — run `npm run build:wasm` before build:cf"
+    "sync-wasm-assets: missing wasm output — run `npm run build:wasm` before build:cf"
   );
+  console.error("  checked:", candidates.join(", "));
   process.exit(1);
+}
+
+if (src !== candidates[0]) {
+  console.warn(
+    "sync-wasm-assets: using legacy path motor_transmutacion/public/wasm — update build:wasm"
+  );
 }
 
 cpSync(src, dest, { recursive: true });
