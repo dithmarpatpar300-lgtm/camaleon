@@ -1,4 +1,5 @@
 import type { EncodeSource, OutputExtension, WorkerRequest, WorkerResponse } from "./types";
+import { SOFT_LIMIT_BYTES } from "@/lib/transmutation/limits";
 import { ResultCache } from "./result-cache";
 
 type TransmutarFn = (input: Uint8Array) => Uint8Array;
@@ -441,9 +442,11 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   const input = new Uint8Array(req.bytes);
   const opts = req.options;
 
-  if (req.effectiveMaxInputBytes != null && req.effectiveMaxInputBytes > 0) {
-    applySessionInputLimit(route, req.effectiveMaxInputBytes);
-  }
+  const sessionLimit =
+    req.effectiveMaxInputBytes != null && req.effectiveMaxInputBytes > 0
+      ? req.effectiveMaxInputBytes
+      : SOFT_LIMIT_BYTES;
+  applySessionInputLimit(route, sessionLimit);
 
   try {
     if (isTransmute && req.fingerprint) {
@@ -521,6 +524,8 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err ?? "Unknown worker error");
     return { id: req.id, ok: false, error: message };
+  } finally {
+    applySessionInputLimit(route, SOFT_LIMIT_BYTES);
   }
 }
 

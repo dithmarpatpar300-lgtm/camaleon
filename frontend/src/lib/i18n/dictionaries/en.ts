@@ -174,9 +174,20 @@ const en: Dictionary = {
     oversize: {
       title: "Large file — confirmation required",
       body: "This file is {size} (above the {softLimit} default). Processing may temporarily use about {peakRam} of browser memory and slow this tab.",
+      nearPixelLimit: "This image is {megapixels} MP — close to the {maxMp} MP browser safety limit.",
+      outputHint: "Output size depends on quality and format — it may be larger or smaller than the original.",
       privacy: "Your file never leaves this device — all processing happens locally in your browser.",
       consent: "I understand — process this file anyway",
       blockedButton: "Confirm above to transmute",
+    },
+    dimensionsBlock: {
+      title: "Image too large to process in the browser",
+      body: "{width} × {height} ({megapixels} MP) exceeds the {maxMp} MP limit for in-browser conversion.",
+      astroHint: "Science and space imagery (Hubble, JWST, etc.) often exceeds browser limits. Resize or tile the image with an astronomy pipeline before converting here.",
+      action: "Reduce dimensions in a desktop editor, or export a smaller preview from your source archive.",
+    },
+    outputSizeNotice: {
+      body: "Estimated output is {size} — above the usual {limit} threshold. Conversion can continue; processing may take longer and use more memory.",
     },
     previewAlt: "Preview of {fileName}",
     transparencyNotice: {
@@ -193,7 +204,10 @@ const en: Dictionary = {
       calculating: "Calculating",
       calculate: "Calculate estimate",
       largeFileHint: "Large file — tap to calculate estimated size.",
-      estimateUnavailable: "Estimate unavailable — file exceeds the 50 MB engine limit.",
+      estimateUnavailable: "Estimate unavailable for this file.",
+      consentRequired: "Confirm the large-file notice above to enable estimate and transmute.",
+      pixelsBlocked: "Dimensions exceed the browser limit — estimate unavailable.",
+      estimateInterrupted: "Estimate was interrupted — tap Calculate again.",
       cacheReady: "Ready to transmute",
     },
     gifFrame: {
@@ -344,9 +358,10 @@ const en: Dictionary = {
   errors: {
     emptyInput: "The file is empty. Please select a valid image.",
     tooLarge: "The file is too large. Maximum size is 50 MB.",
+    inputTooLarge: "Input exceeds the session limit ({maxMb} MB). Try a smaller file or confirm the large-file notice.",
     wrongFormat: "Unsupported file format. Please use {formats}.",
     corrupt: "The file appears to be corrupt. Please select a valid image.",
-    dimensionsTooLarge: "The image dimensions exceed the maximum allowed ({max} pixels).",
+    dimensionsTooLarge: "{width} × {height} ({megapixels} MP) exceeds the {maxMp} MP browser limit.",
     notAvailable: "This conversion is not yet available.",
     engineNotReady: "The transmutation engine is still starting. Please try again.",
     generic: "Transmutation failed. Please try again.",

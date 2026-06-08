@@ -3,6 +3,11 @@
 import { formatBytes } from "@/lib/format/bytes";
 import { formatPeakRam, estimatePeakRamBytes } from "@/lib/transmutation/estimate-peak-ram";
 import { ENGINE_MAX_INPUT_LABEL } from "@/lib/transmutation/limits";
+import {
+  MAX_PIXELS,
+  formatMegapixels,
+  pixelCountFromMeta,
+} from "@/lib/transmutation/limit-context";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/providers/I18nProvider";
@@ -22,6 +27,11 @@ export function OversizeConsentPanel({
   const peakRam = formatPeakRam(
     estimatePeakRamBytes(fileSize, sourceMeta?.width, sourceMeta?.height)
   );
+  const pixelCount = pixelCountFromMeta(sourceMeta);
+  const nearPixelLimit =
+    pixelCount != null &&
+    pixelCount <= MAX_PIXELS &&
+    pixelCount >= MAX_PIXELS * 0.9;
 
   return (
     <div
@@ -36,7 +46,16 @@ export function OversizeConsentPanel({
           peakRam,
         })}
       </p>
-      <p className="mt-2 text-xs text-warning/80">{t("panel.oversize.privacy")}</p>
+      {nearPixelLimit && pixelCount != null && (
+        <p className="mt-2 text-xs text-warning/80">
+          {t("panel.oversize.nearPixelLimit", {
+            megapixels: formatMegapixels(pixelCount),
+            maxMp: formatMegapixels(MAX_PIXELS),
+          })}
+        </p>
+      )}
+      <p className="mt-2 text-xs text-warning/80">{t("panel.oversize.outputHint")}</p>
+      <p className="mt-1 text-xs text-warning/80">{t("panel.oversize.privacy")}</p>
       <Button
         variant="subtle"
         size="sm"

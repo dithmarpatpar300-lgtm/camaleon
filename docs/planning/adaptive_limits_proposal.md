@@ -1,7 +1,8 @@
 # Adaptive File Size Limits — Proposal (refined)
 
-> Status: **Implemented** (v1.8.6).  
-> Applies to: all transmutators, desktop + mobile.
+> Status: **Implemented** (v1.8.6) + **refined** (v1.8.7 `LimitContext`).  
+> Applies to: all transmutators, desktop + mobile.  
+> See also: `astro_imagery_tier.md` for science/space mosaics above 40 MP.
 
 ---
 

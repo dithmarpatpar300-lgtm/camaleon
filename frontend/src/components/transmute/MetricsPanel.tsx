@@ -5,6 +5,7 @@ import { useI18n } from "@/providers/I18nProvider";
 import { formatBytes } from "@/lib/format/bytes";
 import { Button } from "@/components/ui/Button";
 import type { SizeDelta } from "@/lib/format/metrics";
+import type { LimitBlockReason } from "@/lib/transmutation/limit-context";
 import { cn } from "@/lib/utils";
 
 type MetricsPanelProps = {
@@ -12,7 +13,8 @@ type MetricsPanelProps = {
   estimateDelta: SizeDelta | null;
   estimating: boolean;
   estimateError: string | null;
-  needsOversizeConsent: boolean;
+  blockReason: LimitBlockReason;
+  canEstimate: boolean;
   cacheWarm: boolean;
   autoEstimate: boolean;
   ready: boolean;
@@ -24,7 +26,8 @@ export function MetricsPanel({
   estimateDelta,
   estimating,
   estimateError,
-  needsOversizeConsent,
+  blockReason,
+  canEstimate,
   cacheWarm,
   autoEstimate,
   ready,
@@ -47,19 +50,26 @@ export function MetricsPanel({
           <EstimatedMetricsValue
             delta={estimateDelta}
             estimating={estimating}
-            estimateError={estimateError}
-            needsOversizeConsent={needsOversizeConsent}
-            cacheWarm={cacheWarm}
+            canEstimate={canEstimate}
             autoEstimate={autoEstimate}
             ready={ready}
             onRequestEstimate={onRequestEstimate}
           />
         </span>
       </div>
-      {needsOversizeConsent && !estimateDelta && (
-        <p className="py-1 text-warning">{t("panel.metrics.estimateUnavailable")}</p>
+      {blockReason === "consent" && !estimateDelta && (
+        <p className="py-1 text-warning">{t("panel.metrics.consentRequired")}</p>
       )}
-      {!needsOversizeConsent && !autoEstimate && !estimateDelta && !estimating && !estimateError && (
+      {blockReason === "pixels" && !estimateDelta && (
+        <p className="py-1 text-warning">{t("panel.metrics.pixelsBlocked")}</p>
+      )}
+      {!canEstimate &&
+        blockReason !== "consent" &&
+        blockReason !== "pixels" &&
+        !estimateDelta && (
+          <p className="py-1 text-warning">{t("panel.metrics.estimateUnavailable")}</p>
+        )}
+      {canEstimate && !autoEstimate && !estimateDelta && !estimating && !estimateError && (
         <p className="py-1 text-text-muted">{t("panel.metrics.largeFileHint")}</p>
       )}
       {estimateError && (
@@ -82,9 +92,7 @@ export function MetricsPanel({
 type EstimatedMetricsValueProps = {
   delta: SizeDelta | null;
   estimating: boolean;
-  estimateError: string | null;
-  needsOversizeConsent: boolean;
-  cacheWarm: boolean;
+  canEstimate: boolean;
   autoEstimate: boolean;
   ready: boolean;
   onRequestEstimate: () => void;
@@ -97,9 +105,7 @@ function estimateValueKey(delta: SizeDelta): string {
 function EstimatedMetricsValue({
   delta,
   estimating,
-  estimateError,
-  needsOversizeConsent,
-  cacheWarm,
+  canEstimate,
   autoEstimate,
   ready,
   onRequestEstimate,
@@ -125,7 +131,7 @@ function EstimatedMetricsValue({
     if (estimating) {
       return <span className="text-text-muted">{t("panel.metrics.calculating")}</span>;
     }
-    if (needsOversizeConsent) {
+    if (!canEstimate) {
       return <span className="text-text-muted">—</span>;
     }
     if (!autoEstimate) {
@@ -144,7 +150,6 @@ function EstimatedMetricsValue({
     return <span>—</span>;
   }
 
-  const isConfirmed = cacheWarm && !estimating;
   const isGrowth = delta.deltaPct > 0;
 
   return (
@@ -159,12 +164,8 @@ function EstimatedMetricsValue({
       <span>{formatBytes(delta.finalSize)}</span>
       <span
         className={cn(
-          "inline-flex items-center rounded-full px-1.5 py-px text-[10px] font-medium tabular-nums leading-none transition-colors duration-300",
-          isConfirmed
-            ? isGrowth
-              ? "bg-error/15 text-error"
-              : "bg-accent/15 text-accent"
-            : "border border-border bg-transparent text-text-muted"
+          "inline-flex items-center rounded-full px-1.5 py-px text-[10px] font-medium tabular-nums leading-none",
+          isGrowth ? "bg-error/15 text-error" : "bg-accent/15 text-accent"
         )}
       >
         {delta.deltaLabel}

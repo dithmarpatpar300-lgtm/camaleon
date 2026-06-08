@@ -209,7 +209,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   }, [tool, t, hardLimit]);
 
   const handleTransmutar = useCallback(async () => {
-    if (!staged || !ready || metrics.needsOversizeConsent) return;
+    if (!staged || !ready || !metrics.limitContext.canTransmute) return;
     setProcessingProgress(0.08);
     setStatus("processing");
     setErrorMessage(null);
@@ -252,7 +252,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     transmutate,
     metrics.setFinalSize,
     metrics.transmuteMeta,
-    metrics.needsOversizeConsent,
+    metrics.limitContext.canTransmute,
     t,
   ]);
 
@@ -390,12 +390,12 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 backgroundSpec={backgroundSpec}
                 backgroundSwatches={backgroundSwatches}
                 currentBackground={currentBackground}
+                limitContext={metrics.limitContext}
                 metrics={{
                   originalSize: metrics.originalSize,
                   estimateDelta: metrics.estimateDelta,
                   estimating: metrics.estimating,
                   estimateError: metrics.estimateError,
-                  needsOversizeConsent: metrics.needsOversizeConsent,
                   cacheWarm: metrics.cacheWarm,
                 }}
                 profile={profile}

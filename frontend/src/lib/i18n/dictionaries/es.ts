@@ -174,9 +174,20 @@ const es: Dictionary = {
     oversize: {
       title: "Archivo grande — confirmacion requerida",
       body: "Este archivo pesa {size} (por encima del limite habitual de {softLimit}). Procesarlo puede usar temporalmente unos {peakRam} de memoria del navegador y ralentizar esta pestana.",
+      nearPixelLimit: "Esta imagen tiene {megapixels} MP — cerca del limite de seguridad de {maxMp} MP en el navegador.",
+      outputHint: "El peso de salida depende de la calidad y el formato — puede ser mayor o menor que el original.",
       privacy: "Tu archivo nunca sale de este dispositivo — todo el procesamiento ocurre localmente en tu navegador.",
       consent: "Entiendo — procesar este archivo igualmente",
       blockedButton: "Confirma arriba para transmutar",
+    },
+    dimensionsBlock: {
+      title: "Imagen demasiado grande para procesar en el navegador",
+      body: "{width} × {height} ({megapixels} MP) supera el limite de {maxMp} MP para conversion en el navegador.",
+      astroHint: "Imagenes cientificas y espaciales (Hubble, JWST, etc.) suelen superar los limites del navegador. Reduce o divide la imagen con un pipeline astronomico antes de convertir aqui.",
+      action: "Reduce dimensiones en un editor de escritorio, o exporta una vista previa mas pequena desde tu archivo fuente.",
+    },
+    outputSizeNotice: {
+      body: "La salida estimada es {size} — por encima del umbral habitual de {limit}. La conversion puede continuar; el proceso puede tardar mas y usar mas memoria.",
     },
     previewAlt: "Vista previa de {fileName}",
     transparencyNotice: {
@@ -193,7 +204,10 @@ const es: Dictionary = {
       calculating: "Calculando",
       calculate: "Calcular estimacion",
       largeFileHint: "Archivo grande — toca para calcular el peso estimado.",
-      estimateUnavailable: "Estimacion no disponible — el archivo supera el limite de 50 MB del motor.",
+      estimateUnavailable: "Estimacion no disponible para este archivo.",
+      consentRequired: "Confirma el aviso de archivo grande arriba para habilitar estimacion y transmutacion.",
+      pixelsBlocked: "Las dimensiones superan el limite del navegador — estimacion no disponible.",
+      estimateInterrupted: "La estimacion se interrumpio — toca Calcular de nuevo.",
       cacheReady: "Listo para transmutar",
     },
     gifFrame: {
@@ -330,9 +344,10 @@ const es: Dictionary = {
   errors: {
     emptyInput: "El archivo esta vacio. Selecciona una imagen valida.",
     tooLarge: "El archivo es demasiado grande. El tamano maximo es 50 MB.",
+    inputTooLarge: "La entrada supera el limite de sesion ({maxMb} MB). Usa un archivo mas pequeno o confirma el aviso de archivo grande.",
     wrongFormat: "Formato no soportado. Usa {formats}.",
     corrupt: "El archivo parece estar danado. Selecciona una imagen valida.",
-    dimensionsTooLarge: "Las dimensiones de la imagen exceden el maximo permitido ({max} pixeles).",
+    dimensionsTooLarge: "{width} × {height} ({megapixels} MP) supera el limite de {maxMp} MP del navegador.",
     notAvailable: "Esta conversion aun no esta disponible.",
     engineNotReady: "El motor de transmutacion aun esta iniciando. Intentalo de nuevo.",
     generic: "La transmutacion fallo. Intentalo de nuevo.",

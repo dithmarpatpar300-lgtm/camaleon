@@ -4,6 +4,7 @@ import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
+import type { LimitContext } from "@/lib/transmutation/limit-context";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
 import type { SizeDelta } from "@/lib/format/metrics";
 import { formatBytes } from "@/lib/format/bytes";
@@ -14,6 +15,8 @@ import { MetricsPanel } from "./MetricsPanel";
 import { TransparencyNotice } from "./TransparencyNotice";
 import { GifFrameScrubber } from "./GifFrameScrubber";
 import { OversizeConsentPanel } from "./OversizeConsentPanel";
+import { DimensionsBlockPanel } from "./DimensionsBlockPanel";
+import { OutputSizeNotice } from "./OutputSizeNotice";
 import { BmpPngGrowthNotice } from "./BmpPngGrowthNotice";
 import { SourceImageMetaLine } from "./SourceImageMetaLine";
 import { useI18n } from "@/providers/I18nProvider";
@@ -27,6 +30,7 @@ type StagedWorkspaceProps = {
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
   sourceMeta: SourceImageMeta | null;
+  limitContext: LimitContext;
   panelOptionSpecs: NonNullable<ToolDefinition["optionSpecs"]>;
   hasOptions: boolean;
   backgroundSpec?: ColorOptionSpec;
@@ -37,7 +41,6 @@ type StagedWorkspaceProps = {
     estimateDelta: SizeDelta | null;
     estimating: boolean;
     estimateError: string | null;
-    needsOversizeConsent: boolean;
     cacheWarm: boolean;
   };
   profile: ResourceProfile;
@@ -57,6 +60,7 @@ export function StagedWorkspace({
   hasAlpha,
   gifSession,
   sourceMeta,
+  limitContext,
   panelOptionSpecs,
   hasOptions,
   backgroundSpec,
@@ -74,11 +78,15 @@ export function StagedWorkspace({
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
   const isBmpToPng = tool.id === "bmp-to-png";
   const frameIndex = options.frameIndex ?? 0;
-  const canTransmute = ready && !metrics.needsOversizeConsent;
+  const dimensionBlocked = limitContext.blockReason === "pixels";
+  const canTransmute = limitContext.canTransmute;
   const showBmpGrowthWarning =
     isBmpToPng &&
     metrics.estimateDelta != null &&
     metrics.estimateDelta.deltaPct > 0;
+  const showOutputWarning =
+    limitContext.warnings.includes("output_may_exceed_hard_limit") &&
+    metrics.estimateDelta != null;
 
   return (
     <div className="p-5">
@@ -96,7 +104,14 @@ export function StagedWorkspace({
         </Button>
       </div>
 
-      {metrics.needsOversizeConsent && (
+      {dimensionBlocked && (
+        <DimensionsBlockPanel
+          sourceMeta={sourceMeta}
+          isAstronomicalScale={limitContext.isAstronomicalScale}
+        />
+      )}
+
+      {!dimensionBlocked && limitContext.needsInputConsent && (
         <OversizeConsentPanel
           fileSize={fileSize}
           sourceMeta={sourceMeta}
@@ -104,7 +119,7 @@ export function StagedWorkspace({
         />
       )}
 
-      {isGifTool && gifSession?.is_animated && (
+      {!dimensionBlocked && isGifTool && gifSession?.is_animated && (
         <GifFrameScrubber
           session={gifSession}
           frameIndex={frameIndex}
@@ -114,7 +129,7 @@ export function StagedWorkspace({
         />
       )}
 
-      {hasAlpha && backgroundSpec && (
+      {!dimensionBlocked && hasAlpha && backgroundSpec && (
         <div className="mb-4">
           <TransparencyNotice
             background={currentBackground}
@@ -127,7 +142,7 @@ export function StagedWorkspace({
         </div>
       )}
 
-      {hasOptions && (
+      {!dimensionBlocked && hasOptions && (
         <div className="mb-5 border-t border-border pt-4">
           <OptionsControls
             toolId={tool.id}
@@ -138,28 +153,41 @@ export function StagedWorkspace({
         </div>
       )}
 
-      <div className={hasOptions ? "mb-5" : "mb-5 border-t border-border pt-4"}>
-        <MetricsPanel
-          originalSize={metrics.originalSize}
-          estimateDelta={metrics.estimateDelta}
-          estimating={metrics.estimating}
-          estimateError={metrics.estimateError}
-          needsOversizeConsent={metrics.needsOversizeConsent}
-          cacheWarm={metrics.cacheWarm}
-          autoEstimate={profile.autoEstimate}
-          ready={ready}
-          onRequestEstimate={onRequestEstimate}
+      {!dimensionBlocked && (
+        <div className={hasOptions ? "mb-5" : "mb-5 border-t border-border pt-4"}>
+          <MetricsPanel
+            originalSize={metrics.originalSize}
+            estimateDelta={metrics.estimateDelta}
+            estimating={metrics.estimating}
+            estimateError={metrics.estimateError}
+            blockReason={limitContext.blockReason}
+            canEstimate={limitContext.canEstimate}
+            cacheWarm={metrics.cacheWarm}
+            autoEstimate={profile.autoEstimate}
+            ready={ready}
+            onRequestEstimate={onRequestEstimate}
+          />
+        </div>
+      )}
+
+      {showOutputWarning && metrics.estimateDelta && (
+        <OutputSizeNotice
+          estimatedSize={metrics.estimateDelta.finalSize}
+          hardLimitBytes={limitContext.hardLimitBytes}
         />
-      </div>
+      )}
+
       {showBmpGrowthWarning && <BmpPngGrowthNotice />}
 
-      <Button onClick={onTransmutar} disabled={!canTransmute} className="w-full">
-        {!ready
-          ? t("panel.initializing")
-          : metrics.needsOversizeConsent
-            ? t("panel.oversize.blockedButton")
-            : t("panel.transmuteButton")}
-      </Button>
+      {!dimensionBlocked && (
+        <Button onClick={onTransmutar} disabled={!canTransmute} className="w-full">
+          {!ready
+            ? t("panel.initializing")
+            : limitContext.needsInputConsent
+              ? t("panel.oversize.blockedButton")
+              : t("panel.transmuteButton")}
+        </Button>
+      )}
     </div>
   );
 }
