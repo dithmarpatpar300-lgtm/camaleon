@@ -2,28 +2,30 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v1.8.3** (App) · Engine v1.4.1 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v1.9.0** (App) · Engine v1.4.2 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v1.8.3)
+## What works today (v1.9.0)
 
 | Capability | Status |
 |------------|--------|
 | **JPG / JPEG ↔ PNG** | Lossless PNG compression (1–9); JPEG quality (1–100); alpha flatten |
 | **WebP suite** | WebP→PNG/JPG; PNG/JPEG→WebP (lossless WebP) |
-| **Ten active tools** | JPG/PNG/WebP suite + GIF + BMP — `/transmute/[slug]` per conversion |
-| **Staged transmutation flow** | Drop → adjust options → Transmutar → preview + size delta → download |
+| **GIF suite** | GIF→PNG/JPG; frame scrubber; GIF89a compositing; animated preview |
+| **BMP suite** | BMP→PNG/JPG; semantic alpha detection; PNG growth warnings |
+| **Ten active tools** | Full Tier 1 + Tier 2 Wave 1 — `/transmute/[slug]` per conversion |
+| **Adaptive limits** | Byte zones (50 MB soft / 150 MB hard), 40 MP pixel cap, oversize consent |
+| **Science imagery** | Client-side downscale (4K–12K presets) for images >40 MP before Wasm |
+| **Memory lifecycle** | Wasm worker recycled when leaving any transmute route (SPA-safe) |
+| **Staged transmutation flow** | Drop → prepare → adjust options → Transmutar → preview + delta → download |
 | **EN / ES** | Full UI i18n with persisted locale |
 | **Legal pages** | `/about`, `/contact`, `/privacy`, `/terms` (bilingual) |
-| **Community feedback** | `/contact` → report bug, suggest feature, security advisory |
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
-| **Security & ops** | `SECURITY.md`, Dependabot, issue templates, [OPERATIONS.md](docs/OPERATIONS.md) |
-| **Privacy** | StripAll metadata default; 100% local processing; no file analytics |
 
-**Next:** real-user feedback → Tier 2 formats (v1.8.x) — [docs/ROADMAP.md](docs/ROADMAP.md).
+**Shipped with v1.9.0:** Tier 2 Wave 1 complete (GIF + BMP premium polish, `LimitContext`, astro downscale). **Deferred:** Tier 2 Wave 2 (TIFF, ICO, TGA) — see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 
@@ -56,12 +58,12 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 cd frontend && npm run build:wasm
 ```
 
-Artifacts: `frontend/public/wasm/transmutador_{jpg,png,webp,encode}/` (gitignored; rebuild after engine changes).
+Artifacts: `frontend/public/wasm/transmutador_{jpg,png,webp,encode,gif,bmp}/` (gitignored; rebuild after engine changes).
 
 ## Development
 
 ```bash
-# 1. Build both Wasm modules (required after motor_transmutacion changes)
+# 1. Build Wasm modules (required after motor_transmutacion changes)
 cd frontend && npm run build:wasm
 
 # 2. Install dependencies (first time)
@@ -99,37 +101,34 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v1.7.9)
-├── motor_transmutacion/     # Rust workspace (v1.4.1)
-│   ├── core_utils/          # Validation, output integrity, metadata scanners
+├── frontend/              # Next.js app (v1.9.0)
+├── motor_transmutacion/   # Rust workspace (v1.4.2)
+│   ├── core_utils/
 │   ├── transmutador_jpg/    # JPEG → PNG
 │   ├── transmutador_png/    # PNG → JPEG
 │   ├── transmutador_webp/   # WebP → PNG / JPEG
-│   └── transmutador_encode/ # PNG / JPEG → WebP
+│   ├── transmutador_encode/ # PNG / JPEG → WebP
+│   ├── transmutador_gif/    # GIF → PNG / JPEG
+│   └── transmutador_bmp/    # BMP → PNG / JPEG
 ├── docs/
-│   ├── SPEC.md              # Architecture reference
-│   ├── ROADMAP.md           # Product phases and status
-│   ├── DEPLOY.md            # Cloudflare Workers deploy guide
-│   └── BRANCHING.md         # main / dev / contrib workflow
-├── CONTRIBUTING.md          # How to contribute (PRs → contrib)
-└── scripts/                 # build-wasm.ps1 / .sh
+│   ├── SPEC.md
+│   ├── ROADMAP.md
+│   ├── DEPLOY.md
+│   └── planning/            # Tier 2 + astro roadmaps
+├── CONTRIBUTING.md
+└── scripts/
 ```
 
 ## Roadmap summary
 
 | Phase | Version | Status |
 |-------|---------|--------|
-| Foundation | v0.1.0 | ✅ |
-| Build & Bridge | v0.2.0 | ✅ |
-| JPG → PNG | v0.3.0 | ✅ |
-| PNG → JPG | v0.4.0 | ✅ |
-| Engine hardening | v0.5.1–v0.6.6 | ✅ |
-| UI track (UI-1..UI-4) | v0.6.1–v0.6.4 | ✅ |
-| **MVP** | **v1.0.0** | ✅ Shipped (UI-5 baseline + CI) |
-| **Tier 1 WebP suite** | **v1.7.6** | ✅ Six active tools |
-| **Launch baseline** | **v1.7.8** | ✅ Legal pages + footer |
-| **Post-launch hardening** | **v1.7.9** | ✅ Security, ops, deploy fixes, `/contact` feedback |
-| **Tier 2 Wave 1** | **v1.8.3** | ✅ GIF + BMP (4 conversions) |
+| **MVP** | v1.0.0 | ✅ |
+| **Tier 1 WebP suite** | v1.7.6 | ✅ Six tools |
+| **Launch baseline** | v1.7.9 | ✅ Legal + deploy |
+| **Tier 2 Wave 1** | v1.8.3–v1.8.7 | ✅ GIF + BMP + limits polish |
+| **Astro downscale + memory** | **v1.9.0** | ✅ **Shipped on `main`** |
+| **Tier 2 Wave 2** | v1.10+ | TIFF, ICO, TGA — planned |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 
@@ -142,9 +141,9 @@ See **[CONTRIBUTING.md](CONTRIBUTING.md)** — open PRs against the `contrib` br
 ## Security & operations
 
 - **[SECURITY.md](SECURITY.md)** — report vulnerabilities responsibly
-- **[docs/OPERATIONS.md](docs/OPERATIONS.md)** — monitoring playbook (traffic, dependencies)
+- **[docs/OPERATIONS.md](docs/OPERATIONS.md)** — monitoring playbook
 - **[docs/SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md)** — pre-release audit
-- **Feedback:** [GitHub Issues](https://github.com/dithmarpatpar300-lgtm/camaleon/issues/new/choose) (bug / feature templates)
+- **Feedback:** [GitHub Issues](https://github.com/dithmarpatpar300-lgtm/camaleon/issues/new/choose)
 
 ---
 

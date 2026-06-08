@@ -1,6 +1,6 @@
 # Wave 2 — Astronomy / Science Imagery (safe resize path)
 
-> Status: **Planned** — starts after Wave 1.5 limits polish (v1.8.7).  
+> Status: **Shipped (v1.9.0 on `main`)** — Phase A–C + memory lifecycle (Wave 2.5).  
 > Goal: support hybrid cases (moderate file size + extreme megapixels) **without** raising `MAX_PIXELS` blindly.
 
 ---
@@ -52,15 +52,15 @@ v1.8.7 correctly **blocks** these with `DimensionsBlockPanel`. Wave 2 adds a **c
 
 ---
 
-## Phase A — Resize engine (Rust-free v1)
+## Phase A — Resize engine (Rust-free v1) ✅
 
-| Task | Detail |
-|------|--------|
-| A1 | `frontend/src/lib/imaging/downscale/` — canvas drawImage with `imageSmoothingQuality: 'high'` |
-| A2 | `computeTargetDimensions(srcW, srcH, maxEdge)` — preserve aspect, cap longest side |
-| A3 | `downscaleToBlob(maxEdge)` → PNG blob for lossless handoff to Wasm |
-| A4 | Progress callback via `createImageBitmap` + chunked yield (`requestAnimationFrame`) |
-| A5 | Unit tests: dimension math; manual QA on 8K/16K samples |
+| Task | Detail | Status |
+|------|--------|--------|
+| A1 | `frontend/src/lib/imaging/downscale/` — canvas drawImage with `imageSmoothingQuality: 'high'` | ✅ |
+| A2 | `computeTargetDimensions(srcW, srcH, maxEdge)` — preserve aspect, cap longest side | ✅ |
+| A3 | `downscaleImageBytes` → PNG for lossless handoff to Wasm | ✅ |
+| A4 | Progress callback via `createImageBitmap` + chunked yield (`requestAnimationFrame`) | ✅ |
+| A5 | Dimension math + manual QA (Carina 8K path) | ✅ |
 
 **Performance guards:**
 
@@ -70,26 +70,35 @@ v1.8.7 correctly **blocks** these with `DimensionsBlockPanel`. Wave 2 adds a **c
 
 ---
 
-## Phase B — Astro UX flow
+## Phase B — Astro UX flow ✅
 
-| Task | Detail |
-|------|--------|
-| B1 | Extend `DimensionsBlockPanel` with CTA: **"Resize to continue"** |
-| B2 | `AstroResizePanel` — presets (4096 / 6144 / 8192 px), custom slider, live MP + RAM preview |
-| B3 | Second consent: *"Downscale is lossy in resolution (not tone); original file unchanged"* |
-| B4 | Prepare sub-phase `resizing` in gate (0–100%) |
-| B5 | i18n EN/ES; link to `astro_imagery_tier.md` |
+| Task | Detail | Status |
+|------|--------|--------|
+| B1 | Extend `DimensionsBlockPanel` with CTA: **"Resize to continue"** | ✅ |
+| B2 | `AstroResizePanel` — presets 4K/6K/8K/12K (12K gated by MP + RAM consent) | ✅ |
+| B3 | Privacy copy + extended 12K desktop consent | ✅ |
+| B4 | Prepare sub-phase `resizing` in gate (0–100%) | ✅ |
+| B5 | i18n EN/ES | ✅ |
 
 ---
 
-## Phase C — Integration with LimitContext
+## Phase C — Integration with LimitContext ✅
 
-| Task | Detail |
-|------|--------|
-| C1 | `PreparedFileContext.resizedBytes` optional — transmute uses resized buffer |
-| C2 | `sourceMeta` shows both original and effective dimensions |
-| C3 | Fingerprint includes resize params (avoid cache collisions) |
-| C4 | `computeLimitContext` uses **effective** dimensions post-resize |
+| Task | Detail | Status |
+|------|--------|--------|
+| C1 | `staged.bytes` holds resized buffer; `post-resize-route.ts` maps Wasm module | ✅ |
+| C2 | `ResizedMetaNotice` + `originalSourceMeta` on `PreparedFileContext` | ✅ |
+| C3 | Fingerprint includes `resizeMaxEdge` | ✅ |
+| C4 | `computeLimitContext` uses effective bytes + post-resize `sourceMeta` | ✅ |
+
+## Phase C.5 — Memory lifecycle (Wave 2.5) ✅
+
+| Task | Detail | Status |
+|------|--------|--------|
+| M1 | `TransmutationRouteLifecycle` — recycle worker on exit from any `/transmute/*` | ✅ |
+| M2 | `releaseHeavySession()` — invalidate estimate cache, reset GIF/BMP limits | ✅ |
+| M3 | `workerEpoch` pattern in `TransmutationWorkerProvider` | ✅ |
+| M4 | Panel unmount → `releasePreparedContext()` (GIF sessions) | ✅ |
 
 ---
 
@@ -133,9 +142,9 @@ Only if JS canvas path is insufficient for TIFF/16-bit:
 | Milestone | Version | Deliverable |
 |-----------|---------|-------------|
 | Wave 1.5 limits polish | v1.8.7 | `LimitContext`, `DimensionsBlockPanel` ✅ |
-| Wave 2 Astro A+B | v1.9.0 | Resize + UX |
-| Wave 2 Astro C | v1.9.1 | Full pipeline integration |
-| TIFF / 16-bit | v2.0+ | Separate tier |
+| Wave 2 Astro A–C + memory | v1.9.0 | Resize + UX + worker recycle ✅ |
+| Tier 2 Wave 2 formats | v1.10+ | TIFF, ICO, TGA |
+| TIFF / 16-bit native | v2.0+ | Separate tier |
 
 ---
 

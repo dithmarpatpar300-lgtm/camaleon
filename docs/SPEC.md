@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.7.0  
+**Version:** 1.9.0  
 **Last updated:** 2026-06-08  
-**Status:** v1.7.9 live on `main`; Tier 2 Wave 1 (GIF+BMP) active on `dev`; Engine v1.4.1
+**Status:** v1.9.0 live on `main` — Tier 1 + Tier 2 Wave 1 (10 tools); Engine v1.4.2
 
 ---
 
@@ -1256,16 +1256,25 @@ Goal: make Camaleon the best browser-local WebP converter. Four conversion direc
 
 **Phase 5.3 spike required:** before implementing PNG→WebP (lossless `image` crate encode), validate actual output quality, size, and `.wasm` binary size in a spike task. If lossless WebP output is unacceptably large for photographic sources, reconsider lossy WebP encode using `webp` crate.
 
-### 12.3 Tier 2 — Raster Classics (v1.8.x — After Tier 1 complete)
+### 12.3 Tier 2 — Raster Classics (v1.8.x–v1.9.0)
 
 Low-risk, high-value conversions using the `image` crate without new native dependencies. All use the same `decode → re-encode` pipeline.
 
+**Wave 1 (shipped v1.9.0 on `main`):**
+
+| Direction | Crate | Status |
+|-----------|-------|--------|
+| GIF → PNG | `transmutador_gif` | ✅ Frame picker + GIF89a compositing (v1.8.4) |
+| GIF → JPEG | `transmutador_gif` | ✅ Alpha flatten + frame index |
+| BMP → PNG | `transmutador_bmp` | ✅ Semantic alpha + PNG growth notice |
+| BMP → JPEG | `transmutador_bmp` | ✅ Quality slider + alpha flatten |
+
+**Client-side astro downscale (v1.9.0):** images exceeding `MAX_PIXELS` (40 MP) may be downscaled via canvas before Wasm handoff. See `docs/planning/wave2_astro_roadmap.md`. Wasm worker is recycled when leaving any `/transmute/*` route to release linear memory.
+
+**Wave 2 (planned v1.10+):**
+
 | Direction | Crate | Notes |
 |-----------|-------|-------|
-| GIF → PNG | `transmutador_gif` | Palette/transparency notice required; first frame only for animated GIF MVP |
-| GIF → JPEG | `transmutador_gif` (add export) | Alpha flatten; first frame only |
-| BMP → PNG | `transmutador_bmp` | Uncompressed raster → lossless PNG; typically large source |
-| BMP → JPEG | `transmutador_bmp` (add export) | Quality slider |
 | TIFF → PNG | `transmutador_tiff` | Multi-page TIFF: MVP = first page only (documented constraint) |
 | TIFF → JPEG | `transmutador_tiff` (add export) | Quality slider |
 | ICO → PNG | `transmutador_ico` | Multi-size ICO: largest size extracted |

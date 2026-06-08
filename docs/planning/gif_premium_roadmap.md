@@ -1,6 +1,6 @@
 # GIF Premium Roadmap — Camaleon v1.8.4+
 
-> **Branch:** `dev` → merge to `main` at **v1.8.4**
+> **Status:** ✅ Shipped — merged to `main` at **v1.9.0** (GIF premium landed v1.8.4; Tier 2 Wave 1 launch v1.9.0)
 > **Scope:** Replace MVP “first frame only” with frame-accurate compositing and interactive frame picker.
 > **Deferred:** Tier 2 Wave 2 (TIFF/ICO/TGA), BMP product redesign, usage analytics.
 

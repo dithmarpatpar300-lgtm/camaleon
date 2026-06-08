@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.8.4 | **GIF Premium** — frame picker + compositing |
-| **Engine (Rust workspace)** | v1.4.2 | Six Wasm crates (+ `transmutador_gif`, `transmutador_bmp`) |
-| **SPEC** | v1.7.0 | Tier 1 complete; Tier 2 Wave 1 complete |
+| **Frontend (app)** | **v1.9.0** | **Tier 2 Wave 1 shipped** — GIF/BMP premium + astro downscale + memory lifecycle |
+| **Engine (Rust workspace)** | v1.4.2 | Eight Wasm crates (`jpg`, `png`, `webp`, `encode`, `gif`, `bmp` + `core_utils`) |
+| **SPEC** | v1.9.0 | Tier 1 + Tier 2 Wave 1 complete on `main` |
 
-**v1.8.4** (GIF Premium): frame scrubber, `frame_index` API, GIF89a compositing via `image`. **v1.8.3** Tier 2 Wave 1 on `main`. Wave 2 (TIFF/ICO/TGA) after GIF polish — see `docs/planning/gif_premium_roadmap.md`.
+**v1.9.0** (public launch baseline for Tier 2): client-side downscale for science imagery (>40 MP), `LimitContext` unified limits, Wasm worker recycle on route exit. **Ten active tools.** Tier 2 Wave 2 (TIFF/ICO/TGA) deferred to v1.10+.
 
 ---
 
@@ -201,14 +201,27 @@ Minimum trust + product surface for real users — **complete before Tier 2**:
 
 ---
 
-## Post-v1.7 Horizon
+## Tier 2 Wave 1 — Shipped on `main` (v1.8.3 → v1.9.0)
+
+| Milestone | Version | Deliverable | Status |
+|-----------|---------|-------------|--------|
+| GIF + BMP crates | v1.8.3 | 4 new tools (10 total) | ✅ |
+| GIF Premium | v1.8.4 | Frame scrubber, GIF89a compositing | ✅ |
+| BMP Premium | v1.8.5–v1.8.6 | Alpha semantics, meta probe, adaptive limits | ✅ |
+| Limits polish | v1.8.7 | `LimitContext`, `DimensionsBlockPanel`, precise i18n errors | ✅ |
+| Astro downscale | v1.9.0 | `AstroResizePanel`, canvas resize, post-resize Wasm routing | ✅ |
+| Memory lifecycle | v1.9.0 | Worker recycle on exit from any `/transmute/*` route | ✅ |
+
+Planning docs: `docs/planning/gif_premium_roadmap.md`, `bmp_premium_roadmap.md`, `wave2_astro_roadmap.md`, `adaptive_limits_proposal.md`.
+
+---
+
+## Post-v1.9 Horizon
 
 | Tier | Target | Features | Notes |
 |------|--------|----------|-------|
-| **Tier 2 Wave 1** | v1.8.3 | GIF, BMP (4 tools) | ✅ Complete — merge to `main` |
-| **Tier 2 polish** | v1.8.6–v1.8.7 | Source meta, adaptive limits, `LimitContext` | ✅ On `dev` |
-| **Wave 2 Astro** | v1.9.0 | Safe downscale path for science imagery (>40 MP) | Planned — see `wave2_astro_roadmap.md` |
-| **Tier 2 Wave 2** | v1.9.x+ | TIFF, ICO, TGA | After astro resize path |
+| **Tier 2 Wave 1** | v1.9.0 | GIF, BMP, limits, astro | ✅ **Shipped on `main`** |
+| **Tier 2 Wave 2** | v1.10+ | TIFF, ICO, TGA | Next format expansion track |
 | **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
 | **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
 
@@ -239,6 +252,7 @@ Minimum trust + product surface for real users — **complete before Tier 2**:
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-08 | Chief Architect (Cursor) | **v1.9.0 shipped on `main`:** Tier 2 Wave 1 complete (GIF/BMP premium, LimitContext, astro downscale, worker memory recycle); app version 1.9.0; Tier 2 Wave 2 deferred |
 | 2026-06-08 | Chief Architect (Cursor) | v1.8.3 Tier 2 Wave 1: `transmutador_gif` + `transmutador_bmp`, 4 tools (GIF/BMP → PNG/JPG), 10 active tools |
 | 2026-06-08 | Chief Architect (Cursor) | v1.7.9 launch-ready: hardening complete, Cloudflare deploy fixes, snapshot updated; Tier 2 gated on user feedback |
 | 2026-06-07 | Chief Architect (Cursor) | Public repo prep: `main`/`dev`/`contrib` branches; internal docs removed from `main`; `CONTRIBUTING.md` + `docs/BRANCHING.md` |
