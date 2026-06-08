@@ -419,6 +419,34 @@ export const TOOLS: ToolDefinition[] = [
       },
     ],
   },
+  {
+    id: "tga-to-png",
+    slug: "tga-to-png",
+    title: "TGA → PNG",
+    fromFormat: "TGA",
+    toFormat: "PNG",
+    module: "transmutador_tga",
+    category: "image",
+    fidelity: "lossless",
+    status: "active",
+    acceptExtensions: [".tga"],
+    outputExtension: "png",
+    optionSpecs: [
+      {
+        kind: "slider",
+        key: "compression",
+        min: 1,
+        max: 9,
+        step: 1,
+        defaultValue: 6,
+        presets: [
+          { label: "fast", value: 1 },
+          { label: "balanced", value: 6 },
+          { label: "minimal", value: 9 },
+        ],
+      },
+    ],
+  },
 ];
 
 export function getToolBySlug(slug: string): ToolDefinition | undefined {

@@ -61,6 +61,10 @@ const es: Dictionary = {
         title: "PNG a ICO — Camaleon",
         description: "Crea un favicon Windows (.ico) desde PNG en tu navegador. Elige 16, 32, 48 o 256 px — solo reduccion.",
       },
+      "tga-to-png": {
+        title: "TGA a PNG — Camaleon",
+        description: "Convierte texturas Targa y assets de juegos a PNG en tu navegador. Raw y RLE, con alpha preservado.",
+      },
     },
   },
 
@@ -116,8 +120,8 @@ const es: Dictionary = {
           body: "No se sube nada. Tus imágenes nunca salen de esta pestaña.",
         },
         tools: {
-          title: "14 herramientas de conversión",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF e ICO — rutas con y sin pérdida donde importa.",
+          title: "15 herramientas de conversión",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO y TGA — rutas con y sin pérdida donde importa.",
         },
         limits: {
           title: "Límites honestos",
@@ -148,6 +152,18 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v1104: {
+        title: "TGA → PNG",
+        summary: "Texturas de juego y assets Targa a PNG — raw, RLE, indexado y alpha 32-bit.",
+        technical:
+          "Nuevo modulo Wasm transmutador_tga (image 0.25 tga+png). Sonda de cabecera, ruta TgaDecoder, normaliza orientacion, aviso rgb555, estimate dentro del 5%.",
+        highlights: {
+          tgaPng: {
+            title: "TGA → PNG",
+            body: "Convierte Targa legacy para web y editores — texturas sin comprimir y RLE, alpha cuando existe.",
+          },
+        },
+      },
       v1103: {
         title: "PNG → ICO",
         summary: "Crea favicons desde PNG — elige 16, 32, 48 o 256 px con reduccion honesta sin ampliar.",
@@ -574,6 +590,21 @@ const es: Dictionary = {
           lowerLabel: "",
           upperLabel: "",
           presets: { "16": "16", "32": "32", "48": "48", "256": "256" },
+        },
+      },
+    },
+    "tga-to-png": {
+      actionTitle: "Convertir a PNG",
+      description: "PNG sin perdida desde Targa — compresion DEFLATE para texturas y assets de juego.",
+      fidelityHint:
+        "TGA raw y RLE soportados. RGB 16-bit usa el bit atributo, no alpha — salida PNG RGB. Mapas de color indexados cuando el decoder lo permite.",
+      options: {
+        compression: {
+          label: "Compresion PNG",
+          hint: "Siempre sin perdida — mas compresion = archivo mas pequeno + proceso mas lento.",
+          lowerLabel: "Mas rapido",
+          upperLabel: "Mas pequeno",
+          presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
         },
       },
     },

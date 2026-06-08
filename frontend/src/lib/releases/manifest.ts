@@ -1,4 +1,5 @@
 import type { ReleaseManifest } from "./types";
+import { releaseV1104 } from "./entries/v1.10.4";
 import { releaseV1103 } from "./entries/v1.10.3";
 import { releaseV1102 } from "./entries/v1.10.2";
 import { releaseV1101 } from "./entries/v1.10.1";
@@ -6,7 +7,7 @@ import { releaseV1100 } from "./entries/v1.10.0";
 import { releaseV190 } from "./entries/v1.9.0";
 
 export const RELEASE_MANIFEST: ReleaseManifest = {
-  entries: [releaseV1103, releaseV1102, releaseV1101, releaseV1100, releaseV190],
+  entries: [releaseV1104, releaseV1103, releaseV1102, releaseV1101, releaseV1100, releaseV190],
   onboarding: {
     titleKey: "releaseComms.onboarding.title",
     subtitleKey: "releaseComms.onboarding.subtitle",

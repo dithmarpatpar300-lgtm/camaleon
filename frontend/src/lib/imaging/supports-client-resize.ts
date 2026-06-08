@@ -14,6 +14,8 @@ export function mimeTypeForTool(tool: ToolDefinition): string {
       return "image/bmp";
     case "TIFF":
       return "image/tiff";
+    case "TGA":
+      return "image/x-tga";
     default:
       return "application/octet-stream";
   }

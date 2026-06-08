@@ -1,7 +1,7 @@
 # Tier 2 — Wave 2 (TIFF, ICO, TGA)
 
-> **Branch:** `dev` → target **v1.10.x** on `main`  
-> **Status:** Phase 7.0–7.2 TIFF ✅ · Phase 7.3.0 ICO spike ✅ · Phase 7.3 ICO→PNG ✅ (v1.10.2) · Phase 7.4 PNG→ICO ✅ (v1.10.3) · Phase 7.5 pending  
+> **Branch:** merged to **`main`** at **v1.10.4**  
+> **Status:** Phase 7.0–7.2 TIFF ✅ · Phase 7.3–7.4 ICO ✅ · Phase 7.5 TGA→PNG ✅ (v1.10.4) · Phase 7.6 polish pending  
 > **Prerequisite:** Tier 2 Wave 1 ✅ · Release Comms ✅ · LimitContext + astro downscale ✅  
 > **Doctrine:** Same pipeline as Wave 1 — decode → honest options → re-encode → StripAll → estimate-first
 
@@ -312,17 +312,175 @@ Frontend: `TransmutationOptions.entryIndex` (parallel `pageIndex` / `frameIndex`
 
 ---
 
-## 4. TGA — format science (summary)
+## 4. TGA — format science (Wave 2 closing format)
 
-**TGA (Targa)** — legacy game / texture format; uncompressed or RLE; 24/32-bit BGR(A).
+### 4.1 What TGA is
 
-| Direction | MVP logic |
-|-----------|-----------|
-| **TGA → PNG** | Decode → PNG; alpha in 32-bit; RLE transparent |
+**TGA (Truevision Targa)** is a **legacy raster** format from the 1980s, still common in **game assets**, **modding**, **Source/GoldSrc** pipelines, and older 3D tools. Unlike TIFF (tag container) or ICO (multi-entry directory), a classic TGA is a **single image** with a fixed **18-byte header** + optional ID field + optional color map + raw or RLE pixel data.
 
-Variables: PNG compression 1–9 only. No encode TGA in Wave 2.
+| Property | Implication for Camaleon |
+|----------|-------------------------|
+| **Header-driven** | Width, height, bpp, image type, and origin live in header — no IFD / ICONDIR |
+| **Single image** | No multi-page or multi-entry picker (simplest Wave 2 UX) |
+| **Pixel order** | Stored **BGR / BGRA** on disk; `image` decoder normalizes to RGB/RGBA |
+| **Origin** | Rows may be **top-left or bottom-left**; decoder must flip (handled by `image::TgaDecoder`) |
+| **Compression** | **Uncompressed (raw)** or **RLE** per scanline packets — user-invisible |
+| **Bit depths** | 8-bit gray, 8-bit gray+alpha, 15/16-bit RGB (5-5-5), 24-bit RGB, 32-bit RGBA, indexed via color map |
+| **TGA 2.0** | Optional footer with extension area (metadata, thumbnails) — **`image` 0.25 does not parse footer**; spike must test real files |
+
+TGA is the **gaming / texture / retro asset** format: users convert when they need PNG for web, editors, or docs — not for archival science (that's TIFF).
+
+### 4.2 What TGA is for (user jobs)
+
+| Use case | Why users convert in Camaleon |
+|----------|------------------------------|
+| **Game texture → PNG** | `.tga` from mod tools, Unreal/Unity exports, or wiki assets → edit in browser |
+| **Source engine assets** | VTF pipeline sometimes starts from TGA; designers want a quick PNG preview |
+| **Alpha cutouts** | 32-bit TGA with transparency → PNG for web compositing |
+| **RLE vs raw** | User does not care — same output; RLE is just smaller on disk |
+| **Indexed / 16-bit** | Old UI skins and palettes — must decode or reject honestly |
+
+### 4.3 What Camaleon will do (MVP)
+
+**Inbound only** — one direction in new crate `transmutador_tga`:
+
+```
+TGA bytes
+  → validate_input (dimensions, byte cap)
+  → inspect_tga_meta (probe header: w, h, bpp, rle, has_alpha, color_mapped)
+  → decode via image::TgaDecoder (or dedicated path if probe needs parity)
+  → StripAll on PNG output
+  → encode PNG compression 1–9
+```
+
+| Direction | Fidelity | User-facing label |
+|-----------|----------|-------------------|
+| **TGA → PNG** | Lossless (re PNG compression only) | Lossless — texture / asset to PNG |
+
+**TGA → ?** for Wave 2:
+
+- ✅ **TGA → PNG** — only outbound path (textures favor lossless export)
+- ❌ **TGA → JPEG** — no product demand in Wave 2; alpha + game assets favor PNG
+- ❌ **TGA → WebP** — Tier 3+ (`transmutador_encode` scope)
+- ❌ **PNG → TGA** — **out of Wave 2** (encode + RLE policy + origin choice = separate product decision)
+
+### 4.4 Logic behind the transmutation
+
+#### TGA → PNG
+
+1. **Probe** 18-byte header (+ skip ID, read color map size if present) — mirror `bmp_probe` / `ico_probe` for UI meta without full decode when possible.
+2. **Decode** with `ImageReader` / `TgaDecoder`:
+   - **Raw truecolor** (type 2), **RLE truecolor** (type 10) — primary MVP paths (24/32 bpp).
+   - **Grayscale** (types 3, 11) → expand to RGB or RGBA PNG as appropriate.
+   - **Color-mapped** (types 1, 9) — supported if `image` decodes; else reject with i18n.
+   - **15/16-bit RGB** — `image` expands 5-5-5 to RGB8; **attribute bit is not alpha** (document in fidelity hint).
+3. **Orientation** — trust `image` flip to top-left RGBA/RGB (spike: bottom-left fixture).
+4. **Encode PNG** with user compression 1–9 (`PngEncoder` + adaptive filter — same as BMP/TIFF/ICO paths).
+5. **StripAll** + post-encode validation.
+
+**Size expectation (honesty copy):**
+
+| Source | Typical PNG outcome |
+|--------|---------------------|
+| **Uncompressed 24/32-bit TGA** | PNG often **smaller** (DEFLATE vs raw BGR) |
+| **RLE TGA** | Decode expands to full raster; PNG size similar to uncompressed equivalent |
+| **Low-color / flat UI** | PNG can be **much smaller** than bloated raw TGA |
+
+**Not JPEG-style “quality”:** PNG compression 1–9 changes **DEFLATE effort only** — pixels are identical at every level. Level **1 = faster encode, larger file**; level **9 = smaller file, slower**. Default UI **6** (balanced). Users comparing round-trip sizes must hold compression level constant (see §4.9 note on ICO round-trip).
+
+### 4.5 Variables modifiable **before** transmutation (UI / Wasm)
+
+| Variable | TGA → PNG | Notes |
+|----------|-----------|-------|
+| **PNG compression** | ✅ (1–9) | Same slider as BMP/TIFF/ICO → PNG; default **6** |
+| **Downscale preset** | ✅ | If pixels > 40 MP — `AstroResizePanel` (4K game textures exist) |
+| **Oversize consent** | ✅ | `LimitContext` byte caps |
+
+**Not user-modifiable (intrinsic):**
+
+- RLE vs raw (decoder handles both)
+- BGR vs RGB channel order (normalized on decode)
+- Image origin (top-left vs bottom-left — engine corrects)
+- 15/16-bit attribute bit semantics
+- Color map contents (read-only from file)
+- TGA 2.0 extension metadata (ignored in MVP if present after pixel data)
+
+**No extra pickers** — unlike TIFF `page_index` or ICO `entry_index`. Simplest tool in Wave 2.
+
+### 4.6 Product constraints
+
+| Tier | Behavior |
+|------|----------|
+| **MVP (v1.10.4)** | Single image per file; `.tga` extension; probe + decode + PNG out |
+| **Future** | PNG → TGA (encode, RLE toggle, origin); TGA → JPEG; batch folder — backlog |
+
+Wasm exports (proposed):
+
+```rust
+inspect_tga_meta(bytes) -> TgaMeta {
+    width, height, pixel_depth, image_type, is_rle, is_color_mapped,
+    has_meaningful_alpha, orientation  // meta for UI / fidelity hint
+}
+render_tga_preview_png(bytes) -> PNG   // compression=1, for prepare pipeline
+transmutar_tga_a_png_with_compression(bytes, compression)
+estimate_tga_to_png_size(bytes, compression)
+```
+
+Frontend: standard tool — **no** `pageIndex` / `entryIndex` / `iconSize`. Only compression slider (+ astro if needed).
+
+### 4.7 Risk matrix (spike gates before Phase 7.5)
+
+| Risk | Mitigation |
+|------|------------|
+| **TGA 2.0 footer / extension area** | Spike real files from Blender, GIMP, Photoshop; if `image` fails on trailing footer, strip or reject with i18n |
+| **15/16-bit “alpha” attribute bit** | `image` maps to RGB8 without alpha — fidelity hint; do not promise transparency |
+| **Color-mapped exotic map sizes** | `image` supports 15/16/24/32 map entries; reject unknown with mapped error |
+| **All-zero alpha channel** | Some tools write 32-bit with A=0 meaning opaque — follow `image` behavior; spike + honesty if wrong |
+| **Huge textures (4K–8K)** | `validate_input` + 40 MP gate + astro downscale path |
+| **Wrong extension** | Accept `.tga` only in MVP (`.vda`/`.icb`/`.vst` backlog) |
+| **Wasm size** | Features `tga`+`png` only; NFR-7 gate ≤ 3 MB (expect **smaller than TIFF**, similar to BMP) |
+| **BGR channel swap** | Rely on `image` `reverse_encoding`; golden test vs known PNG |
+| **Estimate drift** | `estimate_*` within 5% on raw + RLE fixtures |
+
+### 4.8 Spike checklist (Phase 7.5.0 — before coding 7.5)
+
+- [x] `wasm-pack` with `image` features `tga`+`png` only — **203 KB** (see `tier2_wave2_tga_spike_results.md`)
+- [x] Fixture set:
+  - [x] 24-bit RGB raw, bottom-left origin
+  - [x] 32-bit RGBA raw with real alpha
+  - [x] 32-bit RLE truecolor
+  - [x] 8-bit grayscale + 8-bit grayscale RLE
+  - [x] 16-bit RGB (attribute bit) — `is_rgb555`, no false alpha in probe
+  - [x] Indexed color-mapped raw
+  - [x] TGA 2.0 footer suffix (trailing signature bytes)
+- [x] `inspect_tga_meta` vs full decode dimensions parity
+- [x] Orientation: bottom-left source → correct PNG orientation
+- [x] `estimate_tga_to_png_size` within 5% on each fixture class
+- [x] StripAll integration test — `strip_all_no_exif_in_output`
+- [x] Document results in `docs/planning/tier2_wave2_tga_spike_results.md`
+
+**Recommended execution:**
+
+```
+7.5.0  TGA spike (fixtures + wasm size + probe API)
+7.5    TGA → PNG
+```
+
+### 4.9 Cross-format note — ICO round-trip file sizes (user-reported)
+
+Observed: **512×512 PNG ~15.6 KB** → **PNG→ICO @256px ~15.2 KB** → **ICO→PNG @ compression 1 ~18.1 KB**.
+
+This is **expected**, not entropy loss:
+
+1. **PNG is always lossless** — compression slider is **DEFLATE level**, not visual quality. **1 = minimal compression effort = larger file**; **9 = smaller file**. Default in Camaleon is **6**.
+2. **Different resolutions** — after ICO step the raster is **~256px**, not 512px. Comparing KB to the original 512px file mixes **pixel count** and **codec settings**.
+3. **Re-encoding changes bytes** — even identical pixels produce different PNG IDs, filters, and zlib streams after ICO embed → extract → re-encode.
+4. **ICO embed** may use a different zlib level than the user's ICO→PNG export setting.
+
+**Product takeaway:** fidelity hints for ICO→PNG should continue to say “lossless”; optional backlog — clarify that compression **1** means “faster / larger”, not “highest quality”. For fair size checks, compare at the **same compression level** and **same dimensions**.
 
 ---
+
 
 ## 5. Shared engineering pattern (all Wave 2 crates)
 
@@ -361,6 +519,7 @@ Mirror Wave 1:
 7.3.0  ICO spike (entry_index API + fixtures + wasm size)
 7.3    ICO → PNG
 7.4    PNG → ICO
+7.5.0  TGA spike (fixtures + wasm size + probe API)
 7.5    TGA → PNG
 7.6    Wave 2 polish + v1.10.x release (manifest, GitHub release, docs)
 ```
@@ -376,16 +535,29 @@ Mirror Wave 1:
 1. **16-bit TIFF → PNG:** ✅ **8-bit MVP** with honesty copy (`to_rgb8()` policy).
 2. **GeoTIFF:** deferred — optional one-line disclaimer backlog.
 
-### ICO — decisions needed before 7.3.0 spike
+### Resolved (ICO — shipped 7.3–7.4)
 
-| # | Question | Recommendation | Status |
-|---|----------|----------------|--------|
-| 1 | **ICO → PNG:** silent largest vs picker? | **Picker** when `entry_count > 1`; default index = largest area (same score as `image::best_entry`) | ✅ |
-| 2 | **Accept `.cur`?** | **Yes** — same tool, extensions `.ico` + `.cur`; hotspot shown in meta optional, not used in PNG out | ✅ |
-| 3 | **PNG → ICO:** single 256 only vs size presets? | **Presets 16 / 32 / 48 / 256** (default 256); single entry in file | ⏳ confirm |
-| 4 | **PNG → ICO:** upscale if source smaller than target? | **No upscale** — `output = min(source, target)` per side; honesty hint | ⏳ confirm |
-| 5 | **ICO → JPEG?** | **No** — not in Wave 2 scope | ✅ out of scope |
-| 6 | **Multi-size ICO emit?** | **Backlog** (Tier 4 Favicon Suite); MVP single size only | ✅ deferred |
+| # | Decision | Outcome |
+|---|----------|---------|
+| 1 | ICO → PNG: picker vs silent largest | **Picker** when `entry_count > 1`; default = largest area |
+| 2 | Accept `.cur` | **Yes** — `.ico` + `.cur`; hotspot ignored in MVP |
+| 3 | PNG → ICO size presets | **16 / 32 / 48 / 256** (default 256); single entry |
+| 4 | PNG → ICO upscale | **No** — downscale only; honesty hint in UI |
+| 5 | ICO → JPEG | **Out of scope** Wave 2 |
+| 6 | Multi-size ICO emit | **Backlog** (Tier 4 Favicon Suite) |
+
+### Resolved (TGA — spike 7.5.0)
+
+| # | Decision | Outcome |
+|---|----------|---------|
+| 1 | Extensions | **`.tga` only** in MVP |
+| 2 | 15/16-bit TGA | **RGB8** via `image`; `is_rgb555` in probe; fidelity hint in 7.5 |
+| 3 | Indexed color-mapped | **Supported** (types 1/9) |
+| 4 | TGA 2.0 footer | Trailing footer **does not break** decode; extension metadata ignored |
+| 5 | PNG → TGA | **Out of scope** Wave 2 |
+| 6 | TGA → JPEG | **Out of scope** Wave 2 |
+| 7 | All-zero alpha in 32-bit | Follow `image` at product time; no spike blocker |
+| 8 | Preview in prepare | **Yes** — `render_tga_preview_png` exported in spike crate |
 
 ---
 

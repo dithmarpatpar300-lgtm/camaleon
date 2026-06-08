@@ -6,7 +6,8 @@ export type TransmutationModule =
   | "transmutador_gif"
   | "transmutador_bmp"
   | "transmutador_tiff"
-  | "transmutador_ico";
+  | "transmutador_ico"
+  | "transmutador_tga";
 
 export type OutputExtension = "png" | "jpg" | "webp" | "ico";
 

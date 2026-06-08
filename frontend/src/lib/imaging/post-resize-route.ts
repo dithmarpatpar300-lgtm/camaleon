@@ -33,7 +33,7 @@ export function resolvePostResizeWasmConfig(
 }
 
 export function supportsClientResize(tool: ToolDefinition): boolean {
-  const resizable = new Set(["PNG", "JPG", "WEBP", "BMP", "TIFF"]);
+  const resizable = new Set(["PNG", "JPG", "WEBP", "BMP", "TIFF", "TGA"]);
   if (!resizable.has(tool.fromFormat)) return false;
   return resolvePostResizeWasmConfig(tool) != null;
 }

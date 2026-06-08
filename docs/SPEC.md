@@ -1347,15 +1347,15 @@ Low-risk, high-value conversions using the `image` crate without new native depe
 
 **Client-side astro downscale (v1.9.0):** images exceeding `MAX_PIXELS` (40 MP) may be downscaled via canvas before Wasm handoff. See `docs/planning/wave2_astro_roadmap.md`. Wasm worker is recycled when leaving any `/transmute/*` route to release linear memory.
 
-**Wave 2 (planned v1.10+):**
+**Wave 2 (shipped v1.10.0–1.10.4 on `main`):**
 
-| Direction | Crate | Notes |
-|-----------|-------|-------|
-| TIFF → PNG | `transmutador_tiff` | Multi-page TIFF: MVP = first page only (documented constraint) |
-| TIFF → JPEG | `transmutador_tiff` (add export) | Quality slider |
-| ICO → PNG | `transmutador_ico` | Multi-size ICO: largest size extracted |
-| PNG → ICO | `transmutador_ico` (add export) | Resize to 256×256; standard favicon tool |
-| TGA → PNG | `transmutador_tga` | Gaming/asset niche |
+| Direction | Crate | Status |
+|-----------|-------|--------|
+| TIFF → PNG | `transmutador_tiff` | ✅ Multi-page picker; 16-bit → 8-bit policy |
+| TIFF → JPEG | `transmutador_tiff` | ✅ Quality + background flatten |
+| ICO → PNG | `transmutador_ico` | ✅ `.ico`/`.cur`; entry picker |
+| PNG → ICO | `transmutador_ico` | ✅ Presets 16/32/48/256; downscale only |
+| TGA → PNG | `transmutador_tga` | ✅ Raw/RLE; indexed + rgba |
 
 **Execution:** same pattern as Tier 1, one phase at a time, separate prompt per direction. Crates group by source format to minimize crate count.
 

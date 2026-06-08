@@ -9,6 +9,11 @@ import {
   type IcoMeta,
 } from "@/lib/ico/ico-wasm-client";
 import {
+  formatTgaBitDepthLabel,
+  inspectTgaMeta,
+  setTgaSessionInputLimit,
+} from "@/lib/tga/tga-wasm-client";
+import {
   inspectTiffMeta,
   setTiffSessionInputLimit,
   tiffMetaForPage,
@@ -44,6 +49,7 @@ export async function resolveSourceImageMeta(
     if (format === "GIF") await setGifSessionInputLimit(ctx.sessionInputLimitBytes);
     if (format === "TIFF") await setTiffSessionInputLimit(ctx.sessionInputLimitBytes);
     if (format === "ICO") await setIcoSessionInputLimit(ctx.sessionInputLimitBytes);
+    if (format === "TGA") await setTgaSessionInputLimit(ctx.sessionInputLimitBytes);
   }
 
   switch (format) {
@@ -96,6 +102,19 @@ export async function resolveSourceImageMeta(
           height: page.height,
           bitDepthLabel: page.bitDepthLabel,
           pageCount: page.pageCount > 1 ? page.pageCount : undefined,
+        };
+      } catch {
+        return null;
+      }
+    }
+    case "TGA": {
+      try {
+        const meta = await inspectTgaMeta(new Uint8Array(bytes));
+        return {
+          width: meta.width,
+          height: meta.height,
+          bitDepthLabel: formatTgaBitDepthLabel(meta),
+          hasMeaningfulAlpha: meta.hasAlphaChannel,
         };
       } catch {
         return null;

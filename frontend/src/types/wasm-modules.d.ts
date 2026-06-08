@@ -150,3 +150,25 @@ declare module "*/transmutador_bmp/transmutador_bmp.js" {
   export function estimate_bmp_to_jpg_size(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): number;
   export default function init(): Promise<void>;
 }
+
+declare module "*/transmutador_tga/transmutador_tga.js" {
+  export class TgaMeta {
+    readonly width: number;
+    readonly height: number;
+    readonly pixel_depth: number;
+    readonly is_rle: boolean;
+    readonly is_color_mapped: boolean;
+    readonly has_alpha_channel: boolean;
+    readonly is_rgb555: boolean;
+    readonly orientation: string;
+  }
+  export function inspect_tga_meta(input_bytes: Uint8Array): TgaMeta;
+  export function transmutar_tga_a_png(input_bytes: Uint8Array, compression: number): Uint8Array;
+  export function transmutar_tga_a_png_with_compression(
+    input_bytes: Uint8Array,
+    compression: number
+  ): Uint8Array;
+  export function render_tga_preview_png(input_bytes: Uint8Array): Uint8Array;
+  export function estimate_tga_to_png_size(input_bytes: Uint8Array, compression: number): number;
+  export default function init(): Promise<void>;
+}

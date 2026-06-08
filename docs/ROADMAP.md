@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.10.3** (`dev`) | **Tier 2 Wave 2 in progress** — TIFF suite + ICO↔PNG, Release Comms manifest |
-| **Engine (Rust workspace)** | v1.4.2 | Eight Wasm crates (`jpg`, `png`, `webp`, `encode`, `gif`, `bmp`, `tiff`, `ico` + `core_utils`) |
+| **Frontend (app)** | **v1.10.4** (`main`) | **Tier 2 Wave 2 tool-complete** — TIFF, ICO↔PNG, TGA→PNG; Phase 7.6 polish optional |
+| **Engine (Rust workspace)** | v1.4.2 | Nine Wasm crates (`jpg`, `png`, `webp`, `encode`, `gif`, `bmp`, `tiff`, `ico`, `tga` + `core_utils`) |
 | **SPEC** | v1.9.0-comms | Tier 1 + Tier 2 Wave 1 on `main`; Wave 2 TIFF phases on `dev` |
 
-**v1.10.3** (`dev`): TIFF suite + **ICO ↔ PNG** (v1.10.2–3) with multi-size picker, `.cur` support, and PNG→ICO presets (16/32/48/256, downscale only). **Fourteen active tools.** **Next:** Phase 7.5 TGA → PNG on `dev`.
+**v1.10.4** (`main`): Tier 2 Wave 2 **tool-complete** — TIFF suite, ICO ↔ PNG, **TGA → PNG**. **Fifteen active tools.** Optional: Phase 7.6 polish (GitHub release notes, SPEC snapshot).
 
 ---
 
@@ -225,7 +225,7 @@ Planning docs: `docs/planning/gif_premium_roadmap.md`, `bmp_premium_roadmap.md`,
 | 7.2 TIFF → JPEG | v1.10.1 | Quality + background flatten, per-page alpha | ✅ |
 | 7.3 ICO → PNG | v1.10.2 | `transmutador_ico` | ✅ |
 | 7.4 PNG → ICO | v1.10.3 | Single-size ICO MVP | ✅ |
-| 7.5 TGA → PNG | v1.10.4 | `transmutador_tga` | pending |
+| 7.5 TGA → PNG | v1.10.4 | `transmutador_tga` | ✅ |
 
 Planning: `docs/planning/tier2_wave2_plan.md`, spike results `docs/planning/tier2_wave2_spike_results.md`.
 
@@ -237,7 +237,7 @@ Planning: `docs/planning/tier2_wave2_plan.md`, spike results `docs/planning/tier
 |------|--------|----------|-------|
 | **Tier 2 Wave 1** | v1.9.0 | GIF, BMP, limits, astro | ✅ **Shipped on `main`** |
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
-| **Tier 2 Wave 2** | **v1.10.x** | TIFF, ICO, TGA | **In progress on `dev`** — TIFF PNG+JPEG shipped; ICO/TGA pending — `docs/planning/tier2_wave2_plan.md` |
+| **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
 | **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
 | **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
 
@@ -268,6 +268,7 @@ Planning: `docs/planning/tier2_wave2_plan.md`, spike results `docs/planning/tier
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-08 | Chief Architect (Cursor) | **v1.10.2–1.10.4 merged to `main`:** ICO↔PNG (`transmutador_ico`), TGA→PNG (`transmutador_tga`); 15 active tools; Wave 2 tool-complete |
 | 2026-06-08 | Chief Architect (Cursor) | **v1.10.0–1.10.1 on `dev`:** `transmutador_tiff`, TIFF→PNG + TIFF→JPEG, 12 active tools; spike doc + Wave 2 plan phases 7.0–7.2 complete |
 | 2026-06-08 | Chief Architect (Cursor) | Release Comms shipped (folded v1.9.0); SPEC §7.10–7.11 release policy; Tier 2 Wave 2 planning doc started |
 | 2026-06-08 | Chief Architect (Cursor) | Post-launch hotfixes: Cloudflare `importWasmGlue`, overlay scrollbar hydration |

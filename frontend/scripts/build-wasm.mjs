@@ -21,6 +21,7 @@ const crates = [
   "transmutador_bmp",
   "transmutador_tiff",
   "transmutador_ico",
+  "transmutador_tga",
 ];
 
 for (const crate of crates) {

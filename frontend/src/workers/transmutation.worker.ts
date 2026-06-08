@@ -60,6 +60,8 @@ type EstimateIcoToPngSizeFn = (
 ) => number;
 type TransmutarPngToIcoFn = (input: Uint8Array, target_size: number) => Uint8Array;
 type EstimatePngToIcoSizeFn = (input: Uint8Array, target_size: number) => number;
+type TransmutarTgaWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
+type EstimateTgaToPngSizeFn = (input: Uint8Array, compression: number) => number;
 
 type SessionLimitFn = (maxBytes: number) => void;
 
@@ -114,11 +116,14 @@ let transmutarTiffJpgWithOptions: TransmutarTiffJpgWithOptions | null = null;
 let estimateTiffToJpgSize: EstimateTiffToJpgSizeFn | null = null;
 
 let setIcoSessionLimit: SessionLimitFn | null = null;
+let setTgaSessionLimit: SessionLimitFn | null = null;
 let transmutarIco: ((input: Uint8Array, entry_index: number) => Uint8Array) | null = null;
 let transmutarIcoWithCompression: TransmutarIcoWithCompression | null = null;
 let estimateIcoToPngSize: EstimateIcoToPngSizeFn | null = null;
 let transmutarPngToIco: TransmutarPngToIcoFn | null = null;
 let estimatePngToIcoSize: EstimatePngToIcoSizeFn | null = null;
+let transmutarTgaWithCompression: TransmutarTgaWithCompression | null = null;
+let estimateTgaToPngSize: EstimateTgaToPngSizeFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
@@ -133,6 +138,7 @@ let initGifPromise: Promise<void> | null = null;
 let initBmpPromise: Promise<void> | null = null;
 let initTiffPromise: Promise<void> | null = null;
 let initIcoPromise: Promise<void> | null = null;
+let initTgaPromise: Promise<void> | null = null;
 
 async function initJpgWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_jpg");
@@ -312,6 +318,25 @@ function ensureIcoWasmInitialized(): Promise<void> {
   return initIcoPromise;
 }
 
+async function initTgaWasm(): Promise<void> {
+  const module = await importWasmGlue("transmutador_tga");
+  await module.default();
+  transmutarTgaWithCompression = wasmExport<TransmutarTgaWithCompression>(
+    module,
+    "transmutar_tga_a_png_with_compression"
+  );
+  estimateTgaToPngSize = wasmExport<EstimateTgaToPngSizeFn>(
+    module,
+    "estimate_tga_to_png_size"
+  );
+  setTgaSessionLimit = pickSessionLimit(module);
+}
+
+function ensureTgaWasmInitialized(): Promise<void> {
+  if (!initTgaPromise) initTgaPromise = initTgaWasm();
+  return initTgaPromise;
+}
+
 function postResponse(response: WorkerResponse): void {
   if (response.ok && response.bytes) {
     self.postMessage(response, { transfer: [response.bytes] });
@@ -333,6 +358,7 @@ function resetAllSessionLimits(): void {
   setBmpSessionLimit?.(SOFT_LIMIT_BYTES);
   setTiffSessionLimit?.(SOFT_LIMIT_BYTES);
   setIcoSessionLimit?.(SOFT_LIMIT_BYTES);
+  setTgaSessionLimit?.(SOFT_LIMIT_BYTES);
 }
 
 function purgeWorkerState(id: string): WorkerResponse {
@@ -358,6 +384,7 @@ type RouteFlags = {
   isTiffToJpg: boolean;
   isIcoToPng: boolean;
   isPngToIco: boolean;
+  isTgaToPng: boolean;
   isEncode: boolean;
   encodeSource?: EncodeSource;
 };
@@ -386,6 +413,7 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     req.module === "transmutador_ico" && (req.outputExtension ?? "png") === "png";
   const isPngToIco =
     req.module === "transmutador_ico" && req.outputExtension === "ico";
+  const isTgaToPng = req.module === "transmutador_tga";
   return {
     isJpg,
     isPng,
@@ -399,6 +427,7 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     isTiffToJpg,
     isIcoToPng,
     isPngToIco,
+    isTgaToPng,
     isEncode,
     encodeSource: isEncode ? req.encodeSource : undefined,
   };
@@ -508,6 +537,11 @@ function runFullEncode(
     if (!transmutarPngToIco) throw new Error("Wasm module not initialized");
     return transmutarPngToIco(input, iconSize);
   }
+  if (route.isTgaToPng) {
+    const compression = opts?.compression ?? 6;
+    if (!transmutarTgaWithCompression) throw new Error("Wasm module not initialized");
+    return transmutarTgaWithCompression(input, compression);
+  }
   if (route.isJpg) {
     if (opts?.compression != null && transmutarJpgWithCompression) {
       return transmutarJpgWithCompression(input, opts.compression);
@@ -602,6 +636,11 @@ function runSizeEstimate(
     if (!estimatePngToIcoSize) throw new Error("Wasm estimate export not initialized");
     return estimatePngToIcoSize(input, iconSize);
   }
+  if (route.isTgaToPng) {
+    const compression = opts?.compression ?? 6;
+    if (!estimateTgaToPngSize) throw new Error("Wasm estimate export not initialized");
+    return estimateTgaToPngSize(input, compression);
+  }
   if (route.isJpg) {
     const compression = opts?.compression ?? 6;
     if (!estimateJpgToPngSize) throw new Error("Wasm estimate export not initialized");
@@ -639,6 +678,10 @@ function applySessionInputLimit(route: RouteFlags, maxBytes: number): void {
     setIcoSessionLimit?.(maxBytes);
     return;
   }
+  if (route.isTgaToPng) {
+    setTgaSessionLimit?.(maxBytes);
+    return;
+  }
   if (route.isEncode) {
     setEncodeSessionLimit?.(maxBytes);
     return;
@@ -656,6 +699,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     "transmutador_bmp",
     "transmutador_tiff",
     "transmutador_ico",
+    "transmutador_tga",
   ];
   if (!req.module || !knownModules.includes(req.module)) {
     return { id: req.id, ok: false, error: `Unknown module: ${req.module ?? "none"}` };
@@ -683,6 +727,8 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       await ensureTiffWasmInitialized();
     } else if (route.isIcoToPng || route.isPngToIco) {
       await ensureIcoWasmInitialized();
+    } else if (route.isTgaToPng) {
+      await ensureTgaWasmInitialized();
     } else if (route.isEncode) {
       await ensureEncodeWasmInitialized();
     } else {
