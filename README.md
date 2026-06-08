@@ -2,11 +2,11 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v1.7.8** (App) · Engine v1.4.1 · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v1.7.9** (App) · Engine v1.4.1 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v1.7.8)
+## What works today (v1.7.9)
 
 | Capability | Status |
 |------------|--------|
@@ -16,11 +16,14 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Staged transmutation flow** | Drop → adjust options → Transmutar → preview + size delta → download |
 | **EN / ES** | Full UI i18n with persisted locale |
 | **Legal pages** | `/about`, `/contact`, `/privacy`, `/terms` (bilingual) |
+| **Community feedback** | `/contact` → report bug, suggest feature, security advisory |
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
+| **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
-| **Privacy** | StripAll metadata default; 100% local processing |
+| **Security & ops** | `SECURITY.md`, Dependabot, issue templates, [OPERATIONS.md](docs/OPERATIONS.md) |
+| **Privacy** | StripAll metadata default; 100% local processing; no file analytics |
 
-Deploy: [docs/DEPLOY.md](docs/DEPLOY.md) (Cloudflare Workers + OpenNext). Next formats: Tier 2 (v1.8.x) — [docs/ROADMAP.md](docs/ROADMAP.md).
+**Next:** real-user feedback → Tier 2 formats (v1.8.x) — [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 
@@ -96,7 +99,7 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v1.7.8)
+├── frontend/              # Next.js app (v1.7.9)
 ├── motor_transmutacion/     # Rust workspace (v1.4.1)
 │   ├── core_utils/          # Validation, output integrity, metadata scanners
 │   ├── transmutador_jpg/    # JPEG → PNG
@@ -125,6 +128,7 @@ camaleon/
 | **MVP** | **v1.0.0** | ✅ Shipped (UI-5 baseline + CI) |
 | **Tier 1 WebP suite** | **v1.7.6** | ✅ Six active tools |
 | **Launch baseline** | **v1.7.8** | ✅ Legal pages + footer |
+| **Post-launch hardening** | **v1.7.9** | ✅ Security, ops, deploy fixes, `/contact` feedback |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 

@@ -71,7 +71,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --defaul
 
 ### Environment variables
 
-None required for v1.7.8. Add `NEXT_PUBLIC_*` variables under **Build variables** if needed later.
+None required for v1.7.9. Add `NEXT_PUBLIC_*` variables under **Build variables** if needed later.
 
 4. **Save and Deploy** → note your `*.workers.dev` URL.
 

@@ -11,15 +11,15 @@
 
 ---
 
-## Current Snapshot (2026-06-07)
+## Current Snapshot (2026-06-08)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.7.8 | Six active tools + legal pages — **public-launch baseline** |
+| **Frontend (app)** | v1.7.9 | **Live on Cloudflare** — ready for public feedback |
 | **Engine (Rust workspace)** | v1.4.1 | Four Wasm crates; `transmutador_encode` PNG+JPEG→WebP |
 | **SPEC** | v1.7.0 | Tier 1 Phases 5.1–5.4 implemented |
 
-**v1.7.8 shipped** (2026-06-07): Legal shields (About, Contact, Privacy, Terms) EN+ES; minimal footer; landing privacy link. **v1.7.7** scroll UX polish. **v1.7.6** closed Tier 1 (JPEG→WebP). Next: deploy + real-user feedback, then Tier 2 (v1.8.x).
+**v1.7.9 shipped** (2026-06-08): Post-launch hardening (SECURITY.md, Dependabot, issue templates, ops playbook); `/contact` feedback links; Cloudflare deploy fixes (`wrangler.jsonc` at repo root, main-only builds documented). **v1.7.8** legal pages + production deploy. **Tier 1 complete** (six tools). **Next:** gather user feedback → Tier 2 (v1.8.x).
 
 ---
 
@@ -183,9 +183,9 @@ Goal: first encode-direction crate; lossless VP8L only; spike gate embedded in p
 
 ---
 
-## Public launch baseline (v1.7.8)
+## Public launch baseline (v1.7.8 → v1.7.9)
 
-Minimum trust + product surface for real users:
+Minimum trust + product surface for real users — **complete before Tier 2**:
 
 - [x] Six high-demand conversions (JPG↔PNG + full WebP suite)
 - [x] Bilingual legal pages (`/about`, `/contact`, `/privacy`, `/terms`)
@@ -193,9 +193,11 @@ Minimum trust + product surface for real users:
 - [x] Privacy banner → policy link on landing
 - [x] Production deploy (Cloudflare Workers — see `docs/DEPLOY.md`)
 - [x] Post-launch hardening v1.7.9 (SECURITY.md, Dependabot, issue templates, `/contact` feedback)
-- [ ] Git release tag `v1.7.8`
-- [ ] Optional: contact email; Playwright smoke E2E before scale
+- [x] Git release tags `v1.7.9` on `main`
+- [x] Cloudflare main-only builds + deploy path documented
 - [x] Public repo hygiene (`main` / `dev` / `contrib` — see `docs/BRANCHING.md`)
+- [ ] Optional: GitHub Release notes page; contact email; Playwright smoke E2E before scale
+- [ ] Optional: custom domain; `docs/SECURITY_CHECKLIST.md` manual audit
 
 ---
 
@@ -212,7 +214,7 @@ Minimum trust + product surface for real users:
 | `refine_jpeg_encoder_swap` | Chroma subsampling 4:4:4 / 4:2:2 (§5.5.6) — deferred |
 | Playwright E2E | Smoke tests; deferred from v1.0.0 |
 | PWA / offline shell | Service worker; post-Tier 1 |
-| GitHub issue templates | Community onboarding (`CONTRIBUTING.md` ✅) |
+| Aggregate tool-usage metrics | Anonymous conversion counters; deferred until feedback window |
 
 **Delivered post-MVP items (moved out of backlog):** quality/compression sliders (UI-3), background color (v0.5.6), metadata strip (v0.5.3), UI-9 header/footer (v1.6.0), locale/theme FOUC fix + Scrollbar Camaleón (v1.6.1).
 
@@ -234,6 +236,7 @@ Minimum trust + product surface for real users:
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-08 | Chief Architect (Cursor) | v1.7.9 launch-ready: hardening complete, Cloudflare deploy fixes, snapshot updated; Tier 2 gated on user feedback |
 | 2026-06-07 | Chief Architect (Cursor) | Public repo prep: `main`/`dev`/`contrib` branches; internal docs removed from `main`; `CONTRIBUTING.md` + `docs/BRANCHING.md` |
 | 2026-06-07 | Chief Architect (Cursor) | v1.7.8 shipped: legal pages EN+ES, footer redesign, public-launch baseline section |
 | 2026-06-07 | Chief Architect (Cursor) | Phase 5 (Tier 1 WebP suite) planned; ROADMAP snapshot updated to v1.6.1; post-v1.7 horizon added |

@@ -7,8 +7,8 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
 **Version:** 1.7.0  
-**Last updated:** 2026-06-07  
-**Status:** v1.7.8 shipped — Tier 1 WebP Suite complete; legal pages + launch baseline; public `main` branch (internal dev docs on `dev` only); Engine v1.4.1
+**Last updated:** 2026-06-08  
+**Status:** v1.7.9 live — Tier 1 complete (six tools); post-launch hardening; Cloudflare production; public `main` branch; Engine v1.4.1
 
 ---
 

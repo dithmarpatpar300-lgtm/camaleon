@@ -11,7 +11,7 @@ Camaleon uses three long-lived branches. Pick the one that matches your goal.
 ## Workflow
 
 ```
-main          ●────────●────────●  tagged releases (v1.7.8, …)
+main          ●────────●────────●  tagged releases (v1.7.9, …)
                \      /
 contrib         ●────●────●       community PRs reviewed here
                  \  /
@@ -21,7 +21,7 @@ dev               ●──●──●──●      daily work + internal docs
 ### Maintainers
 
 1. Day-to-day work happens on **`dev`** (or feature branches off `dev`).
-2. When a release is ready, merge `dev` → `main` and tag (e.g. `v1.7.8`).
+2. When a release is ready, merge `dev` → `main` and tag (e.g. `v1.7.9`).
 3. Keep **`contrib`** in sync with `main` after each release so contributors start from a clean base.
 
 ### Contributors
