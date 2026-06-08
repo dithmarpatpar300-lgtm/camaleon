@@ -13,6 +13,7 @@ import {
   SITE_REPO_URL,
 } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { useReleaseComms } from "@/providers/ReleaseCommsProvider";
 import { KeyboardShortcutsDialog } from "./KeyboardShortcutsDialog";
 
 function FooterDot({ className }: { className?: string }) {
@@ -42,6 +43,7 @@ const footerLinkClass =
 
 export function Footer() {
   const { t } = useI18n();
+  const { openWhatsNew } = useReleaseComms();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   useScrollLock(shortcutsOpen);
@@ -58,6 +60,18 @@ export function Footer() {
         >
           {t("footer.github")}
         </a>
+      ),
+    },
+    {
+      key: "whatsNew",
+      node: (
+        <button
+          type="button"
+          onClick={openWhatsNew}
+          className={cn(footerLinkClass, "cursor-pointer")}
+        >
+          {t("footer.whatsNew")}
+        </button>
       ),
     },
     {

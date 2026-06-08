@@ -79,6 +79,88 @@ const en: Dictionary = {
     shortcutClose: "Close",
     engineReady: "Engine ready",
     engineInit: "Engine starting…",
+    whatsNew: "What's new",
+  },
+
+  releaseComms: {
+    onboarding: {
+      badge: "Welcome",
+      title: "Your files stay on your device",
+      subtitle:
+        "Camaleon converts images entirely in your browser — no uploads, no accounts, no waiting on a server.",
+      gotIt: "Got it",
+      explore: "Explore transmutations",
+      about: "About Camaleon",
+      technicalToggle: "How it works technically",
+      technical:
+        "Rust compiled to WebAssembly runs inside a dedicated Web Worker. Large science images can be downscaled in JavaScript before Wasm. We strip metadata by default, enforce honest limits (40 megapixels, 150 MB), and recycle the worker when you leave a conversion to free memory.",
+      highlights: {
+        privacy: {
+          title: "100% local processing",
+          body: "Nothing is uploaded. Your images never leave this tab.",
+        },
+        tools: {
+          title: "10 conversion tools",
+          body: "PNG, JPEG, WebP, AVIF, GIF, and BMP — lossless and lossy paths where it matters.",
+        },
+        limits: {
+          title: "Honest limits",
+          body: "We tell you upfront when a file is too large and offer safe downscale options instead of crashing.",
+        },
+        i18n: {
+          title: "English & Spanish",
+          body: "Full UI in both languages, plus dark and light themes.",
+        },
+      },
+    },
+    changelog: {
+      title: "What's new in {version}",
+      gotIt: "Got it",
+      remindLater: "Remind me later",
+      viewAll: "All updates",
+    },
+    whatsNew: {
+      title: "What's new",
+      subtitle: "Release history",
+      current: "Current",
+      close: "Close",
+    },
+    tags: {
+      feature: "New",
+      fix: "Fix",
+      perf: "Performance",
+      security: "Security",
+    },
+    entries: {
+      v190: {
+        title: "Tier 2 Wave 1",
+        summary: "GIF & BMP suites, smarter limits, and science-image downscale.",
+        technical:
+          "Four new Wasm modules (GIF/BMP read/write), GIF89a frame compositing, LimitContext preflight, client-side astro downscale via Canvas, and worker recycle on route exit to release Wasm heap memory.",
+        highlights: {
+          formats: {
+            title: "GIF & BMP formats",
+            body: "Four new tools: GIF↔PNG and BMP↔PNG, bringing the catalog to 10 active transmutations.",
+          },
+          gif: {
+            title: "GIF frame picker",
+            body: "Preview and select a specific animation frame before converting, with proper GIF89a transparency compositing.",
+          },
+          limits: {
+            title: "Adaptive limits",
+            body: "Unified LimitContext with precise error messages, dimension blocks, and oversize consent for large files.",
+          },
+          astro: {
+            title: "Science imagery downscale",
+            body: "4K–8K presets resize huge astronomical images in-browser before Wasm, so conversions stay within safe memory bounds.",
+          },
+          memory: {
+            title: "Smarter memory lifecycle",
+            body: "Leaving a transmutation route recycles the Wasm worker so heavy sessions do not linger in memory.",
+          },
+        },
+      },
+    },
   },
 
   legal: {

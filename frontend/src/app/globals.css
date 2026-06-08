@@ -126,6 +126,16 @@ dialog.command-palette::backdrop {
   backdrop-filter: blur(2px);
 }
 
+dialog.whats-new-drawer::backdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+dialog.whats-new-drawer.is-closing::backdrop {
+  opacity: 0;
+}
+
 /* Gate de carga y workspace */
 @keyframes prepareGateIn {
   from { opacity: 0; transform: scale(0.97) translateY(6px); }
@@ -134,6 +144,24 @@ dialog.command-palette::backdrop {
 
 .prepare-gate-in {
   animation: prepareGateIn 340ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideOutRight {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-\[slideInRight_280ms_cubic-bezier\(0\.22\,1\,0\.36\,1\)_both\],
+  .motion-safe\:animate-\[slideOutRight_240ms_cubic-bezier\(0\.22\,1\,0\.36\,1\)_both\],
+  .motion-safe\:animate-\[prepareGateIn_340ms_cubic-bezier\(0\.22\,1\,0\.36\,1\)_both\] {
+    animation: none !important;
+  }
 }
 
 /* Ring indeterminado — gira cuando el progreso está bloqueado en Wasm */

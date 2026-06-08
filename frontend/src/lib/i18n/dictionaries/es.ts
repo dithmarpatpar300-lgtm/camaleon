@@ -79,6 +79,88 @@ const es: Dictionary = {
     shortcutClose: "Cerrar",
     engineReady: "Motor listo",
     engineInit: "Motor iniciando...",
+    whatsNew: "Novedades",
+  },
+
+  releaseComms: {
+    onboarding: {
+      badge: "Bienvenida",
+      title: "Tus archivos se quedan en tu dispositivo",
+      subtitle:
+        "Camaleon convierte imágenes enteramente en tu navegador — sin subidas, sin cuentas, sin esperar a un servidor.",
+      gotIt: "Entendido",
+      explore: "Explorar transmutaciones",
+      about: "Acerca de Camaleon",
+      technicalToggle: "Cómo funciona técnicamente",
+      technical:
+        "Rust compilado a WebAssembly corre dentro de un Web Worker dedicado. Las imágenes científicas grandes pueden reducirse en JavaScript antes de Wasm. Eliminamos metadatos por defecto, aplicamos límites honestos (40 megapíxeles, 150 MB) y reciclamos el worker al salir de una conversión para liberar memoria.",
+      highlights: {
+        privacy: {
+          title: "Procesamiento 100% local",
+          body: "No se sube nada. Tus imágenes nunca salen de esta pestaña.",
+        },
+        tools: {
+          title: "10 herramientas de conversión",
+          body: "PNG, JPEG, WebP, AVIF, GIF y BMP — rutas con y sin pérdida donde importa.",
+        },
+        limits: {
+          title: "Límites honestos",
+          body: "Te avisamos cuando un archivo es demasiado grande y ofrecemos opciones seguras de reducción en lugar de fallar.",
+        },
+        i18n: {
+          title: "Inglés y español",
+          body: "Interfaz completa en ambos idiomas, más temas claro y oscuro.",
+        },
+      },
+    },
+    changelog: {
+      title: "Novedades en {version}",
+      gotIt: "Entendido",
+      remindLater: "Recordarme más tarde",
+      viewAll: "Todas las actualizaciones",
+    },
+    whatsNew: {
+      title: "Novedades",
+      subtitle: "Historial de versiones",
+      current: "Actual",
+      close: "Cerrar",
+    },
+    tags: {
+      feature: "Nuevo",
+      fix: "Corrección",
+      perf: "Rendimiento",
+      security: "Seguridad",
+    },
+    entries: {
+      v190: {
+        title: "Tier 2 Ola 1",
+        summary: "Suites GIF y BMP, límites más inteligentes y reducción para imágenes científicas.",
+        technical:
+          "Cuatro módulos Wasm nuevos (lectura/escritura GIF/BMP), composición de frames GIF89a, preflight LimitContext, reducción astro en cliente vía Canvas, y reciclaje del worker al salir de la ruta para liberar memoria del heap Wasm.",
+        highlights: {
+          formats: {
+            title: "Formatos GIF y BMP",
+            body: "Cuatro herramientas nuevas: GIF↔PNG y BMP↔PNG, llevando el catálogo a 10 transmutaciones activas.",
+          },
+          gif: {
+            title: "Selector de frame GIF",
+            body: "Previsualiza y elige un frame concreto antes de convertir, con composición correcta de transparencia GIF89a.",
+          },
+          limits: {
+            title: "Límites adaptativos",
+            body: "LimitContext unificado con mensajes de error precisos, bloqueos por dimensiones y consentimiento para archivos grandes.",
+          },
+          astro: {
+            title: "Reducción para imágenes científicas",
+            body: "Presets 4K–8K redimensionan imágenes astronómicas enormes en el navegador antes de Wasm, manteniendo conversiones dentro de límites de memoria seguros.",
+          },
+          memory: {
+            title: "Ciclo de vida de memoria más inteligente",
+            body: "Al salir de una ruta de transmutación se recicla el worker Wasm para que sesiones pesadas no permanezcan en memoria.",
+          },
+        },
+      },
+    },
   },
 
   legal: {

@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { I18nProvider } from "@/providers/I18nProvider";
 import { TransmutationWorkerProvider } from "@/providers/TransmutationWorkerProvider";
 import { ToastProvider } from "@/providers/ToastProvider";
+import { ReleaseCommsProvider } from "@/providers/ReleaseCommsProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { OverlayScrollbar } from "@/components/layout/OverlayScrollbar";
@@ -67,11 +68,13 @@ export default async function RootLayout({
             <OverlayScrollbar />
             <TransmutationWorkerProvider>
               <ToastProvider>
-                <div className="flex min-h-screen flex-col">
-                  <Header />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                </div>
+                <ReleaseCommsProvider>
+                  <div className="flex min-h-screen flex-col">
+                    <Header />
+                    <main className="flex-1">{children}</main>
+                    <Footer />
+                  </div>
+                </ReleaseCommsProvider>
               </ToastProvider>
             </TransmutationWorkerProvider>
           </ThemeProvider>

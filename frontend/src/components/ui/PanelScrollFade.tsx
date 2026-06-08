@@ -82,16 +82,25 @@ export function PanelScrollFade({
     const el = ref.current;
     if (!el) return;
     el.addEventListener("scroll", onScroll, { passive: true });
-    const ro = new ResizeObserver(() => {
+
+    const onResize = () => {
       if (ref.current) applyMask(ref.current);
-    });
-    ro.observe(el);
+    };
+
+    const viewportRo = new ResizeObserver(onResize);
+    viewportRo.observe(el);
+
+    const content = el.firstElementChild;
+    const contentRo = content ? new ResizeObserver(onResize) : null;
+    if (content && contentRo) contentRo.observe(content);
+
     return () => {
       el.removeEventListener("scroll", onScroll);
-      ro.disconnect();
+      viewportRo.disconnect();
+      contentRo?.disconnect();
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [onScroll, applyMask]);
+  }, [onScroll, applyMask, children]);
 
   return (
     <div

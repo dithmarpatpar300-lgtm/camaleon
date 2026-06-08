@@ -11,7 +11,7 @@ export function ToolGrid() {
   const soonTools = getSoonTools();
 
   return (
-    <section className="pb-10">
+    <section id="transmute-tools" className="pb-10 scroll-mt-24">
       <h2 className="mb-6 text-xl font-semibold text-text-primary">
         {t("landing.tools.available")}
       </h2>
