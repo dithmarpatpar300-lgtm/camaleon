@@ -320,14 +320,16 @@ Shared `flatten_rgba_on_background` may move to `core_utils` in Phase 2 (optiona
 - [ ] Full manual QA matrix (§8.4) for PNG, WebP, GIF, BMP.
 - [x] Frontend check: `npm run test:semantic-alpha` (`needsSemanticAlpha` registry parity).
 
-### Phase 5 — Release v1.11.0 — **blocked on Phases 0 + 4**
+### Phase 5 — Release v1.11.0 — **prepared on `dev`**
 
-- [ ] `frontend/package.json` → 1.11.0
-- [ ] Release entry `v1.11.0` + What's New highlight: "Honest transparency detection"
-- [ ] README + ROADMAP: mark Semantic Alpha Engine shipped on `main`
-- [ ] Merge `dev` → `main` after stability sign-off
+- [x] `frontend/package.json` → 1.11.0
+- [x] Release entry `v1.11.0` + What's New (EN / ES): "Honest transparency detection"
+- [x] `docs/releases/v1.11.0.md`, `GITHUB_v1.11.0.md`, `GITHUB_v1.11.0-body.md`
+- [x] README + ROADMAP: v1.11.0 release-ready on `dev`
+- [ ] Full manual QA matrix (§8.4) before merge
+- [ ] Merge `dev` → `main`, tag `v1.11.0`, GitHub release, production deploy
 
-**Remaining work:** Phase 4 manual QA matrix, Phase 5 release — then merge to `main`.
+**Remaining work:** Manual QA matrix → merge to `main`.
 
 ---
 

@@ -152,6 +152,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v1110: {
+        title: "Honest transparency detection",
+        summary:
+          "Lossy conversions only warn when pixels are actually transparent — not when a file merely has an alpha channel.",
+        technical:
+          "Semantic Alpha Engine: core_utils::semantic_alpha (probe + full raster), Wasm assess_alpha / assess_page_alpha on BMP, PNG, WebP, GIF, TIFF, frontend lib/semantic-alpha at prepare. Encode flatten aligned with assess. SPEC §5.5.3.",
+        highlights: {
+          semanticAlpha: {
+            title: "Semantic Alpha Engine",
+            body: "PNG, WebP, GIF, BMP, and TIFF → JPEG now share one Wasm assessment at prepare time. The transparency notice and background picker appear only when alpha would change the output.",
+          },
+          tiffOpaque: {
+            title: "TIFF opaque RGBA fix",
+            body: "Archival TIFFs with an alpha channel but fully opaque pixels no longer show a false transparency banner — the case that motivated this release.",
+          },
+        },
+      },
       v1104: {
         title: "TGA → PNG",
         summary: "Game textures and Targa assets to PNG — raw, RLE, indexed, and 32-bit alpha.",

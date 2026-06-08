@@ -152,6 +152,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v1110: {
+        title: "Detección honesta de transparencia",
+        summary:
+          "Las conversiones con pérdida solo avisan cuando los píxeles son realmente transparentes — no cuando el archivo solo tiene canal alpha.",
+        technical:
+          "Semantic Alpha Engine: core_utils::semantic_alpha (sonda + raster completo), Wasm assess_alpha / assess_page_alpha en BMP, PNG, WebP, GIF, TIFF, frontend lib/semantic-alpha en prepare. Aplanado en encode alineado con assess. SPEC §5.5.3.",
+        highlights: {
+          semanticAlpha: {
+            title: "Semantic Alpha Engine",
+            body: "PNG, WebP, GIF, BMP y TIFF → JPEG comparten una evaluación Wasm en prepare. El aviso de transparencia y el selector de fondo aparecen solo cuando el alpha cambiaría la salida.",
+          },
+          tiffOpaque: {
+            title: "Corrección TIFF RGBA opaco",
+            body: "TIFF archivales con canal alpha pero píxeles totalmente opacos ya no muestran un aviso falso de transparencia — el caso que motivó esta versión.",
+          },
+        },
+      },
       v1104: {
         title: "TGA → PNG",
         summary: "Texturas de juego y assets Targa a PNG — raw, RLE, indexado y alpha 32-bit.",

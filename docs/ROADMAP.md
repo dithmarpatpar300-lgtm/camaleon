@@ -15,13 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.10.4** (`main`) · **v1.11.0 WIP** (`dev`) | Wave 2 shipped on `main`; **Semantic Alpha Engine** in progress on `dev` |
+| **Frontend (app)** | **v1.10.4** (`main`) · **v1.11.0** (`dev`, release-ready) | Wave 2 on `main`; Semantic Alpha Engine ready to merge |
 | **Engine (Rust workspace)** | v1.4.2 | Nine Wasm crates + **`core_utils::semantic_alpha`** (new on `dev`) |
 | **SPEC** | v1.9.0-comms | §5.5.3 Semantic Alpha Engine — **pending** |
 
 **v1.10.4** (`main`): Tier 2 Wave 2 **shipped** — fifteen active tools.
 
-**v1.11.0** (`dev`, in progress): **Semantic Alpha Engine** — centralized meaningful-transparency detection for all lossy-input tools (PNG/WebP/GIF/BMP/TIFF → JPG). Core Rust + Wasm assess + frontend prepare wired; TIFF false-positive fixed. Release blocked on SPEC, contract tests, full QA. Plan: `docs/planning/semantic_alpha_engine_plan.md`.
+**v1.11.0** (`dev`, release-ready): **Semantic Alpha Engine** shipped on `dev` — meaningful-transparency detection for all lossy-input tools. Pending: manual QA matrix §8.4, merge `dev` → `main`, tag + deploy. Plan: `docs/planning/semantic_alpha_engine_plan.md` · Release: `docs/releases/GITHUB_v1.11.0.md`.
 
 ---
 
@@ -233,18 +233,18 @@ Planning: `docs/planning/tier2_wave2_plan.md`, spike results `docs/planning/tier
 
 ---
 
-## Semantic Alpha Engine — In progress on `dev` (v1.11.0)
+## Semantic Alpha Engine — Release-ready on `dev` (v1.11.0)
 
 Cross-cutting honesty fix: UI and encode both use **meaningful alpha** (pixels with α &lt; 255), not structural container flags.
 
 | Phase | Deliverable | Status |
 |-------|-------------|--------|
+| 0 | SPEC §5.5.3 + fixture catalog | ✅ |
 | 1 | `core_utils::semantic_alpha` + encode alignment (all flatten paths) | ✅ |
-| 2 | Wasm `assess_alpha` / `assess_page_alpha` per lossy crate | ✅ |
+| 2 | Wasm `assess_alpha` / `assess_page_alpha` + contract tests | ✅ |
 | 3 | Frontend `lib/semantic-alpha/` + prepare/panel integration | ✅ |
-| 0 | SPEC §5.5.3 + fixture catalog | ⏳ |
-| 4 | Contract tests, cleanup (`pageHasAlpha` deprecate), full QA matrix | ⏳ |
-| 5 | Release v1.11.0 on `main` | ⏳ |
+| 4 | Cleanup (`pageHasAlpha` deprecate), `needsSemanticAlpha` check | ✅ · manual QA matrix ⏳ |
+| 5 | Release entry + version bump on `dev` | ✅ · merge/tag on `main` ⏳ |
 
 **Verified:** opaque RGBA TIFF (e.g. `file_example_TIFF_10MB.tiff`) no longer shows `TransparencyNotice` on TIFF→JPG.
 
@@ -259,7 +259,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Tier 2 Wave 1** | v1.9.0 | GIF, BMP, limits, astro | ✅ **Shipped on `main`** |
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
-| **Semantic Alpha Engine** | **v1.11.0** (`dev`) | Honest transparency across lossy tools | 🚧 Phases 1–3 done — `docs/planning/semantic_alpha_engine_plan.md` |
+| **Semantic Alpha Engine** | **v1.11.0** (`dev`) | Honest transparency across lossy tools | ✅ Release-ready — `docs/releases/GITHUB_v1.11.0.md` |
 | **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
 | **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
 
