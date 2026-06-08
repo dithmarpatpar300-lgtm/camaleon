@@ -1,7 +1,7 @@
 # Tier 2 — Wave 2 (TIFF, ICO, TGA)
 
 > **Branch:** merged to **`main`** at **v1.10.4**  
-> **Status:** Phase 7.0–7.2 TIFF ✅ · Phase 7.3–7.4 ICO ✅ · Phase 7.5 TGA→PNG ✅ (v1.10.4) · Phase 7.6 polish pending  
+> **Status:** Wave 2 **shipped** on `main` @ **v1.10.4** · GitHub release notes in `docs/releases/GITHUB_v1.10.4.md`  
 > **Prerequisite:** Tier 2 Wave 1 ✅ · Release Comms ✅ · LimitContext + astro downscale ✅  
 > **Doctrine:** Same pipeline as Wave 1 — decode → honest options → re-encode → StripAll → estimate-first
 
@@ -521,7 +521,7 @@ Mirror Wave 1:
 7.4    PNG → ICO
 7.5.0  TGA spike (fixtures + wasm size + probe API)
 7.5    TGA → PNG
-7.6    Wave 2 polish + v1.10.x release (manifest, GitHub release, docs)
+7.6    Wave 2 release tag v1.10.4 + GitHub publish (manifest ✅, docs ✅)
 ```
 
 **Rationale:** TIFF first — highest value for science/print users, exercises multi-page UI and 16-bit policy; ICO/TGA are smaller scope afterward.
