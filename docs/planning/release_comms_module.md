@@ -1,6 +1,6 @@
 # Release Comms Module — Onboarding + Changelog (v1.10 planning)
 
-> **Status:** Planned — design for `dev` before implementation.  
+> **Status:** ✅ Shipped on `main` (folded into v1.9.0). Formal v1.10.0 manifest entry + SPEC §7.11 policy pending next release bump.  
 > **Codename:** `ReleaseComms` (or product name: **What's New** / **Novedades**).  
 > **Privacy:** No server state; all dismissal/version tracking is `localStorage` only.
 

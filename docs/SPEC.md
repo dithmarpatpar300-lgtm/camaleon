@@ -8,7 +8,7 @@
 
 **Version:** 1.9.0  
 **Last updated:** 2026-06-08  
-**Status:** v1.9.0 live on `main` — Tier 1 + Tier 2 Wave 1 (10 tools); Engine v1.4.2
+**Status:** v1.9.0 live on `main` — Tier 1 + Tier 2 Wave 1 (10 tools); Release Comms (What's New) shipped; Engine v1.4.2
 
 ---
 
@@ -67,7 +67,10 @@ camaleon/
 │   ├── src/
 │   │   ├── app/
 │   │   ├── components/
+│   │   │   └── release-comms/  ← Onboarding, changelog modal, What's New drawer
 │   │   ├── hooks/
+│   │   ├── lib/
+│   │   │   └── releases/    ← Release catalog (manifest + entries + localStorage keys)
 │   │   ├── types/           ← Shared TypeScript declarations
 │   │   └── workers/
 │   ├── package.json
@@ -1089,16 +1092,88 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | Shell | `.glass-header` — lighter acrylic than Command Palette (12px blur) | ✅ v1.6.0 |
 | Right | `UtilityCluster` — EN/ES + theme toggle in bordered segment control | ✅ v1.6.0 |
 
-### 7.9 Footer Anatomy (Implemented — v1.6.0)
+### 7.9 Footer Anatomy (Implemented — v1.6.0, extended v1.9.0)
 
 | Zone | Element | Status |
 |------|---------|--------|
-| Left | Trust pill — lock icon + `footer.privacy` copy (`accent-subtle`) | ✅ |
-| Center | GitHub link (`SITE_REPO_URL`) + keyboard shortcuts dialog trigger | ✅ |
-| Right | Dynamic version (`APP_VERSION` from `package.json`) + engine status pill (dot + label) | ✅ |
-| Layout | Three-zone responsive row; `min-height` reserved to avoid layout shift | ✅ |
+| Legal nav | Privacy, Terms, Contact, About links | ✅ |
+| Utilities | GitHub (`SITE_REPO_URL`) + **What's New / Novedades** (`footer.whatsNew`) + keyboard shortcuts dialog | ✅ v1.9.0 |
+| Meta | Copyright + dynamic version (`APP_VERSION` from `package.json`) | ✅ |
 
-**Engine status:** reads `ready` from `TransmutationWorkerProvider` (single Worker instance shared with transmute/estimate paths).
+**What's New** opens the `WhatsNewDrawer` (§7.10) — persistent entry point for release history.
+
+### 7.10 Release Comms — What's New (Implemented — v1.9.0)
+
+> **Product names:** EN *What's New* · ES *Novedades* · **Codename:** `ReleaseComms`  
+> **Design detail:** `docs/planning/release_comms_module.md` (internal planning on `dev`)
+
+**Purpose:** Surface meaningful product updates in-app without server state. One release catalog drives three surfaces:
+
+| Surface | Audience | Trigger |
+|---------|----------|---------|
+| `OnboardingPanel` | First-time visitor | First landing on `/` (not blocking) |
+| `ReleaseNotesModal` | Returning visitor | `APP_VERSION` > `camaleon-last-seen-release` on `/` |
+| `WhatsNewDrawer` | Anyone | Footer link; full release history (newest first) |
+
+**Architecture:**
+
+```
+frontend/src/lib/releases/
+  manifest.ts              ← ordered ReleaseEntry list + onboarding copy keys
+  entries/vX.Y.Z.ts        ← one file per shipped app version
+  storage.ts               ← localStorage keys (onboarding, last-seen, snooze)
+  compare-version.ts
+
+frontend/src/components/release-comms/
+  OnboardingPanel.tsx | ReleaseNotesModal.tsx | WhatsNewDrawer.tsx
+  ReleaseHighlightList.tsx | TechnicalDisclosure.tsx | …
+
+frontend/src/providers/ReleaseCommsProvider.tsx   ← orchestration (one surface at a time)
+```
+
+**Client state (`localStorage` only — document in `/privacy`):**
+
+| Key | Purpose |
+|-----|---------|
+| `camaleon-onboarding-complete` | First-visit panel dismissed |
+| `camaleon-last-seen-release` | Changelog modal acknowledged for semver |
+| `camaleon-release-snooze-until` | Optional 24h snooze without marking seen |
+
+**UI constraints:** `glass-palette` acrylic; scroll regions use `PanelScrollFade` (hidden scrollbar + edge veil — same as Command Palette). Bilingual copy in `dictionaries/en.ts` + `es.ts` under `releaseComms.*`.
+
+**Orchestration rules:** Never show onboarding + changelog simultaneously; onboarding takes priority for brand-new users; changelog requires onboarding complete (or legacy `lastSeen` migration).
+
+### 7.11 Release & Versioning Policy (Mandatory from v1.9.0 onward)
+
+Every push to `main` that users should **notice** must go through the Release Comms checklist below. **Do not ship user-facing changes silently.**
+
+#### When to bump `frontend/package.json` version
+
+| Change type | Bump | Example |
+|-------------|------|---------|
+| New tools, Wasm modules, limits behavior, major UX features | **MINOR** (`1.9.0` → `1.10.0`) | Tier 2 Wave 2 (TIFF/ICO/TGA) |
+| Meaningful fix or polish users would care about | **PATCH** (`1.9.0` → `1.9.1`) | Release Comms alone would have been `1.9.1` |
+| Docs-only, CI, internal refactors (no user-visible delta) | No bump | Planning docs on `dev` |
+
+`APP_VERSION` in `lib/site.ts` is read from `package.json` and gates the changelog modal.
+
+#### Release checklist (required for MINOR and PATCH user-facing ships)
+
+1. **Bump** `frontend/package.json` version.
+2. **Add** `frontend/src/lib/releases/entries/vX.Y.Z.ts` + register in `manifest.ts` (newest first).
+3. **Add** i18n keys under `releaseComms.entries.vXYZ.*` in EN + ES (title, summary, highlights, optional technical).
+4. **Sync** `docs/releases/vX.Y.Z.md` for GitHub Release notes (operator-facing; can be longer than in-app copy).
+5. **Tag** `vX.Y.Z` on `main` after merge; create GitHub Release from tag.
+6. **Verify** in browser: onboarding (fresh profile), changelog modal (bump), footer What's New drawer.
+
+#### Dual sources of truth
+
+| Artifact | Audience | Role |
+|----------|----------|------|
+| `lib/releases/entries/vX.Y.Z.ts` + i18n | End users (in-app) | Short, bilingual, UX-toned |
+| `docs/releases/vX.Y.Z.md` + Git tag | Developers / GitHub | Full changelog |
+
+**v1.9.0 note:** Release Comms infrastructure shipped in the same deploy as Tier 2 Wave 1 content. Strictly it could have been **v1.9.1** (UI-only delivery of the comms module); it was folded into **v1.9.0** for launch simplicity. **From the next user-visible ship onward, always bump semver and add a manifest entry — never forget What's New.**
 
 ### 7.8 UI Implementation Track (Planned)
 
@@ -1165,6 +1240,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 1.9.0-comms | 2026-06-08 | Chief Architect | §7.10 Release Comms (What's New): onboarding, changelog modal, drawer; §7.11 release/versioning policy; footer extended; v1.9.0 fold-in note (comms could have been 1.9.1) | — |
 | 1.7.8-repo | 2026-06-07 | Chief Architect | Public repo prep: `main` (releases), `dev` (internal docs), `contrib` (community PRs); removed prompts/planning/reports/GOVERNANCE from `main` | — |
 | 1.7.8 | 2026-06-07 | Chief Architect | v1.7.8 launch baseline: bilingual legal pages (`lib/legal`), minimal footer, PrivacyBanner → `/privacy` | — |
 | 1.7.0 | 2026-06-07 | OpenCode + Chief Architect | Phase 5.1: `transmutador_webp` WebP→PNG + estimate(compression) + worker/registry/i18n; §6.4 implemented | `phase5_webp_to_png_done.md` |

@@ -36,10 +36,6 @@
 
 ---
 
-## Wave 2 (not started)
+## Wave 2
 
-| Phase | Direction | Crate |
-|-------|-----------|-------|
-| 6.5–6.6 | TIFF → PNG/JPG | `transmutador_tiff` |
-| 6.7–6.8 | ICO → PNG, PNG → ICO | `transmutador_ico` |
-| 6.9 | TGA → PNG | `transmutador_tga` |
+See **`docs/planning/tier2_wave2_plan.md`** — active planning for v1.10.0 (TIFF, ICO, TGA).

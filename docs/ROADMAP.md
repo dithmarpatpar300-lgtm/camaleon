@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.9.0** | **Tier 2 Wave 1 shipped** — GIF/BMP premium + astro downscale + memory lifecycle |
-| **Engine (Rust workspace)** | v1.4.2 | Eight Wasm crates (`jpg`, `png`, `webp`, `encode`, `gif`, `bmp` + `core_utils`) |
-| **SPEC** | v1.9.0 | Tier 1 + Tier 2 Wave 1 complete on `main` |
+| **Frontend (app)** | **v1.9.0** | **Tier 2 Wave 1 shipped** — GIF/BMP premium + astro downscale + memory lifecycle + Release Comms |
+| **Engine (Rust workspace)** | v1.4.2 | Six Wasm crates (`jpg`, `png`, `webp`, `encode`, `gif`, `bmp` + `core_utils`) |
+| **SPEC** | v1.9.0-comms | Tier 1 + Tier 2 Wave 1 + Release Comms policy on `main` |
 
-**v1.9.0** (public launch baseline for Tier 2): client-side downscale for science imagery (>40 MP), `LimitContext` unified limits, Wasm worker recycle on route exit. **Ten active tools.** Tier 2 Wave 2 (TIFF/ICO/TGA) deferred to v1.10+.
+**v1.9.0** (public launch baseline for Tier 2): client-side downscale for science imagery (>40 MP), `LimitContext` unified limits, Wasm worker recycle on route exit, **What's New / onboarding module**, Cloudflare Wasm bundle fix, overlay scrollbar hydration fix. **Ten active tools.** **Next:** Tier 2 Wave 2 planning on `dev` → target **v1.10.0** (TIFF, ICO, TGA).
 
 ---
 
@@ -221,8 +221,8 @@ Planning docs: `docs/planning/gif_premium_roadmap.md`, `bmp_premium_roadmap.md`,
 | Tier | Target | Features | Notes |
 |------|--------|----------|-------|
 | **Tier 2 Wave 1** | v1.9.0 | GIF, BMP, limits, astro | ✅ **Shipped on `main`** |
-| **Release Comms** | v1.10.0 | Onboarding panel + version changelog + What's New drawer | Planned — `release_comms_module.md` |
-| **Tier 2 Wave 2** | v1.10+ | TIFF, ICO, TGA | After Release Comms or parallel track |
+| **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
+| **Tier 2 Wave 2** | **v1.10.0** | TIFF, ICO, TGA | **Planning active** — `docs/planning/tier2_wave2_plan.md` |
 | **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
 | **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
 
@@ -253,6 +253,8 @@ Planning docs: `docs/planning/gif_premium_roadmap.md`, `bmp_premium_roadmap.md`,
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-08 | Chief Architect (Cursor) | Release Comms shipped (folded v1.9.0); SPEC §7.10–7.11 release policy; Tier 2 Wave 2 planning doc started |
+| 2026-06-08 | Chief Architect (Cursor) | Post-launch hotfixes: Cloudflare `importWasmGlue`, overlay scrollbar hydration |
 | 2026-06-08 | Chief Architect (Cursor) | **v1.9.0 shipped on `main`:** Tier 2 Wave 1 complete (GIF/BMP premium, LimitContext, astro downscale, worker memory recycle); app version 1.9.0; Tier 2 Wave 2 deferred |
 | 2026-06-08 | Chief Architect (Cursor) | v1.8.3 Tier 2 Wave 1: `transmutador_gif` + `transmutador_bmp`, 4 tools (GIF/BMP → PNG/JPG), 10 active tools |
 | 2026-06-08 | Chief Architect (Cursor) | v1.7.9 launch-ready: hardening complete, Cloudflare deploy fixes, snapshot updated; Tier 2 gated on user feedback |
