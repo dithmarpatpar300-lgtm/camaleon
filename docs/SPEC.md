@@ -8,7 +8,7 @@
 
 **Version:** 1.7.0  
 **Last updated:** 2026-06-08  
-**Status:** v1.7.9 live — Tier 1 complete (six tools); post-launch hardening; Cloudflare production; public `main` branch; Engine v1.4.1
+**Status:** v1.7.9 live on `main`; Tier 2 Wave 1 (GIF+BMP) active on `dev`; Engine v1.4.1
 
 ---
 

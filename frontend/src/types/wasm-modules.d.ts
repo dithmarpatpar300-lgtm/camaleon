@@ -30,3 +30,23 @@ declare module "*/transmutador_encode/transmutador_encode.js" {
   export function estimate_jpg_to_webp_size(input_bytes: Uint8Array): number;
   export default function init(): Promise<void>;
 }
+
+declare module "*/transmutador_gif/transmutador_gif.js" {
+  export function transmutar_gif_a_png(input_bytes: Uint8Array): Uint8Array;
+  export function transmutar_gif_a_png_with_compression(input_bytes: Uint8Array, compression: number): Uint8Array;
+  export function estimate_gif_to_png_size(input_bytes: Uint8Array, compression: number): number;
+  export function transmutar_gif_a_jpg(input_bytes: Uint8Array): Uint8Array;
+  export function transmutar_gif_a_jpg_with_options(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): Uint8Array;
+  export function estimate_gif_to_jpg_size(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): number;
+  export default function init(): Promise<void>;
+}
+
+declare module "*/transmutador_bmp/transmutador_bmp.js" {
+  export function transmutar_bmp_a_png(input_bytes: Uint8Array): Uint8Array;
+  export function transmutar_bmp_a_png_with_compression(input_bytes: Uint8Array, compression: number): Uint8Array;
+  export function estimate_bmp_to_png_size(input_bytes: Uint8Array, compression: number): number;
+  export function transmutar_bmp_a_jpg(input_bytes: Uint8Array): Uint8Array;
+  export function transmutar_bmp_a_jpg_with_options(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): Uint8Array;
+  export function estimate_bmp_to_jpg_size(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): number;
+  export default function init(): Promise<void>;
+}

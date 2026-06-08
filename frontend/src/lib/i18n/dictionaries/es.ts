@@ -29,6 +29,22 @@ const es: Dictionary = {
         title: "JPEG a WebP — Camaleon",
         description: "Convierte JPEG a WebP sin perdida en tu navegador. Local y privado — nota: el resultado puede ser mas grande.",
       },
+      "gif-to-png": {
+        title: "GIF a PNG — Camaleon",
+        description: "Convierte GIF a PNG en tu navegador. Raster sin perdida — solo el primer fotograma de animacion.",
+      },
+      "gif-to-jpg": {
+        title: "GIF a JPG — Camaleon",
+        description: "Convierte GIF a JPG en tu navegador. Comprimido para web — solo el primer fotograma.",
+      },
+      "bmp-to-png": {
+        title: "BMP a PNG — Camaleon",
+        description: "Convierte BMP a PNG en tu navegador. Compresion sin perdida para bitmaps sin comprimir.",
+      },
+      "bmp-to-jpg": {
+        title: "BMP a JPG — Camaleon",
+        description: "Convierte BMP a JPG en tu navegador. Archivos mas pequenos para fotos y web.",
+      },
     },
   },
 
@@ -211,6 +227,52 @@ const es: Dictionary = {
       actionTitle: "Convertir a WebP sin Perdida",
       description: "WebP sin perdida desde JPEG — cada pixel decodificado preservado en formato VP8L.",
       fidelityHint: "WebP sin perdida desde un JPEG ya comprimido suele producir un archivo mucho mas grande (a menudo 2x-10x). Ideal para archivado, no para reducir fotos.",
+    },
+    "gif-to-png": {
+      actionTitle: "Convertir a PNG",
+      description: "PNG sin perdida desde GIF — paleta y transparencia como pixels raster.",
+      fidelityHint: "GIFs animados usan solo el primer fotograma. El PNG resultante puede ser mucho mas grande que el GIF.",
+      options: {
+        compression: {
+          label: "Compresion PNG",
+          hint: "Siempre sin perdida — mas compresion = archivo mas pequeno + proceso mas lento.",
+          lowerLabel: "Mas rapido",
+          upperLabel: "Mas pequeno",
+          presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+      },
+    },
+    "gif-to-jpg": {
+      actionTitle: "Comprimir para Web",
+      description: "Convierte GIF a JPEG — archivos mas pequenos a la calidad elegida.",
+      fidelityHint: "GIFs animados usan solo el primer fotograma. JPEG tiene perdida — la transparencia se aplana al fondo elegido.",
+      options: {
+        quality: { label: "Calidad JPEG", hint: "Mayor calidad = archivo mas grande. La perdida de calidad siempre es irreversible.", lowerLabel: "Mas liviano", upperLabel: "Mas fiel", presets: { web: "Web", balanced: "Balanceado", high: "Alto" } },
+        background: { label: "Color de fondo", hint: "Solo afecta imagenes con transparencia.", customAria: "Color de fondo personalizado", swatches: { white: "Blanco", black: "Negro", gray: "Gris" } },
+      },
+    },
+    "bmp-to-png": {
+      actionTitle: "Convertir a PNG",
+      description: "PNG sin perdida desde BMP — compresion DEFLATE para bitmaps sin comprimir.",
+      fidelityHint: "BMP suele estar sin comprimir; PNG a menudo reduce el tamano. Bitmaps muy grandes pueden seguir produciendo PNGs grandes.",
+      options: {
+        compression: {
+          label: "Compresion PNG",
+          hint: "Siempre sin perdida — mas compresion = archivo mas pequeno + proceso mas lento.",
+          lowerLabel: "Mas rapido",
+          upperLabel: "Mas pequeno",
+          presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+      },
+    },
+    "bmp-to-jpg": {
+      actionTitle: "Comprimir para Web",
+      description: "Convierte BMP a JPEG — archivos mucho mas pequenos para fotos y web.",
+      fidelityHint: "JPEG tiene perdida — irreversible. La transparencia de BMP de 32 bits se aplana al fondo elegido.",
+      options: {
+        quality: { label: "Calidad JPEG", hint: "Mayor calidad = archivo mas grande. La perdida de calidad siempre es irreversible.", lowerLabel: "Mas liviano", upperLabel: "Mas fiel", presets: { web: "Web", balanced: "Balanceado", high: "Alto" } },
+        background: { label: "Color de fondo", hint: "Solo afecta imagenes con transparencia.", customAria: "Color de fondo personalizado", swatches: { white: "Blanco", black: "Negro", gray: "Gris" } },
+      },
     },
   },
 

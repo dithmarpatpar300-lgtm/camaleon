@@ -17,6 +17,8 @@ const crates = [
   "transmutador_png",
   "transmutador_webp",
   "transmutador_encode",
+  "transmutador_gif",
+  "transmutador_bmp",
 ];
 
 for (const crate of crates) {

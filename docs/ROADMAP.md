@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | v1.7.9 | **Live on Cloudflare** — ready for public feedback |
-| **Engine (Rust workspace)** | v1.4.1 | Four Wasm crates; `transmutador_encode` PNG+JPEG→WebP |
-| **SPEC** | v1.7.0 | Tier 1 Phases 5.1–5.4 implemented |
+| **Frontend (app)** | v1.8.3 | **Tier 2 Wave 1** — 10 active tools |
+| **Engine (Rust workspace)** | v1.4.1 | Six Wasm crates (+ `transmutador_gif`, `transmutador_bmp`) |
+| **SPEC** | v1.7.0 | Tier 1 complete; Tier 2 Wave 1 complete |
 
-**v1.7.9 shipped** (2026-06-08): Post-launch hardening (SECURITY.md, Dependabot, issue templates, ops playbook); `/contact` feedback links; Cloudflare deploy fixes (`wrangler.jsonc` at repo root, main-only builds documented). **v1.7.8** legal pages + production deploy. **Tier 1 complete** (six tools). **Next:** gather user feedback → Tier 2 (v1.8.x).
+**v1.8.3** (Tier 2 Wave 1): GIF→PNG/JPG, BMP→PNG/JPG — four new tools on `dev`. **v1.7.9** live on `main`. Wave 2 (TIFF/ICO/TGA) next — see `docs/planning/tier2_wave1_plan.md`.
 
 ---
 
@@ -205,7 +205,8 @@ Minimum trust + product surface for real users — **complete before Tier 2**:
 
 | Tier | Target | Features | Notes |
 |------|--------|----------|-------|
-| **Tier 2** | v1.8.x | GIF, BMP, TIFF, ICO, TGA | Classic raster; same pipeline pattern |
+| **Tier 2 Wave 1** | v1.8.3 | GIF, BMP (4 tools) | ✅ Complete — merge to `main` |
+| **Tier 2 Wave 2** | v1.8.5+ | TIFF, ICO, TGA | Deferred after Wave 1 ships |
 | **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
 | **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
 
@@ -236,6 +237,7 @@ Minimum trust + product surface for real users — **complete before Tier 2**:
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-08 | Chief Architect (Cursor) | v1.8.3 Tier 2 Wave 1: `transmutador_gif` + `transmutador_bmp`, 4 tools (GIF/BMP → PNG/JPG), 10 active tools |
 | 2026-06-08 | Chief Architect (Cursor) | v1.7.9 launch-ready: hardening complete, Cloudflare deploy fixes, snapshot updated; Tier 2 gated on user feedback |
 | 2026-06-07 | Chief Architect (Cursor) | Public repo prep: `main`/`dev`/`contrib` branches; internal docs removed from `main`; `CONTRIBUTING.md` + `docs/BRANCHING.md` |
 | 2026-06-07 | Chief Architect (Cursor) | v1.7.8 shipped: legal pages EN+ES, footer redesign, public-launch baseline section |

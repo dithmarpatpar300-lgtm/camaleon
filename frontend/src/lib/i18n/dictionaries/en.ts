@@ -29,6 +29,22 @@ const en: Dictionary = {
         title: "JPEG to WebP — Camaleon",
         description: "Convert JPEG to lossless WebP in your browser. Local and private — note output may be larger than the source.",
       },
+      "gif-to-png": {
+        title: "GIF to PNG — Camaleon",
+        description: "Convert GIF to PNG in your browser. Lossless raster — first animation frame only.",
+      },
+      "gif-to-jpg": {
+        title: "GIF to JPG — Camaleon",
+        description: "Convert GIF to JPG in your browser. Compressed for web — first animation frame only.",
+      },
+      "bmp-to-png": {
+        title: "BMP to PNG — Camaleon",
+        description: "Convert BMP to PNG in your browser. Lossless compression for uncompressed bitmaps.",
+      },
+      "bmp-to-jpg": {
+        title: "BMP to JPG — Camaleon",
+        description: "Convert BMP to JPG in your browser. Smaller files for photos and web use.",
+      },
     },
   },
 
@@ -225,6 +241,52 @@ const en: Dictionary = {
       actionTitle: "Convert to Lossless WebP",
       description: "Lossless WebP from JPEG — every decoded pixel preserved in VP8L format.",
       fidelityHint: "Lossless WebP from an already-compressed JPEG usually produces a significantly larger file (often 2x-10x). Best for archival round-trips, not for shrinking photos.",
+    },
+    "gif-to-png": {
+      actionTitle: "Convert to PNG",
+      description: "Lossless PNG from GIF — palette and transparency preserved as raster pixels.",
+      fidelityHint: "Animated GIFs use the first frame only. Output PNG may be much larger than the GIF source.",
+      options: {
+        compression: {
+          label: "PNG Compression",
+          hint: "Always lossless — higher compression = smaller file + slower processing.",
+          lowerLabel: "Faster",
+          upperLabel: "Smaller",
+          presets: { fast: "Fast", balanced: "Balanced", minimal: "Minimal" },
+        },
+      },
+    },
+    "gif-to-jpg": {
+      actionTitle: "Compress for Web",
+      description: "Convert GIF to JPEG — smaller files at your chosen quality.",
+      fidelityHint: "Animated GIFs use the first frame only. JPEG is lossy — transparency is flattened to your chosen background.",
+      options: {
+        quality: { label: "JPEG Quality", hint: "Higher quality = larger file. Quality loss is always irreversible.", lowerLabel: "Lighter", upperLabel: "Faithful", presets: { web: "Web", balanced: "Balanced", high: "High" } },
+        background: { label: "Background color", hint: "Only affects images with transparency.", customAria: "Custom background color", swatches: { white: "White", black: "Black", gray: "Gray" } },
+      },
+    },
+    "bmp-to-png": {
+      actionTitle: "Convert to PNG",
+      description: "Lossless PNG from BMP — DEFLATE compression for uncompressed bitmaps.",
+      fidelityHint: "BMP is typically uncompressed; PNG often shrinks the file. Very large bitmaps may still produce large PNGs.",
+      options: {
+        compression: {
+          label: "PNG Compression",
+          hint: "Always lossless — higher compression = smaller file + slower processing.",
+          lowerLabel: "Faster",
+          upperLabel: "Smaller",
+          presets: { fast: "Fast", balanced: "Balanced", minimal: "Minimal" },
+        },
+      },
+    },
+    "bmp-to-jpg": {
+      actionTitle: "Compress for Web",
+      description: "Convert BMP to JPEG — much smaller files for photos and web.",
+      fidelityHint: "JPEG is lossy — quality loss is irreversible. 32-bit BMP transparency is flattened to your chosen background.",
+      options: {
+        quality: { label: "JPEG Quality", hint: "Higher quality = larger file. Quality loss is always irreversible.", lowerLabel: "Lighter", upperLabel: "Faithful", presets: { web: "Web", balanced: "Balanced", high: "High" } },
+        background: { label: "Background color", hint: "Only affects images with transparency.", customAria: "Custom background color", swatches: { white: "White", black: "Black", gray: "Gray" } },
+      },
     },
   },
 

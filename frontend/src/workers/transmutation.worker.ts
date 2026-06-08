@@ -12,6 +12,14 @@ type EstimateWebpSizeFn = (input: Uint8Array, compression: number) => number;
 type TransmutarWebpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
 type EstimateWebpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
 type EstimatePngToWebpSizeFn = (input: Uint8Array) => number;
+type TransmutarGifWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
+type EstimateGifToPngSizeFn = (input: Uint8Array, compression: number) => number;
+type TransmutarGifJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
+type EstimateGifToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
+type TransmutarBmpWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
+type EstimateBmpToPngSizeFn = (input: Uint8Array, compression: number) => number;
+type TransmutarBmpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
+type EstimateBmpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
 
 let initJpgPromise: Promise<void> | null = null;
 let transmutarJpg: TransmutarFn | null = null;
@@ -36,6 +44,20 @@ let transmutarPngToWebp: TransmutarFn | null = null;
 let estimatePngToWebpSize: EstimatePngToWebpSizeFn | null = null;
 let transmutarJpgToWebp: TransmutarFn | null = null;
 let estimateJpgToWebpSize: EstimatePngToWebpSizeFn | null = null;
+
+let initGifPromise: Promise<void> | null = null;
+let transmutarGif: TransmutarFn | null = null;
+let transmutarGifWithCompression: TransmutarGifWithCompression | null = null;
+let estimateGifToPngSize: EstimateGifToPngSizeFn | null = null;
+let transmutarGifJpgWithOptions: TransmutarGifJpgWithOptions | null = null;
+let estimateGifToJpgSize: EstimateGifToJpgSizeFn | null = null;
+
+let initBmpPromise: Promise<void> | null = null;
+let transmutarBmp: TransmutarFn | null = null;
+let transmutarBmpWithCompression: TransmutarBmpWithCompression | null = null;
+let estimateBmpToPngSize: EstimateBmpToPngSizeFn | null = null;
+let transmutarBmpJpgWithOptions: TransmutarBmpJpgWithOptions | null = null;
+let estimateBmpToJpgSize: EstimateBmpToJpgSizeFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
@@ -98,6 +120,36 @@ function ensureEncodeWasmInitialized(): Promise<void> {
   return initEncodePromise;
 }
 
+async function initGifWasm(): Promise<void> {
+  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_gif/transmutador_gif.js");
+  await module.default();
+  transmutarGif = module.transmutar_gif_a_png;
+  transmutarGifWithCompression = module.transmutar_gif_a_png_with_compression;
+  estimateGifToPngSize = module.estimate_gif_to_png_size;
+  transmutarGifJpgWithOptions = module.transmutar_gif_a_jpg_with_options;
+  estimateGifToJpgSize = module.estimate_gif_to_jpg_size;
+}
+
+function ensureGifWasmInitialized(): Promise<void> {
+  if (!initGifPromise) initGifPromise = initGifWasm();
+  return initGifPromise;
+}
+
+async function initBmpWasm(): Promise<void> {
+  const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_bmp/transmutador_bmp.js");
+  await module.default();
+  transmutarBmp = module.transmutar_bmp_a_png;
+  transmutarBmpWithCompression = module.transmutar_bmp_a_png_with_compression;
+  estimateBmpToPngSize = module.estimate_bmp_to_png_size;
+  transmutarBmpJpgWithOptions = module.transmutar_bmp_a_jpg_with_options;
+  estimateBmpToJpgSize = module.estimate_bmp_to_jpg_size;
+}
+
+function ensureBmpWasmInitialized(): Promise<void> {
+  if (!initBmpPromise) initBmpPromise = initBmpWasm();
+  return initBmpPromise;
+}
+
 function postResponse(response: WorkerResponse): void {
   if (response.ok && response.bytes) {
     self.postMessage(response, { transfer: [response.bytes] });
@@ -115,6 +167,10 @@ type RouteFlags = {
   isPng: boolean;
   isWebpToPng: boolean;
   isWebpToJpg: boolean;
+  isGifToPng: boolean;
+  isGifToJpg: boolean;
+  isBmpToPng: boolean;
+  isBmpToJpg: boolean;
   isEncode: boolean;
   encodeSource?: EncodeSource;
 };
@@ -127,11 +183,23 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     req.module === "transmutador_webp" && (req.outputExtension ?? "png") === "png";
   const isWebpToJpg =
     req.module === "transmutador_webp" && req.outputExtension === "jpg";
+  const isGifToPng =
+    req.module === "transmutador_gif" && (req.outputExtension ?? "png") === "png";
+  const isGifToJpg =
+    req.module === "transmutador_gif" && req.outputExtension === "jpg";
+  const isBmpToPng =
+    req.module === "transmutador_bmp" && (req.outputExtension ?? "png") === "png";
+  const isBmpToJpg =
+    req.module === "transmutador_bmp" && req.outputExtension === "jpg";
   return {
     isJpg,
     isPng,
     isWebpToPng,
     isWebpToJpg,
+    isGifToPng,
+    isGifToJpg,
+    isBmpToPng,
+    isBmpToJpg,
     isEncode,
     encodeSource: isEncode ? req.encodeSource : undefined,
   };
@@ -141,7 +209,12 @@ function resolveMimeExtension(route: RouteFlags): { mime: string; extension: Out
   if (route.isEncode) {
     return { mime: "image/webp", extension: "webp" };
   }
-  if (route.isWebpToJpg || route.isPng) {
+  if (
+    route.isWebpToJpg ||
+    route.isPng ||
+    route.isGifToJpg ||
+    route.isBmpToJpg
+  ) {
     return { mime: "image/jpeg", extension: "jpg" };
   }
   return { mime: "image/png", extension: "png" };
@@ -174,6 +247,32 @@ function runFullEncode(
       return transmutarWebpWithCompression(input, opts.compression);
     }
     if (transmutarWebp) return transmutarWebp(input);
+    throw new Error("Wasm module not initialized");
+  }
+  if (route.isGifToJpg) {
+    const quality = opts?.quality ?? 85;
+    const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    if (!transmutarGifJpgWithOptions) throw new Error("Wasm module not initialized");
+    return transmutarGifJpgWithOptions(input, quality, bg.r, bg.g, bg.b);
+  }
+  if (route.isGifToPng) {
+    if (opts?.compression != null && transmutarGifWithCompression) {
+      return transmutarGifWithCompression(input, opts.compression);
+    }
+    if (transmutarGif) return transmutarGif(input);
+    throw new Error("Wasm module not initialized");
+  }
+  if (route.isBmpToJpg) {
+    const quality = opts?.quality ?? 85;
+    const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    if (!transmutarBmpJpgWithOptions) throw new Error("Wasm module not initialized");
+    return transmutarBmpJpgWithOptions(input, quality, bg.r, bg.g, bg.b);
+  }
+  if (route.isBmpToPng) {
+    if (opts?.compression != null && transmutarBmpWithCompression) {
+      return transmutarBmpWithCompression(input, opts.compression);
+    }
+    if (transmutarBmp) return transmutarBmp(input);
     throw new Error("Wasm module not initialized");
   }
   if (route.isJpg) {
@@ -222,6 +321,28 @@ function runSizeEstimate(
     if (!estimateWebpToPngSize) throw new Error("Wasm estimate export not initialized");
     return estimateWebpToPngSize(input, compression);
   }
+  if (route.isGifToJpg) {
+    const quality = opts?.quality ?? 85;
+    const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    if (!estimateGifToJpgSize) throw new Error("Wasm estimate export not initialized");
+    return estimateGifToJpgSize(input, quality, bg.r, bg.g, bg.b);
+  }
+  if (route.isGifToPng) {
+    const compression = opts?.compression ?? 6;
+    if (!estimateGifToPngSize) throw new Error("Wasm estimate export not initialized");
+    return estimateGifToPngSize(input, compression);
+  }
+  if (route.isBmpToJpg) {
+    const quality = opts?.quality ?? 85;
+    const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    if (!estimateBmpToJpgSize) throw new Error("Wasm estimate export not initialized");
+    return estimateBmpToJpgSize(input, quality, bg.r, bg.g, bg.b);
+  }
+  if (route.isBmpToPng) {
+    const compression = opts?.compression ?? 6;
+    if (!estimateBmpToPngSize) throw new Error("Wasm estimate export not initialized");
+    return estimateBmpToPngSize(input, compression);
+  }
   if (route.isJpg) {
     const compression = opts?.compression ?? 6;
     if (!estimateJpgToPngSize) throw new Error("Wasm estimate export not initialized");
@@ -235,7 +356,14 @@ function runSizeEstimate(
 }
 
 async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
-  const knownModules = ["transmutador_jpg", "transmutador_png", "transmutador_webp", "transmutador_encode"];
+  const knownModules = [
+    "transmutador_jpg",
+    "transmutador_png",
+    "transmutador_webp",
+    "transmutador_encode",
+    "transmutador_gif",
+    "transmutador_bmp",
+  ];
   if (!knownModules.includes(req.module)) {
     return { id: req.id, ok: false, error: `Unknown module: ${req.module}` };
   }
@@ -250,6 +378,10 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       await ensureJpgWasmInitialized();
     } else if (route.isWebpToPng || route.isWebpToJpg) {
       await ensureWebpWasmInitialized();
+    } else if (route.isGifToPng || route.isGifToJpg) {
+      await ensureGifWasmInitialized();
+    } else if (route.isBmpToPng || route.isBmpToJpg) {
+      await ensureBmpWasmInitialized();
     } else if (route.isEncode) {
       await ensureEncodeWasmInitialized();
     } else {

@@ -11,7 +11,9 @@ $crates = @(
     @{ Name = "transmutador_jpg"; Path = "motor_transmutacion\transmutador_jpg" },
     @{ Name = "transmutador_png"; Path = "motor_transmutacion\transmutador_png" },
     @{ Name = "transmutador_webp"; Path = "motor_transmutacion\transmutador_webp" },
-    @{ Name = "transmutador_encode"; Path = "motor_transmutacion\transmutador_encode" }
+    @{ Name = "transmutador_encode"; Path = "motor_transmutacion\transmutador_encode" },
+    @{ Name = "transmutador_gif"; Path = "motor_transmutacion\transmutador_gif" },
+    @{ Name = "transmutador_bmp"; Path = "motor_transmutacion\transmutador_bmp" }
 )
 
 foreach ($crate in $crates) {

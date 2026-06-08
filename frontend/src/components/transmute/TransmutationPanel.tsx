@@ -9,6 +9,8 @@ import { useFileMetrics } from "@/hooks/useFileMetrics";
 import { useAdaptiveResourceProfile } from "@/hooks/useAdaptiveResourceProfile";
 import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
+import { detectBmpAlpha } from "@/lib/format/detect-bmp-alpha";
+import { detectGifAlpha } from "@/lib/format/detect-gif-alpha";
 import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
 import { detectWebpAlpha } from "@/lib/format/detect-webp-alpha";
 import { useI18n } from "@/providers/I18nProvider";
@@ -106,6 +108,10 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setHasAlpha(detectPngAlpha(bytes).hasAlpha);
     } else if (hasBackgroundOption && tool.id === "webp-to-jpg") {
       setHasAlpha(detectWebpAlpha(bytes));
+    } else if (hasBackgroundOption && tool.id === "gif-to-jpg") {
+      setHasAlpha(detectGifAlpha(bytes));
+    } else if (hasBackgroundOption && tool.id === "bmp-to-jpg") {
+      setHasAlpha(detectBmpAlpha(bytes));
     } else {
       setHasAlpha(false);
     }

@@ -2,17 +2,17 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v1.7.9** (App) · Engine v1.4.1 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v1.8.3** (App) · Engine v1.4.1 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v1.7.9)
+## What works today (v1.8.3)
 
 | Capability | Status |
 |------------|--------|
 | **JPG / JPEG ↔ PNG** | Lossless PNG compression (1–9); JPEG quality (1–100); alpha flatten |
 | **WebP suite** | WebP→PNG/JPG; PNG/JPEG→WebP (lossless WebP) |
-| **Six active tools** | Landing grid + `/transmute/[slug]` per conversion |
+| **Ten active tools** | JPG/PNG/WebP suite + GIF + BMP — `/transmute/[slug]` per conversion |
 | **Staged transmutation flow** | Drop → adjust options → Transmutar → preview + size delta → download |
 | **EN / ES** | Full UI i18n with persisted locale |
 | **Legal pages** | `/about`, `/contact`, `/privacy`, `/terms` (bilingual) |
@@ -129,6 +129,7 @@ camaleon/
 | **Tier 1 WebP suite** | **v1.7.6** | ✅ Six active tools |
 | **Launch baseline** | **v1.7.8** | ✅ Legal pages + footer |
 | **Post-launch hardening** | **v1.7.9** | ✅ Security, ops, deploy fixes, `/contact` feedback |
+| **Tier 2 Wave 1** | **v1.8.3** | ✅ GIF + BMP (4 conversions) |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)**
 

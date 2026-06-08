@@ -1,4 +1,10 @@
-export type TransmutationModule = "transmutador_jpg" | "transmutador_png" | "transmutador_webp" | "transmutador_encode";
+export type TransmutationModule =
+  | "transmutador_jpg"
+  | "transmutador_png"
+  | "transmutador_webp"
+  | "transmutador_encode"
+  | "transmutador_gif"
+  | "transmutador_bmp";
 
 export type OutputExtension = "png" | "jpg" | "webp";
 
