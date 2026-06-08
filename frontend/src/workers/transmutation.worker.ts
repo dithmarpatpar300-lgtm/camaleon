@@ -183,6 +183,25 @@ function supersedeEstimate(id: string): void {
   postResponse({ id, ok: false, error: "superseded" });
 }
 
+function resetAllSessionLimits(): void {
+  setJpgSessionLimit?.(SOFT_LIMIT_BYTES);
+  setPngSessionLimit?.(SOFT_LIMIT_BYTES);
+  setWebpSessionLimit?.(SOFT_LIMIT_BYTES);
+  setEncodeSessionLimit?.(SOFT_LIMIT_BYTES);
+  setGifSessionLimit?.(SOFT_LIMIT_BYTES);
+  setBmpSessionLimit?.(SOFT_LIMIT_BYTES);
+}
+
+function purgeWorkerState(id: string): WorkerResponse {
+  resultCache.clear();
+  if (pendingEstimateId) {
+    supersedeEstimate(pendingEstimateId);
+    pendingEstimateId = null;
+  }
+  resetAllSessionLimits();
+  return { id, ok: true, purpose: "purge", outputSize: 0 };
+}
+
 type RouteFlags = {
   isJpg: boolean;
   isPng: boolean;
@@ -411,8 +430,12 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     "transmutador_gif",
     "transmutador_bmp",
   ];
-  if (!knownModules.includes(req.module)) {
-    return { id: req.id, ok: false, error: `Unknown module: ${req.module}` };
+  if (!req.module || !knownModules.includes(req.module)) {
+    return { id: req.id, ok: false, error: `Unknown module: ${req.module ?? "none"}` };
+  }
+
+  if (!req.bytes) {
+    return { id: req.id, ok: false, error: "Missing input bytes" };
   }
 
   const isEstimate = req.purpose === "estimate";
@@ -557,6 +580,12 @@ async function dispatch(req: WorkerRequest): Promise<void> {
 
 self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   const req = e.data;
+  if (req.purpose === "purge") {
+    pipeline = pipeline.then(() => {
+      postResponse(purgeWorkerState(req.id));
+    });
+    return;
+  }
   pipeline = pipeline.then(() => dispatch(req));
 };
 

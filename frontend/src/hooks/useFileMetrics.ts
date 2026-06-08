@@ -21,6 +21,7 @@ import {
   type LimitContext,
 } from "@/lib/transmutation/limit-context";
 import { localizeError } from "@/lib/i18n/errors";
+import { getEstimateInputBuffer } from "@/lib/transmutation/estimate-input-cache";
 import { useI18n } from "@/providers/I18nProvider";
 import type { WorkerRequestMeta } from "@/workers/types";
 
@@ -58,16 +59,6 @@ type FileMetrics = {
   cacheWarm: boolean;
   transmuteMeta: WorkerRequestMeta | undefined;
 };
-
-const estimateInputCache = new WeakMap<File, ArrayBuffer>();
-
-async function getEstimateBuffer(file: File): Promise<ArrayBuffer> {
-  const cached = estimateInputCache.get(file);
-  if (cached) return cached.slice(0);
-  const buf = await file.arrayBuffer();
-  estimateInputCache.set(file, buf);
-  return buf.slice(0);
-}
 
 export function useFileMetrics({
   file,
@@ -205,7 +196,7 @@ export function useFileMetrics({
       try {
         const buf = inputBytes
           ? inputBytes.slice(0)
-          : await getEstimateBuffer(file);
+          : await getEstimateInputBuffer(file);
         if (thisId !== estimateIdRef.current) return;
         if (typeof document !== "undefined" && document.hidden) return;
 
@@ -228,7 +219,10 @@ export function useFileMetrics({
           );
         }
       } catch (err) {
-        if (err instanceof Error && err.message === "superseded") {
+        if (
+          err instanceof Error &&
+          (err.message === "superseded" || err.message === "worker-recycled")
+        ) {
           if (manualEstimateRef.current) {
             setEstimateError(t("panel.metrics.estimateInterrupted"));
           }
@@ -332,6 +326,9 @@ export function useFileMetrics({
 
     if (prev === null || prev === fingerprint) return;
     if (estimatedSize === null && !oversizeConsented) return;
+
+    setEstimatedSize(null);
+    setEstimateError(null);
 
     if (timerRef.current) clearTimeout(timerRef.current);
     const debounceMs = Math.max(profile.debounceMs, 800);

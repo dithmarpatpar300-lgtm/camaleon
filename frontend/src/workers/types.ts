@@ -21,7 +21,7 @@ export type TransmutationOptions = {
   frameIndex?: number;
 };
 
-export type WorkerPurpose = "transmute" | "estimate";
+export type WorkerPurpose = "transmute" | "estimate" | "purge";
 
 export type WorkerRequestMeta = {
   fingerprint?: string;
@@ -34,8 +34,8 @@ export type WorkerRequestMeta = {
 
 export type WorkerRequest = {
   id: string;
-  module: TransmutationModule;
-  bytes: ArrayBuffer;
+  module?: TransmutationModule;
+  bytes?: ArrayBuffer;
   options?: TransmutationOptions;
   /** Required when module is transmutador_webp (png vs jpg). */
   outputExtension?: OutputExtension;

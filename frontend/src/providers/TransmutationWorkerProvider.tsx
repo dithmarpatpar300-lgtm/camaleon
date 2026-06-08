@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { TransmutationRouteLifecycle } from "@/components/transmute/TransmutationRouteLifecycle";
 import type {
   EncodeSource,
   OutputExtension,
@@ -52,12 +53,43 @@ type WorkerContextValue = {
 
 const WorkerContext = createContext<WorkerContextValue | null>(null);
 
+const WORKER_RECYCLED = "worker-recycled";
+
+function attachWorker(
+  worker: Worker,
+  pendingRef: React.MutableRefObject<
+    Map<string, { resolve: (r: WorkerResponse) => void; reject: (e: Error) => void }>
+  >
+): void {
+  worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+    const response = e.data;
+    const pending = pendingRef.current.get(response.id);
+    if (pending) {
+      pending.resolve(response);
+      pendingRef.current.delete(response.id);
+    }
+  };
+
+  worker.onerror = (e) => {
+    console.error("Transmutation worker error:", e);
+  };
+}
+
 export function TransmutationWorkerProvider({ children }: { children: ReactNode }) {
   const workerRef = useRef<Worker | null>(null);
   const [ready, setReady] = useState(false);
+  const [workerEpoch, setWorkerEpoch] = useState(0);
   const pendingRef = useRef<
     Map<string, { resolve: (r: WorkerResponse) => void; reject: (e: Error) => void }>
   >(new Map());
+
+  const rejectAllPending = useCallback((message: string) => {
+    const err = new Error(message);
+    for (const { reject } of pendingRef.current.values()) {
+      reject(err);
+    }
+    pendingRef.current.clear();
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -67,29 +99,23 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
       { type: "module" }
     );
 
-    worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
-      const response = e.data;
-      const pending = pendingRef.current.get(response.id);
-      if (pending) {
-        pending.resolve(response);
-        pendingRef.current.delete(response.id);
-      }
-    };
-
-    worker.onerror = (e) => {
-      console.error("Transmutation worker error:", e);
-    };
-
+    attachWorker(worker, pendingRef);
     workerRef.current = worker;
     setReady(true);
 
     return () => {
+      rejectAllPending(WORKER_RECYCLED);
       worker.terminate();
       workerRef.current = null;
       setReady(false);
-      pendingRef.current.clear();
     };
-  }, []);
+  }, [workerEpoch, rejectAllPending]);
+
+  const recycleWorker = useCallback(() => {
+    rejectAllPending(WORKER_RECYCLED);
+    setReady(false);
+    setWorkerEpoch((epoch) => epoch + 1);
+  }, [rejectAllPending]);
 
   const sendMessage = useCallback(
     (
@@ -109,7 +135,6 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
         }
         const id = crypto.randomUUID();
         pendingRef.current.set(id, { resolve, reject });
-        // Always transfer a clone so the caller's ArrayBuffer is never detached.
         const transferBytes = bytes.slice(0);
         worker.postMessage(
           {
@@ -157,7 +182,7 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
           cacheStored: response.cacheStored,
         };
       }
-      if (response.error === "superseded") {
+      if (response.error === "superseded" || response.error === WORKER_RECYCLED) {
         throw new Error("superseded");
       }
       throw new Error(response.error);
@@ -167,6 +192,7 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
 
   return (
     <WorkerContext.Provider value={{ ready, transmutate, estimate }}>
+      <TransmutationRouteLifecycle recycleWorker={recycleWorker} />
       {children}
     </WorkerContext.Provider>
   );
