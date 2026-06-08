@@ -1,0 +1,27 @@
+name: Security (public intake)
+description: Non-sensitive security question only — use Private Advisories for vulnerabilities
+title: "[Security]: "
+labels: ["security"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **For vulnerabilities that could harm users, use [Private Security Advisories](https://github.com/dithmarpatpar300-lgtm/camaleon/security/advisories/new) instead.**
+
+        This template is for general security questions or post-disclosure discussion.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Do not include exploit details or zero-day instructions in public issues
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: advisory
+    attributes:
+      label: Confirmation
+      options:
+        - label: This is NOT a confidential vulnerability report (or I already reported it privately)
+          required: true

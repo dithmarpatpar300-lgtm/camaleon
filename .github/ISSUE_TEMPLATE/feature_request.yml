@@ -1,0 +1,43 @@
+name: Feature request
+description: Suggest a new format, UI improvement, or capability
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Camaleon prioritizes **privacy-first, local processing**. Features that require server uploads are unlikely to be accepted.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to accomplish?
+      placeholder: I need to convert … because …
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What would you like Camaleon to do?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: How important is this to you?
+      options:
+        - Nice to have
+        - Would use regularly
+        - Blocking my workflow
+
+  - type: checkboxes
+    id: local
+    attributes:
+      label: Privacy alignment
+      options:
+        - label: This feature can work with 100% browser-local processing (no upload)
+          required: true

@@ -134,6 +134,13 @@ The project is modular by design: a new format = one registry entry + one Rust c
 
 See **[CONTRIBUTING.md](CONTRIBUTING.md)** — open PRs against the `contrib` branch. Branch strategy: **[docs/BRANCHING.md](docs/BRANCHING.md)**.
 
+## Security & operations
+
+- **[SECURITY.md](SECURITY.md)** — report vulnerabilities responsibly
+- **[docs/OPERATIONS.md](docs/OPERATIONS.md)** — monitoring playbook (traffic, dependencies)
+- **[docs/SECURITY_CHECKLIST.md](docs/SECURITY_CHECKLIST.md)** — pre-release audit
+- **Feedback:** [GitHub Issues](https://github.com/dithmarpatpar300-lgtm/camaleon/issues/new/choose) (bug / feature templates)
+
 ---
 
 License: MIT

@@ -191,7 +191,8 @@ Minimum trust + product surface for real users:
 - [x] Bilingual legal pages (`/about`, `/contact`, `/privacy`, `/terms`)
 - [x] Footer copyright + MIT + version
 - [x] Privacy banner → policy link on landing
-- [ ] Production deploy (Cloudflare Workers — see `docs/DEPLOY.md`)
+- [x] Production deploy (Cloudflare Workers — see `docs/DEPLOY.md`)
+- [ ] Post-launch hardening v1.7.9 (see `docs/planning/post_launch_hardening_plan.md`)
 - [ ] Git release tag `v1.7.8`
 - [ ] Optional: contact email; Playwright smoke E2E before scale
 - [x] Public repo hygiene (`main` / `dev` / `contrib` — see `docs/BRANCHING.md`)

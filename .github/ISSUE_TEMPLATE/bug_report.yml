@@ -1,0 +1,84 @@
+name: Bug report
+description: Something broke in the app or a conversion failed unexpectedly
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Camaleon. **Do not attach personal photos** — describe the issue instead.
+
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Tool / conversion
+      options:
+        - JPG → PNG
+        - PNG → JPG
+        - WebP → PNG
+        - WebP → JPG
+        - PNG → WebP
+        - JPG → WebP
+        - Landing / other page
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: App version (footer of the site)
+      placeholder: e.g. v1.7.8
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Production (workers.dev or custom domain)
+        - Local dev (`npm run dev`)
+        - Cloudflare preview
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open …
+        2. Drop file …
+        3. Click Transmutar …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include error message text if shown (no need for screenshots of private images)
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser & OS
+      placeholder: e.g. Chrome 131 / Windows 11
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I confirm this report does not include file contents or personal data
+          required: true

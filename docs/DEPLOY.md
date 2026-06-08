@@ -94,6 +94,22 @@ None required for v1.7.8. Add `NEXT_PUBLIC_*` variables under **Build variables*
 
 ---
 
+## Security & abuse (Cloudflare dashboard)
+
+Manual steps after first successful deploy. See also [docs/OPERATIONS.md](OPERATIONS.md).
+
+| Task | Path | Recommendation |
+|------|------|----------------|
+| Bot Fight Mode | Security → Bots | Off initially; enable if scraping/abuse spikes |
+| Security Level | Security → Settings | **Medium** default |
+| Notifications | Account → Notifications | Email on failed Workers Builds |
+| Analytics baseline | Workers → camaleon → Analytics | Note normal requests/day for comparison |
+| Custom domain | Workers → Settings → Domains | Reduces impersonation risk when ready |
+
+**Not needed now:** “I’m Under Attack” mode, paid WAF rulesets, per-IP rate limits unless abuse occurs.
+
+---
+
 ## Troubleshooting
 
 ### `npm ci` — package-lock.json
