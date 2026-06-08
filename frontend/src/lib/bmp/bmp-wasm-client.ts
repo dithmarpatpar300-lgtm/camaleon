@@ -9,6 +9,8 @@ export type BmpMeta = {
 type BmpWasmModule = {
   default: () => Promise<void>;
   inspect_bmp_meta: (input: Uint8Array) => BmpMetaHandle;
+  set_session_input_limit?: (maxBytes: number) => void;
+  reset_session_input_limit?: () => void;
 };
 
 type BmpMetaHandle = {
@@ -48,4 +50,14 @@ export async function inspectBmpMeta(bytes: Uint8Array): Promise<BmpMeta> {
 
 export function formatBmpMetaLine(meta: BmpMeta): string {
   return `${meta.width} × ${meta.height} · ${meta.bitCount}-bit`;
+}
+
+export async function setBmpSessionInputLimit(maxBytes: number): Promise<void> {
+  const wasm = await ensureBmpWasm();
+  wasm.set_session_input_limit?.(maxBytes);
+}
+
+export async function resetBmpSessionInputLimit(): Promise<void> {
+  const wasm = await ensureBmpWasm();
+  wasm.reset_session_input_limit?.();
 }

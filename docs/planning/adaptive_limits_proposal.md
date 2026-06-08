@@ -1,6 +1,6 @@
 # Adaptive File Size Limits — Proposal (refined)
 
-> Status: **Approved direction**, not yet implemented.  
+> Status: **Implemented** (v1.8.6).  
 > Applies to: all transmutators, desktop + mobile.
 
 ---

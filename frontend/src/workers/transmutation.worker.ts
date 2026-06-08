@@ -21,38 +21,45 @@ type EstimateBmpToPngSizeFn = (input: Uint8Array, compression: number) => number
 type TransmutarBmpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
 type EstimateBmpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
 
-let initJpgPromise: Promise<void> | null = null;
+type SessionLimitFn = (maxBytes: number) => void;
+
+function pickSessionLimit(mod: Record<string, unknown>): SessionLimitFn | null {
+  const fn = mod.set_session_input_limit;
+  return typeof fn === "function" ? (fn as SessionLimitFn) : null;
+}
+
+let setJpgSessionLimit: SessionLimitFn | null = null;
 let transmutarJpg: TransmutarFn | null = null;
 let transmutarJpgWithCompression: TransmutarJpgWithCompression | null = null;
 let estimateJpgToPngSize: EstimateJpgSizeFn | null = null;
 
-let initPngPromise: Promise<void> | null = null;
+let setPngSessionLimit: SessionLimitFn | null = null;
 let transmutarPng: TransmutarFn | null = null;
 let transmutarPngWithQuality: TransmutarPngWithQuality | null = null;
 let transmutarPngWithOptions: TransmutarPngWithOptions | null = null;
 let estimatePngToJpgSize: EstimatePngSizeFn | null = null;
 
-let initWebpPromise: Promise<void> | null = null;
+let setWebpSessionLimit: SessionLimitFn | null = null;
 let transmutarWebp: TransmutarFn | null = null;
 let transmutarWebpWithCompression: TransmutarWebpWithCompression | null = null;
 let estimateWebpToPngSize: EstimateWebpSizeFn | null = null;
 let transmutarWebpJpgWithOptions: TransmutarWebpJpgWithOptions | null = null;
 let estimateWebpToJpgSize: EstimateWebpToJpgSizeFn | null = null;
 
-let initEncodePromise: Promise<void> | null = null;
+let setEncodeSessionLimit: SessionLimitFn | null = null;
 let transmutarPngToWebp: TransmutarFn | null = null;
 let estimatePngToWebpSize: EstimatePngToWebpSizeFn | null = null;
 let transmutarJpgToWebp: TransmutarFn | null = null;
 let estimateJpgToWebpSize: EstimatePngToWebpSizeFn | null = null;
 
-let initGifPromise: Promise<void> | null = null;
+let setGifSessionLimit: SessionLimitFn | null = null;
 let transmutarGif: TransmutarFn | null = null;
 let transmutarGifWithCompression: TransmutarGifWithCompression | null = null;
 let estimateGifToPngSize: EstimateGifToPngSizeFn | null = null;
 let transmutarGifJpgWithOptions: TransmutarGifJpgWithOptions | null = null;
 let estimateGifToJpgSize: EstimateGifToJpgSizeFn | null = null;
 
-let initBmpPromise: Promise<void> | null = null;
+let setBmpSessionLimit: SessionLimitFn | null = null;
 let transmutarBmp: TransmutarFn | null = null;
 let transmutarBmpWithCompression: TransmutarBmpWithCompression | null = null;
 let estimateBmpToPngSize: EstimateBmpToPngSizeFn | null = null;
@@ -64,12 +71,20 @@ let pipeline: Promise<void> = Promise.resolve();
 
 const resultCache = new ResultCache();
 
+let initJpgPromise: Promise<void> | null = null;
+let initPngPromise: Promise<void> | null = null;
+let initWebpPromise: Promise<void> | null = null;
+let initEncodePromise: Promise<void> | null = null;
+let initGifPromise: Promise<void> | null = null;
+let initBmpPromise: Promise<void> | null = null;
+
 async function initJpgWasm(): Promise<void> {
   const module = await import(/* webpackIgnore: true */ "/wasm/transmutador_jpg/transmutador_jpg.js");
   await module.default();
   transmutarJpg = module.transmutar_jpg_a_png;
   transmutarJpgWithCompression = module.transmutar_jpg_a_png_with_compression;
   estimateJpgToPngSize = module.estimate_jpg_to_png_size;
+  setJpgSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
 }
 
 async function initPngWasm(): Promise<void> {
@@ -79,6 +94,7 @@ async function initPngWasm(): Promise<void> {
   transmutarPngWithQuality = module.transmutar_png_a_jpg_with_quality;
   transmutarPngWithOptions = module.transmutar_png_a_jpg_with_options;
   estimatePngToJpgSize = module.estimate_png_to_jpg_size;
+  setPngSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
 }
 
 async function initWebpWasm(): Promise<void> {
@@ -89,6 +105,7 @@ async function initWebpWasm(): Promise<void> {
   estimateWebpToPngSize = module.estimate_webp_to_png_size;
   transmutarWebpJpgWithOptions = module.transmutar_webp_a_jpg_with_options;
   estimateWebpToJpgSize = module.estimate_webp_to_jpg_size;
+  setWebpSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
 }
 
 function ensureJpgWasmInitialized(): Promise<void> {
@@ -113,6 +130,7 @@ async function initEncodeWasm(): Promise<void> {
   estimatePngToWebpSize = module.estimate_png_to_webp_size;
   transmutarJpgToWebp = module.transmutar_jpg_a_webp;
   estimateJpgToWebpSize = module.estimate_jpg_to_webp_size;
+  setEncodeSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
 }
 
 function ensureEncodeWasmInitialized(): Promise<void> {
@@ -128,6 +146,7 @@ async function initGifWasm(): Promise<void> {
   estimateGifToPngSize = module.estimate_gif_to_png_size;
   transmutarGifJpgWithOptions = module.transmutar_gif_a_jpg_with_options;
   estimateGifToJpgSize = module.estimate_gif_to_jpg_size;
+  setGifSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
 }
 
 function ensureGifWasmInitialized(): Promise<void> {
@@ -143,6 +162,7 @@ async function initBmpWasm(): Promise<void> {
   estimateBmpToPngSize = module.estimate_bmp_to_png_size;
   transmutarBmpJpgWithOptions = module.transmutar_bmp_a_jpg_with_options;
   estimateBmpToJpgSize = module.estimate_bmp_to_jpg_size;
+  setBmpSessionLimit = pickSessionLimit(module as unknown as Record<string, unknown>);
 }
 
 function ensureBmpWasmInitialized(): Promise<void> {
@@ -357,6 +377,30 @@ function runSizeEstimate(
   return estimatePngToJpgSize(input, quality, bg.r, bg.g, bg.b);
 }
 
+function applySessionInputLimit(route: RouteFlags, maxBytes: number): void {
+  if (route.isJpg) {
+    setJpgSessionLimit?.(maxBytes);
+    return;
+  }
+  if (route.isWebpToPng || route.isWebpToJpg) {
+    setWebpSessionLimit?.(maxBytes);
+    return;
+  }
+  if (route.isGifToPng || route.isGifToJpg) {
+    setGifSessionLimit?.(maxBytes);
+    return;
+  }
+  if (route.isBmpToPng || route.isBmpToJpg) {
+    setBmpSessionLimit?.(maxBytes);
+    return;
+  }
+  if (route.isEncode) {
+    setEncodeSessionLimit?.(maxBytes);
+    return;
+  }
+  setPngSessionLimit?.(maxBytes);
+}
+
 async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   const knownModules = [
     "transmutador_jpg",
@@ -396,6 +440,10 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
 
   const input = new Uint8Array(req.bytes);
   const opts = req.options;
+
+  if (req.effectiveMaxInputBytes != null && req.effectiveMaxInputBytes > 0) {
+    applySessionInputLimit(route, req.effectiveMaxInputBytes);
+  }
 
   try {
     if (isTransmute && req.fingerprint) {

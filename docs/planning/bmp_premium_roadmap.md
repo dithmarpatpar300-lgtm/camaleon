@@ -12,8 +12,8 @@
 | **B2** | Semantic alpha detection (32-bit BGRA sampling) | Done |
 | **B3** | PNG growth warning, WxH·bpp in workspace, BMP large-file hints | Done |
 | **B4** | Rust `inspect_bmp_meta` Wasm + prepare via `bmp-wasm-client` | Done |
-| **B5** | Fixtures: near-limit size, RLE, fake-alpha 32-bit | Pending |
-| **B6** | ROADMAP + SPEC alignment | Pending |
+| **B5** | Fixtures: near-limit size, RLE, fake-alpha 32-bit | Done |
+| **B6** | ROADMAP + SPEC alignment | Done |
 
 ---
 

@@ -14,6 +14,8 @@ type GifWasmModule = {
     onProgress: (current: number, total: number) => void
   ) => GifSessionHandle;
   render_gif_frame_preview_png: (input: Uint8Array, frameIndex: number) => Uint8Array;
+  set_session_input_limit?: (maxBytes: number) => void;
+  reset_session_input_limit?: () => void;
 };
 
 type GifMetaHandle = {
@@ -95,4 +97,14 @@ export async function renderGifFramePreviewPng(
 ): Promise<Uint8Array> {
   const wasm = await ensureGifWasm();
   return wasm.render_gif_frame_preview_png(bytes, frameIndex);
+}
+
+export async function setGifSessionInputLimit(maxBytes: number): Promise<void> {
+  const wasm = await ensureGifWasm();
+  wasm.set_session_input_limit?.(maxBytes);
+}
+
+export async function resetGifSessionInputLimit(): Promise<void> {
+  const wasm = await ensureGifWasm();
+  wasm.reset_session_input_limit?.();
 }

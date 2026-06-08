@@ -664,11 +664,12 @@ UI hints for each conversion derived from these ranges — same copy doctrine as
 
 - `TransmutationError` enum with variants: `EmptyInput`, `InputTooLarge { size, max }`, `DimensionsTooLarge { width, height, pixel_count, max_pixels }`, `InvalidDimensions { reason }`, `ConversionFailed(String)`
 - `Display` implementation for `String` conversion at Wasm boundary
-- `validate_input(bytes: &[u8]) -> Result<(), String>` — rejects empty, input exceeding `MAX_INPUT_BYTES`, and (for PNG/JPEG magic) dimensions exceeding `MAX_PIXELS` or zero dimensions
+- `validate_input(bytes: &[u8]) -> Result<(), String>` — rejects empty, input exceeding session limit (default `MAX_INPUT_BYTES`), and (for PNG/JPEG/BMP magic) dimensions exceeding `MAX_PIXELS` or zero dimensions
+- `set_session_max_input_bytes(max)` / `reset_session_max_input_bytes()` — per-Wasm-instance elevated limit (up to `ABSOLUTE_MAX_INPUT_BYTES` = 150 MB desktop / 100 MB mobile via UI)
 - `validate_output(bytes: &[u8], format: OutputFormat) -> Result<(), String>` — post-encode integrity: rejects empty output, validates destination magic bytes (PNG signature / JPEG SOI). O(1), mandatory in both `_inner` pipelines (v0.6.6)
 - `OutputFormat` enum: `Png | Jpeg | WebP` — WebP validates RIFF `WEBP` magic (Phase 5.3)
 - `probe_dimensions`, `pixel_count`, metadata scanners (unchanged)
-- `MAX_INPUT_BYTES`: **50 MB**; `MAX_PIXELS`: **40,000,000** (40 MP)
+- `MAX_INPUT_BYTES`: **50 MB** (soft default); `ABSOLUTE_MAX_INPUT_BYTES`: **150 MB**; `MAX_PIXELS`: **40,000,000** (40 MP)
 
 **Tests:** 31 unit tests covering validation, dimension probing, metadata scanners, output validation, and error display formatting.
 

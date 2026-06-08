@@ -57,14 +57,37 @@ impl fmt::Display for TransmutationError {
 
 pub const MAX_INPUT_BYTES: usize = 50 * 1024 * 1024;
 
+/// Hard ceiling for user-consented elevated sessions (desktop).
+pub const ABSOLUTE_MAX_INPUT_BYTES: usize = 150 * 1024 * 1024;
+
 pub const MAX_PIXELS: u64 = 40_000_000;
 
 const PNG_SIGNATURE: &[u8] = &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
 
 const JPEG_SOI: &[u8] = &[0xFF, 0xD8];
 
+const BMP_SIGNATURE: &[u8] = &[0x42, 0x4D];
+
 /// Maximum bytes to scan when searching for JPEG SOF markers.
 const JPEG_SCAN_LIMIT: usize = 64 * 1024;
+
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static SESSION_MAX_INPUT_BYTES: AtomicUsize = AtomicUsize::new(MAX_INPUT_BYTES);
+
+/// Override per Wasm instance for elevated user-consented sessions.
+pub fn set_session_max_input_bytes(max: usize) {
+    let clamped = max.clamp(1, ABSOLUTE_MAX_INPUT_BYTES);
+    SESSION_MAX_INPUT_BYTES.store(clamped, Ordering::Relaxed);
+}
+
+pub fn reset_session_max_input_bytes() {
+    SESSION_MAX_INPUT_BYTES.store(MAX_INPUT_BYTES, Ordering::Relaxed);
+}
+
+pub fn session_max_input_bytes() -> usize {
+    SESSION_MAX_INPUT_BYTES.load(Ordering::Relaxed)
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -100,6 +123,10 @@ pub fn probe_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
         return probe_jpeg_dimensions(bytes);
     }
 
+    if bytes.starts_with(BMP_SIGNATURE) {
+        return probe_bmp_dimensions(bytes);
+    }
+
     Err(TransmutationError::InvalidDimensions {
         reason: "Unknown image format; cannot probe dimensions".into(),
     }
@@ -107,20 +134,26 @@ pub fn probe_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
 }
 
 pub fn validate_input(bytes: &[u8]) -> Result<(), String> {
+    validate_input_with_limit(bytes, session_max_input_bytes())
+}
+
+pub fn validate_input_with_limit(bytes: &[u8], max_bytes: usize) -> Result<(), String> {
     if bytes.is_empty() {
         return Err(TransmutationError::EmptyInput.to_string());
     }
-    if bytes.len() > MAX_INPUT_BYTES {
+    if bytes.len() > max_bytes {
         return Err(
             TransmutationError::InputTooLarge {
                 size: bytes.len(),
-                max: MAX_INPUT_BYTES,
+                max: max_bytes,
             }
             .to_string(),
         );
     }
 
-    let magic_known = bytes.starts_with(PNG_SIGNATURE) || bytes.starts_with(JPEG_SOI);
+    let is_bmp = bytes.len() >= 2 && bytes.starts_with(BMP_SIGNATURE);
+    let magic_known =
+        bytes.starts_with(PNG_SIGNATURE) || bytes.starts_with(JPEG_SOI) || is_bmp;
 
     if magic_known {
         let (width, height) = probe_dimensions(bytes)?;
@@ -173,6 +206,52 @@ fn probe_png_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
     }
 
     Ok((width, height))
+}
+
+fn probe_bmp_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
+    if bytes.len() < 26 {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: "Truncated BMP: header too short".into(),
+        }
+        .to_string());
+    }
+    if !bytes.starts_with(BMP_SIGNATURE) {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: "Not a BMP file".into(),
+        }
+        .to_string());
+    }
+
+    let width = read_le_u32(bytes, 18);
+    let raw_height = read_le_i32(bytes, 22);
+    let height = raw_height.unsigned_abs();
+
+    if width == 0 || height == 0 {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: format!("BMP has zero dimension: {}x{}", width, height),
+        }
+        .to_string());
+    }
+
+    Ok((width, height))
+}
+
+fn read_le_u32(bytes: &[u8], offset: usize) -> u32 {
+    u32::from_le_bytes([
+        bytes[offset],
+        bytes[offset + 1],
+        bytes[offset + 2],
+        bytes[offset + 3],
+    ])
+}
+
+fn read_le_i32(bytes: &[u8], offset: usize) -> i32 {
+    i32::from_le_bytes([
+        bytes[offset],
+        bytes[offset + 1],
+        bytes[offset + 2],
+        bytes[offset + 3],
+    ])
 }
 
 fn probe_jpeg_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
@@ -886,5 +965,44 @@ mod tests {
     fn validate_output_webp_bad_magic() {
         let err = validate_output(b"not a WebP file", OutputFormat::WebP).unwrap_err();
         assert!(err.contains("WebP") || err.contains("RIFF"));
+    }
+
+    fn minimal_bmp_header(width: u32, height: u32, bit_count: u16, compression: u32) -> Vec<u8> {
+        let mut buf = vec![0u8; 54];
+        buf[0..2].copy_from_slice(b"BM");
+        buf[18..22].copy_from_slice(&width.to_le_bytes());
+        buf[22..26].copy_from_slice(&height.to_le_bytes());
+        buf[26..28].copy_from_slice(&1u16.to_le_bytes());
+        buf[28..30].copy_from_slice(&bit_count.to_le_bytes());
+        buf[30..34].copy_from_slice(&compression.to_le_bytes());
+        buf
+    }
+
+    #[test]
+    fn probe_bmp_dimensions_from_header() {
+        let bmp = minimal_bmp_header(1920, 1080, 24, 0);
+        let (w, h) = probe_dimensions(&bmp).expect("probe");
+        assert_eq!(w, 1920);
+        assert_eq!(h, 1080);
+    }
+
+    #[test]
+    fn probe_bmp_negative_height_uses_absolute() {
+        let mut bmp = minimal_bmp_header(64, 64, 24, 0);
+        bmp[22..26].copy_from_slice(&(-64i32).to_le_bytes());
+        let (w, h) = probe_dimensions(&bmp).expect("probe");
+        assert_eq!(w, 64);
+        assert_eq!(h, 64);
+    }
+
+    #[test]
+    fn validate_input_respects_session_limit() {
+        reset_session_max_input_bytes();
+        let over_soft = vec![0u8; MAX_INPUT_BYTES + 1];
+        assert!(validate_input(&over_soft).is_err());
+
+        set_session_max_input_bytes(ABSOLUTE_MAX_INPUT_BYTES);
+        assert!(validate_input(&over_soft).is_ok());
+        reset_session_max_input_bytes();
     }
 }

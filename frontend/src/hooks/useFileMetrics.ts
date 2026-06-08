@@ -10,11 +10,17 @@ import type {
 } from "@/workers/types";
 import { computeSizeDelta, type SizeDelta } from "@/lib/format/metrics";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
+import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import {
   buildFileIdentity,
   buildTransmuteFingerprint,
 } from "@/lib/transmutation/fingerprint";
-import { exceedsEngineLimit } from "@/lib/transmutation/limits";
+import {
+  effectiveSessionInputLimit,
+  getHardLimitBytes,
+  getLimitZone,
+  needsOversizeConsent,
+} from "@/lib/transmutation/limits";
 import { localizeError } from "@/lib/i18n/errors";
 import { useI18n } from "@/providers/I18nProvider";
 import type { WorkerRequestMeta } from "@/workers/types";
@@ -27,6 +33,9 @@ type UseFileMetricsArgs = {
   options: TransmutationOptions;
   ready: boolean;
   profile: ResourceProfile;
+  deviceMemoryGb?: number;
+  oversizeConsented: boolean;
+  sourceMeta: SourceImageMeta | null;
   /** When true, suppresses the auto-estimate debounce (e.g. during entry animation). */
   holdEstimate?: boolean;
 };
@@ -37,7 +46,8 @@ type FileMetrics = {
   estimating: boolean;
   estimateDelta: SizeDelta | null;
   estimateError: string | null;
-  engineLimitExceeded: boolean;
+  needsOversizeConsent: boolean;
+  limitZone: ReturnType<typeof getLimitZone>;
   finalDelta: SizeDelta | null;
   setFinalSize: (bytes: number) => void;
   resetMetrics: () => void;
@@ -57,7 +67,17 @@ async function getEstimateBuffer(file: File): Promise<ArrayBuffer> {
 }
 
 export function useFileMetrics({
-  file, module, outputExtension, encodeSource, options, ready, profile, holdEstimate = false,
+  file,
+  module,
+  outputExtension,
+  encodeSource,
+  options,
+  ready,
+  profile,
+  deviceMemoryGb,
+  oversizeConsented,
+  sourceMeta: _sourceMeta,
+  holdEstimate = false,
 }: UseFileMetricsArgs): FileMetrics {
   const { t } = useI18n();
   const { estimate } = useTransmutationWorker();
@@ -71,7 +91,9 @@ export function useFileMetrics({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const originalSize = file?.size ?? 0;
-  const engineLimitExceeded = file ? exceedsEngineLimit(file.size) : false;
+  const hardLimit = getHardLimitBytes(deviceMemoryGb);
+  const limitZone = file ? getLimitZone(file.size, hardLimit) : "normal";
+  const blockedByConsent = needsOversizeConsent(limitZone, oversizeConsented);
 
   const fingerprint = useMemo(
     () =>
@@ -96,6 +118,8 @@ export function useFileMetrics({
       fileIdentity,
       enableResultCache: profile.enableResultCache,
       cacheMaxOutputBytes: profile.cacheMaxOutputBytes,
+      effectiveMaxInputBytes: effectiveSessionInputLimit(limitZone, hardLimit),
+      userConsentedOversize: oversizeConsented,
     };
   }, [
     file,
@@ -103,6 +127,9 @@ export function useFileMetrics({
     fileIdentity,
     profile.enableResultCache,
     profile.cacheMaxOutputBytes,
+    limitZone,
+    hardLimit,
+    oversizeConsented,
   ]);
 
   useEffect(() => {
@@ -120,7 +147,7 @@ export function useFileMetrics({
 
   const runEstimate = useCallback(async () => {
     if (!file || !ready || !transmuteMeta) return;
-    if (engineLimitExceeded) {
+    if (blockedByConsent) {
       setEstimateError(t("panel.metrics.estimateUnavailable"));
       return;
     }
@@ -167,7 +194,7 @@ export function useFileMetrics({
   }, [
     file,
     ready,
-    engineLimitExceeded,
+    blockedByConsent,
     module,
     outputExtension,
     encodeSource,
@@ -190,7 +217,7 @@ export function useFileMetrics({
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!file || !ready || !fingerprint) return;
     if (!profile.autoEstimate) return;
-    if (engineLimitExceeded) return;
+    if (blockedByConsent) return;
     if (holdEstimate) return;
     if (typeof document !== "undefined" && document.hidden) return;
 
@@ -202,10 +229,10 @@ export function useFileMetrics({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [file, ready, fingerprint, profile.debounceMs, profile.autoEstimate, engineLimitExceeded, holdEstimate]);
+  }, [file, ready, fingerprint, profile.debounceMs, profile.autoEstimate, blockedByConsent, holdEstimate]);
 
   useEffect(() => {
-    if (!file || !ready || !profile.autoEstimate || engineLimitExceeded) return;
+    if (!file || !ready || !profile.autoEstimate || blockedByConsent) return;
 
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
@@ -217,7 +244,13 @@ export function useFileMetrics({
 
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [file, ready, profile.autoEstimate, profile.debounceMs, engineLimitExceeded]);
+  }, [file, ready, profile.autoEstimate, profile.debounceMs, blockedByConsent]);
+
+  useEffect(() => {
+    if (!oversizeConsented || blockedByConsent) return;
+    if (!file || !ready || !profile.autoEstimate) return;
+    void runEstimateRef.current();
+  }, [oversizeConsented, blockedByConsent, file, ready, profile.autoEstimate]);
 
   const setFinalSize = useCallback(
     (bytes: number) => setFinalDelta(computeSizeDelta(originalSize, bytes)),
@@ -239,7 +272,8 @@ export function useFileMetrics({
     estimating,
     estimateDelta,
     estimateError,
-    engineLimitExceeded,
+    needsOversizeConsent: blockedByConsent,
+    limitZone,
     finalDelta,
     setFinalSize,
     resetMetrics,

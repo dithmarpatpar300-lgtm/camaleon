@@ -3,20 +3,19 @@
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
-import type { BmpMeta } from "@/lib/bmp/bmp-wasm-client";
-import { formatBmpMetaLine } from "@/lib/bmp/bmp-wasm-client";
+import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
 import type { SizeDelta } from "@/lib/format/metrics";
 import { formatBytes } from "@/lib/format/bytes";
-import { getOptionSpecStrings } from "@/lib/i18n/tool-copy";
 import { Button } from "@/components/ui/Button";
 import { DisplayFilename } from "@/components/ui/DisplayFilename";
 import { OptionsControls } from "./OptionsControls";
 import { MetricsPanel } from "./MetricsPanel";
 import { TransparencyNotice } from "./TransparencyNotice";
 import { GifFrameScrubber } from "./GifFrameScrubber";
-import { LargeFileNotice } from "./LargeFileNotice";
+import { OversizeConsentPanel } from "./OversizeConsentPanel";
 import { BmpPngGrowthNotice } from "./BmpPngGrowthNotice";
+import { SourceImageMetaLine } from "./SourceImageMetaLine";
 import { useI18n } from "@/providers/I18nProvider";
 
 type StagedWorkspaceProps = {
@@ -27,7 +26,7 @@ type StagedWorkspaceProps = {
   onOptionsChange: (next: TransmutationOptions) => void;
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
-  bmpMeta: BmpMeta | null;
+  sourceMeta: SourceImageMeta | null;
   panelOptionSpecs: NonNullable<ToolDefinition["optionSpecs"]>;
   hasOptions: boolean;
   backgroundSpec?: ColorOptionSpec;
@@ -38,12 +37,13 @@ type StagedWorkspaceProps = {
     estimateDelta: SizeDelta | null;
     estimating: boolean;
     estimateError: string | null;
-    engineLimitExceeded: boolean;
+    needsOversizeConsent: boolean;
     cacheWarm: boolean;
   };
   profile: ResourceProfile;
   ready: boolean;
   onRequestEstimate: () => void;
+  onOversizeConsent: () => void;
   onTransmutar: () => void;
   onReset: () => void;
 };
@@ -56,7 +56,7 @@ export function StagedWorkspace({
   onOptionsChange,
   hasAlpha,
   gifSession,
-  bmpMeta,
+  sourceMeta,
   panelOptionSpecs,
   hasOptions,
   backgroundSpec,
@@ -66,6 +66,7 @@ export function StagedWorkspace({
   profile,
   ready,
   onRequestEstimate,
+  onOversizeConsent,
   onTransmutar,
   onReset,
 }: StagedWorkspaceProps) {
@@ -73,7 +74,7 @@ export function StagedWorkspace({
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
   const isBmpToPng = tool.id === "bmp-to-png";
   const frameIndex = options.frameIndex ?? 0;
-  const canTransmute = ready && !metrics.engineLimitExceeded;
+  const canTransmute = ready && !metrics.needsOversizeConsent;
   const showBmpGrowthWarning =
     isBmpToPng &&
     metrics.estimateDelta != null &&
@@ -88,16 +89,20 @@ export function StagedWorkspace({
             className="text-sm font-medium text-text-primary"
           />
           <p className="text-xs text-text-muted">{formatBytes(fileSize)}</p>
-          {bmpMeta && (
-            <p className="text-xs text-text-muted">{formatBmpMetaLine(bmpMeta)}</p>
-          )}
+          <SourceImageMetaLine meta={sourceMeta} />
         </div>
         <Button variant="ghost" size="sm" className="shrink-0" onClick={onReset}>
           {t("panel.changeFile")}
         </Button>
       </div>
 
-      {metrics.engineLimitExceeded && <LargeFileNotice toolId={tool.id} />}
+      {metrics.needsOversizeConsent && (
+        <OversizeConsentPanel
+          fileSize={fileSize}
+          sourceMeta={sourceMeta}
+          onConsent={onOversizeConsent}
+        />
+      )}
 
       {isGifTool && gifSession?.is_animated && (
         <GifFrameScrubber
@@ -139,7 +144,7 @@ export function StagedWorkspace({
           estimateDelta={metrics.estimateDelta}
           estimating={metrics.estimating}
           estimateError={metrics.estimateError}
-          engineLimitExceeded={metrics.engineLimitExceeded}
+          needsOversizeConsent={metrics.needsOversizeConsent}
           cacheWarm={metrics.cacheWarm}
           autoEstimate={profile.autoEstimate}
           ready={ready}
@@ -151,8 +156,8 @@ export function StagedWorkspace({
       <Button onClick={onTransmutar} disabled={!canTransmute} className="w-full">
         {!ready
           ? t("panel.initializing")
-          : metrics.engineLimitExceeded
-            ? t("panel.transmuteUnavailable")
+          : metrics.needsOversizeConsent
+            ? t("panel.oversize.blockedButton")
             : t("panel.transmuteButton")}
       </Button>
     </div>

@@ -106,3 +106,13 @@ pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String> {
     let bytes = count_webp_bytes(&img.to_rgb8())?;
     Ok(bytes as u32)
 }
+
+#[wasm_bindgen]
+pub fn set_session_input_limit(max_bytes: u32) {
+    core_utils::set_session_max_input_bytes(max_bytes as usize);
+}
+
+#[wasm_bindgen]
+pub fn reset_session_input_limit() {
+    core_utils::reset_session_max_input_bytes();
+}

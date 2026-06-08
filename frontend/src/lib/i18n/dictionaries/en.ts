@@ -167,6 +167,17 @@ const en: Dictionary = {
       body: "This file is larger than the {limit} limit. You can adjust options, but conversion is disabled until you use a smaller file.",
       bmpBody: "Uncompressed BMP files grow quickly — this file exceeds the {limit} limit. Resize or re-export from source before converting.",
     },
+    hardLimit: {
+      title: "File too large",
+      body: "This file exceeds the maximum supported size ({limit}). Try resizing it or use a desktop tool before converting here.",
+    },
+    oversize: {
+      title: "Large file — confirmation required",
+      body: "This file is {size} (above the {softLimit} default). Processing may temporarily use about {peakRam} of browser memory and slow this tab.",
+      privacy: "Your file never leaves this device — all processing happens locally in your browser.",
+      consent: "I understand — process this file anyway",
+      blockedButton: "Confirm above to transmute",
+    },
     previewAlt: "Preview of {fileName}",
     transparencyNotice: {
       title: "This image has transparency",

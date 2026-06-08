@@ -188,3 +188,39 @@ fn jpg_estimate_within_5pct() {
     let diff = (full.len() as f64 - est as f64).abs();
     assert!((diff / full.len() as f64) < 0.05);
 }
+
+fn minimal_bmp_header(width: u32, height: u32, bit_count: u16, compression: u32) -> Vec<u8> {
+    let mut buf = vec![0u8; 54];
+    buf[0..2].copy_from_slice(b"BM");
+    buf[18..22].copy_from_slice(&width.to_le_bytes());
+    buf[22..26].copy_from_slice(&height.to_le_bytes());
+    buf[26..28].copy_from_slice(&1u16.to_le_bytes());
+    buf[28..30].copy_from_slice(&bit_count.to_le_bytes());
+    buf[30..34].copy_from_slice(&compression.to_le_bytes());
+    buf
+}
+
+#[test]
+fn inspect_rle_bmp_header_reports_compression() {
+    let bmp = minimal_bmp_header(32, 32, 8, 1);
+    let info = inspect_bmp(&bmp).expect("inspect RLE8 header");
+    assert_eq!(info.width, 32);
+    assert_eq!(info.height, 32);
+    assert_eq!(info.compression, 1);
+}
+
+#[test]
+fn inspect_fake_alpha_32_opaque_no_meaningful_alpha() {
+    let bmp = create_bmp_32_opaque();
+    let info = inspect_bmp(&bmp).expect("inspect");
+    assert!(!info.has_meaningful_alpha);
+    assert!(info.bit_count == 24 || info.bit_count == 32);
+}
+
+#[test]
+fn bmp_dimensions_within_pixel_limit() {
+    let bmp = create_bmp_rgb();
+    let info = inspect_bmp(&bmp).expect("inspect");
+    let pixels = info.width as u64 * info.height as u64;
+    assert!(pixels <= 40_000_000);
+}

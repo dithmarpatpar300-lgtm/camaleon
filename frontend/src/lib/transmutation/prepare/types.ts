@@ -1,5 +1,5 @@
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
-import type { BmpMeta } from "@/lib/bmp/bmp-wasm-client";
+import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 
 export type PreparePhaseId =
   | "reading"
@@ -23,9 +23,14 @@ export type PrepareProgress = {
 export type PreparedFileContext = {
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
-  bmpMeta: BmpMeta | null;
+  sourceMeta: SourceImageMeta | null;
 };
 
 export function releasePreparedContext(ctx: PreparedFileContext | null): void {
   ctx?.gifSession?.free();
 }
+
+export type PrepareOptions = {
+  /** Raised Wasm session limit for elevated-zone prepare probes. */
+  sessionInputLimitBytes?: number;
+};

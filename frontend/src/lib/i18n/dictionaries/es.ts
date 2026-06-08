@@ -167,6 +167,17 @@ const es: Dictionary = {
       body: "Este archivo es mayor que el limite de {limit}. Puedes ajustar opciones, pero la conversion esta deshabilitada hasta usar un archivo mas pequeno.",
       bmpBody: "Los BMP sin comprimir crecen rapido — este archivo supera el limite de {limit}. Reduce dimensiones o reexporta desde el origen antes de convertir.",
     },
+    hardLimit: {
+      title: "Archivo demasiado grande",
+      body: "Este archivo supera el tamano maximo admitido ({limit}). Intenta reducirlo o usa una herramienta de escritorio antes de convertir aqui.",
+    },
+    oversize: {
+      title: "Archivo grande — confirmacion requerida",
+      body: "Este archivo pesa {size} (por encima del limite habitual de {softLimit}). Procesarlo puede usar temporalmente unos {peakRam} de memoria del navegador y ralentizar esta pestana.",
+      privacy: "Tu archivo nunca sale de este dispositivo — todo el procesamiento ocurre localmente en tu navegador.",
+      consent: "Entiendo — procesar este archivo igualmente",
+      blockedButton: "Confirma arriba para transmutar",
+    },
     previewAlt: "Vista previa de {fileName}",
     transparencyNotice: {
       title: "Esta imagen tiene transparencia",

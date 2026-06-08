@@ -28,6 +28,8 @@ export type WorkerRequestMeta = {
   fileIdentity?: string;
   enableResultCache?: boolean;
   cacheMaxOutputBytes?: number;
+  effectiveMaxInputBytes?: number;
+  userConsentedOversize?: boolean;
 };
 
 export type WorkerRequest = {
@@ -44,6 +46,8 @@ export type WorkerRequest = {
   fileIdentity?: string;
   enableResultCache?: boolean;
   cacheMaxOutputBytes?: number;
+  effectiveMaxInputBytes?: number;
+  userConsentedOversize?: boolean;
 };
 
 export type WorkerResponseSuccess = {

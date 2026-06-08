@@ -1,13 +1,17 @@
 import type { ToolDefinition } from "@/lib/tools/types";
 import { bmpHasMeaningfulAlpha } from "@/lib/format/detect-bmp-alpha";
-import { inspectBmpMeta } from "@/lib/bmp/bmp-wasm-client";
 import { detectGifAlpha } from "@/lib/format/detect-gif-alpha";
 import { detectPngAlpha } from "@/lib/format/detect-png-alpha";
 import { detectWebpAlpha } from "@/lib/format/detect-webp-alpha";
-import { exceedsEngineLimit } from "@/lib/transmutation/limits";
-import { openGifSessionWithProgress } from "@/lib/gif/gif-wasm-client";
+import { resolveSourceImageMeta } from "@/lib/format/source-image-meta";
+import { setGifSessionInputLimit, openGifSessionWithProgress } from "@/lib/gif/gif-wasm-client";
 import { warmupTransmutatorModule } from "@/lib/transmutation/prepare/warmup-wasm";
-import type { PreparedFileContext, PreparePhaseId, PrepareProgress } from "./types";
+import type {
+  PreparedFileContext,
+  PrepareOptions,
+  PreparePhaseId,
+  PrepareProgress,
+} from "./types";
 
 type PreparePipelinePhase = Exclude<PreparePhaseId, "transmuting">;
 
@@ -54,10 +58,6 @@ function detectAlphaForTool(toolId: string, bytes: ArrayBuffer): boolean {
   }
 }
 
-function isBmpTool(toolId: string): boolean {
-  return toolId === "bmp-to-png" || toolId === "bmp-to-jpg";
-}
-
 function isGifTool(toolId: string): boolean {
   return toolId === "gif-to-png" || toolId === "gif-to-jpg";
 }
@@ -74,76 +74,47 @@ function yieldToMain(): Promise<void> {
 export async function prepareFileForTool(
   tool: ToolDefinition,
   bytes: ArrayBuffer,
-  onProgress: (p: PrepareProgress) => void
+  onProgress: (p: PrepareProgress) => void,
+  options: PrepareOptions = {}
 ): Promise<PreparedFileContext> {
+  const sessionLimit = options.sessionInputLimitBytes;
+
   // ── Phase: reading ───────────────────────────────────────────────────
   emit(onProgress, "reading", 0);
-  await yieldToMain();                // render 0 → 8 %
+  await yieldToMain();
   emit(onProgress, "reading", 1);
 
   // ── Phase: engine (async Wasm module load) ───────────────────────────
   emit(onProgress, "engine", 0);
-  await warmupTransmutatorModule(tool.module);   // async import → yields automatically
+  await warmupTransmutatorModule(tool.module);
   emit(onProgress, "engine", 1);
 
   // ── Phase: analyze ───────────────────────────────────────────────────
-  const overEngineLimit = exceedsEngineLimit(bytes.byteLength);
   let gifSession = null;
-  let bmpMeta = null;
 
   if (isGifTool(tool.id)) {
-    if (overEngineLimit) {
-      emit(onProgress, "analyze", 0, {
-        phaseLabelKey: "prepare.phases.analyzeSkippedLimit",
-      });
-      await yieldToMain();
-      emit(onProgress, "analyze", 1, {
-        phaseLabelKey: "prepare.phases.analyzeSkippedLimit",
-      });
-    } else {
-      // Wasm decode is synchronous — show indeterminate until it finishes,
-      // then emit frame-accurate detail labels.
-      emit(onProgress, "analyze", 0, {
-        phaseLabelKey: "prepare.phases.analyzeGif",
-        indeterminate: true,
-      });
-      // Yield once to let React paint the indeterminate ring before Wasm blocks.
-      await yieldToMain();
-
-      let lastRafFrame = 0;
-      gifSession = await openGifSessionWithProgress(
-        new Uint8Array(bytes),
-        (current) => {
-          // Callbacks fire synchronously inside Wasm.
-          // Track frame count for the detail label; actual UI batches all of these
-          // into one React render after the await resolves, which is fine —
-          // the indeterminate indicator already communicates activity.
-          lastRafFrame = current;
-        }
-      );
-
-      emit(onProgress, "analyze", 1, {
-        phaseLabelKey: "prepare.phases.analyzeGif",
-        detailLabelKey: "prepare.gifFrameProgress",
-        detailParams: { current: lastRafFrame || gifSession.frame_count },
-      });
-    }
-  } else if (isBmpTool(tool.id)) {
-    emit(onProgress, "analyze", 0, { phaseLabelKey: "prepare.phases.analyzeBmp" });
+    emit(onProgress, "analyze", 0, {
+      phaseLabelKey: "prepare.phases.analyzeGif",
+      indeterminate: true,
+    });
     await yieldToMain();
-    if (!overEngineLimit) {
-      try {
-        bmpMeta = await inspectBmpMeta(new Uint8Array(bytes));
-      } catch {
-        bmpMeta = null;
-      }
+
+    if (sessionLimit != null) {
+      await setGifSessionInputLimit(sessionLimit);
     }
+
+    let lastRafFrame = 0;
+    gifSession = await openGifSessionWithProgress(
+      new Uint8Array(bytes),
+      (current) => {
+        lastRafFrame = current;
+      }
+    );
+
     emit(onProgress, "analyze", 1, {
-      phaseLabelKey: "prepare.phases.analyzeBmp",
-      detailLabelKey: bmpMeta ? "prepare.bmpMeta" : undefined,
-      detailParams: bmpMeta
-        ? { width: bmpMeta.width, height: bmpMeta.height, bpp: bmpMeta.bitCount }
-        : undefined,
+      phaseLabelKey: "prepare.phases.analyzeGif",
+      detailLabelKey: "prepare.gifFrameProgress",
+      detailParams: { current: lastRafFrame || gifSession.frame_count },
     });
   } else if (needsAlphaScan(tool)) {
     emit(onProgress, "analyze", 0);
@@ -156,18 +127,25 @@ export async function prepareFileForTool(
     emit(onProgress, "analyze", 1);
   }
 
+  const sourceMeta = await resolveSourceImageMeta(tool, bytes, {
+    gifSession,
+    sessionInputLimitBytes: sessionLimit,
+  });
+
   // ── Phase: finalize ──────────────────────────────────────────────────
   emit(onProgress, "finalize", 0);
-  await yieldToMain();                // render 92 → 100 %
+  await yieldToMain();
   emit(onProgress, "finalize", 1);
 
+  const hasAlpha = needsAlphaScan(tool)
+    ? tool.fromFormat === "BMP"
+      ? sourceMeta?.hasMeaningfulAlpha ?? bmpHasMeaningfulAlpha(bytes)
+      : detectAlphaForTool(tool.id, bytes)
+    : false;
+
   return {
-    hasAlpha: needsAlphaScan(tool)
-      ? tool.id === "bmp-to-jpg"
-        ? bmpMeta?.hasMeaningfulAlpha ?? bmpHasMeaningfulAlpha(bytes)
-        : detectAlphaForTool(tool.id, bytes)
-      : false,
+    hasAlpha,
     gifSession,
-    bmpMeta,
+    sourceMeta,
   };
 }

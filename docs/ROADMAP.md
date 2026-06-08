@@ -206,7 +206,8 @@ Minimum trust + product surface for real users — **complete before Tier 2**:
 | Tier | Target | Features | Notes |
 |------|--------|----------|-------|
 | **Tier 2 Wave 1** | v1.8.3 | GIF, BMP (4 tools) | ✅ Complete — merge to `main` |
-| **Tier 2 Wave 2** | v1.8.5+ | TIFF, ICO, TGA | Deferred after Wave 1 ships |
+| **Tier 2 polish** | v1.8.6 | Source image meta (all tools), adaptive file limits | ✅ On `dev` |
+| **Tier 2 Wave 2** | v1.8.7+ | TIFF, ICO, TGA | Deferred after Wave 1 ships |
 | **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
 | **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
 

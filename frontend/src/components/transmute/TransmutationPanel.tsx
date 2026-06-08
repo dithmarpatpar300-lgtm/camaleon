@@ -11,6 +11,12 @@ import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
 import { prepareFileForTool } from "@/lib/transmutation/prepare/run-prepare";
 import {
+  effectiveSessionInputLimit,
+  formatHardLimitLabel,
+  getHardLimitBytes,
+  getLimitZone,
+} from "@/lib/transmutation/limits";
+import {
   releasePreparedContext,
   type PreparedFileContext,
   type PreparePhaseId,
@@ -81,6 +87,13 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const [result, setResult] = useState<Result | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [hasAlpha, setHasAlpha] = useState(false);
+  const [oversizeConsented, setOversizeConsented] = useState(false);
+
+  const deviceMemoryGb =
+    typeof navigator !== "undefined"
+      ? (navigator as { deviceMemory?: number }).deviceMemory
+      : undefined;
+  const hardLimit = getHardLimitBytes(deviceMemoryGb);
 
   const prepareIdRef = useRef(0);
   const preparedRef = useRef(prepared);
@@ -103,6 +116,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     options,
     ready,
     profile,
+    deviceMemoryGb,
+    oversizeConsented,
+    sourceMeta: prepared?.sourceMeta ?? null,
     holdEstimate: crossfading,
   });
   const accept = tool.acceptExtensions.join(",");
@@ -114,12 +130,21 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       return;
     }
 
+    if (file.size > hardLimit) {
+      setStatus("error");
+      setErrorMessage(
+        t("panel.hardLimit.body", { limit: formatHardLimitLabel(hardLimit) })
+      );
+      return;
+    }
+
     const prepareId = ++prepareIdRef.current;
     releasePreparedContext(preparedRef.current);
     setPrepared(null);
     setStaged(null);
     setResult(null);
     setCrossfading(false);
+    setOversizeConsented(false);
     setErrorMessage(null);
 
     let bytes: ArrayBuffer;
@@ -131,6 +156,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       return;
     }
 
+    const limitZone = getLimitZone(file.size, hardLimit);
+    const sessionLimit = effectiveSessionInputLimit(limitZone, hardLimit);
+
     const pending = { file, bytes };
     setPendingFile(pending);
     setStatus("preparing");
@@ -140,18 +168,23 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setPrepareDetailLabel(undefined);
 
     try {
-      const ctx = await prepareFileForTool(tool, bytes, (p) => {
-        if (prepareId !== prepareIdRef.current) return;
-        setPrepareProgress(p.progress);
-        setPreparePhase(p.phase);
-        setPreparePhaseLabelKey(p.phaseLabelKey);
-        setPrepareIndeterminate(p.indeterminate ?? false);
-        if (p.detailLabelKey) {
-          setPrepareDetailLabel(t(p.detailLabelKey, p.detailParams ?? {}));
-        } else {
-          setPrepareDetailLabel(undefined);
-        }
-      });
+      const ctx = await prepareFileForTool(
+        tool,
+        bytes,
+        (p) => {
+          if (prepareId !== prepareIdRef.current) return;
+          setPrepareProgress(p.progress);
+          setPreparePhase(p.phase);
+          setPreparePhaseLabelKey(p.phaseLabelKey);
+          setPrepareIndeterminate(p.indeterminate ?? false);
+          if (p.detailLabelKey) {
+            setPrepareDetailLabel(t(p.detailLabelKey, p.detailParams ?? {}));
+          } else {
+            setPrepareDetailLabel(undefined);
+          }
+        },
+        { sessionInputLimitBytes: sessionLimit }
+      );
 
       if (prepareId !== prepareIdRef.current) {
         releasePreparedContext(ctx);
@@ -173,10 +206,10 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setStatus("error");
       setErrorMessage(t("panel.prepareFailed"));
     }
-  }, [tool, t]);
+  }, [tool, t, hardLimit]);
 
   const handleTransmutar = useCallback(async () => {
-    if (!staged || !ready || metrics.engineLimitExceeded) return;
+    if (!staged || !ready || metrics.needsOversizeConsent) return;
     setProcessingProgress(0.08);
     setStatus("processing");
     setErrorMessage(null);
@@ -219,9 +252,13 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     transmutate,
     metrics.setFinalSize,
     metrics.transmuteMeta,
-    metrics.engineLimitExceeded,
+    metrics.needsOversizeConsent,
     t,
   ]);
+
+  const handleOversizeConsent = useCallback(() => {
+    setOversizeConsented(true);
+  }, []);
 
   const handleAdjustAndRetry = useCallback(async () => {
     if (staged?.file) {
@@ -256,6 +293,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setHasAlpha(false);
     setPreviewUrl(null);
     setCrossfading(false);
+    setOversizeConsented(false);
     setOptions(buildDefaultOptions(tool.optionSpecs));
     metrics.resetMetrics();
   }, [tool, metrics, prepared]);
@@ -346,7 +384,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 onOptionsChange={setOptions}
                 hasAlpha={hasAlpha}
                 gifSession={prepared.gifSession}
-                bmpMeta={prepared.bmpMeta}
+                sourceMeta={prepared.sourceMeta}
                 panelOptionSpecs={panelOptionSpecs}
                 hasOptions={hasOptions}
                 backgroundSpec={backgroundSpec}
@@ -357,12 +395,13 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                   estimateDelta: metrics.estimateDelta,
                   estimating: metrics.estimating,
                   estimateError: metrics.estimateError,
-                  engineLimitExceeded: metrics.engineLimitExceeded,
+                  needsOversizeConsent: metrics.needsOversizeConsent,
                   cacheWarm: metrics.cacheWarm,
                 }}
                 profile={profile}
                 ready={ready}
                 onRequestEstimate={metrics.requestEstimate}
+                onOversizeConsent={handleOversizeConsent}
                 onTransmutar={handleTransmutar}
                 onReset={handleReset}
               />

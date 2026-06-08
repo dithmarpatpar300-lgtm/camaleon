@@ -12,7 +12,7 @@ type MetricsPanelProps = {
   estimateDelta: SizeDelta | null;
   estimating: boolean;
   estimateError: string | null;
-  engineLimitExceeded: boolean;
+  needsOversizeConsent: boolean;
   cacheWarm: boolean;
   autoEstimate: boolean;
   ready: boolean;
@@ -24,7 +24,7 @@ export function MetricsPanel({
   estimateDelta,
   estimating,
   estimateError,
-  engineLimitExceeded,
+  needsOversizeConsent,
   cacheWarm,
   autoEstimate,
   ready,
@@ -48,7 +48,7 @@ export function MetricsPanel({
             delta={estimateDelta}
             estimating={estimating}
             estimateError={estimateError}
-            engineLimitExceeded={engineLimitExceeded}
+            needsOversizeConsent={needsOversizeConsent}
             cacheWarm={cacheWarm}
             autoEstimate={autoEstimate}
             ready={ready}
@@ -56,10 +56,10 @@ export function MetricsPanel({
           />
         </span>
       </div>
-      {engineLimitExceeded && !estimateDelta && (
+      {needsOversizeConsent && !estimateDelta && (
         <p className="py-1 text-warning">{t("panel.metrics.estimateUnavailable")}</p>
       )}
-      {!engineLimitExceeded && !autoEstimate && !estimateDelta && !estimating && !estimateError && (
+      {!needsOversizeConsent && !autoEstimate && !estimateDelta && !estimating && !estimateError && (
         <p className="py-1 text-text-muted">{t("panel.metrics.largeFileHint")}</p>
       )}
       {estimateError && (
@@ -83,7 +83,7 @@ type EstimatedMetricsValueProps = {
   delta: SizeDelta | null;
   estimating: boolean;
   estimateError: string | null;
-  engineLimitExceeded: boolean;
+  needsOversizeConsent: boolean;
   cacheWarm: boolean;
   autoEstimate: boolean;
   ready: boolean;
@@ -98,7 +98,7 @@ function EstimatedMetricsValue({
   delta,
   estimating,
   estimateError,
-  engineLimitExceeded,
+  needsOversizeConsent,
   cacheWarm,
   autoEstimate,
   ready,
@@ -125,7 +125,7 @@ function EstimatedMetricsValue({
     if (estimating) {
       return <span className="text-text-muted">{t("panel.metrics.calculating")}</span>;
     }
-    if (engineLimitExceeded) {
+    if (needsOversizeConsent) {
       return <span className="text-text-muted">—</span>;
     }
     if (!autoEstimate) {
