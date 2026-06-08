@@ -37,6 +37,7 @@ npm run deploy:cf
 1. [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Import a repository**
 2. Connect **GitHub** → select **`dithmarpatpar300-lgtm/camaleon`**
 3. Production branch: **`main`**
+4. **Build branches:** limit to **`main` only** (see [Branch builds](#branch-builds-which-branches-should-deploy))
 
 ### Build settings
 
@@ -73,6 +74,26 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --defaul
 None required for v1.7.8. Add `NEXT_PUBLIC_*` variables under **Build variables** if needed later.
 
 4. **Save and Deploy** → note your `*.workers.dev` URL.
+
+### Branch builds (which branches should deploy?)
+
+| Branch | Deploy to production? | Why |
+|--------|----------------------|-----|
+| **`main`** | **Yes** | Only branch that should update the live Worker |
+| `dev` | **No** | Internal development; avoid overwriting production |
+| `contrib` | **No** | Community PR target; not a release channel |
+| `dependabot/*` | **No** | Dependency PRs must pass CI on GitHub, not auto-deploy |
+
+In Cloudflare → Workers & Pages → **camaleon** → **Settings** → **Build** → **Branch control**:
+
+- **Production branch:** `main`
+- **Uncheck** “Builds for non-production branches”
+
+With that box enabled (Cloudflare’s default for preview URLs), every push to `dev`, `contrib`, or `dependabot/*` runs the full build plus `npx wrangler versions upload` — that is why those rows fail while `main` can still succeed.
+
+Each push to `dev`, `contrib`, or Dependabot currently triggers a full Rust + Wasm + OpenNext build (~10–15 min) and then fails or risks clobbering production. That wastes build minutes and creates noise in Build history.
+
+**Recommended:** only `main` builds and deploys. Validate other branches with GitHub Actions (or manual `npm run preview:cf` locally).
 
 ---
 
@@ -135,6 +156,8 @@ npm error The npm ci command can only install with an existing package-lock.json
 | `Failed to fetch dynamically imported module: .../wasm/...` | Wasm not in deploy assets — ensure `build:cf` runs `sync-wasm-assets.mjs`; redeploy |
 | `sync-wasm-assets: missing public/wasm` | Old `build:wasm` wrote to wrong path — use `node scripts/build-wasm.mjs` (fixed in repo) |
 | Peso estimado shows `—` | Same root cause — estimate runs in worker after Wasm init |
+| `Missing entry-point to Worker script` on deploy | Deploy ran from repo root without `wrangler.jsonc`. **Fix:** set Deploy command to `bash scripts/cloudflare-deploy.sh`, or use root `wrangler.jsonc` (paths under `frontend/.open-next/`). Do **not** leave the default `npx wrangler versions upload` alone unless root config exists. |
+| Build succeeds, deploy fails on `dev` / `contrib` / Dependabot | Disable preview builds; only `main` should deploy (see [Branch builds](#branch-builds-which-branches-should-deploy)) |
 
 ---
 

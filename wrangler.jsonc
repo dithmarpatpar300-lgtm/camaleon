@@ -1,0 +1,16 @@
+// Fallback for Cloudflare Git deploy when wrangler runs from repo root
+// (e.g. default `npx wrangler versions upload`). Local dev uses frontend/wrangler.jsonc.
+{
+  "$schema": "./frontend/node_modules/wrangler/config-schema.json",
+  "name": "camaleon",
+  "main": "frontend/.open-next/worker.js",
+  "compatibility_date": "2026-06-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "frontend/.open-next/assets",
+    "binding": "ASSETS"
+  }
+}
