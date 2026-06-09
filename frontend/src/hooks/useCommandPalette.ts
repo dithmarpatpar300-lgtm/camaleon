@@ -1,13 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useScrollLock } from "@/hooks/useScrollLock";
 
 export function useCommandPalette() {
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useScrollLock(open);
 
   const openPalette = useCallback(() => {
     setOpen(true);

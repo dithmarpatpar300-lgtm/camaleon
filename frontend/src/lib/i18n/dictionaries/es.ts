@@ -71,6 +71,9 @@ const es: Dictionary = {
   nav: {
     transmutations: "Transmutaciones",
     mainNavAria: "Navegacion principal",
+    searchPlaceholder: "Buscar herramienta…",
+    searchPlaceholderShort: "Buscar…",
+    searchAriaLabel: "Buscar herramientas de transmutacion",
   },
 
   lang: {
@@ -152,6 +155,31 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v1120: {
+        title: "Identidad visual y shell de descubrimiento",
+        summary:
+          "Pase UI completo Pre-Tier 3 — nuevas superficies, navegador de herramientas escalable, command palette v2 y workspace de transmutación refinado en desktop y móvil.",
+        technical:
+          "UX-0–UX-8 en dev: tokens surface-raised/floating/subnav, SurfaceDialog/Sheet, ModalPortal + useModalDialog, guard de scroll-lock, AmbientBloom (tier móvil), ToolBrowser (tabs + filas compactas), búsqueda/grupos en palette, transmute-shell + ToolPageHeader. SPEC §7.4.1. Plan: docs/planning/pre_tier3_ui_ux_plan.md.",
+        highlights: {
+          visualIdentity: {
+            title: "Sistema de superficies Camaleon",
+            body: "Overlays opacos unificados, header/subnav sticky, bloom ambiental accent y paleta light sincronizada — legible en todo dispositivo.",
+          },
+          toolBrowser: {
+            title: "Tool browser v2",
+            body: "Tabs por familia, filas compactas, toggle de densidad y jerarquía en toolbar — reemplaza el grid acordeón, listo para 25+ herramientas.",
+          },
+          surfacesHotfix: {
+            title: "Hotfixes de modales y scroll",
+            body: "Sincronía de cierre What's New, recuperación de scroll-lock, race del portal modal, overlap de píldoras en Huawei y fixes z-index al filtrar tabs.",
+          },
+          transmuteShell: {
+            title: "Refresh del workspace transmute",
+            body: "Nuevo header de herramienta, dropzone accent y shell transmute elevado — mismo motor, UX radicalmente más clara.",
+          },
+        },
+      },
       v1110: {
         title: "Detección honesta de transparencia",
         summary:
@@ -281,6 +309,27 @@ const es: Dictionary = {
     tools: {
       available: "Transmutaciones disponibles",
       comingSoon: "Proximamente",
+      jumpNavAria: "Ir a familias de herramientas",
+      tabsAria: "Familias de herramientas",
+      densityAria: "Densidad de la lista",
+      jumpLinks: {
+        "jpeg-png": "JPEG",
+        webp: "WebP",
+        "gif-bmp": "GIF",
+        archival: "TIFF",
+        icons: "ICO",
+      },
+      tabs: {
+        all: "Todas",
+      },
+      density: {
+        compact: "Vista compacta",
+        detailed: "Vista detallada",
+      },
+      toolbarMeta: {
+        all: "{count} herramientas en {families} familias",
+        filtered: "{count} herramientas",
+      },
     },
   },
 
@@ -683,9 +732,20 @@ const es: Dictionary = {
     ariaLabel: "Paleta de comandos — navegar transmutaciones",
     triggerAriaLabel: "Abrir paleta de comandos",
     title: "Transmutaciones",
+    searchLabel: "Buscar herramientas",
+    searchPlaceholder: "Buscar por nombre o formato…",
+    noResults: "Ninguna herramienta coincide con tu busqueda",
+    close: "Cerrar",
     categoryImage: "Imagen",
     categorySoon: "Proximamente",
     closeHint: "Esc para cerrar",
+    groups: {
+      "jpeg-png": "JPEG y PNG",
+      webp: "WebP",
+      "gif-bmp": "GIF y BMP",
+      archival: "Archivo y texturas",
+      icons: "Iconos y favicons",
+    },
   },
 };
 

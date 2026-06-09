@@ -18,7 +18,7 @@ import { useI18n } from "@/providers/I18nProvider";
 const LOCALES: readonly Locale[] = ["en", "es"];
 
 /** Width of each locale button. Must match --lang-btn-w default in globals.css. */
-const BTN_W = "2.25rem" as const;
+const BTN_W = "1.875rem" as const;
 
 function getAriaLabel(l: Locale, t: (key: string) => string): string {
   if (l === "en") return t("lang.switchToEn");
@@ -33,7 +33,7 @@ export function LanguageSelector() {
     <div
       role="group"
       aria-label="Language"
-      className="relative flex h-8 items-stretch text-xs font-medium"
+      className="relative flex h-7 items-stretch text-[11px] font-medium leading-none"
       style={
         {
           "--active-idx": activeIndex,

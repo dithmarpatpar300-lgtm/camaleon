@@ -121,8 +121,8 @@ export function StagedWorkspace({
     metrics.estimateDelta != null;
 
   return (
-    <div className="p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="p-5 sm:p-6">
+      <div className="mb-5 flex items-center justify-between gap-3 border-b border-border/60 pb-4">
         <div className="min-w-0 flex-1">
           <DisplayFilename
             name={fileName}

@@ -14,6 +14,14 @@ export type ToolCategory = "image";
 export type ToolFidelity = "lossless" | "lossy";
 export type ToolStatus = "active" | "soon";
 
+/** Discovery grouping for palette and landing (Pre-Tier 3 UX-2/3). */
+export type ToolGroupKey =
+  | "jpeg-png"
+  | "webp"
+  | "gif-bmp"
+  | "archival"
+  | "icons";
+
 export type RgbColor = { r: number; g: number; b: number };
 
 export type SliderOptionSpec = {
@@ -44,6 +52,7 @@ export type ToolDefinition = {
   toFormat: ImageFormat;
   module: TransmutationModule;
   category: ToolCategory;
+  toolGroup: ToolGroupKey;
   fidelity: ToolFidelity;
   status: ToolStatus;
   acceptExtensions: string[];

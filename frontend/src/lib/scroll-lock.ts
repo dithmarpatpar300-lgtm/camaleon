@@ -1,17 +1,34 @@
 /**
  * Reference-counted scroll lock for modals / overlays.
- * Prevents the page behind a dialog from scrolling while keeping position.
+ * Uses overflow:hidden only — preserves scroll position without position:fixed
+ * (avoids header/content vertical jump when modals close).
  */
 
 type ScrollLockListener = (locked: boolean) => void;
 
 let lockCount = 0;
-let savedScrollY = 0;
 const listeners = new Set<ScrollLockListener>();
 
 function notify() {
   const locked = lockCount > 0;
   for (const fn of listeners) fn(locked);
+}
+
+function getScrollbarWidth(): number {
+  return Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+}
+
+function applyLock() {
+  const sbw = getScrollbarWidth();
+  document.documentElement.classList.add("camaleon-scroll-locked");
+  if (sbw > 0) {
+    document.documentElement.style.setProperty("--camaleon-scrollbar-width", `${sbw}px`);
+  }
+}
+
+function clearLock() {
+  document.documentElement.classList.remove("camaleon-scroll-locked");
+  document.documentElement.style.removeProperty("--camaleon-scrollbar-width");
 }
 
 export function isScrollLocked(): boolean {
@@ -27,13 +44,7 @@ export function subscribeScrollLock(listener: ScrollLockListener): () => void {
 export function acquireScrollLock(): () => void {
   lockCount++;
   if (lockCount === 1) {
-    savedScrollY = window.scrollY;
-    document.documentElement.classList.add("camaleon-scroll-locked");
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${savedScrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
+    applyLock();
     notify();
   }
   return () => releaseScrollLock();
@@ -43,13 +54,14 @@ function releaseScrollLock() {
   if (lockCount === 0) return;
   lockCount--;
   if (lockCount === 0) {
-    document.documentElement.classList.remove("camaleon-scroll-locked");
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    document.body.style.width = "";
-    window.scrollTo(0, savedScrollY);
+    clearLock();
     notify();
   }
+}
+
+/** Safety net — resets a stuck lock (should not be needed in normal flow). */
+export function resetScrollLock() {
+  lockCount = 0;
+  clearLock();
+  notify();
 }

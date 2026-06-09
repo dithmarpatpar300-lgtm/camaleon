@@ -10,6 +10,8 @@ import { ReleaseCommsProvider } from "@/providers/ReleaseCommsProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { OverlayScrollbar } from "@/components/layout/OverlayScrollbar";
+import { ScrollLockRouteGuard } from "@/components/layout/ScrollLockRouteGuard";
+import { AmbientBloom } from "@/components/layout/AmbientBloom";
 import { getRootMetadata, LOCALE_COOKIE_NAME } from "@/lib/i18n/metadata";
 import {
   PREFERENCES_BOOTSTRAP_SCRIPT,
@@ -66,12 +68,14 @@ export default async function RootLayout({
         <I18nProvider initialLocale={initialLocale}>
           <ThemeProvider initialTheme={initialTheme}>
             <OverlayScrollbar />
+            <ScrollLockRouteGuard />
             <TransmutationWorkerProvider>
               <ToastProvider>
                 <ReleaseCommsProvider>
-                  <div className="flex min-h-screen flex-col">
+                  <AmbientBloom />
+                  <div className="relative z-10 flex min-h-screen min-w-0 flex-col overflow-x-clip">
                     <Header />
-                    <main className="flex-1">{children}</main>
+                    <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
                     <Footer />
                   </div>
                 </ReleaseCommsProvider>

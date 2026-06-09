@@ -565,7 +565,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       {(status === "preparing" || status === "staged") && activeFile && (
         <div
           className={cn(
-            "relative overflow-hidden rounded-2xl border border-border bg-bg-surface",
+            "transmute-shell relative",
             status === "preparing" && "min-h-[22rem]"
           )}
         >
@@ -639,7 +639,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       )}
 
       {status === "processing" && staged && (
-        <div className="overflow-hidden rounded-2xl border border-border bg-bg-surface">
+        <div className="transmute-shell overflow-hidden">
           <FilePrepareGate
             fileName={staged.file.name}
             fileSize={staged.file.size}
@@ -651,8 +651,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       )}
 
       {status === "success" && result && (
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-xl border border-border bg-bg-base">
+        <div className="transmute-shell space-y-4 p-5 sm:p-6">
+          <div className="overflow-hidden rounded-xl border border-border/60 bg-bg-base">
             {previewUrl && (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
@@ -662,7 +662,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
               />
             )}
           </div>
-          <div className="rounded-xl border border-border bg-bg-surface px-4 py-2 text-xs">
+          <div className="rounded-xl border border-border/60 bg-bg-elevated/50 px-4 py-2 text-xs">
             <div className="flex items-center justify-between py-1">
               <span className="text-text-muted">{t("panel.metrics.original")}</span>
               <span className="font-mono tabular-nums text-text-secondary">

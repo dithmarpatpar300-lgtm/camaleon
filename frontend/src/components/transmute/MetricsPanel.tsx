@@ -37,7 +37,7 @@ export function MetricsPanel({
   const showCacheHint = cacheWarm && !estimating;
 
   return (
-    <div className="mb-3 rounded-lg bg-bg-elevated px-4 py-2 text-xs">
+    <div className="mb-3 rounded-xl border border-border/50 bg-bg-elevated/80 px-4 py-2.5 text-xs">
       <div className="flex items-center justify-between py-1">
         <span className="text-text-muted">{t("panel.metrics.original")}</span>
         <span className="font-mono tabular-nums text-text-secondary">

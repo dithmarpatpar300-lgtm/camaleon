@@ -4,8 +4,7 @@ import type { Metadata } from "next";
 import { getToolBySlug, getActiveTools } from "@/lib/tools/tool-registry";
 import { resolveLocaleFromCookie, getToolMetadata, LOCALE_COOKIE_NAME } from "@/lib/i18n/metadata";
 import { TransmutationPanel } from "@/components/transmute/TransmutationPanel";
-import { ToolPageStrings } from "./ToolPageStrings";
-import { ToolPageBack } from "./ToolPageBack";
+import { ToolPageHeader } from "@/components/transmute/ToolPageHeader";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -35,18 +34,8 @@ export default async function TransmuteToolPage({ params }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12">
-      <ToolPageBack />
-
-      <div className="mb-8">
-        <div className="mb-2 flex items-center gap-3">
-          <ToolPageStrings toolId={tool.id} showActionTitle />
-          <ToolPageStrings toolId={tool.id} />
-        </div>
-        <ToolPageStrings toolId={tool.id} showDescription />
-        <ToolPageStrings toolId={tool.id} showHint />
-      </div>
-
+    <div className="mx-auto w-full min-w-0 max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
+      <ToolPageHeader tool={tool} />
       <TransmutationPanel tool={tool} />
     </div>
   );

@@ -1,16 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { RELEASE_MANIFEST } from "@/lib/releases";
 import type { ReleaseEntry } from "@/lib/releases/types";
-import { useScrollLock } from "@/hooks/useScrollLock";
 import { useI18n } from "@/providers/I18nProvider";
 import { APP_VERSION } from "@/lib/site";
+import { SurfaceDialog } from "@/components/ui/SurfaceDialog";
+import { ModalPortal } from "@/components/ui/ModalPortal";
 import { PanelScrollFade } from "@/components/ui/PanelScrollFade";
 import { cn } from "@/lib/utils";
 import { ReleaseHighlightList } from "./ReleaseHighlightList";
 import { ReleaseTagChip } from "./ReleaseTagChip";
 import { TechnicalDisclosure } from "./TechnicalDisclosure";
+
+const EXIT_MS = 240;
+
+const PANEL_SHELL_CLASS =
+  "surface-raised fixed right-0 flex h-full w-full max-w-md flex-col overflow-hidden max-sm:surface-sheet-mobile max-sm:rounded-none sm:rounded-l-2xl top-0 bottom-0 sm:top-4 sm:bottom-4 sm:right-4 sm:h-auto";
 
 type Props = {
   open: boolean;
@@ -36,17 +42,17 @@ function ReleaseAccordionItem({
   return (
     <article
       className={cn(
-        "rounded-xl border transition-colors",
+        "rounded-xl border shadow-sm transition-colors",
         isCurrent
-          ? "border-accent/25 bg-accent-subtle/20"
-          : "border-white/6 bg-bg-elevated/30"
+          ? "border-accent/35 bg-accent-subtle/25"
+          : "border-border bg-bg-surface"
       )}
     >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-start gap-3 px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset rounded-xl"
+        className="flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -80,7 +86,7 @@ function ReleaseAccordionItem({
         </svg>
       </button>
       {open && (
-        <div className="border-t border-white/5 px-4 py-3">
+        <div className="border-t border-border px-4 py-3">
           <ReleaseHighlightList highlights={entry.highlights} compact />
           {entry.technicalKey && (
             <TechnicalDisclosure
@@ -95,94 +101,158 @@ function ReleaseAccordionItem({
   );
 }
 
+function WhatsNewDrawerBody({ onRequestClose }: { onRequestClose: () => void }) {
+  const { t } = useI18n();
+
+  return (
+    <>
+      <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+            {t("releaseComms.whatsNew.subtitle")}
+          </p>
+          <h2 className="mt-1 text-lg font-semibold text-text-primary">
+            {t("releaseComms.whatsNew.title")}
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onRequestClose}
+          aria-label={t("releaseComms.whatsNew.close")}
+          className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-bg-elevated hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M4.28 3.22a.75.75 0 00-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 101.06 1.06L8 9.06l3.72 3.72a.75.75 0 101.06-1.06L9.06 8l3.72-3.72a.75.75 0 00-1.06-1.06L8 6.94 4.28 3.22z" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="min-h-0 flex-1">
+        <PanelScrollFade
+          className="h-full px-4 py-4"
+          maxHeightClass="h-full"
+          ariaLabel={t("releaseComms.whatsNew.title")}
+        >
+          <div className="flex flex-col gap-3 pb-2">
+            {RELEASE_MANIFEST.entries.map((entry, index) => (
+              <ReleaseAccordionItem key={entry.version} entry={entry} defaultOpen={index === 0} />
+            ))}
+          </div>
+        </PanelScrollFade>
+      </div>
+    </>
+  );
+}
+
+function DrawerPanelShell({
+  phase,
+  onRequestClose,
+}: {
+  phase: "enter" | "exit";
+  onRequestClose: () => void;
+}) {
+  return (
+    <div
+      className={cn(
+        PANEL_SHELL_CLASS,
+        phase === "exit"
+          ? "motion-safe:animate-[slideOutRight_240ms_cubic-bezier(0.22,1,0.36,1)_both]"
+          : "motion-safe:animate-[slideInRight_280ms_cubic-bezier(0.22,1,0.36,1)_both]"
+      )}
+      onClick={(e) => e.stopPropagation()}
+      aria-hidden={phase === "exit"}
+    >
+      <WhatsNewDrawerBody onRequestClose={onRequestClose} />
+    </div>
+  );
+}
+
 export function WhatsNewDrawer({ open, onClose }: Props) {
   const { t } = useI18n();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [isClosing, setIsClosing] = useState(false);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const programmaticCloseRef = useRef(false);
+  const [isExiting, setIsExiting] = useState(false);
 
-  useScrollLock(open);
+  const clearExitTimer = useCallback(() => {
+    if (exitTimerRef.current !== null) {
+      clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
+    }
+  }, []);
 
-  useEffect(() => {
+  const dismissDialog = useCallback(() => {
+    const dialog = dialogRef.current;
+    programmaticCloseRef.current = true;
+    dialog?.close();
+    programmaticCloseRef.current = false;
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (isExiting || !open) return;
+
+    setIsExiting(true);
+    clearExitTimer();
+    dismissDialog();
+    onClose();
+
+    exitTimerRef.current = setTimeout(() => {
+      setIsExiting(false);
+      exitTimerRef.current = null;
+    }, EXIT_MS);
+  }, [clearExitTimer, dismissDialog, isExiting, onClose, open]);
+
+  const setDialogRef = useCallback(
+    (node: HTMLDialogElement | null) => {
+      dialogRef.current = node;
+      if (node && open && !node.open) {
+        setIsExiting(false);
+        node.showModal();
+      }
+    },
+    [open]
+  );
+
+  useLayoutEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
-    
     if (open && !dialog.open) {
-      setIsClosing(false);
+      setIsExiting(false);
       dialog.showModal();
-    } else if (!open && dialog.open) {
-      setIsClosing(true);
-      const timer = setTimeout(() => {
-        dialog.close();
-        setIsClosing(false);
-      }, 240);
-      return () => clearTimeout(timer);
     }
   }, [open]);
 
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(onClose, 240);
-  };
+  useLayoutEffect(() => clearExitTimer, [clearExitTimer]);
+
+  const handleDialogClose = useCallback(() => {
+    if (programmaticCloseRef.current) return;
+    if (!open) return;
+    requestClose();
+  }, [open, requestClose]);
 
   return (
-    <dialog
-      ref={dialogRef}
-      className={cn(
-        "whats-new-drawer fixed inset-0 m-0 h-full w-full max-w-none bg-transparent p-0",
-        isClosing && "is-closing"
+    <>
+      {open && (
+        <SurfaceDialog
+          ref={setDialogRef}
+          open={open}
+          mounted={open}
+          manageOpen={false}
+          kind="drawer"
+          onClose={handleDialogClose}
+          ariaLabel={t("releaseComms.whatsNew.title")}
+        >
+          <DrawerPanelShell phase="enter" onRequestClose={requestClose} />
+        </SurfaceDialog>
       )}
-      aria-label={t("releaseComms.whatsNew.title")}
-      aria-modal="true"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) handleClose();
-      }}
-      onClose={onClose}
-    >
-      <div
-        className={cn(
-          "glass-palette fixed right-0 flex h-full w-full max-w-md flex-col overflow-hidden rounded-none sm:rounded-l-2xl",
-          "top-0 bottom-0 sm:top-4 sm:bottom-4 sm:right-4 sm:h-auto",
-          isClosing
-            ? "motion-safe:animate-[slideOutRight_240ms_cubic-bezier(0.22,1,0.36,1)_both]"
-            : "motion-safe:animate-[slideInRight_280ms_cubic-bezier(0.22,1,0.36,1)_both]"
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-3 border-b border-white/8 px-5 py-4">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
-              {t("releaseComms.whatsNew.subtitle")}
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-text-primary">
-              {t("releaseComms.whatsNew.title")}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label={t("releaseComms.whatsNew.close")}
-            className="rounded-lg p-1.5 text-text-muted transition-colors hover:bg-bg-elevated hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M4.28 3.22a.75.75 0 00-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 101.06 1.06L8 9.06l3.72 3.72a.75.75 0 101.06-1.06L9.06 8l3.72-3.72a.75.75 0 00-1.06-1.06L8 6.94 4.28 3.22z" />
-            </svg>
-          </button>
-        </div>
 
-        <div className="min-h-0 flex-1">
-          <PanelScrollFade
-            className="h-full px-4 py-4"
-            maxHeightClass="h-full"
-            ariaLabel={t("releaseComms.whatsNew.title")}
-          >
-            <div className="flex flex-col gap-3 pb-2">
-              {RELEASE_MANIFEST.entries.map((entry, index) => (
-                <ReleaseAccordionItem key={entry.version} entry={entry} defaultOpen={index === 0} />
-              ))}
-            </div>
-          </PanelScrollFade>
-        </div>
-      </div>
-    </dialog>
+      {isExiting && (
+        <ModalPortal>
+          <div className="pointer-events-none fixed inset-0 z-40" aria-hidden="true">
+            <DrawerPanelShell phase="exit" onRequestClose={() => undefined} />
+          </div>
+        </ModalPortal>
+      )}
+    </>
   );
 }

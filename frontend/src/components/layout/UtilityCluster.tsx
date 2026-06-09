@@ -5,9 +5,9 @@ import { ThemeToggle } from "./ThemeToggle";
 
 export function UtilityCluster() {
   return (
-    <div className="flex items-center gap-1 rounded-full border border-border bg-bg-elevated/60 px-1 py-0.5">
+    <div className="flex h-8 shrink-0 items-center gap-0.5 rounded-full border border-border bg-bg-elevated/40 px-1.5 py-0.5">
       <LanguageSelector />
-      <div className="h-4 w-px bg-border" aria-hidden />
+      <div className="h-3.5 w-px bg-border/80" aria-hidden />
       <ThemeToggle />
     </div>
   );

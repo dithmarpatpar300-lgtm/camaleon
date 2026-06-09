@@ -11,15 +11,17 @@
 
 ---
 
-## Current Snapshot (2026-06-08)
+## Current Snapshot (2026-06-09)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.11.0** (`main`) | Wave 2 + Semantic Alpha Engine shipped |
+| **Frontend (app)** | **v1.12.0** (`dev`) · **v1.11.0** (`main`) | Pre-Tier 3 Visual Identity on `dev`; Semantic Alpha on `main` |
 | **Engine (Rust workspace)** | v1.4.2 | Nine Wasm crates + **`core_utils::semantic_alpha`** |
-| **SPEC** | v1.9.0-comms | §5.5.3 Semantic Alpha Engine — **shipped** |
+| **SPEC** | v1.9.0-comms + §7.4.1 | Surface system documented on `dev` |
 
-**v1.11.0** (`main`): **Semantic Alpha Engine** — meaningful-transparency detection for PNG/WebP/GIF/BMP/TIFF → JPEG. Fifteen active tools unchanged. Plan: `docs/planning/semantic_alpha_engine_plan.md` · Release: `docs/releases/v1.11.0.md`.
+**v1.12.0** (`dev`): **Visual Identity & Discovery Shell** — UX-0–UX-8: surface system, ToolBrowser v2, Command Palette v2, transmute shell refresh, mobile hotfixes. Plan: `docs/planning/pre_tier3_ui_ux_plan.md` · Release: `docs/releases/v1.12.0.md`.
+
+**v1.11.0** (`main`): **Semantic Alpha Engine** — meaningful-transparency detection for PNG/WebP/GIF/BMP/TIFF → JPEG. Release: `docs/releases/v1.11.0.md`.
 
 ---
 
@@ -258,8 +260,10 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
 | **Semantic Alpha Engine** | **v1.11.0** (`main`) | Honest transparency across lossy tools | ✅ **Shipped** — `docs/releases/v1.11.0.md` |
-| **Tier 3** | v2.0.x | AVIF, SVG, HEIC | Bundle-size spikes required |
-| **Tier 4** | v2.x | Resize, Compress, Crop, Favicon, PDF | New ToolDefinition categories |
+| **Tier 3** | v2.0.x | AVIF, SVG→raster, HEIC (spike) | **Next** — modern **image** formats only |
+| **Tier 4a** | v2.x | Compress, Resize | Image **optimization** — same raster domain |
+| **Tier 4b** | v2.x | Crop, Rotate/Flip, favicon pack | Image **editing** |
+| **Tier 5** | TBD | PDF tools | **Deferred** — documents; separate planning required |
 
 | Backlog item | Notes |
 |-------------|-------|

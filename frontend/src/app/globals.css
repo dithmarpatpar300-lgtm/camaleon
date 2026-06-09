@@ -28,13 +28,14 @@
 
 /* Light theme */
 .light {
-  --color-bg-base: #FAFAFA;
+  --color-bg-base: #F8FAF9;
   --color-bg-surface: #FFFFFF;
-  --color-bg-elevated: #F5F5F5;
-  --color-border: #E5E5E5;
-  --color-text-primary: #1A1A1A;
-  --color-text-secondary: #6B6B6B;
+  --color-bg-elevated: #F0F4F2;
+  --color-border: #DDE5E0;
+  --color-text-primary: #0F1412;
+  --color-text-secondary: #4B5563;
   --color-text-muted: #9CA3AF;
+  --color-accent-subtle: rgba(34, 197, 94, 0.14);
 }
 
 /* ------------------------------------------------------------------ */
@@ -73,10 +74,22 @@ html.light {
   color-scheme: light;
 }
 
+html {
+  overflow-x: clip;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   background-color: var(--color-bg-base);
   color: var(--color-text-primary);
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -92,7 +105,7 @@ body {
   }
 }
 
-/* Command Palette glass panel (acrylic) — content fade handled by PanelScrollFade */
+/* Nested popovers (e.g. color picker) — light acrylic on opaque parents */
 .glass-palette {
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
@@ -112,28 +125,359 @@ body {
     0 1px 0 rgba(255, 255, 255, 0.90) inset;
 }
 
+/* Overlay surfaces — modals, palette, drawers (UX-1: readable on busy backgrounds) */
+.surface-raised {
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  background-color: rgba(21, 23, 26, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  border-radius: 1.25rem;
+}
+
+.light .surface-raised {
+  background-color: rgba(245, 247, 250, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset;
+}
+
+/* Floating cards over scrim — near-solid (onboarding, mobile sheets) */
+.surface-floating {
+  background-color: rgba(21, 23, 26, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  border-radius: 1.25rem;
+}
+
+.light .surface-floating {
+  background-color: rgba(252, 252, 253, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.12),
+    0 1px 0 rgba(255, 255, 255, 1) inset;
+}
+
+@media (max-width: 639px) {
+  .surface-sheet-mobile {
+    border-radius: 1.25rem 1.25rem 0 0;
+    background-color: rgba(21, 23, 26, 0.98);
+  }
+
+  .light .surface-sheet-mobile {
+    background-color: rgba(252, 252, 253, 0.99);
+  }
+}
+
+/* Sticky app header — more opaque than legacy glass-header (UX-4) */
+.surface-header {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  background-color: rgba(14, 15, 17, 0.88);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.light .surface-header {
+  background-color: rgba(250, 250, 250, 0.90);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* ------------------------------------------------------------------ */
+/* Surface subnav — secondary sticky bars (tool browser tabs).         */
+/* Solid opaque bg (no mask-image — breaks on Huawei + causes overlap).*/
+/* backdrop-filter only on sm+ to avoid mobile GPU compositor bugs.    */
+/* ------------------------------------------------------------------ */
+.surface-subnav {
+  position: relative;
+  isolation: isolate;
+  background-color: rgba(14, 15, 17, 0.96);
+}
+
+.light .surface-subnav {
+  background-color: rgba(250, 250, 250, 0.96);
+}
+
+@media (min-width: 640px) {
+  .surface-subnav {
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    background-color: rgba(14, 15, 17, 0.92);
+  }
+
+  .light .surface-subnav {
+    background-color: rgba(250, 250, 250, 0.92);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Ambient bloom — accent halos between body bg and content.           */
+/* Compact corner halos only; no bottom halo. Mobile uses less blur.   */
+/* ------------------------------------------------------------------ */
+.ambient-bloom {
+  contain: strict;
+  pointer-events: none;
+}
+
+.ambient-bloom__halo {
+  position: absolute;
+  display: block;
+  border-radius: 9999px;
+  filter: blur(56px);
+  opacity: 0.45;
+  transform: translateZ(0);
+}
+
+.ambient-bloom__halo--top-left {
+  top: -120px;
+  left: -80px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(closest-side, rgba(34, 197, 94, 0.32), rgba(34, 197, 94, 0) 72%);
+  animation: ambientDriftA 36s ease-in-out infinite alternate;
+}
+
+.ambient-bloom__halo--top-right {
+  top: 48px;
+  right: -100px;
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(closest-side, rgba(34, 197, 94, 0.18), rgba(34, 197, 94, 0) 72%);
+  animation: ambientDriftB 42s ease-in-out infinite alternate;
+}
+
+.ambient-bloom__grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 68%);
+  mask-image: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 68%);
+}
+
+.light .ambient-bloom__halo--top-left {
+  background: radial-gradient(closest-side, rgba(34, 197, 94, 0.28), rgba(34, 197, 94, 0) 72%);
+  opacity: 0.65;
+}
+.light .ambient-bloom__halo--top-right {
+  background: radial-gradient(closest-side, rgba(34, 197, 94, 0.16), rgba(34, 197, 94, 0) 72%);
+  opacity: 0.65;
+}
+.light .ambient-bloom__grid {
+  background-image: radial-gradient(rgba(34, 197, 94, 0.06) 1px, transparent 1px);
+}
+
+@media (max-width: 639px) {
+  .ambient-bloom__halo {
+    filter: blur(40px);
+    opacity: 0.32;
+    animation: none !important;
+  }
+  .ambient-bloom__halo--top-left {
+    top: -80px;
+    left: -60px;
+    width: 280px;
+    height: 280px;
+  }
+  .ambient-bloom__halo--top-right {
+    top: 24px;
+    right: -70px;
+    width: 240px;
+    height: 240px;
+  }
+  .ambient-bloom__grid {
+    opacity: 0.6;
+  }
+}
+
+@keyframes ambientDriftA {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(24px, 16px, 0) scale(1.04); }
+}
+@keyframes ambientDriftB {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-20px, 12px, 0) scale(1.03); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-bloom__halo {
+    animation: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Transmute workspace shell — refined panel for tool pages (UX-8)     */
+/* ------------------------------------------------------------------ */
+.transmute-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(21, 23, 26, 0.94);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+.transmute-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(34, 197, 94, 0.45) 35%,
+    rgba(34, 197, 94, 0.65) 50%,
+    rgba(34, 197, 94, 0.45) 65%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.light .transmute-shell {
+  border: 1px solid rgba(34, 197, 94, 0.12);
+  background-color: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 20px 40px rgba(34, 197, 94, 0.06),
+    0 1px 0 rgba(255, 255, 255, 1) inset;
+}
+
+.light .transmute-shell::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(34, 197, 94, 0.25) 35%,
+    rgba(34, 197, 94, 0.45) 50%,
+    rgba(34, 197, 94, 0.25) 65%,
+    transparent 100%
+  );
+}
+
+.transmute-dropzone {
+  position: relative;
+  display: flex;
+  min-height: 14rem;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  border: 2px dashed rgba(255, 255, 255, 0.12);
+  background-color: rgba(14, 15, 17, 0.5);
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.transmute-dropzone:hover:not([aria-disabled="true"]) {
+  border-color: rgba(34, 197, 94, 0.35);
+  background-color: rgba(34, 197, 94, 0.04);
+}
+
+.transmute-dropzone[data-dragging="true"] {
+  border-color: rgba(34, 197, 94, 0.55);
+  background-color: rgba(34, 197, 94, 0.08);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.08);
+}
+
+.light .transmute-dropzone {
+  border-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(34, 197, 94, 0.03);
+}
+
+.light .transmute-dropzone:hover:not([aria-disabled="true"]) {
+  border-color: rgba(34, 197, 94, 0.4);
+  background-color: rgba(34, 197, 94, 0.06);
+}
+
+.light .transmute-dropzone[data-dragging="true"] {
+  border-color: rgba(34, 197, 94, 0.5);
+  background-color: rgba(34, 197, 94, 0.1);
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+}
+
+/** @deprecated Use `.surface-header` */
 .glass-header {
   backdrop-filter: blur(12px) saturate(150%);
   -webkit-backdrop-filter: blur(12px) saturate(150%);
-  background-color: rgba(14, 15, 17, 0.75);
+  background-color: rgba(14, 15, 17, 0.88);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 16px rgba(0, 0, 0, 0.18);
 }
+
 .light .glass-header {
-  background-color: rgba(250, 250, 250, 0.82);
+  background-color: rgba(250, 250, 250, 0.90);
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
-dialog.command-palette::backdrop {
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
+/* Unified modal shell (UX-5 — SurfaceDialog) */
+dialog.surface-dialog {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  max-width: 100vw;
+  background: transparent;
+  padding: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
+dialog.surface-dialog--palette {
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  dialog.surface-dialog--palette {
+    padding: 2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  dialog.surface-dialog--palette {
+    padding: 4rem;
+  }
+}
+
+dialog.surface-dialog::backdrop,
+dialog.command-palette::backdrop,
+dialog.surface-overlay::backdrop,
 dialog.whats-new-drawer::backdrop {
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-  transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-dialog.whats-new-drawer.is-closing::backdrop {
-  opacity: 0;
+dialog.surface-dialog--drawer::backdrop,
+dialog.whats-new-drawer::backdrop {
+  transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/** @deprecated Use `surface-dialog` */
+dialog.command-palette,
+dialog.surface-overlay,
+dialog.whats-new-drawer {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  max-width: 100vw;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Gate de carga y workspace */
@@ -156,10 +500,76 @@ dialog.whats-new-drawer.is-closing::backdrop {
   to   { opacity: 0; transform: translateX(100%); }
 }
 
+/* Tool browser — staggered row entrance only (no transform on panel container;
+   transform on the panel caused z-index clash with sticky toolbar). */
+@keyframes toolRowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tool browser toolbar — primary navigation deck (above list content) */
+.tool-browser-toolbar {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.tool-browser-toolbar::before {
+  content: "";
+  display: block;
+  height: 2px;
+  margin: -0.75rem -1rem 0.75rem;
+  border-radius: 0.75rem 0.75rem 0 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(34, 197, 94, 0.35) 30%,
+    rgba(34, 197, 94, 0.5) 50%,
+    rgba(34, 197, 94, 0.35) 70%,
+    transparent
+  );
+}
+
+@media (min-width: 640px) {
+  .tool-browser-toolbar::before {
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+  }
+}
+
+.light .tool-browser-toolbar {
+  border-color: rgba(34, 197, 94, 0.14);
+  box-shadow:
+    0 6px 24px rgba(34, 197, 94, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.light .tool-browser-toolbar::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(34, 197, 94, 0.2) 30%,
+    rgba(34, 197, 94, 0.38) 50%,
+    rgba(34, 197, 94, 0.2) 70%,
+    transparent
+  );
+}
+
+.tool-browser-panel {
+  padding-top: 0;
+}
+
+.tool-browser-row {
+  animation: toolRowIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--tool-row-index, 0) * 28ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .motion-safe\:animate-\[slideInRight_280ms_cubic-bezier\(0\.22\,1\,0\.36\,1\)_both\],
   .motion-safe\:animate-\[slideOutRight_240ms_cubic-bezier\(0\.22\,1\,0\.36\,1\)_both\],
-  .motion-safe\:animate-\[prepareGateIn_340ms_cubic-bezier\(0\.22\,1\,0\.36\,1\)_both\] {
+  .motion-safe\:animate-\[prepareGateIn_340ms_cubic-bezier\(0\.22\,1\,0\.36\,1\)_both\],
+  .tool-browser-row {
     animation: none !important;
   }
 }
@@ -241,16 +651,16 @@ dialog.whats-new-drawer.is-closing::backdrop {
  */
 .lang-pill-thumb {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 2px;
+  bottom: 2px;
   left: 0;
-  width: var(--lang-btn-w, 2.25rem);
+  width: var(--lang-btn-w, 1.875rem);
   border-radius: 9999px;
   background-color: var(--color-bg-elevated);
   box-shadow:
     0 1px 4px rgba(0, 0, 0, 0.35),
     inset 0 0 0 1px rgba(255, 255, 255, 0.07);
-  transform: translateX(calc(var(--active-idx, 0) * var(--lang-btn-w, 2.25rem)));
+  transform: translateX(calc(var(--active-idx, 0) * var(--lang-btn-w, 1.875rem)));
   transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
 }
@@ -315,6 +725,28 @@ html.camaleon-theme-fade *::after {
 
 html.camaleon-scroll-locked {
   overflow: hidden !important;
+  overflow-x: clip !important;
+  overscroll-behavior: none;
+  height: 100%;
+}
+
+html.camaleon-scroll-locked body {
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* Keep sticky header aligned when the scrollbar gutter disappears (desktop modals) */
+html.camaleon-scroll-locked .surface-header {
+  padding-right: var(--camaleon-scrollbar-width, 0px);
+}
+
+dialog.surface-dialog:not([open]),
+dialog.command-palette:not([open]),
+dialog.surface-overlay:not([open]),
+dialog.whats-new-drawer:not([open]) {
+  display: none !important;
 }
 
 /* ------------------------------------------------------------------ */

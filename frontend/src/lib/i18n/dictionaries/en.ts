@@ -71,6 +71,9 @@ const en: Dictionary = {
   nav: {
     transmutations: "Transmutations",
     mainNavAria: "Main navigation",
+    searchPlaceholder: "Search tools…",
+    searchPlaceholderShort: "Search…",
+    searchAriaLabel: "Search transmutation tools",
   },
 
   lang: {
@@ -152,6 +155,31 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v1120: {
+        title: "Visual identity & discovery shell",
+        summary:
+          "A full Pre-Tier 3 UI pass — new surfaces, scalable tool browser, command palette v2, and a refined transmute workspace on desktop and mobile.",
+        technical:
+          "UX-0–UX-8 on dev: surface-raised/floating/subnav tokens, SurfaceDialog/Sheet, ModalPortal + useModalDialog, scroll-lock guard, AmbientBloom (mobile perf tier), ToolBrowser (tabs + compact rows), Command Palette search/groups, transmute-shell + ToolPageHeader. SPEC §7.4.1. Plan: docs/planning/pre_tier3_ui_ux_plan.md.",
+        highlights: {
+          visualIdentity: {
+            title: "Camaleon surface system",
+            body: "Unified opaque overlays, sticky header/subnav, ambient accent bloom, and light-mode palette sync — readable on every device.",
+          },
+          toolBrowser: {
+            title: "Tool browser v2",
+            body: "Family tabs, compact list rows, density toggle, and toolbar hierarchy replace the accordion grid — ready for 25+ tools.",
+          },
+          surfacesHotfix: {
+            title: "Modal & scroll hotfixes",
+            body: "What's New close sync, scroll-lock recovery, modal portal race, mobile pill overlap on Huawei, and z-index tab-filter fixes.",
+          },
+          transmuteShell: {
+            title: "Transmute workspace refresh",
+            body: "New tool page header, accent dropzone, and raised transmute shell — same engine, radically clearer UX.",
+          },
+        },
+      },
       v1110: {
         title: "Honest transparency detection",
         summary:
@@ -281,6 +309,27 @@ const en: Dictionary = {
     tools: {
       available: "Available transmutations",
       comingSoon: "Coming soon",
+      jumpNavAria: "Jump to tool families",
+      tabsAria: "Tool families",
+      densityAria: "List density",
+      jumpLinks: {
+        "jpeg-png": "JPEG",
+        webp: "WebP",
+        "gif-bmp": "GIF",
+        archival: "TIFF",
+        icons: "ICO",
+      },
+      tabs: {
+        all: "All",
+      },
+      density: {
+        compact: "Compact view",
+        detailed: "Detailed view",
+      },
+      toolbarMeta: {
+        all: "{count} tools across {families} families",
+        filtered: "{count} tools",
+      },
     },
   },
 
@@ -697,9 +746,20 @@ const en: Dictionary = {
     ariaLabel: "Command palette — navigate transmutations",
     triggerAriaLabel: "Open command palette",
     title: "Transmutations",
+    searchLabel: "Search tools",
+    searchPlaceholder: "Search by name or format…",
+    noResults: "No tools match your search",
+    close: "Close",
     categoryImage: "Image",
     categorySoon: "Coming soon",
     closeHint: "Esc to close",
+    groups: {
+      "jpeg-png": "JPEG & PNG",
+      webp: "WebP",
+      "gif-bmp": "GIF & BMP",
+      archival: "Archival & textures",
+      icons: "Icons & favicons",
+    },
   },
 };
 

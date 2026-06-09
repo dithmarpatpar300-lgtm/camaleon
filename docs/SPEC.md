@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.9.0  
+**Version:** 1.11.0  
 **Last updated:** 2026-06-08  
-**Status:** v1.9.0 live on `main` — Tier 1 + Tier 2 Wave 1 (10 tools); Release Comms (What's New) shipped; Engine v1.4.2
+**Status:** v1.11.0 live on `main` — fifteen image transmutation tools; Semantic Alpha Engine shipped; Engine v1.4.2
 
 ---
 
@@ -16,7 +16,25 @@
 
 ### 1.1 Mission
 
-Camaleon transmutes file formats entirely inside the user's browser. Privacy is non-negotiable: file bytes never leave the client.
+Camaleon transmutes **image** formats entirely inside the user's browser. Privacy is non-negotiable: file bytes never leave the client.
+
+### 1.3 Product scope — images first (normative)
+
+Camaleon is an **image platform** first. Expansion follows a fixed priority ladder. Do not skip tiers or mix document tooling into image tiers without an explicit SPEC amendment.
+
+| Ladder | Name | What it is | Status |
+|--------|------|------------|--------|
+| **A** | **Image transmutation** | Format-to-format raster conversion (decode → policy → encode) | ✅ **Shipped** — Tiers 1–2 + Semantic Alpha Engine (v1.11.0) |
+| **B** | **Modern image formats** | AVIF, SVG→raster, HEIC (spike-gated) | ⏳ **Tier 3** — next major engine milestone |
+| **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | 📋 **Tier 4a** — planned after Tier 3 |
+| **D** | **Image editing** | Crop, rotate, flip on raster (Wasm + canvas UI) | 📋 **Tier 4b** — planned after Tier 4a |
+| **E** | **Documents** | PDF merge/split, PDF→images — non-raster domain | 🚫 **Deferred** — far horizon; separate planning doc required |
+
+**Out of scope (unless amended):** server uploads, accounts, cloud storage, ML tools (e.g. watermark removal), and any tool whose primary artifact is not a raster image file.
+
+**Competitor mapping:** suites like [Convertify](https://herramientas-imagen.pages.dev/en/) bundle conversion + optimization + editing + documents in one landing. Camaleon **matches depth on image transmutation first**, then adds optimization and editing on the **same Rust/Wasm engine**, and treats **documents as a later product line** — not v2.0 scope.
+
+**Registry implication:** `ToolDefinition.category` today is `"image"` only. Future values `"optimize"` and `"edit"` are allowed in Tier 4. `"document"` requires a new SPEC section and ROADMAP phase before any implementation.
 
 ### 1.2 Architectural Principles
 
@@ -1033,6 +1051,28 @@ Light theme: identical token names, neutrals inverted to off-white surfaces + da
 
 **Typography:** neutral sans-serif (Geist or Inter) for UI; monospace (Geist Mono / JetBrains Mono) for technical data (extensions, byte sizes). No decorative serif. Minimal motion; subtle transitions only.
 
+#### 7.4.1 Overlay surface system (Pre-Tier 3 — UX-1 / UX-5)
+
+Floating UI (modals, palette, release comms) shares a **three-tier surface ladder** in `frontend/src/app/globals.css`. Components MUST use these tokens — not ad-hoc opacity or legacy `glass-palette` on overlay parents.
+
+| CSS class | Opacity (dark) | Use |
+|-----------|----------------|-----|
+| `::backdrop` on `dialog.surface-dialog` | `rgba(0,0,0,.55)` + `blur(4px)` | Standard scrim behind all modals |
+| `surface-raised` | ~94% | Command palette, release notes, What's New panel |
+| `surface-floating` | ~97% | Onboarding card |
+| `surface-sheet-mobile` | ~98% (mobile only) | Bottom sheets — palette, onboarding |
+| `surface-header` | ~88% | Sticky app header (not a dialog) |
+| `glass-palette` | ~62% | **Nested popovers only** (e.g. color picker inside an opaque panel) |
+
+**Shell components** (`frontend/src/components/ui/`):
+
+- `SurfaceDialog` — portal + native `<dialog>` + scroll lock + `useModalDialog` sync
+- `SurfaceSheet` — `SurfaceBackdrop` (layout) + `SurfacePanel` (raised / floating / sheet variants)
+
+All new overlay features MUST compose `SurfaceDialog` + `SurfaceSheet` unless a documented exception applies (e.g. animated drawer with `manageOpen={false}`).
+
+**Scroll lock:** `lib/scroll-lock.ts` — `overflow: hidden` on `html`/`body` with scrollbar-gutter compensation on `.surface-header`; no `position: fixed` on desktop (prevents header/content jump on modal close).
+
 ### 7.5 Component Architecture (Implemented — UI-1 foundation)
 
 Reusable, modular taxonomy under `frontend/src/`:
@@ -1309,7 +1349,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 ## 12. Format Expansion Program
 
-> **Owned by Chief Architect.** This section documents the planned format expansion beyond the JPG/PNG MVP, organized by priority tier. Each tier's phases are executed one format at a time with QA gates between them. The tier classification is a product and engineering commitment — do not implement Tier 2+ until Tier 1 is complete and signed off.
+> **Owned by Chief Architect.** Planned work beyond the JPG/PNG MVP, organized by priority tier (see §1.3). **Tiers 1–2 are complete and live on `main` (v1.11.0).** Next gate: **Tier 3** (modern image formats). Optimization, editing, and documents follow in that order — documents are **not** Tier 3 or Tier 4 scope.
 
 ### 12.1 Expansion Principles
 
@@ -1326,7 +1366,7 @@ All format expansion work follows these rules in addition to existing principles
 | **i18n day-one** | Both EN and ES strings shipped in the same task; no partial i18n. |
 | **Bundle size gate (NFR-7)** | Each new `.wasm` ≤ 3 MB uncompressed. Block merge if exceeded. |
 
-### 12.2 Tier 1 — WebP Suite (v1.7.x — Current Priority)
+### 12.2 Tier 1 — WebP Suite (v1.7.x — ✅ Complete)
 
 Goal: make Camaleon the best browser-local WebP converter. Four conversion directions, each its own phase.
 
@@ -1377,36 +1417,59 @@ Low-risk, high-value conversions using the `image` crate without new native depe
 
 **Execution:** same pattern as Tier 1, one phase at a time, separate prompt per direction. Crates group by source format to minimize crate count.
 
-### 12.4 Tier 3 — Modern Formats (v2.0.x — After Tier 2 complete)
+### 12.4 Tier 3 — Modern Image Formats (v2.0.x — **Next**)
 
-These require careful Wasm bundle size analysis before commitment.
+Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm bundle spikes before commitment.
 
 | Format | Direction | Technical note |
 |--------|-----------|---------------|
 | **AVIF → PNG/JPEG** | Decode | `ravif` pure-Rust decoder; `avif-native` uses libdav1d (C) — spike required for Wasm feasibility |
 | **PNG/JPEG → AVIF** | Encode | `ravif` encode; known large bundle. Budget spike before commit. |
 | **SVG → PNG/JPEG** | Rasterize | `resvg` + `usvg`; adds ~2–4 MB to bundle; DPI/background parameters |
-| **HEIC/HEIF → JPEG** | Decode | No pure-Rust decoder; `libheif` WASM port fragile. Honest UI message recommended. |
+| **HEIC/HEIF → JPEG** | Decode | No pure-Rust decoder; `libheif` WASM port fragile. Honest UI message if deferred. |
 
-**Go/no-go criteria for each:** spike delivers working Wasm build + `.wasm` ≤ 4 MB + `cargo test --workspace` passes.
+**Go/no-go criteria for each:** spike delivers working Wasm build + `.wasm` ≤ 4 MB (≤ 3 MB preferred per NFR-7) + `cargo test --workspace` passes.
 
-### 12.5 Tier 4 — Raster Operations & New Categories (v2.x — After Tier 3 milestone)
+### 12.5 Tier 4a — Image Optimization (v2.x — After Tier 3)
 
-These extend Camaleon beyond format swap into raster operations and new content types.
+**Ladder C (§1.3).** Same raster domain; not format swap — re-encode or resample with metrics-first UX (estimate before apply).
 
-| Category | Tool | Implementation notes |
-|----------|------|---------------------|
-| **Optimization** | Compress (same-format re-encode) | Re-encode PNG or JPEG at user-chosen compression/quality; size delta as primary metric |
-| **Optimization** | Resize | `imageops::resize`; width/height + aspect-ratio lock; filter type (Nearest/Lanczos) |
-| **Editing** | Crop | Canvas/coordinate UI; Wasm crops raster before encode |
-| **Editing** | Rotate / Flip | 90°/180°/270° + horizontal/vertical flip; lossless when source is PNG |
-| **Favicon Suite** | PNG → ICO (multi-size) | Tier 2 ICO tool extended to emit standard sizes (16/32/48/256) |
-| **Documents** | Images → PDF | `printpdf` or `lopdf` crate; new output category; StripAll applies |
-| **Documents** | PDF → Images | `pdfium` WASM port; spike for bundle size before commit |
+| Tool | Implementation notes |
+|------|---------------------|
+| **Compress** | Same-format re-encode (PNG compression 1–9, JPEG quality 1–100); size delta as primary metric |
+| **Resize** | `imageops::resize`; width/height + aspect-ratio lock; filter type (Nearest/Lanczos/Triangle) |
 
-**Governance note:** Tier 4 may introduce a new `category` value in `ToolDefinition` (`"optimize"`, `"edit"`, `"document"`). The ToolGrid, CommandPalette, and registry must be updated in a coordinated UI task before Tier 4 tools go live.
+**Governance:** introduces `ToolDefinition.category: "optimize"`. ToolGrid / Command Palette grouping update required in same release.
 
-### 12.6 Cross-Cutting Requirements for All Format Expansion
+### 12.6 Tier 4b — Image Editing (v2.x — After Tier 4a)
+
+**Ladder D (§1.3).** Geometric ops on raster before encode; may share astro/canvas patterns from v1.9.
+
+| Tool | Implementation notes |
+|------|---------------------|
+| **Crop** | Canvas/coordinate UI; Wasm crops raster before encode |
+| **Rotate / Flip** | 90°/180°/270° + horizontal/vertical flip; lossless when source is PNG |
+| **Favicon multi-size** | Extend PNG→ICO to emit standard pack (16/32/48/256) in one download |
+
+**Governance:** introduces `ToolDefinition.category: "edit"`.
+
+### 12.7 Tier 5 — Documents (deferred — far horizon)
+
+**Ladder E (§1.3).** Not image transmutation. PDF is a **document** container (pages, vectors, fonts, embedded images). Requires:
+
+- New product planning doc (not started)
+- New `category: "document"` and likely separate navigation surface
+- Different validation, limits, and StripAll rules
+- Spike on `printpdf` / `lopdf` (images→PDF) and `pdfium` WASM (PDF→images) for bundle size
+
+| Tool | Status |
+|------|--------|
+| Images → PDF | Deferred — no implementation until Tier 5 planning approved |
+| PDF → Images | Deferred — same |
+
+**Normative:** Do not implement PDF tools under Tier 3 or Tier 4 milestones. Competitors bundle these early; Camaleon prioritizes **image depth and honesty** first.
+
+### 12.8 Cross-Cutting Requirements for All Format Expansion
 
 These apply to every new tool regardless of tier:
 

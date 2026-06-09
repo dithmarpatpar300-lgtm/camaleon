@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Fragment, useState, type ReactNode } from "react";
-import { useScrollLock } from "@/hooks/useScrollLock";
 import { useI18n } from "@/providers/I18nProvider";
 import { LEGAL_PAGES } from "@/lib/legal";
 import {
@@ -45,8 +44,6 @@ export function Footer() {
   const { t } = useI18n();
   const { openWhatsNew } = useReleaseComms();
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-
-  useScrollLock(shortcutsOpen);
 
   const utilityItems = [
     {

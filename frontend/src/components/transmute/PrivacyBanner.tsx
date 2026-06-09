@@ -8,7 +8,7 @@ export function PrivacyBanner() {
 
   return (
     <section className="pb-12">
-      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-accent/15 bg-bg-surface px-5 py-4 shadow-sm shadow-accent/5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <svg
             xmlns="http://www.w3.org/2000/svg"
