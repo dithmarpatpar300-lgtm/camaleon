@@ -15,13 +15,15 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.12.1** (`dev`) · **v1.11.0** (`main`) | Pre-Tier 3 Visual Identity on `dev`; Semantic Alpha on `main` |
+| **Frontend (app)** | **v1.12.1** (`main` + `dev`) | Pre-Tier 3 UI/UX + brand mark shipped; Pre²-Tier 3 estimate perf next on `dev` |
 | **Engine (Rust workspace)** | v1.4.2 | Nine Wasm crates + **`core_utils::semantic_alpha`** |
 | **SPEC** | v1.9.0-comms + §7.4.1 | Surface system documented on `dev` |
 
-**v1.12.1** (`dev`): **Brand mark & favicon polish** — Lamina 3C chameleon in header + transparent favicon; reference PNG pipeline. Release: `docs/releases/v1.12.1.md`.
+**Pre²-Tier 3** (`dev`, planning): **Estimation engine performance** — Wasm SIMD128, GIF incremental decode, flatten/alpha hotspots, optional WebGPU spike. Plan: `docs/planning/estimate_engine_perf_plan.md`.
 
-**v1.12.0** (`dev`): **Visual Identity & Discovery Shell** — UX-0–UX-8: surface system, ToolBrowser v2, Command Palette v2, transmute shell refresh, mobile hotfixes. Plan: `docs/planning/pre_tier3_ui_ux_plan.md` · Release: `docs/releases/v1.12.0.md`.
+**v1.12.1** (`main`): **Brand mark & favicon polish** — Lamina 3C chameleon in header + transparent favicon; reference PNG pipeline. Release: `docs/releases/v1.12.1.md`.
+
+**v1.12.0** (`main`): **Visual Identity & Discovery Shell** — UX-0–UX-8: surface system, ToolBrowser v2, Command Palette v2, transmute shell refresh, mobile hotfixes. Plan: `docs/planning/pre_tier3_ui_ux_plan.md` · Release: `docs/releases/v1.12.0.md`.
 
 **v1.11.0** (`main`): **Semantic Alpha Engine** — meaningful-transparency detection for PNG/WebP/GIF/BMP/TIFF → JPEG. Release: `docs/releases/v1.11.0.md`.
 
