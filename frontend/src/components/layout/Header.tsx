@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
@@ -8,6 +7,7 @@ import { useI18n } from "@/providers/I18nProvider";
 import { TOOLS } from "@/lib/tools/tool-registry";
 import { resolveToolActionTitle } from "@/lib/i18n/tool-copy";
 import { cn } from "@/lib/utils";
+import { BrandLink } from "@/components/brand/BrandLink";
 import { UtilityCluster } from "./UtilityCluster";
 
 function paletteModKey(): string {
@@ -113,25 +113,7 @@ export function Header() {
   return (
     <header className="surface-header sticky top-0 z-50 border-b border-border overflow-x-clip">
       <div className="mx-auto flex h-14 min-w-0 max-w-6xl items-center gap-2 px-4 sm:gap-3 sm:px-6">
-        <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2 rounded-lg transition-colors hover:bg-bg-elevated/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:gap-2.5"
-        >
-          <svg viewBox="0 0 28 28" fill="none" className="h-7 w-7 shrink-0" aria-hidden="true">
-            <path
-              d="M14 2C10 2 6.5 3.5 4 6c3-1 6.5-0.5 8 1.5C13.5 5.5 17 5 20 6c-2.5-2.5-6-4-10-4z"
-              fill="currentColor"
-              className="text-accent"
-            />
-            <ellipse cx="14" cy="22" rx="10" ry="4" fill="currentColor" className="text-accent/30" />
-            <circle cx="14" cy="20" r="4" fill="currentColor" className="text-accent" />
-            <circle cx="14" cy="20" r="2" fill="currentColor" className="text-accent-hover" />
-            <circle cx="14" cy="20" r="1" fill="currentColor" className="text-bg-base" />
-          </svg>
-          <span className="hidden truncate text-base font-semibold text-text-primary sm:inline">
-            Camaleon
-          </span>
-        </Link>
+        <BrandLink />
 
         {tool && actionTitle && (
           <div className="hidden min-w-0 max-w-[32%] items-center gap-2 truncate text-sm md:flex">

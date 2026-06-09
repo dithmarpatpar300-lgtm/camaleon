@@ -2,7 +2,7 @@
 
 **Status:** Planning (branch `dev`)  
 **Priority:** Urgent — before Tier 3 format expansion  
-**Last updated:** 2026-06-08  
+**Last updated:** 2026-06-09  
 **Related:** SPEC §1.3 (image-first scope), `chat.md` (internal only — never publish)
 
 ---
@@ -297,6 +297,13 @@ Click / `⌘K` → open palette → autofocus search input (unchanged).
 - [x] `.transmute-dropzone` — icon in accent ring, dashed border with drag glow.
 - [x] `StagedWorkspace` file strip with bottom border; metrics card refined.
 - [x] Success state wrapped in same shell.
+
+### Phase UX-9 — Brand mark (v1.12.1)
+
+- [x] Lamina 3 option C mark — oval head, spiral tail (reference PNG, not hand-traced SVG).
+- [x] `BrandLink` + `CamaleonMark` in header; wordmark visible on mobile; accent hover ring.
+- [x] Transparent `app/icon.png`; centered favicon safe area; `apple-icon.png` for iOS.
+- [x] `scripts/generate-brand-assets.mjs` — reproducible extract/trim/center from `reference-dark.png`.
 
 **Total estimate:** ~10–15 dev days on `dev` before Tier 3 engine spike.
 

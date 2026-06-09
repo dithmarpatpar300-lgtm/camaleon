@@ -1144,7 +1144,7 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 
 | Zone | Element | Status |
 |------|---------|--------|
-| Left | Chameleon logo mark (inline SVG, token-driven) + `Camaleon` wordmark (link to `/`) | ✅ v1.6.0 |
+| Left | Chameleon logo mark (`BrandLink` / Lamina 3C PNG, accent hover) + `Camaleon` wordmark (link to `/`) | ✅ v1.12.1 |
 | Center-left (tool routes) | Registry-driven breadcrumb: action title + `FROM → TO` mono slug on `/transmute/[slug]` | ✅ v1.6.0 |
 | Center-left | `Transmutaciones` command palette trigger (`⌘K` / `Ctrl+K`) — active state (`accent-subtle` + ring) when open | ✅ v1.6.0 |
 | Shell | `.glass-header` — lighter acrylic than Command Palette (12px blur) | ✅ v1.6.0 |

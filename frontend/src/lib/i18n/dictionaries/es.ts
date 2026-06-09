@@ -155,6 +155,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v1121: {
+        title: "Marca Camaleon",
+        summary:
+          "El camaleón de Lámina 3C llega al header y a la pestaña del navegador — cabeza ovalada, favicon transparente y espaciado afinado en todos los breakpoints.",
+        technical:
+          "BrandLink + CamaleonMark (PNG de referencia), assets en public/brand, app/icon.png (transparente) + apple-icon.png, scripts/generate-brand-assets.mjs. Header reemplaza el SVG inline anterior. Verde Camaleón #22C55E.",
+        highlights: {
+          brandMark: {
+            title: "Marca Lámina 3 opción C",
+            body: "Silueta fiel del camaleón en espiral con cabeza ovalada y cola — extraída de la referencia aprobada, sin SVG trazado a mano.",
+          },
+          favicon: {
+            title: "Favicon transparente",
+            body: "El icono de pestaña ya no muestra un cuadrado oscuro — mark centrado con padding seguro sobre tile transparente.",
+          },
+          headerBrand: {
+            title: "Enlace de marca en header",
+            body: "Wordmark visible en móvil, hover con anillo accent y marco óptico más grande para que el mark respire junto al título.",
+          },
+        },
+      },
       v1120: {
         title: "Identidad visual y shell de descubrimiento",
         summary:

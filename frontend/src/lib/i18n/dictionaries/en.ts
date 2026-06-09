@@ -155,6 +155,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v1121: {
+        title: "Camaleon brand mark",
+        summary:
+          "The Lamina 3C chameleon mark ships in the header and browser tab — oval head, transparent favicon, and tuned spacing on every breakpoint.",
+        technical:
+          "BrandLink + CamaleonMark (reference PNG), public/brand assets, app/icon.png (transparent) + apple-icon.png, scripts/generate-brand-assets.mjs. Header replaces inline SVG crest. Verde Camaleón #22C55E.",
+        highlights: {
+          brandMark: {
+            title: "Lamina 3 option C mark",
+            body: "Faithful curled-chameleon silhouette with oval head and spiral tail — extracted from the approved reference, not hand-traced SVG.",
+          },
+          favicon: {
+            title: "Transparent favicon",
+            body: "Browser tab icon no longer shows a dark square — centered mark with safe padding on a transparent tile.",
+          },
+          headerBrand: {
+            title: "Header brand link",
+            body: "Wordmark visible on mobile, accent hover ring, and a larger optical frame so the mark breathes next to the title.",
+          },
+        },
+      },
       v1120: {
         title: "Visual identity & discovery shell",
         summary:
