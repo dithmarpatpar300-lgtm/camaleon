@@ -9,7 +9,8 @@ export type ImageFormat =
   | "BMP"
   | "TIFF"
   | "ICO"
-  | "TGA";
+  | "TGA"
+  | "AVIF";
 export type ToolCategory = "image";
 export type ToolFidelity = "lossless" | "lossy";
 export type ToolStatus = "active" | "soon";
@@ -20,7 +21,8 @@ export type ToolGroupKey =
   | "webp"
   | "gif-bmp"
   | "archival"
-  | "icons";
+  | "icons"
+  | "modern";
 
 export type RgbColor = { r: number; g: number; b: number };
 

@@ -65,6 +65,10 @@ const es: Dictionary = {
         title: "TGA a PNG — Camaleon",
         description: "Convierte texturas Targa y assets de juegos a PNG en tu navegador. Raw y RLE, con alpha preservado.",
       },
+      "avif-to-png": {
+        title: "AVIF a PNG — Camaleon",
+        description: "Convierte AVIF a PNG en tu navegador. Exportacion raster universal desde imagenes AV1 modernas — local y privado.",
+      },
     },
   },
 
@@ -355,6 +359,7 @@ const es: Dictionary = {
       tabsAria: "Familias de herramientas",
       densityAria: "Densidad de la lista",
       jumpLinks: {
+        modern: "AVIF",
         "jpeg-png": "JPEG",
         webp: "WebP",
         "gif-bmp": "GIF",
@@ -716,6 +721,21 @@ const es: Dictionary = {
         },
       },
     },
+    "avif-to-png": {
+      actionTitle: "Convertir a PNG",
+      description: "PNG sin perdida desde AVIF — decodifica AV1 una vez y comprime el raster con DEFLATE.",
+      fidelityHint:
+        "El PNG de salida suele ser mucho mas grande que el AVIF en fotos — expandes AV1 comprimido a raster completo. Fuentes 10/12-bit se normalizan a 8-bit. AVIF animado aun no esta soportado.",
+      options: {
+        compression: {
+          label: "Compresion PNG",
+          hint: "Pixeles siempre sin perdida — mas compresion = archivo mas pequeno + proceso mas lento.",
+          lowerLabel: "Mas rapido",
+          upperLabel: "Mas pequeno",
+          presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+      },
+    },
     "tiff-to-jpg": {
       actionTitle: "Comprimir para Web",
       description: "Convierte TIFF a JPEG — archivos mucho mas pequenos para compartir escaneos y masters en linea.",
@@ -782,6 +802,7 @@ const es: Dictionary = {
     categorySoon: "Proximamente",
     closeHint: "Esc para cerrar",
     groups: {
+      modern: "Formatos modernos",
       "jpeg-png": "JPEG y PNG",
       webp: "WebP",
       "gif-bmp": "GIF y BMP",

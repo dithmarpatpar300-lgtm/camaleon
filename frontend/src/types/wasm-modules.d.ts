@@ -190,6 +190,34 @@ declare module "*/transmutador_bmp/transmutador_bmp.js" {
   export default function init(): Promise<void>;
 }
 
+declare module "*/transmutador_avif/transmutador_avif.js" {
+  export class AvifMeta {
+    readonly width: number;
+    readonly height: number;
+    readonly bit_depth: number;
+    readonly has_alpha_channel: boolean;
+    readonly is_sequence: boolean;
+    readonly frame_count: number;
+    readonly lossless: boolean;
+  }
+  export function inspect_avif_meta(input_bytes: Uint8Array): AvifMeta;
+  export function transmutar_avif_a_png(input_bytes: Uint8Array): Uint8Array;
+  export function transmutar_avif_a_png_with_compression(
+    input_bytes: Uint8Array,
+    compression: number
+  ): Uint8Array;
+  export function decode_avif_preview_png(input_bytes: Uint8Array): Uint8Array;
+  export function estimate_avif_to_png_size(
+    input_bytes: Uint8Array,
+    compression: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
+  ): number;
+  export function set_session_input_limit(max_bytes: number): void;
+  export function reset_session_input_limit(): void;
+  export default function init(): Promise<void>;
+}
+
 declare module "*/transmutador_tga/transmutador_tga.js" {
   export class TgaMeta {
     readonly width: number;

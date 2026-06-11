@@ -1,14 +1,26 @@
-//! AVIF transmutator (Tier 3 Phase 3.1).
+//! AVIF → PNG transmutator (Tier 3 Phase 3.1).
 //!
-//! Spike (3.1.0): `inspect_avif_meta` + `decode_avif_to_image` via zenavif (pure Rust).
+//! Decode via zenavif (pure Rust rav1d-safe); re-encode PNG with configurable DEFLATE level.
+//! Metadata strip: StripAll (SPEC §5.10) — HEIF EXIF/XMP/ICC not propagated.
 
 mod avif_decode;
 mod avif_probe;
 
+use std::io::Cursor;
+
+use core_utils::counting_writer::CountingWriter;
+use core_utils::semantic_alpha::{
+    assessment_from_wasm_hint, dynamic_image_has_meaningful_alpha, meaningful_alpha_for_estimate,
+};
+use image::codecs::png::{CompressionType, FilterType, PngEncoder};
+use image::{DynamicImage, ExtendedColorType, ImageEncoder};
 pub use avif_decode::decode_avif_to_dynamic;
 pub use avif_probe::{inspect_and_validate, inspect_avif, AvifInfo};
-
 use wasm_bindgen::prelude::*;
+
+pub const DEFAULT_COMPRESSION: u8 = 6;
+pub const MIN_COMPRESSION: u8 = 1;
+pub const MAX_COMPRESSION: u8 = 9;
 
 #[wasm_bindgen]
 pub struct AvifMeta {
@@ -61,29 +73,30 @@ pub fn inspect_avif_meta(input_bytes: &[u8]) -> Result<AvifMeta, String> {
     })
 }
 
-/// Spike export: full decode to 8-bit RGB/RGBA PNG bytes (compression level 1) for prepare previews.
-#[wasm_bindgen]
-pub fn decode_avif_preview_png(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
-    core_utils::validate_input(input_bytes)?;
-    inspect_and_validate(input_bytes)?;
-
-    let img = decode_avif_to_dynamic(input_bytes)?;
-    encode_preview_png(&img)
+fn validate_compression(c: u8) -> Result<u8, String> {
+    if c == 0 {
+        return Err("PNG compression level must be at least 1".into());
+    }
+    if c > MAX_COMPRESSION {
+        return Err(format!(
+            "PNG compression level {} exceeds maximum ({})",
+            c, MAX_COMPRESSION
+        ));
+    }
+    Ok(c)
 }
 
-fn encode_preview_png(img: &image::DynamicImage) -> Result<Vec<u8>, String> {
-    use image::codecs::png::{CompressionType, FilterType, PngEncoder};
-    use image::{ExtendedColorType, ImageEncoder};
-    use std::io::Cursor;
+fn encode_png_from_dynamic(img: &DynamicImage, compression: u8) -> Result<Vec<u8>, String> {
+    let meaningful_alpha = dynamic_image_has_meaningful_alpha(img);
 
     let mut buf = Cursor::new(Vec::new());
     let encoder = PngEncoder::new_with_quality(
         &mut buf,
-        CompressionType::Fast,
+        CompressionType::Level(compression),
         FilterType::Adaptive,
     );
 
-    if img.color().has_alpha() {
+    if meaningful_alpha {
         let rgba = img.to_rgba8();
         encoder
             .write_image(
@@ -92,7 +105,7 @@ fn encode_preview_png(img: &image::DynamicImage) -> Result<Vec<u8>, String> {
                 rgba.height(),
                 ExtendedColorType::Rgba8,
             )
-            .map_err(|e| format!("Failed to encode preview PNG: {}", e))?;
+            .map_err(|e| format!("Failed to encode PNG: {}", e))?;
     } else {
         let rgb = img.to_rgb8();
         encoder
@@ -102,10 +115,90 @@ fn encode_preview_png(img: &image::DynamicImage) -> Result<Vec<u8>, String> {
                 rgb.height(),
                 ExtendedColorType::Rgb8,
             )
-            .map_err(|e| format!("Failed to encode preview PNG: {}", e))?;
+            .map_err(|e| format!("Failed to encode PNG: {}", e))?;
     }
 
     Ok(buf.into_inner())
+}
+
+fn avif_bytes_to_png_bytes(input: &[u8], compression: u8) -> Result<Vec<u8>, String> {
+    let img = decode_avif_to_dynamic(input)?;
+    encode_png_from_dynamic(&img, compression)
+}
+
+pub fn transmutar_avif_a_png_inner(input: &[u8], compression: u8) -> Result<Vec<u8>, String> {
+    core_utils::validate_input(input)?;
+    validate_compression(compression)?;
+    inspect_and_validate(input)?;
+
+    let output = avif_bytes_to_png_bytes(input, compression)?;
+    core_utils::validate_output(&output, core_utils::OutputFormat::Png)?;
+    Ok(output)
+}
+
+#[wasm_bindgen]
+pub fn transmutar_avif_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    transmutar_avif_a_png_inner(input_bytes, DEFAULT_COMPRESSION)
+}
+
+#[wasm_bindgen]
+pub fn transmutar_avif_a_png_with_compression(
+    input_bytes: &[u8],
+    compression: u8,
+) -> Result<Vec<u8>, String> {
+    transmutar_avif_a_png_inner(input_bytes, compression)
+}
+
+#[wasm_bindgen]
+pub fn decode_avif_preview_png(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    transmutar_avif_a_png_inner(input_bytes, 1)
+}
+
+#[wasm_bindgen]
+pub fn estimate_avif_to_png_size(
+    input_bytes: &[u8],
+    compression: u8,
+    alpha_confidence: u8,
+    alpha_meaningful: u8,
+) -> Result<u32, String> {
+    core_utils::validate_input(input_bytes)?;
+    validate_compression(compression)?;
+    inspect_and_validate(input_bytes)?;
+
+    let img = decode_avif_to_dynamic(input_bytes)?;
+    let alpha_hint = assessment_from_wasm_hint(alpha_confidence, alpha_meaningful);
+    let has_alpha = meaningful_alpha_for_estimate(&img, alpha_hint);
+
+    let mut writer = CountingWriter::default();
+    let encoder = PngEncoder::new_with_quality(
+        &mut writer,
+        CompressionType::Level(compression),
+        FilterType::Adaptive,
+    );
+
+    if has_alpha {
+        let rgba = img.to_rgba8();
+        encoder
+            .write_image(
+                rgba.as_raw(),
+                rgba.width(),
+                rgba.height(),
+                ExtendedColorType::Rgba8,
+            )
+            .map_err(|e| format!("Failed to estimate PNG size: {}", e))?;
+    } else {
+        let rgb = img.to_rgb8();
+        encoder
+            .write_image(
+                rgb.as_raw(),
+                rgb.width(),
+                rgb.height(),
+                ExtendedColorType::Rgb8,
+            )
+            .map_err(|e| format!("Failed to estimate PNG size: {}", e))?;
+    }
+
+    Ok(writer.bytes_written as u32)
 }
 
 #[wasm_bindgen]

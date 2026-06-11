@@ -9,6 +9,11 @@ import {
   type IcoMeta,
 } from "@/lib/ico/ico-wasm-client";
 import {
+  formatAvifBitDepthLabel,
+  inspectAvifMeta,
+  setAvifSessionInputLimit,
+} from "@/lib/avif/avif-wasm-client";
+import {
   formatTgaBitDepthLabel,
   inspectTgaMeta,
   setTgaSessionInputLimit,
@@ -65,6 +70,7 @@ export async function resolveSourceImageMeta(
     if (format === "TIFF") await setTiffSessionInputLimit(ctx.sessionInputLimitBytes);
     if (format === "ICO") await setIcoSessionInputLimit(ctx.sessionInputLimitBytes);
     if (format === "TGA") await setTgaSessionInputLimit(ctx.sessionInputLimitBytes);
+    if (format === "AVIF") await setAvifSessionInputLimit(ctx.sessionInputLimitBytes);
   }
 
   switch (format) {
@@ -141,6 +147,21 @@ export async function resolveSourceImageMeta(
             width: meta.width,
             height: meta.height,
             bitDepthLabel: formatTgaBitDepthLabel(meta),
+          },
+          ctx.alphaAssessment
+        );
+      } catch {
+        return null;
+      }
+    }
+    case "AVIF": {
+      try {
+        const meta = await inspectAvifMeta(new Uint8Array(bytes));
+        return withSemanticAlpha(
+          {
+            width: meta.width,
+            height: meta.height,
+            bitDepthLabel: formatAvifBitDepthLabel(meta),
           },
           ctx.alphaAssessment
         );

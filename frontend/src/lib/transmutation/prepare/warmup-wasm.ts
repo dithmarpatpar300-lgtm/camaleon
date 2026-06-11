@@ -2,6 +2,7 @@ import type { TransmutationModule } from "@/workers/types";
 import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
 import { ensureIcoWasm } from "@/lib/ico/ico-wasm-client";
+import { ensureAvifWasm } from "@/lib/avif/avif-wasm-client";
 import { ensureTgaWasm } from "@/lib/tga/tga-wasm-client";
 import { ensureTiffWasm } from "@/lib/tiff/tiff-wasm-client";
 import { importWasmGlue } from "@/lib/wasm/load-glue";
@@ -31,6 +32,8 @@ export async function warmupTransmutatorModule(module: TransmutationModule): Pro
       return ensureIcoWasm().then(() => undefined);
     case "transmutador_tga":
       return ensureTgaWasm().then(() => undefined);
+    case "transmutador_avif":
+      return ensureAvifWasm().then(() => undefined);
     default:
       throw new Error(`Unknown module: ${module}`);
   }

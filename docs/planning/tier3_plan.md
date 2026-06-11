@@ -14,7 +14,7 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 
 | Sub-phase | ID | Directions | Crate(s) | Target version | Status |
 |-----------|-----|------------|----------|----------------|--------|
-| **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.0.0** | **3.1.0 ✅ spike** → 3.1.1 next |
+| **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.0.0** | **3.1.1 ✅ AVIF→PNG** → 3.1.2 next |
 | **3.2** | AVIF encode | PNG → AVIF, JPEG → AVIF | `transmutador_avif` or `transmutador_encode` | v2.0.x | After 3.1 + encode spike |
 | **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` (TBD) | v2.1.x | Spike-gated (`resvg`) |
 | **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | TBD | v2.x | Spike-gated (no pure-Rust decoder) |
@@ -398,15 +398,16 @@ transmutador_avif + options.quality + background → transmutar_avif_a_jpg_with_
 
 **Goal:** First shippable Tier 3 tool.
 
-- [ ] `transmutar_avif_a_png_inner` + Wasm exports (default + compression).
-- [ ] `estimate_avif_to_png_size` (CountingWriter).
-- [ ] Integration tests: valid path, empty, corrupt, StripAll, IHDR RGB vs RGBA, compression size monotonicity.
-- [ ] Worker lazy-load + `useFileMetrics` dispatch.
-- [ ] `tool-registry` `avif-to-png` → `active`.
-- [ ] i18n EN/ES + fidelity hint (size growth).
+- [x] `transmutar_avif_a_png_inner` + Wasm exports (default + compression).
+- [x] `estimate_avif_to_png_size` (CountingWriter + alpha hint bytes).
+- [x] Integration tests: valid path, empty, StripAll, RGBA alpha, estimate ≤5%, animated reject.
+- [x] Worker lazy-load + estimate route (`transmutador_avif`).
+- [x] `tool-registry` `avif-to-png` → `active`; `toolGroup: modern`.
+- [x] i18n EN/ES + fidelity hint (size growth).
 - [ ] Manual smoke: drop `.avif` → slider → download PNG.
+- [ ] `npm run build:wasm` before deploy.
 
-**Exit gate:** QA §8 items 1–7 pass.
+**Exit gate:** QA §8 items 1–7 pass (manual smoke pending).
 
 ### 7.3 Phase 3.1.2 — AVIF → JPEG
 

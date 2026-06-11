@@ -21,7 +21,7 @@
 
 **v1.12.2** (`dev`): **Estimation engine performance** — GIF fast inspect/incremental decode, alpha hint, multi-entry cache, SIMD128 + LTO. Release: `docs/releases/v1.12.2.md`.
 
-**Tier 3** (`dev`): **3.1.0 AVIF spike ✅** (zenavif, 1.81 MB Wasm) — next **3.1.1** AVIF→PNG · `docs/planning/tier3_1_avif_spike_results.md`
+**Tier 3** (`dev`): **3.1.1 AVIF→PNG ✅** (16 tools) — next **3.1.2** AVIF→JPEG · `docs/planning/tier3_plan.md`
 
 **v1.12.1** (`main`): **Brand mark & favicon polish** — Lamina 3C chameleon in header + transparent favicon; reference PNG pipeline. Release: `docs/releases/v1.12.1.md`.
 
