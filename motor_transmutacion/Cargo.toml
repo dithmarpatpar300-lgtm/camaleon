@@ -3,6 +3,12 @@ members = ["core_utils", "transmutador_jpg", "transmutador_png", "transmutador_w
 resolver = "2"
 
 [workspace.package]
-version = "1.4.2"
+version = "1.4.3"
 edition = "2021"
 license = "MIT"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"

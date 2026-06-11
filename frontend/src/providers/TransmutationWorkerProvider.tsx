@@ -149,8 +149,10 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
             fileIdentity: meta?.fileIdentity,
             enableResultCache: meta?.enableResultCache,
             cacheMaxOutputBytes: meta?.cacheMaxOutputBytes,
+            cacheMaxEntries: meta?.cacheMaxEntries,
             effectiveMaxInputBytes: meta?.effectiveMaxInputBytes,
             userConsentedOversize: meta?.userConsentedOversize,
+            alphaHint: meta?.alphaHint,
           },
           [transferBytes]
         );

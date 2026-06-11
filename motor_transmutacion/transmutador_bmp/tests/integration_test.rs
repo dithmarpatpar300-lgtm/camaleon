@@ -104,7 +104,7 @@ fn strip_all_no_exif_in_output() {
 fn estimate_within_5pct_of_full_encode() {
     let bmp = create_bmp_rgb();
     let full = transmutar_bmp_a_png_inner(&bmp, 6).expect("full");
-    let est = estimate_bmp_to_png_size(&bmp, 6).expect("estimate");
+    let est = estimate_bmp_to_png_size(&bmp, 6, 255, 0).expect("estimate");
     let diff = (full.len() as f64 - est as f64).abs();
     let pct = diff / full.len() as f64;
     assert!(pct < 0.05);
@@ -184,7 +184,7 @@ fn inspect_bmp_opaque_reports_no_alpha() {
 fn jpg_estimate_within_5pct() {
     let bmp = create_bmp_rgb();
     let full = transmutar_bmp_a_jpg_inner(&bmp, 85, 255, 255, 255).expect("full");
-    let est = estimate_bmp_to_jpg_size(&bmp, 85, 255, 255, 255).expect("estimate");
+    let est = estimate_bmp_to_jpg_size(&bmp, 85, 255, 255, 255, 255, 0).expect("estimate");
     let diff = (full.len() as f64 - est as f64).abs();
     assert!((diff / full.len() as f64) < 0.05);
 }

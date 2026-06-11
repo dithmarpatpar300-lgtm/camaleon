@@ -1,4 +1,10 @@
-import type { EncodeSource, OutputExtension, WorkerRequest, WorkerResponse } from "./types";
+import type {
+  EncodeSource,
+  OutputExtension,
+  WorkerAlphaHint,
+  WorkerRequest,
+  WorkerResponse,
+} from "./types";
 import { SOFT_LIMIT_BYTES } from "@/lib/transmutation/limits";
 import { importWasmGlue, wasmExport, type WasmGlueModule } from "@/lib/wasm/load-glue";
 import { ResultCache } from "./result-cache";
@@ -8,20 +14,54 @@ type TransmutarJpgWithCompression = (input: Uint8Array, compression: number) => 
 type TransmutarPngWithQuality = (input: Uint8Array, quality: number) => Uint8Array;
 type TransmutarPngWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
 type EstimateJpgSizeFn = (input: Uint8Array, compression: number) => number;
-type EstimatePngSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
+type EstimatePngSizeFn = (
+  input: Uint8Array,
+  quality: number,
+  bg_r: number,
+  bg_g: number,
+  bg_b: number,
+  alpha_confidence: number,
+  alpha_meaningful: number
+) => number;
 type TransmutarWebpWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
-type EstimateWebpSizeFn = (input: Uint8Array, compression: number) => number;
+type EstimateWebpSizeFn = (
+  input: Uint8Array,
+  compression: number,
+  alpha_confidence: number,
+  alpha_meaningful: number
+) => number;
 type TransmutarWebpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
-type EstimateWebpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
+type EstimateWebpToJpgSizeFn = (
+  input: Uint8Array,
+  quality: number,
+  bg_r: number,
+  bg_g: number,
+  bg_b: number,
+  alpha_confidence: number,
+  alpha_meaningful: number
+) => number;
 type EstimatePngToWebpSizeFn = (input: Uint8Array) => number;
 type TransmutarGifWithCompression = (input: Uint8Array, compression: number, frame_index: number) => Uint8Array;
 type EstimateGifToPngSizeFn = (input: Uint8Array, compression: number, frame_index: number) => number;
 type TransmutarGifJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number, frame_index: number) => Uint8Array;
 type EstimateGifToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number, frame_index: number) => number;
 type TransmutarBmpWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
-type EstimateBmpToPngSizeFn = (input: Uint8Array, compression: number) => number;
+type EstimateBmpToPngSizeFn = (
+  input: Uint8Array,
+  compression: number,
+  alpha_confidence: number,
+  alpha_meaningful: number
+) => number;
 type TransmutarBmpJpgWithOptions = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => Uint8Array;
-type EstimateBmpToJpgSizeFn = (input: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number) => number;
+type EstimateBmpToJpgSizeFn = (
+  input: Uint8Array,
+  quality: number,
+  bg_r: number,
+  bg_g: number,
+  bg_b: number,
+  alpha_confidence: number,
+  alpha_meaningful: number
+) => number;
 type TransmutarTiffWithCompression = (
   input: Uint8Array,
   compression: number,
@@ -30,7 +70,9 @@ type TransmutarTiffWithCompression = (
 type EstimateTiffToPngSizeFn = (
   input: Uint8Array,
   compression: number,
-  page_index: number
+  page_index: number,
+  alpha_confidence: number,
+  alpha_meaningful: number
 ) => number;
 type TransmutarTiffJpgWithOptions = (
   input: Uint8Array,
@@ -46,7 +88,9 @@ type EstimateTiffToJpgSizeFn = (
   bg_r: number,
   bg_g: number,
   bg_b: number,
-  page_index: number
+  page_index: number,
+  alpha_confidence: number,
+  alpha_meaningful: number
 ) => number;
 type TransmutarIcoWithCompression = (
   input: Uint8Array,
@@ -64,6 +108,26 @@ type TransmutarTgaWithCompression = (input: Uint8Array, compression: number) => 
 type EstimateTgaToPngSizeFn = (input: Uint8Array, compression: number) => number;
 
 type SessionLimitFn = (maxBytes: number) => void;
+
+const WASM_ALPHA_HINT_NONE = 255;
+
+const ALPHA_CONFIDENCE_CODE: Record<WorkerAlphaHint["confidence"], number> = {
+  none: 0,
+  structural: 1,
+  sampled: 2,
+  full: 3,
+};
+
+/** Maps prepare-time alpha assessment to Wasm estimate hint bytes (E0.5). */
+function wasmAlphaParams(hint?: WorkerAlphaHint | null): [number, number] {
+  if (!hint || hint.confidence === "structural") {
+    return [WASM_ALPHA_HINT_NONE, 0];
+  }
+  return [
+    ALPHA_CONFIDENCE_CODE[hint.confidence] ?? WASM_ALPHA_HINT_NONE,
+    hint.hasMeaningfulAlpha ? 1 : 0,
+  ];
+}
 
 function pickSessionLimit(mod: WasmGlueModule): SessionLimitFn | null {
   const fn = mod.set_session_input_limit;
@@ -564,8 +628,10 @@ function runFullEncode(
 function runSizeEstimate(
   route: RouteFlags,
   input: Uint8Array,
-  opts: WorkerRequest["options"]
+  opts: WorkerRequest["options"],
+  alphaHint?: WorkerAlphaHint | null
 ): number {
+  const [alphaConfidence, alphaMeaningful] = wasmAlphaParams(alphaHint);
   if (route.isEncode) {
     if (!route.encodeSource) {
       throw new Error("encodeSource is required for transmutador_encode");
@@ -581,12 +647,20 @@ function runSizeEstimate(
     const quality = opts?.quality ?? 85;
     const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
     if (!estimateWebpToJpgSize) throw new Error("Wasm estimate export not initialized");
-    return estimateWebpToJpgSize(input, quality, bg.r, bg.g, bg.b);
+    return estimateWebpToJpgSize(
+      input,
+      quality,
+      bg.r,
+      bg.g,
+      bg.b,
+      alphaConfidence,
+      alphaMeaningful
+    );
   }
   if (route.isWebpToPng) {
     const compression = opts?.compression ?? 6;
     if (!estimateWebpToPngSize) throw new Error("Wasm estimate export not initialized");
-    return estimateWebpToPngSize(input, compression);
+    return estimateWebpToPngSize(input, compression, alphaConfidence, alphaMeaningful);
   }
   if (route.isGifToJpg) {
     const quality = opts?.quality ?? 85;
@@ -605,25 +679,48 @@ function runSizeEstimate(
     const quality = opts?.quality ?? 85;
     const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
     if (!estimateBmpToJpgSize) throw new Error("Wasm estimate export not initialized");
-    return estimateBmpToJpgSize(input, quality, bg.r, bg.g, bg.b);
+    return estimateBmpToJpgSize(
+      input,
+      quality,
+      bg.r,
+      bg.g,
+      bg.b,
+      alphaConfidence,
+      alphaMeaningful
+    );
   }
   if (route.isBmpToPng) {
     const compression = opts?.compression ?? 6;
     if (!estimateBmpToPngSize) throw new Error("Wasm estimate export not initialized");
-    return estimateBmpToPngSize(input, compression);
+    return estimateBmpToPngSize(input, compression, alphaConfidence, alphaMeaningful);
   }
   if (route.isTiffToJpg) {
     const quality = opts?.quality ?? 85;
     const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
     const pageIndex = opts?.pageIndex ?? 0;
     if (!estimateTiffToJpgSize) throw new Error("Wasm estimate export not initialized");
-    return estimateTiffToJpgSize(input, quality, bg.r, bg.g, bg.b, pageIndex);
+    return estimateTiffToJpgSize(
+      input,
+      quality,
+      bg.r,
+      bg.g,
+      bg.b,
+      pageIndex,
+      alphaConfidence,
+      alphaMeaningful
+    );
   }
   if (route.isTiffToPng) {
     const compression = opts?.compression ?? 6;
     const pageIndex = opts?.pageIndex ?? 0;
     if (!estimateTiffToPngSize) throw new Error("Wasm estimate export not initialized");
-    return estimateTiffToPngSize(input, compression, pageIndex);
+    return estimateTiffToPngSize(
+      input,
+      compression,
+      pageIndex,
+      alphaConfidence,
+      alphaMeaningful
+    );
   }
   if (route.isIcoToPng) {
     const compression = opts?.compression ?? 6;
@@ -650,7 +747,15 @@ function runSizeEstimate(
   const quality = opts?.quality ?? 85;
   const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
   if (!estimatePngToJpgSize) throw new Error("Wasm estimate export not initialized");
-  return estimatePngToJpgSize(input, quality, bg.r, bg.g, bg.b);
+  return estimatePngToJpgSize(
+    input,
+    quality,
+    bg.r,
+    bg.g,
+    bg.b,
+    alphaConfidence,
+    alphaMeaningful
+  );
 }
 
 function applySessionInputLimit(route: RouteFlags, maxBytes: number): void {
@@ -748,6 +853,10 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       : SOFT_LIMIT_BYTES;
   applySessionInputLimit(route, sessionLimit);
 
+  if (req.enableResultCache && (req.cacheMaxEntries ?? 0) > 0) {
+    resultCache.configure({ maxEntries: req.cacheMaxEntries });
+  }
+
   try {
     if (isTransmute && req.fingerprint) {
       const cached = resultCache.get(req.fingerprint);
@@ -801,7 +910,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
         };
       }
 
-      const outputSize = runSizeEstimate(route, input, opts);
+      const outputSize = runSizeEstimate(route, input, opts, req.alphaHint);
       return { id: req.id, ok: true, purpose: "estimate", outputSize, cacheStored: false };
     }
 

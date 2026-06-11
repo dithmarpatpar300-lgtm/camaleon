@@ -33,7 +33,8 @@
 use std::io::Cursor;
 
 use core_utils::semantic_alpha::{
-    assess_dynamic_image_probe, dynamic_image_has_meaningful_alpha, png_has_alpha_channel,
+    assess_dynamic_image_probe, assessment_from_wasm_hint, dynamic_image_has_meaningful_alpha,
+    meaningful_alpha_for_estimate, png_has_alpha_channel,
     AlphaAssessment, AlphaAssessmentJs,
 };
 use image::codecs::jpeg::JpegEncoder;
@@ -120,39 +121,6 @@ pub fn validate_quality(quality: u8) -> Result<u8, String> {
 }
 
 // ---------------------------------------------------------------------------
-// Alpha flatten
-// ---------------------------------------------------------------------------
-
-fn flatten_rgba_on_background(
-    rgba: &image::RgbaImage,
-    bg: BackgroundFill,
-) -> image::RgbImage {
-    let (w, h) = rgba.dimensions();
-    let mut rgb = image::RgbImage::new(w, h);
-
-    for (x, y, pixel) in rgba.enumerate_pixels() {
-        let a = pixel[3] as u32;
-        let r = pixel[0] as u32;
-        let g = pixel[1] as u32;
-        let b = pixel[2] as u32;
-
-        let bg_r = bg.r as u32;
-        let bg_g = bg.g as u32;
-        let bg_b = bg.b as u32;
-
-        let inv_a = 255 - a;
-
-        let out_r = ((a * r + inv_a * bg_r + 127) / 255) as u8;
-        let out_g = ((a * g + inv_a * bg_g + 127) / 255) as u8;
-        let out_b = ((a * b + inv_a * bg_b + 127) / 255) as u8;
-
-        rgb.put_pixel(x, y, image::Rgb([out_r, out_g, out_b]));
-    }
-
-    rgb
-}
-
-// ---------------------------------------------------------------------------
 // Core conversion
 // ---------------------------------------------------------------------------
 
@@ -170,7 +138,10 @@ pub fn png_bytes_to_jpg_bytes(
 
     let encoded = if dynamic_image_has_meaningful_alpha(&img) {
         let rgba = img.to_rgba8();
-        let rgb = flatten_rgba_on_background(&rgba, options.background);
+        let bg = options.background;
+        let rgb = core_utils::flatten_rgba::flatten_rgba_on_background(
+            &rgba, bg.r, bg.g, bg.b,
+        );
         encode_rgb_to_jpeg(&rgb, options.quality)?
     } else {
         encode_rgb_to_jpeg(&img.to_rgb8(), options.quality)?
@@ -276,6 +247,8 @@ pub fn estimate_png_to_jpg_size(
     bg_r: u8,
     bg_g: u8,
     bg_b: u8,
+    alpha_confidence: u8,
+    alpha_meaningful: u8,
 ) -> Result<u32, String> {
     core_utils::validate_input(input_bytes)?;
     validate_quality(quality)?;
@@ -286,10 +259,11 @@ pub fn estimate_png_to_jpg_size(
         .decode()
         .map_err(|e| format!("Failed to decode PNG: {}", e))?;
 
+    let alpha_hint = assessment_from_wasm_hint(alpha_confidence, alpha_meaningful);
     let bg = BackgroundFill { r: bg_r, g: bg_g, b: bg_b };
-    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
+    let rgb = if meaningful_alpha_for_estimate(&img, alpha_hint) {
         let rgba = img.to_rgba8();
-        flatten_rgba_on_background(&rgba, bg)
+        core_utils::flatten_rgba::flatten_rgba_on_background(&rgba, bg.r, bg.g, bg.b)
     } else {
         img.to_rgb8()
     };

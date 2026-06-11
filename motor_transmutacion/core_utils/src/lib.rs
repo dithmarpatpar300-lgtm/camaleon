@@ -1,6 +1,7 @@
 use core::fmt;
 
 pub mod counting_writer;
+pub mod flatten_rgba;
 pub mod semantic_alpha;
 
 // ---------------------------------------------------------------------------

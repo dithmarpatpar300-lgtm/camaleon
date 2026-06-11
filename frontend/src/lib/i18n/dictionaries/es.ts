@@ -155,6 +155,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v1122: {
+        title: "Estimaciones de tamaño más rápidas",
+        summary:
+          "El motor de estimación es más ágil — la inspección GIF ya no decodifica todos los frames, los escaneos alpha reutilizan hints del prepare y los sliders recientes quedan en caché en dispositivos capaces.",
+        technical:
+          "Pre²-Tier 3 en dev: GIF skip_frame_decoding + composite incremental; alpha hint prepare→worker→Wasm; ResultCache LRU multi-entrada; core_utils flatten_rgba + alpha_scan SIMD128; release LTO + simd128/bulk-memory. Motor v1.4.3.",
+        highlights: {
+          gifEstimate: {
+            title: "Hot path de estimación GIF",
+            body: "Los GIF animados inspeccionan metadatos sin decodificar todos los frames y componen solo hasta el índice del frame seleccionado.",
+          },
+          estimateCache: {
+            title: "Caché multi-entrada de estimaciones",
+            body: "Los sliders de calidad y compresión consultan un LRU pequeño de estimaciones exactas recientes en lugar de re-codificar en cada movimiento.",
+          },
+          wasmPerf: {
+            title: "Build Wasm y rutas raster",
+            body: "LTO en release, SIMD128, flatten compartido y escaneo alpha vectorizado reducen trabajo redundante manteniendo la doctrina de estimación byte-exacta.",
+          },
+        },
+      },
       v1121: {
         title: "Marca Camaleon",
         summary:

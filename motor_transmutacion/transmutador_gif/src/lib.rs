@@ -168,32 +168,7 @@ fn validate_quality(q: u8) -> Result<u8, String> {
     Ok(q)
 }
 
-pub fn flatten_rgba_on_background(
-    rgba: &image::RgbaImage,
-    bg_r: u8,
-    bg_g: u8,
-    bg_b: u8,
-) -> image::RgbImage {
-    let (w, h) = rgba.dimensions();
-    let mut rgb = image::RgbImage::new(w, h);
-    let br = bg_r as u32;
-    let bg = bg_g as u32;
-    let bb = bg_b as u32;
-    for (x, y, pixel) in rgba.enumerate_pixels() {
-        let a = pixel[3] as u32;
-        let inv = 255 - a;
-        rgb.put_pixel(
-            x,
-            y,
-            image::Rgb([
-                ((a * pixel[0] as u32 + inv * br + 127) / 255) as u8,
-                ((a * pixel[1] as u32 + inv * bg + 127) / 255) as u8,
-                ((a * pixel[2] as u32 + inv * bb + 127) / 255) as u8,
-            ]),
-        );
-    }
-    rgb
-}
+pub use core_utils::flatten_rgba::flatten_rgba_on_background;
 
 fn decode_gif_frame(input: &[u8], frame_index: u32) -> Result<image::DynamicImage, String> {
     composite_to_dynamic_image(input, frame_index)

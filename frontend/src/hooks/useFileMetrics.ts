@@ -11,6 +11,7 @@ import type {
 import { computeSizeDelta, type SizeDelta } from "@/lib/format/metrics";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
+import type { AlphaAssessment } from "@/lib/semantic-alpha";
 import {
   buildFileIdentity,
   buildTransmuteFingerprint,
@@ -40,6 +41,8 @@ type UseFileMetricsArgs = {
   deviceMemoryGb?: number;
   oversizeConsented: boolean;
   sourceMeta: SourceImageMeta | null;
+  /** Prepare-time semantic alpha (E0.5 estimate hint). */
+  alphaAssessment?: AlphaAssessment | null;
   resizeMaxEdge?: number;
   holdEstimate?: boolean;
 };
@@ -71,6 +74,7 @@ export function useFileMetrics({
   deviceMemoryGb,
   oversizeConsented,
   sourceMeta,
+  alphaAssessment,
   effectiveFileSize,
   inputBytes,
   resizeMaxEdge,
@@ -139,13 +143,23 @@ export function useFileMetrics({
   const transmuteMeta = useMemo((): WorkerRequestMeta | undefined => {
     if (!file || !fingerprint || !fileIdentity) return undefined;
     const largeInput = limitFileSize > SOFT_LIMIT_BYTES;
+    const alphaHint =
+      alphaAssessment && alphaAssessment.confidence !== "structural"
+        ? {
+            hasMeaningfulAlpha: alphaAssessment.hasMeaningfulAlpha,
+            confidence: alphaAssessment.confidence,
+          }
+        : undefined;
+
     return {
       fingerprint,
       fileIdentity,
       enableResultCache: profile.enableResultCache && !largeInput,
       cacheMaxOutputBytes: profile.cacheMaxOutputBytes,
+      cacheMaxEntries: profile.cacheMaxEntries,
       effectiveMaxInputBytes: limitContext.sessionInputLimitBytes,
       userConsentedOversize: oversizeConsented,
+      alphaHint,
     };
   }, [
     file,
@@ -153,9 +167,11 @@ export function useFileMetrics({
     fileIdentity,
     profile.enableResultCache,
     profile.cacheMaxOutputBytes,
+    profile.cacheMaxEntries,
     limitContext.sessionInputLimitBytes,
     oversizeConsented,
     limitFileSize,
+    alphaAssessment,
   ]);
 
   useEffect(() => {

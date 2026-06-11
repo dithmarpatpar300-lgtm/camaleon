@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 1.11.0  
-**Last updated:** 2026-06-08  
-**Status:** v1.11.0 live on `main` — fifteen image transmutation tools; Semantic Alpha Engine shipped; Engine v1.4.2
+**Version:** 1.12.2-estimate  
+**Last updated:** 2026-06-11  
+**Status:** v1.12.2 on `dev` — Pre²-Tier 3 estimation engine fix + perf; v1.12.1 on `main`; Engine v1.4.3
 
 ---
 
@@ -975,7 +975,7 @@ type WorkerResponseSuccess = {
 };
 ```
 
-**Estimate path (v1.3.0–v1.5.0):** when `purpose === "estimate"`, dual strategy by `enableResultCache` on `WorkerRequest`: (a) cache-enabled — full encode, store bytes in worker `ResultCache`, return `{ outputSize, cacheStored }`; (b) cache-disabled — Wasm `estimate_*_size` (`CountingWriter`). Worker pipeline serializes jobs; coalescing drops superseded requests; transmute preempts estimates. **Transmute fast path (v1.5.0):** matching `fingerprint` → transfer cached bytes (`cacheHit: true`) without re-encode. Fingerprint built on main thread via `buildTransmuteFingerprint`. Estimation never uses `staged.bytes`.
+**Estimate path (v1.3.0–v1.12.2):** when `purpose === "estimate"`, dual strategy by `enableResultCache` on `WorkerRequest`: (a) cache-enabled — full encode, store bytes in worker **multi-entry `ResultCache`** (LRU, `cacheMaxEntries` from resource profile — v1.12.2), return `{ outputSize, cacheStored }`; (b) cache-disabled — Wasm `estimate_*_size` (`CountingWriter`). **Alpha hint (v1.12.2):** prepare-time `alphaAssessment` passed to worker → optional `alpha_hint` on estimate exports to skip redundant full-raster semantic-alpha scan when safe. **GIF estimate (v1.12.2):** `inspect_gif` uses metadata-only decode; `composite_gif_frame` stops at target frame index. Worker pipeline serializes jobs; coalescing drops superseded requests; transmute preempts estimates. **Transmute fast path (v1.5.0):** matching `fingerprint` → transfer cached bytes (`cacheHit: true`) without re-encode. Fingerprint built on main thread via `buildTransmuteFingerprint`. Estimation never uses `staged.bytes`.
 
 **Worker routing (v0.6.3):**
 - `transmutador_jpg` + `options.compression` → `transmutar_jpg_a_png_with_compression`
@@ -1298,6 +1298,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 1.12.2-estimate | 2026-06-11 | Chief Architect | Pre²-Tier 3: GIF fast inspect/incremental composite; alpha hint prepare→worker; multi-entry ResultCache; `flatten_rgba` + SIMD128 alpha scan; release LTO/SIMD; engine v1.4.3 | `docs/releases/v1.12.2.md` |
 | 1.9.0-comms | 2026-06-08 | Chief Architect | §7.10 Release Comms (What's New): onboarding, changelog modal, drawer; §7.11 release/versioning policy; footer extended; v1.9.0 fold-in note (comms could have been 1.9.1) | — |
 | 1.7.8-repo | 2026-06-07 | Chief Architect | Public repo prep: `main` (releases), `dev` (internal docs), `contrib` (community PRs); removed prompts/planning/reports/GOVERNANCE from `main` | — |
 | 1.7.8 | 2026-06-07 | Chief Architect | v1.7.8 launch baseline: bilingual legal pages (`lib/legal`), minimal footer, PrivacyBanner → `/privacy` | — |

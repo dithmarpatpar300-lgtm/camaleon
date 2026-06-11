@@ -455,6 +455,8 @@ fn estimate_size_matches_full_transmute() {
         opts.background.r,
         opts.background.g,
         opts.background.b,
+        255,
+        0,
     )
     .expect("estimate");
     assert_eq!(estimated as usize, full.len());

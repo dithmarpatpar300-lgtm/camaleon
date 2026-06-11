@@ -9,6 +9,8 @@ export type CacheEntry = {
   createdAt: number;
 };
 
+const DEFAULT_TTL_MS = 60_000;
+
 function sortKeysDeep(value: unknown): unknown {
   if (value === null || typeof value !== "object") return value;
   if (Array.isArray(value)) return value.map(sortKeysDeep);
@@ -33,25 +35,67 @@ export function buildFingerprint(
   );
 }
 
+/** LRU-ish multi-entry cache for estimate→transmute fast path (E1.4). */
 export class ResultCache {
-  private entry: CacheEntry | null = null;
+  /** Insertion order — oldest key first for eviction. */
+  private entries = new Map<string, CacheEntry>();
+  private maxEntries = 1;
+  private ttlMs = DEFAULT_TTL_MS;
+
+  configure(options?: { maxEntries?: number; ttlMs?: number }): void {
+    if (options?.maxEntries != null && options.maxEntries > 0) {
+      this.maxEntries = options.maxEntries;
+    }
+    if (options?.ttlMs != null && options.ttlMs > 0) {
+      this.ttlMs = options.ttlMs;
+    }
+    this.evictExpired();
+    this.evictOverflow();
+  }
 
   get(fingerprint: string): CacheEntry | null {
-    if (!this.entry || this.entry.fingerprint !== fingerprint) return null;
-    if (Date.now() - this.entry.createdAt > 60_000) {
-      this.entry = null;
+    this.evictExpired();
+    const entry = this.entries.get(fingerprint);
+    if (!entry) return null;
+    if (Date.now() - entry.createdAt > this.ttlMs) {
+      this.entries.delete(fingerprint);
       return null;
     }
-    return this.entry;
+    // Touch for LRU: move to newest slot.
+    this.entries.delete(fingerprint);
+    this.entries.set(fingerprint, entry);
+    return entry;
   }
 
   set(entry: CacheEntry, maxBytes: number): boolean {
     if (entry.outputSize > maxBytes) return false;
-    this.entry = entry;
+    this.evictExpired();
+    if (this.entries.has(entry.fingerprint)) {
+      this.entries.delete(entry.fingerprint);
+    }
+    this.entries.set(entry.fingerprint, entry);
+    this.evictOverflow();
     return true;
   }
 
   clear(): void {
-    this.entry = null;
+    this.entries.clear();
+  }
+
+  private evictExpired(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.entries) {
+      if (now - entry.createdAt > this.ttlMs) {
+        this.entries.delete(key);
+      }
+    }
+  }
+
+  private evictOverflow(): void {
+    while (this.entries.size > this.maxEntries) {
+      const oldest = this.entries.keys().next().value;
+      if (oldest === undefined) break;
+      this.entries.delete(oldest);
+    }
   }
 }

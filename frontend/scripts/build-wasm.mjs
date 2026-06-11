@@ -31,7 +31,14 @@ for (const crate of crates) {
   console.log(`build-wasm: ${crate} → ${outDir}`);
   execSync(
     `wasm-pack build --target web --out-dir "${outDir}" --out-name ${crate}`,
-    { cwd: cratePath, stdio: "inherit" }
+    {
+      cwd: cratePath,
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        RUSTFLAGS: "-C target-feature=+simd128,+bulk-memory",
+      },
+    }
   );
 }
 

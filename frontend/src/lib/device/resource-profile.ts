@@ -8,6 +8,8 @@ export type ResourceProfile = {
   maxAutoEstimateBytes: number;
   enableResultCache: boolean;
   cacheMaxOutputBytes: number;
+  /** Multi-entry result cache slots for quality/compression slider (E1.4). */
+  cacheMaxEntries: number;
 };
 
 export type ResourceSignals = {
@@ -48,6 +50,7 @@ export function computeResourceProfile(
   const maxAutoEstimateBytes = tier === "high" ? 40_000_000 : tier === "mid" ? 25_000_000 : 15_000_000;
   const enableResultCache = tier !== "low";
   const cacheMaxOutputBytes = tier === "high" ? 25_000_000 : tier === "mid" ? 15_000_000 : 0;
+  const cacheMaxEntries = tier === "high" ? 5 : tier === "mid" ? 3 : 0;
   const autoEstimate = fileSize <= maxAutoEstimateBytes;
 
   return {
@@ -58,5 +61,6 @@ export function computeResourceProfile(
     maxAutoEstimateBytes,
     enableResultCache,
     cacheMaxOutputBytes,
+    cacheMaxEntries,
   };
 }

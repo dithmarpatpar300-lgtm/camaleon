@@ -108,7 +108,7 @@ fn estimate_within_5pct_of_full_encode() {
         .find(|f| f.name == "rgb8_uncompressed")
         .expect("fixture");
     let full = transmutar_tiff_a_png_inner(&fixture.bytes, 6, 0).expect("full");
-    let est = estimate_tiff_to_png_size(&fixture.bytes, 6, 0).expect("estimate");
+    let est = estimate_tiff_to_png_size(&fixture.bytes, 6, 0, 255, 0).expect("estimate");
     let diff = (full.len() as f64 - est as f64).abs();
     assert!((diff / full.len() as f64) < 0.05);
 }
@@ -149,7 +149,16 @@ fn jpg_estimate_within_5pct() {
     let full =
         transmutador_tiff::transmutar_tiff_a_jpg_inner(&fixture.bytes, 85, 255, 255, 255, 0)
             .expect("full");
-    let est = transmutador_tiff::estimate_tiff_to_jpg_size(&fixture.bytes, 85, 255, 255, 255, 0)
+    let est = transmutador_tiff::estimate_tiff_to_jpg_size(
+        &fixture.bytes,
+        85,
+        255,
+        255,
+        255,
+        0,
+        255,
+        0,
+    )
         .expect("estimate");
     let diff = (full.len() as f64 - est as f64).abs();
     assert!((diff / full.len() as f64) < 0.05);

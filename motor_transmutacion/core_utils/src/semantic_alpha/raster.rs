@@ -1,5 +1,6 @@
 //! Pixel-level semantic alpha detection.
 
+use super::alpha_scan;
 use image::RgbaImage;
 
 /// Global budget for prepare-time alpha probes (matches BMP probe).
@@ -10,7 +11,7 @@ pub const MAX_PROBE_EDGE: u32 = 512;
 
 /// True when any pixel has alpha below 255 (full raster scan).
 pub fn rgba_has_meaningful_alpha(rgba: &RgbaImage) -> bool {
-    rgba.pixels().any(|p| p[3] < 255)
+    alpha_scan::rgba_raw_has_meaningful_alpha(rgba.as_raw())
 }
 
 /// Stratified grid sample over RGBA pixels; full scan when image is small.
@@ -30,13 +31,13 @@ pub fn rgba_has_meaningful_alpha_sampled(rgba: &RgbaImage, max_samples: usize) -
     let step = (total / max_samples).max(1);
     let mut sampled = 0usize;
 
+    let raw = rgba.as_raw();
     for i in (0..total).step_by(step) {
         if sampled >= max_samples {
             break;
         }
-        let x = i % w;
-        let y = i / w;
-        if rgba.get_pixel(x as u32, y as u32)[3] < 255 {
+        let alpha_idx = i * 4 + 3;
+        if raw[alpha_idx] < 255 {
             return true;
         }
         sampled += 1;

@@ -114,7 +114,7 @@ fn compression_ten_rejected() {
 fn estimate_within_5pct_of_full_encode() {
     let webp = create_lossless_webp_rgb();
     let full = transmutar_webp_a_png_inner(&webp, 6).expect("full");
-    let est = estimate_webp_to_png_size(&webp, 6).expect("estimate");
+    let est = estimate_webp_to_png_size(&webp, 6, 255, 0).expect("estimate");
     let diff = (full.len() as f64 - est as f64).abs();
     let pct = diff / full.len() as f64;
     assert!(pct < 0.05, "estimate {} vs actual {} diff {:.2}%", est, full.len(), pct * 100.0);
@@ -202,7 +202,7 @@ fn quality_over_100_rejected() {
 fn estimate_webp_to_jpg_within_5pct() {
     let webp = create_lossless_webp_rgb();
     let full = transmutar_webp_a_jpg_inner(&webp, 85, 255, 255, 255).expect("full");
-    let est = estimate_webp_to_jpg_size(&webp, 85, 255, 255, 255).expect("estimate");
+    let est = estimate_webp_to_jpg_size(&webp, 85, 255, 255, 255, 255, 0).expect("estimate");
     let diff = (full.len() as f64 - est as f64).abs();
     let pct = diff / full.len() as f64;
     assert!(pct < 0.05, "est {} vs actual {} diff {:.2}%", est, full.len(), pct * 100.0);

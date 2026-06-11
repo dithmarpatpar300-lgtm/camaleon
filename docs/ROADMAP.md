@@ -11,15 +11,15 @@
 
 ---
 
-## Current Snapshot (2026-06-09)
+## Current Snapshot (2026-06-11)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.12.1** (`main` + `dev`) | Pre-Tier 3 UI/UX + brand mark shipped; Pre²-Tier 3 estimate perf next on `dev` |
-| **Engine (Rust workspace)** | v1.4.2 | Nine Wasm crates + **`core_utils::semantic_alpha`** |
+| **Frontend (app)** | **v1.12.2** (`dev`) | Pre²-Tier 3 estimation engine fix + perf shipped on `dev` |
+| **Engine (Rust workspace)** | v1.4.3 | Nine Wasm crates + **`core_utils::semantic_alpha`** + flatten/SIMD estimate paths |
 | **SPEC** | v1.9.0-comms + §7.4.1 | Surface system documented on `dev` |
 
-**Pre²-Tier 3** (`dev`, planning): **Estimation engine performance** — Wasm SIMD128, GIF incremental decode, flatten/alpha hotspots, optional WebGPU spike. Plan: `docs/planning/estimate_engine_perf_plan.md`.
+**v1.12.2** (`dev`): **Estimation engine performance** — GIF fast inspect/incremental decode, alpha hint, multi-entry cache, SIMD128 + LTO. Release: `docs/releases/v1.12.2.md`.
 
 **v1.12.1** (`main`): **Brand mark & favicon polish** — Lamina 3C chameleon in header + transparent favicon; reference PNG pipeline. Release: `docs/releases/v1.12.1.md`.
 

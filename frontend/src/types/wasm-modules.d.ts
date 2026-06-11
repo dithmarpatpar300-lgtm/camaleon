@@ -9,17 +9,38 @@ declare module "*/transmutador_png/transmutador_png.js" {
   export function transmutar_png_a_jpg(input_bytes: Uint8Array): Uint8Array;
   export function transmutar_png_a_jpg_with_quality(input_bytes: Uint8Array, quality: number): Uint8Array;
   export function transmutar_png_a_jpg_with_options(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): Uint8Array;
-  export function estimate_png_to_jpg_size(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): number;
+  export function estimate_png_to_jpg_size(
+    input_bytes: Uint8Array,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
+  ): number;
   export default function init(): Promise<void>;
 }
 
 declare module "*/transmutador_webp/transmutador_webp.js" {
   export function transmutar_webp_a_png(input_bytes: Uint8Array): Uint8Array;
   export function transmutar_webp_a_png_with_compression(input_bytes: Uint8Array, compression: number): Uint8Array;
-  export function estimate_webp_to_png_size(input_bytes: Uint8Array, compression: number): number;
+  export function estimate_webp_to_png_size(
+    input_bytes: Uint8Array,
+    compression: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
+  ): number;
   export function transmutar_webp_a_jpg(input_bytes: Uint8Array): Uint8Array;
   export function transmutar_webp_a_jpg_with_options(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): Uint8Array;
-  export function estimate_webp_to_jpg_size(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): number;
+  export function estimate_webp_to_jpg_size(
+    input_bytes: Uint8Array,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
+  ): number;
   export default function init(): Promise<void>;
 }
 
@@ -83,7 +104,9 @@ declare module "*/transmutador_tiff/transmutador_tiff.js" {
   export function estimate_tiff_to_png_size(
     input_bytes: Uint8Array,
     compression: number,
-    page_index: number
+    page_index: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
   ): number;
   export function transmutar_tiff_a_jpg(input_bytes: Uint8Array, page_index: number): Uint8Array;
   export function transmutar_tiff_a_jpg_with_options(
@@ -100,7 +123,9 @@ declare module "*/transmutador_tiff/transmutador_tiff.js" {
     bg_r: number,
     bg_g: number,
     bg_b: number,
-    page_index: number
+    page_index: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
   ): number;
   export default function init(): Promise<void>;
 }
@@ -145,10 +170,23 @@ declare module "*/transmutador_bmp/transmutador_bmp.js" {
   export function inspect_bmp_meta(input_bytes: Uint8Array): BmpMeta;
   export function transmutar_bmp_a_png(input_bytes: Uint8Array): Uint8Array;
   export function transmutar_bmp_a_png_with_compression(input_bytes: Uint8Array, compression: number): Uint8Array;
-  export function estimate_bmp_to_png_size(input_bytes: Uint8Array, compression: number): number;
+  export function estimate_bmp_to_png_size(
+    input_bytes: Uint8Array,
+    compression: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
+  ): number;
   export function transmutar_bmp_a_jpg(input_bytes: Uint8Array): Uint8Array;
   export function transmutar_bmp_a_jpg_with_options(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): Uint8Array;
-  export function estimate_bmp_to_jpg_size(input_bytes: Uint8Array, quality: number, bg_r: number, bg_g: number, bg_b: number): number;
+  export function estimate_bmp_to_jpg_size(
+    input_bytes: Uint8Array,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
+  ): number;
   export default function init(): Promise<void>;
 }
 

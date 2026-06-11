@@ -155,6 +155,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v1122: {
+        title: "Faster size estimates",
+        summary:
+          "The estimation engine is quicker and lighter — GIF inspect no longer decodes every frame, alpha scans reuse prepare-time hints, and recent slider values stay cached on capable devices.",
+        technical:
+          "Pre²-Tier 3 on dev: GIF skip_frame_decoding + incremental composite; alpha hint prepare→worker→Wasm; multi-entry ResultCache LRU; core_utils flatten_rgba + SIMD128 alpha_scan; release LTO + simd128/bulk-memory. Engine v1.4.3.",
+        highlights: {
+          gifEstimate: {
+            title: "GIF estimate hot path",
+            body: "Animated GIFs inspect metadata without full frame decode and composite only up to the selected frame index.",
+          },
+          estimateCache: {
+            title: "Multi-entry estimate cache",
+            body: "Quality and compression sliders hit a small LRU of recent exact estimates instead of re-encoding from scratch every tick.",
+          },
+          wasmPerf: {
+            title: "Wasm build & raster paths",
+            body: "Release LTO, SIMD128, shared flatten, and vectorized alpha scan cut redundant work while keeping byte-exact estimate doctrine.",
+          },
+        },
+      },
       v1121: {
         title: "Camaleon brand mark",
         summary:

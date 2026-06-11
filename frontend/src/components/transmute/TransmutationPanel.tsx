@@ -147,6 +147,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     deviceMemoryGb,
     oversizeConsented,
     sourceMeta: prepared?.sourceMeta ?? null,
+    alphaAssessment: prepared?.alphaAssessment ?? null,
     resizeMaxEdge: prepared?.resizeMaxEdge,
     holdEstimate: crossfading || resizing,
   });

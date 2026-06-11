@@ -7,7 +7,10 @@ mod tiff_semantic_alpha;
 use std::io::Cursor;
 
 use core_utils::counting_writer::CountingWriter;
-use core_utils::semantic_alpha::{dynamic_image_has_meaningful_alpha, AlphaAssessmentJs};
+use core_utils::semantic_alpha::{
+    assessment_from_wasm_hint, dynamic_image_has_meaningful_alpha, meaningful_alpha_for_estimate,
+    AlphaAssessmentJs,
+};
 use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::{ExtendedColorType, ImageEncoder};
@@ -111,32 +114,7 @@ fn validate_compression(c: u8) -> Result<u8, String> {
     Ok(c)
 }
 
-pub fn flatten_rgba_on_background(
-    rgba: &image::RgbaImage,
-    bg_r: u8,
-    bg_g: u8,
-    bg_b: u8,
-) -> image::RgbImage {
-    let (w, h) = rgba.dimensions();
-    let mut rgb = image::RgbImage::new(w, h);
-    let br = bg_r as u32;
-    let bg = bg_g as u32;
-    let bb = bg_b as u32;
-    for (x, y, pixel) in rgba.enumerate_pixels() {
-        let a = pixel[3] as u32;
-        let inv = 255 - a;
-        rgb.put_pixel(
-            x,
-            y,
-            image::Rgb([
-                ((a * pixel[0] as u32 + inv * br + 127) / 255) as u8,
-                ((a * pixel[1] as u32 + inv * bg + 127) / 255) as u8,
-                ((a * pixel[2] as u32 + inv * bb + 127) / 255) as u8,
-            ]),
-        );
-    }
-    rgb
-}
+pub use core_utils::flatten_rgba::flatten_rgba_on_background;
 
 fn dynamic_to_png_bytes(img: &image::DynamicImage, compression: u8) -> Result<Vec<u8>, String> {
     let meaningful_alpha = dynamic_image_has_meaningful_alpha(img);
@@ -212,11 +190,14 @@ pub fn estimate_tiff_to_png_size(
     input_bytes: &[u8],
     compression: u8,
     page_index: u32,
+    alpha_confidence: u8,
+    alpha_meaningful: u8,
 ) -> Result<u32, String> {
     core_utils::validate_input(input_bytes)?;
     validate_compression(compression)?;
     let img = decode_tiff_page(input_bytes, page_index)?;
-    let meaningful_alpha = dynamic_image_has_meaningful_alpha(&img);
+    let alpha_hint = assessment_from_wasm_hint(alpha_confidence, alpha_meaningful);
+    let meaningful_alpha = meaningful_alpha_for_estimate(&img, alpha_hint);
 
     let mut writer = CountingWriter::default();
     let encoder = PngEncoder::new_with_quality(
@@ -316,12 +297,15 @@ pub fn estimate_tiff_to_jpg_size(
     bg_g: u8,
     bg_b: u8,
     page_index: u32,
+    alpha_confidence: u8,
+    alpha_meaningful: u8,
 ) -> Result<u32, String> {
     core_utils::validate_input(input_bytes)?;
     validate_quality(quality)?;
     let img = decode_tiff_page(input_bytes, page_index)?;
 
-    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
+    let alpha_hint = assessment_from_wasm_hint(alpha_confidence, alpha_meaningful);
+    let rgb = if meaningful_alpha_for_estimate(&img, alpha_hint) {
         let rgba = img.to_rgba8();
         flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
     } else {

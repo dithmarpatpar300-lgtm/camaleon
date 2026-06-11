@@ -32,13 +32,21 @@ export type TransmutationOptions = {
 
 export type WorkerPurpose = "transmute" | "estimate" | "purge";
 
+/** Prepare-time semantic alpha passed into estimate to skip redundant raster scans (E0.5). */
+export type WorkerAlphaHint = {
+  hasMeaningfulAlpha: boolean;
+  confidence: "none" | "structural" | "sampled" | "full";
+};
+
 export type WorkerRequestMeta = {
   fingerprint?: string;
   fileIdentity?: string;
   enableResultCache?: boolean;
   cacheMaxOutputBytes?: number;
+  cacheMaxEntries?: number;
   effectiveMaxInputBytes?: number;
   userConsentedOversize?: boolean;
+  alphaHint?: WorkerAlphaHint | null;
 };
 
 export type WorkerRequest = {
@@ -55,8 +63,10 @@ export type WorkerRequest = {
   fileIdentity?: string;
   enableResultCache?: boolean;
   cacheMaxOutputBytes?: number;
+  cacheMaxEntries?: number;
   effectiveMaxInputBytes?: number;
   userConsentedOversize?: boolean;
+  alphaHint?: WorkerAlphaHint | null;
 };
 
 export type WorkerResponseSuccess = {

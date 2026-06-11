@@ -305,6 +305,13 @@ Click / `⌘K` → open palette → autofocus search input (unchanged).
 - [x] Transparent `app/icon.png`; centered favicon safe area; `apple-icon.png` for iOS.
 - [x] `scripts/generate-brand-assets.mjs` — reproducible extract/trim/center from `reference-dark.png`.
 
+### Phase Pre² — Estimation engine (v1.12.2)
+
+- [x] GIF `inspect_gif` with `skip_frame_decoding`; incremental `composite_gif_frame`.
+- [x] Alpha hint from prepare → worker → Wasm estimate exports.
+- [x] Multi-entry `ResultCache` LRU (resource-profile tiers).
+- [x] `core_utils::flatten_rgba`; SIMD128 `alpha_scan` + release LTO/SIMD build flags.
+
 **Total estimate:** ~10–15 dev days on `dev` before Tier 3 engine spike.
 
 ---
