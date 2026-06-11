@@ -1,7 +1,7 @@
 # Tier 3 — Modern Image Formats (AVIF first)
 
 > **Branch:** `dev` (implementation) → merge to `main` at **v2.0.x**  
-> **Status:** **v2.0.0 shipped** (Phase 3.1.0–3.1.1) — **3.1.2 AVIF→JPEG next**  
+> **Status:** **v2.1.1 shipped** (Phase 3.1.2) — Tier 3.1 outbound AVIF pair complete  
 > **Prerequisite:** Pre-Tier 3 UI/UX ✅ (v1.12.0) · Brand mark ✅ (v1.12.1) · Estimation engine perf ✅ (v1.12.2)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**
@@ -14,7 +14,7 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 
 | Sub-phase | ID | Directions | Crate(s) | Target version | Status |
 |-----------|-----|------------|----------|----------------|--------|
-| **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.0.0** | **3.1.0–3.1.1 ✅ shipped** → **3.1.2 next** |
+| **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.1.1** | **3.1.0–3.1.2 ✅ shipped** |
 | **3.2** | AVIF encode | PNG → AVIF, JPEG → AVIF | `transmutador_avif` or `transmutador_encode` | v2.0.x | After 3.1 + encode spike |
 | **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` (TBD) | v2.1.x | Spike-gated (`resvg`) |
 | **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | TBD | v2.x | Spike-gated (no pure-Rust decoder) |
@@ -31,8 +31,8 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 |-------|------------------|-----------|-------|-------------|
 | **3.1.0** | v2.0.0 | Spike | `transmutador_avif` (skeleton) | 0 | ✅ |
 | **3.1.1** | v2.0.0 | AVIF → PNG | `transmutador_avif` | 1 | ✅ |
-| **3.1.2** | v2.0.1 (target) | AVIF → JPEG | `transmutador_avif` | 1 | Next |
-| **3.1.3** | v2.0.x | Tier 3.1 pair complete + polish | — | manifest | After 3.1.2 |
+| **3.1.2** | v2.1.1 | AVIF → JPEG + preview UX | `transmutador_avif` | 1 | ✅ |
+| **3.1.3** | v2.1.x | Tier 3.2 encode spike prep | — | — | Next |
 
 **Out of Tier 3.1 MVP:**
 
@@ -413,12 +413,12 @@ transmutador_avif + options.quality + background → transmutar_avif_a_jpg_with_
 
 **Goal:** Complete outbound AVIF pair.
 
-- [ ] `assess_alpha` Wasm export (semantic alpha).
-- [ ] `transmutar_avif_a_jpg_*` + flatten policy (§5.5.2).
-- [ ] `estimate_avif_to_jpg_size` + `alpha_hint` param (v1.12.2 pattern).
-- [ ] Integration tests: opaque, meaningful alpha + white/black bg, quality range, two-generation lossy fixture messaging.
-- [ ] `avif-to-jpg` registry + i18n (warn lossy-on-lossy).
-- [ ] `TransparencyNotice` QA on rgba fixture.
+- [x] `assess_alpha` Wasm export (semantic alpha).
+- [x] `transmutar_avif_a_jpg_*` + flatten policy (§5.5.2).
+- [x] `estimate_avif_to_jpg_size` + `alpha_hint` param (v1.12.2 pattern).
+- [x] Integration tests: opaque, meaningful alpha + white/black bg, quality range, estimate drift.
+- [x] `avif-to-jpg` registry + i18n (warn lossy-on-lossy).
+- [x] Animated preview UX: frame-preview worker, session cache, scrub overlay split (v2.1.1 hotfix).
 
 **Exit gate:** QA §8 all items + alpha engine parity with WebP→JPG.
 
@@ -510,8 +510,9 @@ transmutador_avif + options.quality + background → transmutar_avif_a_jpg_with_
 | `docs/planning/tier3_1_avif_spike_results.md` | ✅ Phase 3.1.0 spike results |
 | `docs/LIMIT_PIPELINE.md` | **Regression reference** — byte zones, astro, AVIF, session limits |
 | `docs/releases/v2.0.0.md` | **Shipped v2.0.0** (Phase 3.1.0–3.1.1) |
+| `docs/releases/v2.1.1.md` | **Shipped v2.1.1** (Phase 3.1.2 + preview UX) |
 | `motor_transmutacion/transmutador_webp/` | Closest implementation mirror |
 
 ---
 
-*Planning doc for Tier 3 — Modern Image Formats. Tier 3.1 AVIF → PNG/JPEG is the implementation guide on `dev` until v2.0.0 ships.*
+*Planning doc for Tier 3 — Modern Image Formats. Tier 3.1 outbound AVIF pair shipped in v2.1.1; next: Tier 3.2 AVIF encode.*

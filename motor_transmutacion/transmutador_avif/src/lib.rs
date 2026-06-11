@@ -17,8 +17,10 @@ use std::io::Cursor;
 
 use core_utils::counting_writer::CountingWriter;
 use core_utils::semantic_alpha::{
-    assessment_from_wasm_hint, dynamic_image_has_meaningful_alpha, meaningful_alpha_for_estimate,
+    assess_dynamic_image_probe, assessment_from_wasm_hint, dynamic_image_has_meaningful_alpha,
+    meaningful_alpha_for_estimate, AlphaAssessment, AlphaAssessmentJs,
 };
+use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::{DynamicImage, ExtendedColorType, ImageEncoder};
 pub use avif_decode::{decode_avif_frame_to_dynamic, decode_avif_to_dynamic, verify_avif_decodable};
@@ -29,6 +31,10 @@ use wasm_bindgen::prelude::*;
 pub const DEFAULT_COMPRESSION: u8 = 6;
 pub const MIN_COMPRESSION: u8 = 1;
 pub const MAX_COMPRESSION: u8 = 9;
+
+pub const DEFAULT_QUALITY: u8 = 85;
+pub const MIN_QUALITY: u8 = 1;
+pub const MAX_QUALITY: u8 = 100;
 
 #[wasm_bindgen]
 pub struct AvifMeta {
@@ -79,6 +85,19 @@ pub fn inspect_avif_meta(input_bytes: &[u8]) -> Result<AvifMeta, String> {
     let info = inspect_and_validate(input_bytes)?;
     verify_avif_decodable(input_bytes)?;
     Ok(AvifMeta { inner: info })
+}
+
+fn validate_quality(q: u8) -> Result<u8, String> {
+    if q == 0 {
+        return Err("JPEG quality must be at least 1".into());
+    }
+    if q > MAX_QUALITY {
+        return Err(format!(
+            "JPEG quality {} exceeds maximum ({})",
+            q, MAX_QUALITY
+        ));
+    }
+    Ok(q)
 }
 
 fn validate_compression(c: u8) -> Result<u8, String> {
@@ -218,6 +237,114 @@ pub fn estimate_avif_to_png_size(
             .map_err(|e| format!("Failed to estimate PNG size: {}", e))?;
     }
 
+    Ok(writer.bytes_written as u32)
+}
+
+pub fn assess_avif_alpha(input: &[u8]) -> Result<AlphaAssessment, String> {
+    core_utils::validate_input(input)?;
+    let info = inspect_and_validate(input)?;
+    if !info.has_alpha_channel {
+        return Ok(AlphaAssessment::OPAQUE);
+    }
+    let img = decode_avif_frame_to_dynamic(input, 0)?;
+    Ok(assess_dynamic_image_probe(&img, true))
+}
+
+#[wasm_bindgen]
+pub fn assess_alpha(input_bytes: &[u8]) -> Result<AlphaAssessmentJs, String> {
+    Ok(AlphaAssessmentJs::from_assessment(assess_avif_alpha(input_bytes)?))
+}
+
+fn avif_bytes_to_jpg_bytes(
+    input: &[u8],
+    quality: u8,
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+    frame_index: u32,
+) -> Result<Vec<u8>, String> {
+    let img = decode_avif_frame_to_dynamic(input, frame_index)?;
+
+    let rgb = if dynamic_image_has_meaningful_alpha(&img) {
+        let rgba = img.to_rgba8();
+        core_utils::flatten_rgba::flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
+    } else {
+        img.to_rgb8()
+    };
+
+    let mut buf = Cursor::new(Vec::new());
+    let mut encoder = JpegEncoder::new_with_quality(&mut buf, quality);
+    encoder
+        .encode_image(&rgb)
+        .map_err(|e| format!("Failed to encode JPEG: {}", e))?;
+    Ok(buf.into_inner())
+}
+
+pub fn transmutar_avif_a_jpg_inner(
+    input: &[u8],
+    quality: u8,
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+    frame_index: u32,
+) -> Result<Vec<u8>, String> {
+    core_utils::validate_input(input)?;
+    validate_quality(quality)?;
+    let info = inspect_and_validate(input)?;
+    validate_frame_index(info.frame_count, frame_index)?;
+
+    let output = avif_bytes_to_jpg_bytes(input, quality, bg_r, bg_g, bg_b, frame_index)?;
+    core_utils::validate_output(&output, core_utils::OutputFormat::Jpeg)?;
+    Ok(output)
+}
+
+#[wasm_bindgen]
+pub fn transmutar_avif_a_jpg(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    transmutar_avif_a_jpg_inner(input_bytes, DEFAULT_QUALITY, 255, 255, 255, 0)
+}
+
+#[wasm_bindgen]
+pub fn transmutar_avif_a_jpg_with_options(
+    input_bytes: &[u8],
+    quality: u8,
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+    frame_index: u32,
+) -> Result<Vec<u8>, String> {
+    transmutar_avif_a_jpg_inner(input_bytes, quality, bg_r, bg_g, bg_b, frame_index)
+}
+
+#[wasm_bindgen]
+pub fn estimate_avif_to_jpg_size(
+    input_bytes: &[u8],
+    quality: u8,
+    bg_r: u8,
+    bg_g: u8,
+    bg_b: u8,
+    frame_index: u32,
+    alpha_confidence: u8,
+    alpha_meaningful: u8,
+) -> Result<u32, String> {
+    core_utils::validate_input(input_bytes)?;
+    validate_quality(quality)?;
+    let info = inspect_and_validate(input_bytes)?;
+    validate_frame_index(info.frame_count, frame_index)?;
+
+    let img = decode_avif_frame_to_dynamic(input_bytes, frame_index)?;
+    let alpha_hint = assessment_from_wasm_hint(alpha_confidence, alpha_meaningful);
+    let rgb = if meaningful_alpha_for_estimate(&img, alpha_hint) {
+        let rgba = img.to_rgba8();
+        core_utils::flatten_rgba::flatten_rgba_on_background(&rgba, bg_r, bg_g, bg_b)
+    } else {
+        img.to_rgb8()
+    };
+
+    let mut writer = CountingWriter::default();
+    let mut encoder = JpegEncoder::new_with_quality(&mut writer, quality);
+    encoder
+        .encode_image(&rgb)
+        .map_err(|e| format!("Failed to estimate JPEG size: {}", e))?;
     Ok(writer.bytes_written as u32)
 }
 

@@ -1,3 +1,4 @@
+import { ensureAvifWasm } from "@/lib/avif/avif-wasm-client";
 import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
 import { ensureTiffWasm } from "@/lib/tiff/tiff-wasm-client";
@@ -93,6 +94,13 @@ export async function assessSemanticAlpha(
             assess_page_alpha: (input: Uint8Array, pageIndex: number) => AlphaAssessmentHandle;
           }
         ).assess_page_alpha(input, pageIndex)
+      );
+    }
+    case "AVIF": {
+      const wasm = await ensureAvifWasm();
+      applyLimit(wasm as unknown as AssessWasmModule, limit);
+      return wrapAlphaAssessment(
+        (wasm as unknown as AssessWasmModule).assess_alpha(input)
       );
     }
     default:

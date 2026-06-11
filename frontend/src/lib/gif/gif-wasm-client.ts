@@ -90,12 +90,16 @@ export function drawRgbaToCanvas(
 ): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
-  const pixels = new Uint8ClampedArray(rgba.length);
-  pixels.set(rgba);
-  const imageData = new ImageData(pixels, width, height);
-  canvas.width = width;
-  canvas.height = height;
-  ctx.putImageData(imageData, 0, 0);
+
+  const byteLength = width * height * 4;
+  if (rgba.byteLength < byteLength) return;
+
+  if (canvas.width !== width) canvas.width = width;
+  if (canvas.height !== height) canvas.height = height;
+
+  const pixels = new Uint8ClampedArray(byteLength);
+  pixels.set(rgba.subarray(0, byteLength));
+  ctx.putImageData(new ImageData(pixels, width, height), 0, 0);
 }
 
 export async function renderGifFramePreviewPng(

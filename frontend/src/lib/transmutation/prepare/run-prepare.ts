@@ -64,7 +64,7 @@ function isIcoTool(toolId: string): boolean {
 }
 
 function isAvifTool(toolId: string): boolean {
-  return toolId === "avif-to-png";
+  return toolId === "avif-to-png" || toolId === "avif-to-jpg";
 }
 
 /** Yields to the main thread via rAF, allowing React to flush pending state. */

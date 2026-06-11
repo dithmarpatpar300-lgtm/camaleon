@@ -118,6 +118,24 @@ type EstimateAvifToPngSizeFn = (
   alpha_confidence: number,
   alpha_meaningful: number
 ) => number;
+type TransmutarAvifJpgWithOptions = (
+  input: Uint8Array,
+  quality: number,
+  bg_r: number,
+  bg_g: number,
+  bg_b: number,
+  frame_index: number
+) => Uint8Array;
+type EstimateAvifToJpgSizeFn = (
+  input: Uint8Array,
+  quality: number,
+  bg_r: number,
+  bg_g: number,
+  bg_b: number,
+  frame_index: number,
+  alpha_confidence: number,
+  alpha_meaningful: number
+) => number;
 
 type SessionLimitFn = (maxBytes: number) => void;
 
@@ -204,6 +222,8 @@ let estimateTgaToPngSize: EstimateTgaToPngSizeFn | null = null;
 let setAvifSessionLimit: SessionLimitFn | null = null;
 let transmutarAvifWithCompression: TransmutarAvifWithCompression | null = null;
 let estimateAvifToPngSize: EstimateAvifToPngSizeFn | null = null;
+let transmutarAvifJpgWithOptions: TransmutarAvifJpgWithOptions | null = null;
+let estimateAvifToJpgSize: EstimateAvifToJpgSizeFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
@@ -429,6 +449,14 @@ async function initAvifWasm(): Promise<void> {
     module,
     "estimate_avif_to_png_size"
   );
+  transmutarAvifJpgWithOptions = wasmExport<TransmutarAvifJpgWithOptions>(
+    module,
+    "transmutar_avif_a_jpg_with_options"
+  );
+  estimateAvifToJpgSize = wasmExport<EstimateAvifToJpgSizeFn>(
+    module,
+    "estimate_avif_to_jpg_size"
+  );
   setAvifSessionLimit = pickSessionLimit(module);
 }
 
@@ -487,6 +515,7 @@ type RouteFlags = {
   isPngToIco: boolean;
   isTgaToPng: boolean;
   isAvifToPng: boolean;
+  isAvifToJpg: boolean;
   isEncode: boolean;
   encodeSource?: EncodeSource;
 };
@@ -518,6 +547,8 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
   const isTgaToPng = req.module === "transmutador_tga";
   const isAvifToPng =
     req.module === "transmutador_avif" && (req.outputExtension ?? "png") === "png";
+  const isAvifToJpg =
+    req.module === "transmutador_avif" && req.outputExtension === "jpg";
   return {
     isJpg,
     isPng,
@@ -533,6 +564,7 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     isPngToIco,
     isTgaToPng,
     isAvifToPng,
+    isAvifToJpg,
     isEncode,
     encodeSource: isEncode ? req.encodeSource : undefined,
   };
@@ -544,6 +576,7 @@ function resolveMimeExtension(route: RouteFlags): { mime: string; extension: Out
   }
   if (
     route.isWebpToJpg ||
+    route.isAvifToJpg ||
     route.isPng ||
     route.isGifToJpg ||
     route.isBmpToJpg ||
@@ -646,6 +679,13 @@ function runFullEncode(
     const compression = opts?.compression ?? 6;
     if (!transmutarTgaWithCompression) throw new Error("Wasm module not initialized");
     return transmutarTgaWithCompression(input, compression);
+  }
+  if (route.isAvifToJpg) {
+    const quality = opts?.quality ?? 85;
+    const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    const frameIndex = opts?.frameIndex ?? 0;
+    if (!transmutarAvifJpgWithOptions) throw new Error("Wasm module not initialized");
+    return transmutarAvifJpgWithOptions(input, quality, bg.r, bg.g, bg.b, frameIndex);
   }
   if (route.isAvifToPng) {
     const compression = opts?.compression ?? 6;
@@ -785,6 +825,22 @@ function runSizeEstimate(
     if (!estimateTgaToPngSize) throw new Error("Wasm estimate export not initialized");
     return estimateTgaToPngSize(input, compression);
   }
+  if (route.isAvifToJpg) {
+    const quality = opts?.quality ?? 85;
+    const bg = opts?.background ?? { r: 255, g: 255, b: 255 };
+    const frameIndex = opts?.frameIndex ?? 0;
+    if (!estimateAvifToJpgSize) throw new Error("Wasm estimate export not initialized");
+    return estimateAvifToJpgSize(
+      input,
+      quality,
+      bg.r,
+      bg.g,
+      bg.b,
+      frameIndex,
+      alphaConfidence,
+      alphaMeaningful
+    );
+  }
   if (route.isAvifToPng) {
     const compression = opts?.compression ?? 6;
     const frameIndex = opts?.frameIndex ?? 0;
@@ -846,7 +902,7 @@ function applySessionInputLimit(route: RouteFlags, maxBytes: number): void {
     setTgaSessionLimit?.(maxBytes);
     return;
   }
-  if (route.isAvifToPng) {
+  if (route.isAvifToPng || route.isAvifToJpg) {
     setAvifSessionLimit?.(maxBytes);
     return;
   }
@@ -898,7 +954,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       await ensureIcoWasmInitialized();
     } else if (route.isTgaToPng) {
       await ensureTgaWasmInitialized();
-    } else if (route.isAvifToPng) {
+    } else if (route.isAvifToPng || route.isAvifToJpg) {
       await ensureAvifWasmInitialized();
     } else if (route.isEncode) {
       await ensureEncodeWasmInitialized();

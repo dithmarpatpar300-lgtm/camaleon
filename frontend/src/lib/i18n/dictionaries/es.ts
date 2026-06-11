@@ -69,6 +69,10 @@ const es: Dictionary = {
         title: "AVIF a PNG — Camaleon",
         description: "Convierte AVIF a PNG en tu navegador. Exportacion raster universal desde imagenes AV1 modernas — local y privado.",
       },
+      "avif-to-jpg": {
+        title: "AVIF a JPG — Camaleon",
+        description: "Convierte AVIF a JPEG en tu navegador. Comprimido para web — local y privado.",
+      },
     },
   },
 
@@ -127,8 +131,8 @@ const es: Dictionary = {
           body: "No se sube nada. Tus imágenes nunca salen de esta pestaña.",
         },
         tools: {
-          title: "16 herramientas de conversión",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA y AVIF — rutas con y sin pérdida donde importa.",
+          title: "17 herramientas de conversión",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA y AVIF (PNG + JPEG) — rutas con y sin pérdida donde importa.",
         },
         limits: {
           title: "Límites honestos",
@@ -159,6 +163,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v211: {
+        title: "AVIF → JPEG + vistas previas más fluidas",
+        summary:
+          "Decimoséptima herramienta: convierte AVIF a JPEG en el navegador. Los scrubbers de AVIF y GIF animado decodifican en segundo plano — cambios de fotograma instantáneos tras el warm-up, sin parpadeos.",
+        technical:
+          "Tier 3.1.2: exports JPEG en transmutador_avif + assess_alpha. frame-preview.worker + caché de sesión; pintura coalescida RgbaFrameScrubber; Transmutar bloqueado con estimación obsoleta. Motor v1.5.1.",
+        highlights: {
+          avifJpg: {
+            title: "AVIF → JPEG",
+            body: "Completa el par AVIF de salida — control de calidad, aplanado de fondo, alpha semántico y aviso lossy-on-lossy.",
+          },
+          framePreview: {
+            title: "Vista previa animada",
+            body: "Los fotogramas se preparan fuera del hilo principal; el scrubber responde al instante con caché LRU y sin overlay por fotograma.",
+          },
+          transmuteSync: {
+            title: "Transmutar alineado con estimación",
+            body: "El botón espera cuando el tamaño en pantalla está desactualizado y aún se recalcula — se reactiva al quedar alineado.",
+          },
+        },
+      },
       v200: {
         title: "Tier 3 — decodificación AVIF",
         summary:
@@ -446,6 +471,7 @@ const es: Dictionary = {
     changeFile: "Cambiar",
     cancel: "Cancelar",
     transmuteButton: "Transmutar",
+    transmuteSyncing: "Actualizando estimación…",
     initializing: "Inicializando...",
     processing: "Transmutando {fileName}...",
     processingFallback: "Transmutando...",
@@ -540,7 +566,8 @@ const es: Dictionary = {
       cacheReady: "Listo para transmutar",
     },
     avifFrame: {
-      hint: "La vista previa carga cada fotograma bajo demanda — elige cual exportar.",
+      hint: "Los fotogramas cargan en segundo plano — al terminar, el deslizador responde al instante. Elige cual exportar.",
+      warmingFrames: "Preparando fotogramas {current} / {total}…",
     },
     gifFrame: {
       title: "Fotograma de animacion",
@@ -744,6 +771,27 @@ const es: Dictionary = {
           lowerLabel: "Mas rapido",
           upperLabel: "Mas pequeno",
           presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+      },
+    },
+    "avif-to-jpg": {
+      actionTitle: "Comprimir para Web",
+      description: "Convierte AVIF a JPEG — archivos mas pequenos con la calidad que elijas.",
+      fidelityHint:
+        "JPEG tiene perdida — irreversible. El AVIF ya venia comprimido; volver a codificar anade una segunda generacion con perdida. Fuentes 10/12-bit se normalizan a 8-bit. AVIF animado: elige un fotograma para exportar. La transparencia se aplana al fondo elegido.",
+      options: {
+        quality: {
+          label: "Calidad JPEG",
+          hint: "Mayor calidad = archivo mas grande. La perdida de calidad siempre es irreversible.",
+          lowerLabel: "Mas liviano",
+          upperLabel: "Mas fiel",
+          presets: { web: "Web", balanced: "Balanceado", high: "Alto" },
+        },
+        background: {
+          label: "Color de fondo",
+          hint: "Solo afecta imagenes con transparencia.",
+          customAria: "Color de fondo personalizado",
+          swatches: { white: "Blanco", black: "Negro", gray: "Gris" },
         },
       },
     },

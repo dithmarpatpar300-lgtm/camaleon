@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v2.0.0** (`main`) | Tier 3 major baseline — AVIF→PNG (Phase 3.1.0–3.1.1) |
-| **Engine (Rust workspace)** | v1.5.0 | Ten Wasm crates incl. **`transmutador_avif`** (zenavif) |
-| **SPEC** | v2.0.0-avif | §6.10 transmutador_avif; `docs/LIMIT_PIPELINE.md` |
+| **Frontend (app)** | **v2.1.1** (`main`) | Tier 3.1 complete — AVIF→PNG/JPEG (Phase 3.1.0–3.1.2) |
+| **Engine (Rust workspace)** | v1.5.1 | Ten Wasm crates incl. **`transmutador_avif`** (zenavif) |
+| **SPEC** | v2.1.1-avif | §6.10 transmutador_avif; `docs/LIMIT_PIPELINE.md` |
 
-**v2.0.0** (`main`): **Tier 3 begins** — AVIF→PNG, animated frame scrubber, MIAF container normalize, limit/astro pipeline hotfixes. **16 tools.** Release: `docs/releases/v2.0.0.md`. Next: **3.1.2** AVIF→JPEG · `docs/planning/tier3_plan.md`
+**v2.1.1** (`main`): **AVIF→JPEG** + animated preview UX (worker, cache, estimate sync). **17 tools.** Release: `docs/releases/v2.1.1.md`. Next: **Tier 3.2** AVIF encode spike · `docs/planning/tier3_plan.md`
+
+**v2.0.0** (`main`): Tier 3 baseline — AVIF→PNG, limit pipeline. Release: `docs/releases/v2.0.0.md`
 
 **v1.12.2** (`main`): **Estimation engine performance** — GIF fast inspect, alpha hint, multi-entry cache, SIMD128 + LTO. Release: `docs/releases/v1.12.2.md`.
 

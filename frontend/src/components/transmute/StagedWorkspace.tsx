@@ -1,5 +1,6 @@
 "use client";
 
+import { sessionLimitForBytes } from "@/lib/transmutation/limits";
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import type { AvifMeta } from "@/lib/avif/avif-wasm-client";
@@ -108,7 +109,7 @@ export function StagedWorkspace({
 }: StagedWorkspaceProps) {
   const { t } = useI18n();
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
-  const isAvifTool = tool.id === "avif-to-png";
+  const isAvifTool = tool.id === "avif-to-png" || tool.id === "avif-to-jpg";
   const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
   const isIcoTool = tool.id === "ico-to-png";
   const isBmpToPng = tool.id === "bmp-to-png";
@@ -117,6 +118,15 @@ export function StagedWorkspace({
   const entryIndex = options.entryIndex ?? 0;
   const dimensionBlocked = limitContext.blockReason === "pixels";
   const canTransmute = limitContext.canTransmute;
+  /**
+   * Block transmute while a stale estimate is being refreshed (options changed).
+   * Skip on first estimate (no prior delta) so users can transmute immediately if they want.
+   */
+  const estimateSyncing =
+    metrics.estimating &&
+    !metrics.cacheWarm &&
+    metrics.estimateDelta != null;
+  const transmuteReady = canTransmute && !estimateSyncing;
   const showBmpGrowthWarning =
     isBmpToPng &&
     metrics.estimateDelta != null &&
@@ -124,6 +134,7 @@ export function StagedWorkspace({
   const showOutputWarning =
     limitContext.warnings.includes("output_may_exceed_hard_limit") &&
     metrics.estimateDelta != null;
+  const avifSessionLimit = sessionLimitForBytes(fileSize, deviceMemoryGb);
 
   return (
     <div className="p-5 sm:p-6">
@@ -189,6 +200,7 @@ export function StagedWorkspace({
             bytes={fileBytes}
             meta={avifMeta}
             frameIndex={frameIndex}
+            sessionInputLimitBytes={avifSessionLimit}
             onFrameIndexChange={(index) =>
               onOptionsChange({ ...options, frameIndex: index })
             }
@@ -276,12 +288,14 @@ export function StagedWorkspace({
       {showBmpGrowthWarning && <BmpPngGrowthNotice />}
 
       {!dimensionBlocked && (
-        <Button onClick={onTransmutar} disabled={!canTransmute} className="w-full">
+        <Button onClick={onTransmutar} disabled={!transmuteReady} className="w-full">
           {!ready
             ? t("panel.initializing")
             : limitContext.needsInputConsent
               ? t("panel.oversize.blockedButton")
-              : t("panel.transmuteButton")}
+              : estimateSyncing
+                ? t("panel.transmuteSyncing")
+                : t("panel.transmuteButton")}
         </Button>
       )}
     </div>

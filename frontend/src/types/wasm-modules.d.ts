@@ -231,6 +231,30 @@ declare module "*/transmutador_avif/transmutador_avif.js" {
     alpha_confidence: number,
     alpha_meaningful: number
   ): number;
+  export function assess_alpha(input_bytes: Uint8Array): {
+    has_alpha_channel: boolean;
+    has_meaningful_alpha: boolean;
+    confidence: number;
+  };
+  export function transmutar_avif_a_jpg(input_bytes: Uint8Array): Uint8Array;
+  export function transmutar_avif_a_jpg_with_options(
+    input_bytes: Uint8Array,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number,
+    frame_index: number
+  ): Uint8Array;
+  export function estimate_avif_to_jpg_size(
+    input_bytes: Uint8Array,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number,
+    frame_index: number,
+    alpha_confidence: number,
+    alpha_meaningful: number
+  ): number;
   export function set_session_input_limit(max_bytes: number): void;
   export function reset_session_input_limit(): void;
   export default function init(): Promise<void>;

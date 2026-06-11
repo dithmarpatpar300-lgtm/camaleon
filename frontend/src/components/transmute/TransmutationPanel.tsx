@@ -29,6 +29,7 @@ import { localizeError } from "@/lib/i18n/errors";
 import { extractWasmError } from "@/lib/wasm/extract-error";
 import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
 import { downscaleImageBytes } from "@/lib/imaging/downscale";
+import { releaseFramePreviewSessions } from "@/lib/imaging/frame-preview-cache";
 import { resolvePostResizeWasmConfig, supportsClientResize } from "@/lib/imaging/post-resize-route";
 import { mimeTypeForTool } from "@/lib/imaging/supports-client-resize";
 import { assessSemanticAlpha, needsSemanticAlpha } from "@/lib/semantic-alpha";
@@ -115,8 +116,18 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       prepareIdRef.current += 1;
       releasePreparedContext(preparedRef.current);
       preparedRef.current = null;
+      releaseFramePreviewSessions();
     };
   }, []);
+
+  /**
+   * Stable view over the staged bytes — scrubbers key their preview sessions
+   * on this identity, so it must NOT be recreated on every render.
+   */
+  const stagedFileBytes = useMemo(
+    () => (staged ? new Uint8Array(staged.bytes) : null),
+    [staged]
+  );
 
   const { transmutate, ready } = useTransmutationWorker();
   const { toast } = useToast();
@@ -393,13 +404,19 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       !metrics.limitContext.canTransmute ||
       metrics.estimateError ||
       !prepared?.sourceMeta ||
-      (metrics.limitContext.needsInputConsent && !oversizeConsented)
+      (metrics.limitContext.needsInputConsent && !oversizeConsented) ||
+      (metrics.estimating &&
+        !metrics.cacheWarm &&
+        metrics.estimateDelta != null)
     ) {
       return;
     }
     setProcessingProgress(0.08);
     setStatus("processing");
     setErrorMessage(null);
+    // Free decoded preview frames — the Wasm transmute path re-reads the
+    // original bytes, so the scrub cache is dead weight from here on.
+    releaseFramePreviewSessions();
     try {
       const response = await transmutate(
         effectiveModule,
@@ -442,6 +459,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     metrics.limitContext.canTransmute,
     metrics.limitContext.needsInputConsent,
     metrics.estimateError,
+    metrics.estimating,
+    metrics.cacheWarm,
+    metrics.estimateDelta,
     oversizeConsented,
     prepared?.sourceMeta,
     t,
@@ -495,6 +515,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const handleReset = useCallback(() => {
     prepareIdRef.current++;
     releasePreparedContext(prepared);
+    releaseFramePreviewSessions();
     setPrepared(null);
     setPendingFile(null);
     setStaged(null);
@@ -600,7 +621,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 avifMeta={prepared.avifMeta}
                 tiffMeta={prepared.tiffMeta}
                 icoMeta={prepared.icoMeta}
-                fileBytes={new Uint8Array(staged.bytes)}
+                fileBytes={stagedFileBytes}
                 sourceMeta={prepared.sourceMeta}
                 originalSourceMeta={prepared.originalSourceMeta}
                 limitContext={metrics.limitContext}

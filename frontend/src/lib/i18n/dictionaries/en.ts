@@ -69,6 +69,10 @@ const en: Dictionary = {
         title: "AVIF to PNG — Camaleon",
         description: "Convert AVIF to PNG in your browser. Universal raster export from modern AV1 images — local and private.",
       },
+      "avif-to-jpg": {
+        title: "AVIF to JPG — Camaleon",
+        description: "Convert AVIF to JPEG in your browser. Compressed for web — local and private.",
+      },
     },
   },
 
@@ -127,8 +131,8 @@ const en: Dictionary = {
           body: "Nothing is uploaded. Your images never leave this tab.",
         },
         tools: {
-          title: "16 conversion tools",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, and AVIF — lossless and lossy paths where it matters.",
+          title: "17 conversion tools",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, and AVIF (PNG + JPEG) — lossless and lossy paths where it matters.",
         },
         limits: {
           title: "Honest limits",
@@ -159,6 +163,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v211: {
+        title: "AVIF → JPEG + smoother previews",
+        summary:
+          "Seventeenth tool: convert AVIF to JPEG in-browser. Animated AVIF and GIF scrubbers decode in the background — instant frame changes after warm-up, no flicker.",
+        technical:
+          "Tier 3.1.2: transmutador_avif JPEG exports + assess_alpha. frame-preview.worker + session cache; RgbaFrameScrubber coalesced paint; transmute blocked while stale estimate. Engine v1.5.1.",
+        highlights: {
+          avifJpg: {
+            title: "AVIF → JPEG",
+            body: "Complete the AVIF outbound pair — quality slider, background flatten, semantic alpha, lossy-on-lossy honesty.",
+          },
+          framePreview: {
+            title: "Animated preview UX",
+            body: "Frames warm up off the main thread; scrubbing stays responsive with LRU cache and no per-frame loading overlay.",
+          },
+          transmuteSync: {
+            title: "Estimate-aware Transmute",
+            body: "The button waits when the size on screen is outdated and still recalculating — then re-enables when aligned.",
+          },
+        },
+      },
       v200: {
         title: "Tier 3 — AVIF decode",
         summary:
@@ -446,6 +471,7 @@ const en: Dictionary = {
     changeFile: "Change",
     cancel: "Cancel",
     transmuteButton: "Transmute",
+    transmuteSyncing: "Updating estimate…",
     initializing: "Initializing...",
     processing: "Transmuting {fileName}...",
     processingFallback: "Transmuting...",
@@ -540,7 +566,8 @@ const en: Dictionary = {
       cacheReady: "Ready to transmute",
     },
     avifFrame: {
-      hint: "Preview loads per frame on demand — scrub to pick which frame to export.",
+      hint: "Frames load in the background — once ready, scrubbing is instant. Pick which frame to export.",
+      warmingFrames: "Preparing frames {current} / {total}…",
     },
     gifFrame: {
       title: "Animation frame",
@@ -758,6 +785,27 @@ const en: Dictionary = {
           lowerLabel: "Faster",
           upperLabel: "Smaller",
           presets: { fast: "Fast", balanced: "Balanced", minimal: "Minimal" },
+        },
+      },
+    },
+    "avif-to-jpg": {
+      actionTitle: "Compress for Web",
+      description: "Convert AVIF to JPEG — smaller files at your chosen quality.",
+      fidelityHint:
+        "JPEG is lossy — quality loss is irreversible. AVIF was likely already compressed; re-encoding adds a second lossy generation. 10/12-bit sources normalize to 8-bit. Animated AVIF: pick one frame to export. Transparency flattens to your chosen background.",
+      options: {
+        quality: {
+          label: "JPEG Quality",
+          hint: "Higher quality = larger file. Quality loss is always irreversible.",
+          lowerLabel: "Lighter",
+          upperLabel: "Faithful",
+          presets: { web: "Web", balanced: "Balanced", high: "High" },
+        },
+        background: {
+          label: "Background color",
+          hint: "Only affects images with transparency.",
+          customAria: "Custom background color",
+          swatches: { white: "White", black: "Black", gray: "Gray" },
         },
       },
     },
