@@ -127,8 +127,8 @@ const en: Dictionary = {
           body: "Nothing is uploaded. Your images never leave this tab.",
         },
         tools: {
-          title: "15 conversion tools",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, and TGA — lossless and lossy paths where it matters.",
+          title: "16 conversion tools",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, and AVIF — lossless and lossy paths where it matters.",
         },
         limits: {
           title: "Honest limits",
@@ -159,6 +159,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v200: {
+        title: "Tier 3 — AVIF decode",
+        summary:
+          "Camaleon 2.0 opens the modern formats era: convert AVIF to PNG in-browser, scrub animated AVIF frames, and process large science images with restored 150 MB / 40 MP limits.",
+        technical:
+          "Tier 3.1.0–3.1.1: transmutador_avif (zenavif), normalize_avif_input, AvifFrameScrubber, estimate + worker frame_index. Hotfixes: sessionLimitForBytes, prepare pixel guard, astro post-resize consent. Engine v1.5.0. See docs/LIMIT_PIPELINE.md.",
+        highlights: {
+          avifPng: {
+            title: "AVIF → PNG",
+            body: "Sixteenth tool — decode AV1 in HEIF containers to PNG with compression control and honest size estimates.",
+          },
+          avifAnimated: {
+            title: "Animated AVIF frames",
+            body: "Pick which frame to export with a lazy scrubber — prepare stays responsive on multi-frame files.",
+          },
+          limitPipeline: {
+            title: "Large image pipeline",
+            body: "Science PNGs up to 150 MB can downscale via 4K–12K presets before Wasm; limit rules documented for maintainers.",
+          },
+        },
+      },
       v1122: {
         title: "Faster size estimates",
         summary:
@@ -396,12 +417,14 @@ const en: Dictionary = {
     switchToBar: "Switch to bar view",
     switchToRing: "Switch to ring view",
     gifFrameProgress: "Frame {current}",
+    avifFrameProgress: "Frame {current} of {total}",
     bmpMeta: "{width} × {height} · {bpp}-bit",
     phases: {
       reading: "Reading file…",
       engine: "Loading conversion engine…",
       analyze: "Analyzing image…",
       analyzeGif: "Reading animation frames…",
+      analyzeAvif: "Decoding AVIF…",
       analyzeBmp: "Reading bitmap header…",
       analyzeSkippedLimit: "Skipping deep analysis — file exceeds engine limit",
       finalize: "Preparing workspace…",
@@ -515,6 +538,9 @@ const en: Dictionary = {
       pixelsBlocked: "Dimensions exceed the browser limit — estimate unavailable.",
       estimateInterrupted: "Estimate was interrupted — tap Calculate again.",
       cacheReady: "Ready to transmute",
+    },
+    avifFrame: {
+      hint: "Preview loads per frame on demand — scrub to pick which frame to export.",
     },
     gifFrame: {
       title: "Animation frame",
@@ -739,7 +765,7 @@ const en: Dictionary = {
       actionTitle: "Convert to PNG",
       description: "Lossless PNG from AVIF — decode AV1 once, then DEFLATE-compress the raster.",
       fidelityHint:
-        "Output PNG is often much larger than the AVIF source for photos — you are expanding compressed AV1 to a full raster. 10/12-bit sources normalize to 8-bit. Animated AVIF is not supported yet.",
+        "Output PNG is often much larger than the AVIF source for photos — you are expanding compressed AV1 to a full raster. 10/12-bit sources normalize to 8-bit. Animated AVIF: pick one frame to export.",
       options: {
         compression: {
           label: "PNG Compression",
@@ -789,6 +815,16 @@ const en: Dictionary = {
     icoEntryRange: "That icon size entry does not exist. Pick a size within the file.",
     icoBmpLegacy:
       "Legacy BMP-style ICO layer is not supported. Re-save the icon with a modern tool (PNG-in-ICO).",
+    avifDecodeFailed:
+      "This AVIF could not be decoded in the browser engine. It may use an AV1 profile or container layout that Windows Photos accepts via its system codec but zenavif cannot rasterize yet.",
+    avifDecodeFailedWithHint:
+      "This AVIF could not be decoded in the browser. Windows Photos uses a different system codec (WIC + AV1 extension); your file is likely valid but not supported by our Wasm decoder yet.",
+    avifUnsupported:
+      "This AVIF variant is not supported in the browser engine yet. Try re-exporting from your editor.",
+    avifCorrupt: "Invalid AVIF container. The file may be truncated or not a real AVIF image.",
+    avifMiafBrand:
+      "MIAF container (mif1 major brand) without a decodable AVIF track. Re-export with major brand avif if this persists.",
+    avifFrameRange: "That animation frame does not exist. Pick a frame within the file.",
     engineNotReady: "The transmutation engine is still starting. Please try again.",
     generic: "Transmutation failed. Please try again.",
   },

@@ -25,6 +25,16 @@ const matchers: ErrorMatcher[] = [
   { pattern: /page index \d+ out of range/i, key: "errors.tiffPageRange" },
   { pattern: /ICO entry index \d+ is out of range/i, key: "errors.icoEntryRange" },
   { pattern: /Legacy BMP-style ICO/i, key: "errors.icoBmpLegacy" },
+  {
+    pattern: /Hint:.*Windows Photos|WIC codec/i,
+    key: "errors.avifDecodeFailedWithHint",
+  },
+  { pattern: /Failed to decode AVIF/i, key: "errors.avifDecodeFailed" },
+  { pattern: /Failed to open animated AVIF/i, key: "errors.avifDecodeFailed" },
+  { pattern: /Unsupported.*AVIF|not an animated AVIF/i, key: "errors.avifUnsupported" },
+  { pattern: /AVIF frame index \d+/i, key: "errors.avifFrameRange" },
+  { pattern: /ftyp must be 'avif' or 'avis'/i, key: "errors.avifMiafBrand" },
+  { pattern: /Invalid or corrupt AVIF/i, key: "errors.avifCorrupt" },
   { pattern: /corrupt|invalid/i, key: "errors.corrupt" },
 ];
 

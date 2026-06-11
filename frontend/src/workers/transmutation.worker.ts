@@ -106,10 +106,15 @@ type TransmutarPngToIcoFn = (input: Uint8Array, target_size: number) => Uint8Arr
 type EstimatePngToIcoSizeFn = (input: Uint8Array, target_size: number) => number;
 type TransmutarTgaWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
 type EstimateTgaToPngSizeFn = (input: Uint8Array, compression: number) => number;
-type TransmutarAvifWithCompression = (input: Uint8Array, compression: number) => Uint8Array;
+type TransmutarAvifWithCompression = (
+  input: Uint8Array,
+  compression: number,
+  frame_index: number
+) => Uint8Array;
 type EstimateAvifToPngSizeFn = (
   input: Uint8Array,
   compression: number,
+  frame_index: number,
   alpha_confidence: number,
   alpha_meaningful: number
 ) => number;
@@ -644,8 +649,9 @@ function runFullEncode(
   }
   if (route.isAvifToPng) {
     const compression = opts?.compression ?? 6;
+    const frameIndex = opts?.frameIndex ?? 0;
     if (!transmutarAvifWithCompression) throw new Error("Wasm module not initialized");
-    return transmutarAvifWithCompression(input, compression);
+    return transmutarAvifWithCompression(input, compression, frameIndex);
   }
   if (route.isJpg) {
     if (opts?.compression != null && transmutarJpgWithCompression) {
@@ -781,8 +787,15 @@ function runSizeEstimate(
   }
   if (route.isAvifToPng) {
     const compression = opts?.compression ?? 6;
+    const frameIndex = opts?.frameIndex ?? 0;
     if (!estimateAvifToPngSize) throw new Error("Wasm estimate export not initialized");
-    return estimateAvifToPngSize(input, compression, alphaConfidence, alphaMeaningful);
+    return estimateAvifToPngSize(
+      input,
+      compression,
+      frameIndex,
+      alphaConfidence,
+      alphaMeaningful
+    );
   }
   if (route.isJpg) {
     const compression = opts?.compression ?? 6;

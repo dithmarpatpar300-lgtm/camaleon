@@ -11,7 +11,8 @@ import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
 import { prepareFileForTool } from "@/lib/transmutation/prepare/run-prepare";
 import {
-  effectiveSessionInputLimit,
+  prepareSessionInputLimit,
+  SOFT_LIMIT_BYTES,
   formatHardLimitLabel,
   getHardLimitBytes,
   getLimitZone,
@@ -25,6 +26,7 @@ import { useI18n } from "@/providers/I18nProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { usePageFileDrop } from "@/hooks/usePageFileDrop";
 import { localizeError } from "@/lib/i18n/errors";
+import { extractWasmError } from "@/lib/wasm/extract-error";
 import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-copy";
 import { downscaleImageBytes } from "@/lib/imaging/downscale";
 import { resolvePostResizeWasmConfig, supportsClientResize } from "@/lib/imaging/post-resize-route";
@@ -253,7 +255,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     }
 
     const limitZone = getLimitZone(file.size, hardLimit);
-    const sessionLimit = effectiveSessionInputLimit(limitZone, hardLimit);
+    const sessionLimit = prepareSessionInputLimit(limitZone, hardLimit);
 
     const pending = { file, bytes };
     setPendingFile(pending);
@@ -301,11 +303,12 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setStatus("staged");
       setCrossfading(true);
       setTimeout(() => setCrossfading(false), CROSSFADE_MS);
-    } catch {
+    } catch (err) {
       if (prepareId !== prepareIdRef.current) return;
       setPendingFile(null);
       setStatus("error");
-      setErrorMessage(t("panel.prepareFailed"));
+      const raw = extractWasmError(err, t("panel.prepareFailed"));
+      setErrorMessage(localizeError(raw, t));
     }
   }, [tool, t, hardLimit]);
 
@@ -328,7 +331,6 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setPreparePhaseLabelKey("prepare.phases.resizing");
       setPrepareIndeterminate(false);
       setPrepareDetailLabel(undefined);
-      setOversizeConsented(false);
       setErrorMessage(null);
 
       try {
@@ -349,7 +351,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         const resizedOutput = resolvePostResizeWasmConfig(tool)?.outputExtension;
         const alphaAssessment =
           needsSemanticAlpha(tool) && resizedOutput === "jpg"
-            ? await assessSemanticAlpha(tool, result.bytes)
+            ? await assessSemanticAlpha(tool, result.bytes, { deviceMemoryGb })
             : prepared.alphaAssessment;
 
         setPrepared({
@@ -368,22 +370,33 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
           effectiveSize: result.bytes.byteLength,
         });
         setAstroResizeMode(false);
+        // Astro resize is explicit consent for elevated byte zone (wave2 astro roadmap).
+        setOversizeConsented(result.bytes.byteLength > SOFT_LIMIT_BYTES);
         metrics.resetMetrics();
         setStatus("staged");
       } catch (err) {
         setStatus("staged");
         setAstroResizeMode(true);
-        const raw = err instanceof Error ? err.message : t("panel.unexpectedError");
+        const raw = extractWasmError(err, t("panel.unexpectedError"));
         toast({ message: localizeError(raw, t), variant: "info" });
       } finally {
         setResizing(false);
       }
     },
-    [staged, prepared, tool, metrics, t, toast]
+    [staged, prepared, tool, metrics, t, toast, deviceMemoryGb]
   );
 
   const handleTransmutar = useCallback(async () => {
-    if (!staged || !ready || !metrics.limitContext.canTransmute) return;
+    if (
+      !staged ||
+      !ready ||
+      !metrics.limitContext.canTransmute ||
+      metrics.estimateError ||
+      !prepared?.sourceMeta ||
+      (metrics.limitContext.needsInputConsent && !oversizeConsented)
+    ) {
+      return;
+    }
     setProcessingProgress(0.08);
     setStatus("processing");
     setErrorMessage(null);
@@ -413,7 +426,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       }
     } catch (err) {
       setStatus("error");
-      const raw = err instanceof Error ? err.message : t("panel.unexpectedError");
+      const raw = extractWasmError(err, t("panel.unexpectedError"));
       setErrorMessage(localizeError(raw, t));
     }
   }, [
@@ -427,6 +440,10 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     metrics.setFinalSize,
     metrics.transmuteMeta,
     metrics.limitContext.canTransmute,
+    metrics.limitContext.needsInputConsent,
+    metrics.estimateError,
+    oversizeConsented,
+    prepared?.sourceMeta,
     t,
   ]);
 
@@ -580,6 +597,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 onOptionsChange={handleOptionsChange}
                 hasAlpha={hasAlpha}
                 gifSession={prepared.gifSession}
+                avifMeta={prepared.avifMeta}
                 tiffMeta={prepared.tiffMeta}
                 icoMeta={prepared.icoMeta}
                 fileBytes={new Uint8Array(staged.bytes)}

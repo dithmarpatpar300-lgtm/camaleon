@@ -1,48 +1,65 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { drawRgbaToCanvas } from "@/lib/gif/gif-wasm-client";
-
-export type RgbaFrameSession = {
-  frame_count: number;
-  width: number;
-  height: number;
-  frame_rgba: (frameIndex: number) => Uint8Array;
-};
+import type { AvifMeta } from "@/lib/avif/avif-wasm-client";
+import { ensureAvifWasm } from "@/lib/avif/avif-wasm-client";
 import { useI18n } from "@/providers/I18nProvider";
 import { cn } from "@/lib/utils";
 
-type GifFrameScrubberProps = {
-  session: RgbaFrameSession;
+type AvifFrameScrubberProps = {
+  bytes: Uint8Array;
+  meta: AvifMeta;
   frameIndex: number;
   onFrameIndexChange: (index: number) => void;
 };
 
-export function GifFrameScrubber({
-  session,
+export function AvifFrameScrubber({
+  bytes,
+  meta,
   frameIndex,
   onFrameIndexChange,
-}: GifFrameScrubberProps) {
+}: AvifFrameScrubberProps) {
   const { t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const scrubbingRef = useRef(false);
   const [localIndex, setLocalIndex] = useState(frameIndex);
+  const [loading, setLoading] = useState(false);
+  const paintIdRef = useRef(0);
 
-  const frameCount = session.frame_count;
+  const frameCount = meta.frameCount;
   const maxIndex = Math.max(0, frameCount - 1);
+  const safeIndex = Math.min(localIndex, maxIndex);
 
   const paintFrame = useCallback(
-    (index: number) => {
+    async (index: number) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
+      const paintId = ++paintIdRef.current;
+      setLoading(true);
       try {
-        const rgba = session.frame_rgba(index);
-        drawRgbaToCanvas(canvas, rgba, session.width, session.height);
+        const wasm = await ensureAvifWasm();
+        const png = wasm.decode_avif_preview_png(bytes, index);
+        if (paintId !== paintIdRef.current) return;
+        const blob = new Blob([png.slice()], { type: "image/png" });
+        const bitmap = await createImageBitmap(blob);
+        if (paintId !== paintIdRef.current) {
+          bitmap.close();
+          return;
+        }
+        canvas.width = meta.width;
+        canvas.height = meta.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bitmap, 0, 0);
+        bitmap.close();
       } catch {
-        // ignore stale index during teardown
+        // ignore stale / teardown
+      } finally {
+        if (paintId === paintIdRef.current) setLoading(false);
       }
     },
-    [session]
+    [bytes, meta.height, meta.width]
   );
 
   useEffect(() => {
@@ -51,13 +68,13 @@ export function GifFrameScrubber({
 
   useEffect(() => {
     const idx = Math.min(frameIndex, maxIndex);
-    requestAnimationFrame(() => paintFrame(idx));
+    void paintFrame(idx);
   }, [frameIndex, maxIndex, paintFrame]);
 
   const handleIndexChange = useCallback(
     (index: number) => {
       setLocalIndex(index);
-      paintFrame(index);
+      void paintFrame(index);
       if (!scrubbingRef.current) {
         onFrameIndexChange(index);
       }
@@ -70,8 +87,6 @@ export function GifFrameScrubber({
     onFrameIndexChange(localIndex);
   }, [localIndex, onFrameIndexChange]);
 
-  const safeIndex = Math.min(localIndex, maxIndex);
-
   return (
     <div className="mb-4 space-y-3 rounded-xl border border-border bg-bg-elevated/50 p-4">
       <div className="flex items-center justify-between gap-2">
@@ -79,10 +94,12 @@ export function GifFrameScrubber({
           {t("panel.gifFrame.title")}
         </p>
         <span className="font-mono text-xs tabular-nums text-text-muted">
-          {t("panel.gifFrame.counter", {
-            current: safeIndex + 1,
-            total: frameCount,
-          })}
+          {loading
+            ? t("panel.metrics.calculating")
+            : t("panel.gifFrame.counter", {
+                current: safeIndex + 1,
+                total: frameCount,
+              })}
         </span>
       </div>
 
@@ -90,7 +107,7 @@ export function GifFrameScrubber({
         <div
           className="overflow-hidden rounded-lg border border-border bg-bg-base"
           style={{
-            aspectRatio: `${session.width} / ${session.height}`,
+            aspectRatio: `${meta.width} / ${meta.height}`,
             height: "10rem",
             width: "auto",
             maxWidth: "100%",
@@ -98,11 +115,14 @@ export function GifFrameScrubber({
         >
           <canvas
             ref={canvasRef}
-            width={session.width}
-            height={session.height}
+            width={meta.width}
+            height={meta.height}
             role="img"
             aria-label={t("panel.gifFrame.previewAlt", { index: safeIndex + 1 })}
-            className="block h-full w-full object-contain"
+            className={cn(
+              "block h-full w-full object-contain transition-opacity",
+              loading && "opacity-60"
+            )}
           />
         </div>
       </div>
@@ -126,7 +146,7 @@ export function GifFrameScrubber({
             "h-2 cursor-pointer appearance-none rounded-full bg-bg-surface"
           )}
         />
-        <p className="mt-1.5 text-xs text-text-muted">{t("panel.gifFrame.hint")}</p>
+        <p className="mt-1.5 text-xs text-text-muted">{t("panel.avifFrame.hint")}</p>
       </div>
     </div>
   );

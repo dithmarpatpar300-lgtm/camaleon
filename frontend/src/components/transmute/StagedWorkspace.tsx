@@ -2,7 +2,9 @@
 
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
+import type { AvifMeta } from "@/lib/avif/avif-wasm-client";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
+import { AvifFrameScrubber } from "./AvifFrameScrubber";
 import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
 import { IcoEntryScrubber } from "./IcoEntryScrubber";
@@ -35,6 +37,7 @@ type StagedWorkspaceProps = {
   onOptionsChange: (next: TransmutationOptions) => void;
   hasAlpha: boolean;
   gifSession: GifSessionHandle | null;
+  avifMeta: AvifMeta | null;
   tiffMeta: TiffMeta | null;
   icoMeta: IcoMeta | null;
   fileBytes: Uint8Array | null;
@@ -76,6 +79,7 @@ export function StagedWorkspace({
   onOptionsChange,
   hasAlpha,
   gifSession,
+  avifMeta,
   tiffMeta,
   icoMeta,
   fileBytes,
@@ -104,6 +108,7 @@ export function StagedWorkspace({
 }: StagedWorkspaceProps) {
   const { t } = useI18n();
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
+  const isAvifTool = tool.id === "avif-to-png";
   const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
   const isIcoTool = tool.id === "ico-to-png";
   const isBmpToPng = tool.id === "bmp-to-png";
@@ -174,6 +179,21 @@ export function StagedWorkspace({
           }
         />
       )}
+
+      {!dimensionBlocked &&
+        isAvifTool &&
+        avifMeta &&
+        avifMeta.frameCount > 1 &&
+        fileBytes && (
+          <AvifFrameScrubber
+            bytes={fileBytes}
+            meta={avifMeta}
+            frameIndex={frameIndex}
+            onFrameIndexChange={(index) =>
+              onOptionsChange({ ...options, frameIndex: index })
+            }
+          />
+        )}
 
       {!dimensionBlocked &&
         isTiffTool &&

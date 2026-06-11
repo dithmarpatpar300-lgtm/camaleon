@@ -15,13 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v1.12.2** (`dev`) | Pre²-Tier 3 estimation engine fix + perf shipped on `dev` |
-| **Engine (Rust workspace)** | v1.4.3 | Nine Wasm crates + **`core_utils::semantic_alpha`** + flatten/SIMD estimate paths |
-| **SPEC** | v1.9.0-comms + §7.4.1 | Surface system documented on `dev` |
+| **Frontend (app)** | **v2.0.0** (`main`) | Tier 3 major baseline — AVIF→PNG (Phase 3.1.0–3.1.1) |
+| **Engine (Rust workspace)** | v1.5.0 | Ten Wasm crates incl. **`transmutador_avif`** (zenavif) |
+| **SPEC** | v2.0.0-avif | §6.10 transmutador_avif; `docs/LIMIT_PIPELINE.md` |
 
-**v1.12.2** (`dev`): **Estimation engine performance** — GIF fast inspect/incremental decode, alpha hint, multi-entry cache, SIMD128 + LTO. Release: `docs/releases/v1.12.2.md`.
+**v2.0.0** (`main`): **Tier 3 begins** — AVIF→PNG, animated frame scrubber, MIAF container normalize, limit/astro pipeline hotfixes. **16 tools.** Release: `docs/releases/v2.0.0.md`. Next: **3.1.2** AVIF→JPEG · `docs/planning/tier3_plan.md`
 
-**Tier 3** (`dev`): **3.1.1 AVIF→PNG ✅** (16 tools) — next **3.1.2** AVIF→JPEG · `docs/planning/tier3_plan.md`
+**v1.12.2** (`main`): **Estimation engine performance** — GIF fast inspect, alpha hint, multi-entry cache, SIMD128 + LTO. Release: `docs/releases/v1.12.2.md`.
 
 **v1.12.1** (`main`): **Brand mark & favicon polish** — Lamina 3C chameleon in header + transparent favicon; reference PNG pipeline. Release: `docs/releases/v1.12.1.md`.
 

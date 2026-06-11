@@ -3,8 +3,15 @@
 //! Decode via zenavif (pure Rust rav1d-safe); re-encode PNG with configurable DEFLATE level.
 //! Metadata strip: StripAll (SPEC §5.10) — HEIF EXIF/XMP/ICC not propagated.
 
+mod avif_container;
 mod avif_decode;
+mod avif_diagnose;
 mod avif_probe;
+mod avif_session;
+
+pub use avif_container::normalize_avif_input;
+
+pub use avif_diagnose::{diagnose_avif, AvifDiagnosis};
 
 use std::io::Cursor;
 
@@ -14,8 +21,9 @@ use core_utils::semantic_alpha::{
 };
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::{DynamicImage, ExtendedColorType, ImageEncoder};
-pub use avif_decode::decode_avif_to_dynamic;
-pub use avif_probe::{inspect_and_validate, inspect_avif, AvifInfo};
+pub use avif_decode::{decode_avif_frame_to_dynamic, decode_avif_to_dynamic, verify_avif_decodable};
+pub use avif_probe::{inspect_and_validate, inspect_avif, validate_frame_index, AvifInfo};
+pub use avif_session::{open_avif_session, open_avif_session_with_progress, AvifSession};
 use wasm_bindgen::prelude::*;
 
 pub const DEFAULT_COMPRESSION: u8 = 6;
@@ -68,9 +76,9 @@ impl AvifMeta {
 #[wasm_bindgen]
 pub fn inspect_avif_meta(input_bytes: &[u8]) -> Result<AvifMeta, String> {
     core_utils::validate_input(input_bytes)?;
-    Ok(AvifMeta {
-        inner: inspect_and_validate(input_bytes)?,
-    })
+    let info = inspect_and_validate(input_bytes)?;
+    verify_avif_decodable(input_bytes)?;
+    Ok(AvifMeta { inner: info })
 }
 
 fn validate_compression(c: u8) -> Result<u8, String> {
@@ -121,51 +129,63 @@ fn encode_png_from_dynamic(img: &DynamicImage, compression: u8) -> Result<Vec<u8
     Ok(buf.into_inner())
 }
 
-fn avif_bytes_to_png_bytes(input: &[u8], compression: u8) -> Result<Vec<u8>, String> {
-    let img = decode_avif_to_dynamic(input)?;
+fn avif_bytes_to_png_bytes(
+    input: &[u8],
+    compression: u8,
+    frame_index: u32,
+) -> Result<Vec<u8>, String> {
+    let img = decode_avif_frame_to_dynamic(input, frame_index)?;
     encode_png_from_dynamic(&img, compression)
 }
 
-pub fn transmutar_avif_a_png_inner(input: &[u8], compression: u8) -> Result<Vec<u8>, String> {
+pub fn transmutar_avif_a_png_inner(
+    input: &[u8],
+    compression: u8,
+    frame_index: u32,
+) -> Result<Vec<u8>, String> {
     core_utils::validate_input(input)?;
     validate_compression(compression)?;
-    inspect_and_validate(input)?;
+    let info = inspect_and_validate(input)?;
+    validate_frame_index(info.frame_count, frame_index)?;
 
-    let output = avif_bytes_to_png_bytes(input, compression)?;
+    let output = avif_bytes_to_png_bytes(input, compression, frame_index)?;
     core_utils::validate_output(&output, core_utils::OutputFormat::Png)?;
     Ok(output)
 }
 
 #[wasm_bindgen]
 pub fn transmutar_avif_a_png(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
-    transmutar_avif_a_png_inner(input_bytes, DEFAULT_COMPRESSION)
+    transmutar_avif_a_png_inner(input_bytes, DEFAULT_COMPRESSION, 0)
 }
 
 #[wasm_bindgen]
 pub fn transmutar_avif_a_png_with_compression(
     input_bytes: &[u8],
     compression: u8,
+    frame_index: u32,
 ) -> Result<Vec<u8>, String> {
-    transmutar_avif_a_png_inner(input_bytes, compression)
+    transmutar_avif_a_png_inner(input_bytes, compression, frame_index)
 }
 
 #[wasm_bindgen]
-pub fn decode_avif_preview_png(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
-    transmutar_avif_a_png_inner(input_bytes, 1)
+pub fn decode_avif_preview_png(input_bytes: &[u8], frame_index: u32) -> Result<Vec<u8>, String> {
+    transmutar_avif_a_png_inner(input_bytes, 1, frame_index)
 }
 
 #[wasm_bindgen]
 pub fn estimate_avif_to_png_size(
     input_bytes: &[u8],
     compression: u8,
+    frame_index: u32,
     alpha_confidence: u8,
     alpha_meaningful: u8,
 ) -> Result<u32, String> {
     core_utils::validate_input(input_bytes)?;
     validate_compression(compression)?;
-    inspect_and_validate(input_bytes)?;
+    let info = inspect_and_validate(input_bytes)?;
+    validate_frame_index(info.frame_count, frame_index)?;
 
-    let img = decode_avif_to_dynamic(input_bytes)?;
+    let img = decode_avif_frame_to_dynamic(input_bytes, frame_index)?;
     let alpha_hint = assessment_from_wasm_hint(alpha_confidence, alpha_meaningful);
     let has_alpha = meaningful_alpha_for_estimate(&img, alpha_hint);
 

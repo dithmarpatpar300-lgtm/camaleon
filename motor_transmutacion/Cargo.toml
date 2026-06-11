@@ -3,7 +3,7 @@ members = ["core_utils", "transmutador_jpg", "transmutador_png", "transmutador_w
 resolver = "2"
 
 [workspace.package]
-version = "1.4.3"
+version = "1.5.0"
 edition = "2021"
 license = "MIT"
 

@@ -3,7 +3,16 @@ import { resolveSourceImageMeta } from "@/lib/format/source-image-meta";
 import { setGifSessionInputLimit, openGifSessionWithProgress } from "@/lib/gif/gif-wasm-client";
 import { inspectIcoMeta, setIcoSessionInputLimit } from "@/lib/ico/ico-wasm-client";
 import { assessSemanticAlpha, needsSemanticAlpha } from "@/lib/semantic-alpha";
+import {
+  inspectAvifMeta,
+  setAvifSessionInputLimit,
+  type AvifMeta,
+} from "@/lib/avif/avif-wasm-client";
 import { inspectTiffMeta, setTiffSessionInputLimit } from "@/lib/tiff/tiff-wasm-client";
+import {
+  MAX_PIXELS,
+  pixelCountFromMeta,
+} from "@/lib/transmutation/limit-context";
 import { warmupTransmutatorModule } from "@/lib/transmutation/prepare/warmup-wasm";
 import type {
   PreparedFileContext,
@@ -54,6 +63,10 @@ function isIcoTool(toolId: string): boolean {
   return toolId === "ico-to-png";
 }
 
+function isAvifTool(toolId: string): boolean {
+  return toolId === "avif-to-png";
+}
+
 /** Yields to the main thread via rAF, allowing React to flush pending state. */
 function yieldToMain(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -82,6 +95,7 @@ export async function prepareFileForTool(
   let tiffMeta = null;
   let icoMeta = null;
   let alphaAssessment = null;
+  let avifMeta = null;
 
   if (isGifTool(tool.id)) {
     emit(onProgress, "analyze", 0, {
@@ -123,25 +137,54 @@ export async function prepareFileForTool(
     }
     icoMeta = await inspectIcoMeta(new Uint8Array(bytes));
     emit(onProgress, "analyze", 1);
+  } else if (isAvifTool(tool.id)) {
+    emit(onProgress, "analyze", 0, {
+      phaseLabelKey: "prepare.phases.analyzeAvif",
+      indeterminate: true,
+    });
+    await yieldToMain();
+    if (sessionLimit != null) {
+      await setAvifSessionInputLimit(sessionLimit);
+    }
+    avifMeta = await inspectAvifMeta(new Uint8Array(bytes));
+    // Animated AVIF: metadata + decode probe only — frame previews load lazily (non-blocking).
+    emit(onProgress, "analyze", 1);
   } else {
     emit(onProgress, "analyze", 0);
     await yieldToMain();
     emit(onProgress, "analyze", 1);
   }
 
-  if (needsSemanticAlpha(tool)) {
-    alphaAssessment = await assessSemanticAlpha(tool, bytes, { pageIndex: 0 });
-  }
-
-  const sourceMeta = await resolveSourceImageMeta(tool, bytes, {
+  // Header/metadata probe first — must not full-decode above MAX_PIXELS (astro path).
+  let sourceMeta = await resolveSourceImageMeta(tool, bytes, {
     gifSession,
+    avifMeta,
     tiffMeta,
     tiffPageIndex: 0,
     icoMeta,
     icoEntryIndex: icoMeta?.defaultEntryIndex ?? 0,
-    alphaAssessment,
     sessionInputLimitBytes: sessionLimit,
   });
+
+  const pixelCount = pixelCountFromMeta(sourceMeta);
+  const exceedsPixelLimit = pixelCount != null && pixelCount > MAX_PIXELS;
+
+  if (needsSemanticAlpha(tool) && !exceedsPixelLimit) {
+    try {
+      alphaAssessment = await assessSemanticAlpha(tool, bytes, {
+        pageIndex: 0,
+        sessionInputLimitBytes: sessionLimit ?? undefined,
+      });
+      if (sourceMeta && alphaAssessment) {
+        sourceMeta = {
+          ...sourceMeta,
+          hasMeaningfulAlpha: alphaAssessment.hasMeaningfulAlpha,
+        };
+      }
+    } catch {
+      // Dimension guard or decode failure — proceed; user may still resize.
+    }
+  }
 
   // ── Phase: finalize ──────────────────────────────────────────────────
   emit(onProgress, "finalize", 0);
@@ -154,6 +197,7 @@ export async function prepareFileForTool(
     hasAlpha,
     alphaAssessment,
     gifSession,
+    avifMeta,
     tiffMeta,
     icoMeta,
     sourceMeta,

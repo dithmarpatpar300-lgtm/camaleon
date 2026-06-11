@@ -12,6 +12,7 @@ import {
   formatAvifBitDepthLabel,
   inspectAvifMeta,
   setAvifSessionInputLimit,
+  type AvifMeta,
 } from "@/lib/avif/avif-wasm-client";
 import {
   formatTgaBitDepthLabel,
@@ -35,6 +36,7 @@ import {
 
 export type ResolveSourceMetaContext = {
   gifSession: GifSessionHandle | null;
+  avifMeta?: AvifMeta | null;
   tiffMeta?: TiffMeta | null;
   tiffPageIndex?: number;
   icoMeta?: IcoMeta | null;
@@ -155,19 +157,16 @@ export async function resolveSourceImageMeta(
       }
     }
     case "AVIF": {
-      try {
-        const meta = await inspectAvifMeta(new Uint8Array(bytes));
-        return withSemanticAlpha(
-          {
-            width: meta.width,
-            height: meta.height,
-            bitDepthLabel: formatAvifBitDepthLabel(meta),
-          },
-          ctx.alphaAssessment
-        );
-      } catch {
-        return null;
-      }
+      const meta = ctx.avifMeta ?? (await inspectAvifMeta(new Uint8Array(bytes)));
+      return withSemanticAlpha(
+        {
+          width: meta.width,
+          height: meta.height,
+          bitDepthLabel: formatAvifBitDepthLabel(meta),
+          frameCount: meta.frameCount > 1 ? meta.frameCount : undefined,
+        },
+        ctx.alphaAssessment
+      );
     }
     case "ICO": {
       const entryIndex = ctx.icoEntryIndex ?? ctx.icoMeta?.defaultEntryIndex ?? 0;

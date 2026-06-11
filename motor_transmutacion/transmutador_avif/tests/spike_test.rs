@@ -61,7 +61,7 @@ fn alpha_preserved_in_preview_png() {
         .into_iter()
         .find(|f| f.name == "rgba_alpha_aux")
         .unwrap();
-    let png = decode_avif_preview_png(&fixture.bytes).unwrap();
+    let png = decode_avif_preview_png(&fixture.bytes, 0).unwrap();
     let img = image::load_from_memory(&png).expect("png");
     assert!(img.color().has_alpha());
     let has_transparent = img.to_rgba8().pixels().any(|p| p[3] < 255);
@@ -104,7 +104,7 @@ fn oversize_dimensions_rejected_at_probe() {
 #[test]
 fn preview_png_is_valid() {
     for fixture in all_fixtures() {
-        let png = decode_avif_preview_png(&fixture.bytes).unwrap_or_else(|e| {
+        let png = decode_avif_preview_png(&fixture.bytes, 0).unwrap_or_else(|e| {
             panic!("preview failed for {}: {}", fixture.name, e);
         });
         assert!(png.starts_with(&[137, 80, 78, 71]), "{}", fixture.name);

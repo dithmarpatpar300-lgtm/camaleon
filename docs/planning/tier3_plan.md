@@ -1,10 +1,10 @@
 # Tier 3 — Modern Image Formats (AVIF first)
 
 > **Branch:** `dev` (implementation) → merge to `main` at **v2.0.x**  
-> **Status:** **Planning** — Tier 3.1 AVIF decode path next  
+> **Status:** **v2.0.0 shipped** (Phase 3.1.0–3.1.1) — **3.1.2 AVIF→JPEG next**  
 > **Prerequisite:** Pre-Tier 3 UI/UX ✅ (v1.12.0) · Brand mark ✅ (v1.12.1) · Estimation engine perf ✅ (v1.12.2)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
-> **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty
+> **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**
 
 ---
 
@@ -14,7 +14,7 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 
 | Sub-phase | ID | Directions | Crate(s) | Target version | Status |
 |-----------|-----|------------|----------|----------------|--------|
-| **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.0.0** | **3.1.1 ✅ AVIF→PNG** → 3.1.2 next |
+| **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.0.0** | **3.1.0–3.1.1 ✅ shipped** → **3.1.2 next** |
 | **3.2** | AVIF encode | PNG → AVIF, JPEG → AVIF | `transmutador_avif` or `transmutador_encode` | v2.0.x | After 3.1 + encode spike |
 | **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` (TBD) | v2.1.x | Spike-gated (`resvg`) |
 | **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | TBD | v2.x | Spike-gated (no pure-Rust decoder) |
@@ -29,10 +29,10 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 
 | Phase | Version (target) | Direction | Crate | Tools added |
 |-------|------------------|-----------|-------|-------------|
-| **3.1.0** | — | Spike | `transmutador_avif` (skeleton) | 0 |
-| **3.1.1** | v2.0.0 (partial) | AVIF → PNG | `transmutador_avif` | 1 |
-| **3.1.2** | v2.0.0 | AVIF → JPEG | `transmutador_avif` | 1 |
-| **3.1.3** | v2.0.0 | Release + What's New | — | manifest |
+| **3.1.0** | v2.0.0 | Spike | `transmutador_avif` (skeleton) | 0 | ✅ |
+| **3.1.1** | v2.0.0 | AVIF → PNG | `transmutador_avif` | 1 | ✅ |
+| **3.1.2** | v2.0.1 (target) | AVIF → JPEG | `transmutador_avif` | 1 | Next |
+| **3.1.3** | v2.0.x | Tier 3.1 pair complete + polish | — | manifest | After 3.1.2 |
 
 **Out of Tier 3.1 MVP:**
 
@@ -422,14 +422,16 @@ transmutador_avif + options.quality + background → transmutar_avif_a_jpg_with_
 
 **Exit gate:** QA §8 all items + alpha engine parity with WebP→JPG.
 
-### 7.4 Phase 3.1.3 — Release v2.0.0 (Tier 3.1 complete)
+### 7.4 Phase 3.1.3 — Release v2.0.0 (Tier 3.1 partial — AVIF→PNG)
 
-- [ ] `npm run build:wasm` clean CI build.
-- [ ] Aggregate `public/wasm/` ≤ 12 MB (NFR-7 total).
-- [ ] `frontend/package.json` → `2.0.0`; engine workspace bump (e.g. `1.5.0` — TBD).
-- [ ] `docs/releases/v2.0.0.md` + What's New manifest + i18n `v200` entry.
-- [ ] SPEC amendment log + ROADMAP Tier 3.1 shipped row.
-- [ ] Merge `dev` → `main` + tag `v2.0.0` (when PO approves).
+- [x] `frontend/package.json` → `2.0.0`; engine workspace → `1.5.0`
+- [x] `docs/releases/v2.0.0.md` + What's New manifest + i18n `v200` entry
+- [x] SPEC amendment log + ROADMAP Tier 3.1 shipped row
+- [x] `docs/LIMIT_PIPELINE.md` regression reference
+- [ ] `npm run build:wasm` clean CI build before deploy
+- [x] Merge `dev` → `main` + tag `v2.0.0`
+
+**Note:** Full Tier 3.1 pair (AVIF→JPEG) ships after Phase 3.1.2; v2.0.0 is the **major baseline** for the v2.x line.
 
 ---
 
@@ -506,7 +508,8 @@ transmutador_avif + options.quality + background → transmutar_avif_a_jpg_with_
 | `docs/planning/tier2_wave2_plan.md` | Phased delivery pattern reference |
 | `docs/planning/semantic_alpha_engine_plan.md` | Alpha honesty for AVIF→JPEG |
 | `docs/planning/tier3_1_avif_spike_results.md` | ✅ Phase 3.1.0 spike results |
-| `docs/releases/v2.0.0.md` | **Create at 3.1.3** |
+| `docs/LIMIT_PIPELINE.md` | **Regression reference** — byte zones, astro, AVIF, session limits |
+| `docs/releases/v2.0.0.md` | **Shipped v2.0.0** (Phase 3.1.0–3.1.1) |
 | `motor_transmutacion/transmutador_webp/` | Closest implementation mirror |
 
 ---

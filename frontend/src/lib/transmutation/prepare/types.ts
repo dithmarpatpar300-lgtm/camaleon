@@ -1,3 +1,4 @@
+import type { AvifMeta } from "@/lib/avif/avif-wasm-client";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
 import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
@@ -29,6 +30,7 @@ export type PreparedFileContext = {
   hasAlpha: boolean;
   alphaAssessment: AlphaAssessment | null;
   gifSession: GifSessionHandle | null;
+  avifMeta: AvifMeta | null;
   tiffMeta: TiffMeta | null;
   icoMeta: IcoMeta | null;
   /** Effective dimensions after optional client resize. */

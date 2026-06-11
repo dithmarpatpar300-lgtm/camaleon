@@ -127,8 +127,8 @@ const es: Dictionary = {
           body: "No se sube nada. Tus imágenes nunca salen de esta pestaña.",
         },
         tools: {
-          title: "15 herramientas de conversión",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO y TGA — rutas con y sin pérdida donde importa.",
+          title: "16 herramientas de conversión",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA y AVIF — rutas con y sin pérdida donde importa.",
         },
         limits: {
           title: "Límites honestos",
@@ -159,6 +159,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v200: {
+        title: "Tier 3 — decodificación AVIF",
+        summary:
+          "Camaleon 2.0 abre la era de formatos modernos: convierte AVIF a PNG en el navegador, elige frames en AVIF animado y procesa imágenes científicas grandes con límites 150 MB / 40 MP restaurados.",
+        technical:
+          "Tier 3.1.0–3.1.1: transmutador_avif (zenavif), normalize_avif_input, AvifFrameScrubber, estimate + worker frame_index. Hotfixes: sessionLimitForBytes, guardia de píxeles en prepare, consentimiento post-resize astro. Motor v1.5.0. Ver docs/LIMIT_PIPELINE.md.",
+        highlights: {
+          avifPng: {
+            title: "AVIF → PNG",
+            body: "Decimosexta herramienta — decodifica AV1 en contenedores HEIF a PNG con control de compresión y estimaciones honestas.",
+          },
+          avifAnimated: {
+            title: "Frames AVIF animado",
+            body: "Elige qué frame exportar con un scrubber perezoso — el prepare sigue respondiendo en archivos multiframe.",
+          },
+          limitPipeline: {
+            title: "Pipeline imágenes grandes",
+            body: "PNG científicos hasta 150 MB pueden reducirse con presets 4K–12K antes de Wasm; reglas documentadas para mantenedores.",
+          },
+        },
+      },
       v1122: {
         title: "Estimaciones de tamaño más rápidas",
         summary:
@@ -396,12 +417,14 @@ const es: Dictionary = {
     switchToBar: "Cambiar a vista de barra",
     switchToRing: "Cambiar a vista de anillo",
     gifFrameProgress: "Fotograma {current}",
+    avifFrameProgress: "Fotograma {current} de {total}",
     bmpMeta: "{width} × {height} · {bpp} bits",
     phases: {
       reading: "Leyendo archivo…",
       engine: "Cargando motor de conversion…",
       analyze: "Analizando imagen…",
       analyzeGif: "Leyendo fotogramas de animacion…",
+      analyzeAvif: "Decodificando AVIF…",
       analyzeBmp: "Leyendo cabecera del bitmap…",
       analyzeSkippedLimit: "Analisis profundo omitido — archivo supera el limite del motor",
       finalize: "Preparando espacio de trabajo…",
@@ -515,6 +538,9 @@ const es: Dictionary = {
       pixelsBlocked: "Las dimensiones superan el limite del navegador — estimacion no disponible.",
       estimateInterrupted: "La estimacion se interrumpio — toca Calcular de nuevo.",
       cacheReady: "Listo para transmutar",
+    },
+    avifFrame: {
+      hint: "La vista previa carga cada fotograma bajo demanda — elige cual exportar.",
     },
     gifFrame: {
       title: "Fotograma de animacion",
@@ -725,7 +751,7 @@ const es: Dictionary = {
       actionTitle: "Convertir a PNG",
       description: "PNG sin perdida desde AVIF — decodifica AV1 una vez y comprime el raster con DEFLATE.",
       fidelityHint:
-        "El PNG de salida suele ser mucho mas grande que el AVIF en fotos — expandes AV1 comprimido a raster completo. Fuentes 10/12-bit se normalizan a 8-bit. AVIF animado aun no esta soportado.",
+        "El PNG de salida suele ser mucho mas grande que el AVIF en fotos — expandes AV1 comprimido a raster completo. Fuentes 10/12-bit se normalizan a 8-bit. AVIF animado: elige un fotograma para exportar.",
       options: {
         compression: {
           label: "Compresion PNG",
@@ -775,6 +801,16 @@ const es: Dictionary = {
     icoEntryRange: "Esa entrada de tamano no existe. Elige un tamano dentro del archivo.",
     icoBmpLegacy:
       "Capa ICO estilo BMP legacy no soportada. Re-guarda el icono con una herramienta moderna (PNG-in-ICO).",
+    avifDecodeFailed:
+      "No se pudo decodificar este AVIF en el motor del navegador. Puede usar un perfil AV1 o contenedor que Fotos de Windows acepta con su codec del sistema pero zenavif aun no rasteriza.",
+    avifDecodeFailedWithHint:
+      "No se pudo decodificar este AVIF en el navegador. Fotos de Windows usa otro codec del sistema (WIC + extension AV1); el archivo probablemente es valido pero nuestro decodificador Wasm aun no lo soporta.",
+    avifUnsupported:
+      "Esta variante AVIF aun no esta soportada en el motor del navegador. Prueba reexportar desde tu editor.",
+    avifCorrupt: "Contenedor AVIF invalido. El archivo puede estar truncado o no ser una imagen AVIF real.",
+    avifMiafBrand:
+      "Contenedor MIAF (marca mif1) sin pista AVIF decodificable. Reexporta con marca principal avif si persiste.",
+    avifFrameRange: "Ese fotograma no existe. Elige un fotograma dentro del archivo.",
     engineNotReady: "El motor de transmutacion aun esta iniciando. Intentalo de nuevo.",
     generic: "La transmutacion fallo. Intentalo de nuevo.",
   },

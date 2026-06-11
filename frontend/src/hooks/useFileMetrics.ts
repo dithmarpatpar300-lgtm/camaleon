@@ -22,6 +22,7 @@ import {
   type LimitContext,
 } from "@/lib/transmutation/limit-context";
 import { localizeError } from "@/lib/i18n/errors";
+import { extractWasmError } from "@/lib/wasm/extract-error";
 import { getEstimateInputBuffer } from "@/lib/transmutation/estimate-input-cache";
 import { useI18n } from "@/providers/I18nProvider";
 import type { WorkerRequestMeta } from "@/workers/types";
@@ -244,7 +245,7 @@ export function useFileMetrics({
           }
           return;
         }
-        const raw = err instanceof Error ? err.message : t("panel.unexpectedError");
+        const raw = extractWasmError(err, t("panel.unexpectedError"));
         setEstimateError(localizeError(raw, t));
       } finally {
         estimateInFlightRef.current = Math.max(0, estimateInFlightRef.current - 1);

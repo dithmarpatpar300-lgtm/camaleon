@@ -200,16 +200,34 @@ declare module "*/transmutador_avif/transmutador_avif.js" {
     readonly frame_count: number;
     readonly lossless: boolean;
   }
+  export class AvifSession {
+    readonly frame_count: number;
+    readonly width: number;
+    readonly height: number;
+    readonly is_animated: boolean;
+    frame_rgba(frame_index: number): Uint8Array;
+    free(): void;
+  }
   export function inspect_avif_meta(input_bytes: Uint8Array): AvifMeta;
+  export function open_avif_session(input_bytes: Uint8Array): AvifSession;
+  export function open_avif_session_with_progress(
+    input_bytes: Uint8Array,
+    on_progress: (current: number, total: number) => void
+  ): AvifSession;
   export function transmutar_avif_a_png(input_bytes: Uint8Array): Uint8Array;
   export function transmutar_avif_a_png_with_compression(
     input_bytes: Uint8Array,
-    compression: number
+    compression: number,
+    frame_index: number
   ): Uint8Array;
-  export function decode_avif_preview_png(input_bytes: Uint8Array): Uint8Array;
+  export function decode_avif_preview_png(
+    input_bytes: Uint8Array,
+    frame_index: number
+  ): Uint8Array;
   export function estimate_avif_to_png_size(
     input_bytes: Uint8Array,
     compression: number,
+    frame_index: number,
     alpha_confidence: number,
     alpha_meaningful: number
   ): number;

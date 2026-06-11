@@ -8,7 +8,7 @@ use transmutador_avif::{
 
 #[test]
 fn empty_input_returns_error() {
-    assert!(transmutar_avif_a_png_inner(&[], DEFAULT_COMPRESSION).is_err());
+    assert!(transmutar_avif_a_png_inner(&[], DEFAULT_COMPRESSION, 0).is_err());
 }
 
 #[test]
@@ -17,7 +17,7 @@ fn valid_avif_to_png() {
         .into_iter()
         .find(|f| f.name == "rgb8_lossy")
         .unwrap();
-    let out = transmutar_avif_a_png_inner(&fixture.bytes, 6).expect("convert");
+    let out = transmutar_avif_a_png_inner(&fixture.bytes, 6, 0).expect("convert");
     assert!(out.starts_with(&[137, 80, 78, 71, 13, 10, 26, 10]));
 }
 
@@ -27,10 +27,10 @@ fn compression_validation() {
         .into_iter()
         .find(|f| f.name == "rgb8_lossy")
         .unwrap();
-    assert!(transmutar_avif_a_png_inner(&fixture.bytes, 0).is_err());
-    assert!(transmutar_avif_a_png_inner(&fixture.bytes, MAX_COMPRESSION + 1).is_err());
-    transmutar_avif_a_png_inner(&fixture.bytes, MIN_COMPRESSION).expect("min");
-    transmutar_avif_a_png_inner(&fixture.bytes, MAX_COMPRESSION).expect("max");
+    assert!(transmutar_avif_a_png_inner(&fixture.bytes, 0, 0).is_err());
+    assert!(transmutar_avif_a_png_inner(&fixture.bytes, MAX_COMPRESSION + 1, 0).is_err());
+    transmutar_avif_a_png_inner(&fixture.bytes, MIN_COMPRESSION, 0).expect("min");
+    transmutar_avif_a_png_inner(&fixture.bytes, MAX_COMPRESSION, 0).expect("max");
 }
 
 #[test]
@@ -39,7 +39,7 @@ fn alpha_fixture_produces_rgba_png() {
         .into_iter()
         .find(|f| f.name == "rgba_alpha_aux")
         .unwrap();
-    let out = transmutar_avif_a_png_inner(&fixture.bytes, 6).expect("convert");
+    let out = transmutar_avif_a_png_inner(&fixture.bytes, 6, 0).expect("convert");
     let img = image::load_from_memory(&out).expect("png");
     assert!(img.color().has_alpha());
 }
@@ -50,29 +50,39 @@ fn strip_all_no_exif_in_output() {
         .into_iter()
         .find(|f| f.name == "rgb8_lossy")
         .unwrap();
-    let png = transmutar_avif_a_png_inner(&fixture.bytes, 6).expect("convert");
+    let png = transmutar_avif_a_png_inner(&fixture.bytes, 6, 0).expect("convert");
     assert!(!core_utils::png_contains_exif_chunk(&png));
 }
 
 #[test]
-fn animated_rejected_at_probe() {
-    // Synthetic ftyp with avis brand — probe only, not a valid animated file.
+fn mif1_major_brand_with_avif_compatible_decodes() {
+    let path = std::path::PathBuf::from(
+        r"C:\Users\gator\Downloads\Misc\York_minster_optimizedavif.avif",
+    );
+    if !path.exists() {
+        return;
+    }
+    let bytes = std::fs::read(&path).expect("read york fixture");
+    let info = inspect_and_validate(&bytes).expect("probe york mif1 avif");
+    assert_eq!(info.width, 500);
+    assert_eq!(info.height, 375);
+    transmutar_avif_a_png_inner(&bytes, 6, 0).expect("convert york");
+}
+
+#[test]
+fn avis_brand_without_animation_track_is_not_sequence() {
     let mut bogus = vec![0u8; 32];
     bogus[4..8].copy_from_slice(b"ftyp");
     bogus[8..12].copy_from_slice(b"avis");
-    let err = inspect_and_validate(&bogus).unwrap_err();
-    assert!(
-        err.contains("Animated") || err.contains("corrupt") || err.contains("Invalid"),
-        "unexpected: {err}"
-    );
+    assert!(inspect_and_validate(&bogus).is_err());
 }
 
 #[test]
 fn estimate_within_5pct() {
     for fixture in all_fixtures() {
-        let full = transmutar_avif_a_png_inner(&fixture.bytes, 6).expect("full");
-        let est = transmutador_avif::estimate_avif_to_png_size(&fixture.bytes, 6, 255, 0)
-            .expect("est");
+        let full = transmutar_avif_a_png_inner(&fixture.bytes, 6, 0).expect("full");
+        let est =
+            transmutador_avif::estimate_avif_to_png_size(&fixture.bytes, 6, 0, 255, 0).expect("est");
         let diff = (full.len() as f64 - est as f64).abs();
         let full_len = full.len() as f64;
         assert!(

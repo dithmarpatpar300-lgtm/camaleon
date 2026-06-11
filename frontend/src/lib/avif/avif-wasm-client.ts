@@ -13,6 +13,17 @@ export type AvifMeta = {
 type AvifWasmModule = {
   default: () => Promise<void>;
   inspect_avif_meta: (input: Uint8Array) => AvifMetaHandle;
+  open_avif_session: (input: Uint8Array) => AvifSessionHandle;
+  open_avif_session_with_progress: (
+    input: Uint8Array,
+    onProgress: (current: number, total: number) => void
+  ) => AvifSessionHandle;
+  decode_avif_preview_png: (input: Uint8Array, frameIndex: number) => Uint8Array;
+  transmutar_avif_a_png_with_compression: (
+    input: Uint8Array,
+    compression: number,
+    frameIndex: number
+  ) => Uint8Array;
   set_session_input_limit?: (maxBytes: number) => void;
   reset_session_input_limit?: () => void;
 };
@@ -25,6 +36,15 @@ type AvifMetaHandle = {
   is_sequence: boolean;
   frame_count: number;
   lossless: boolean;
+};
+
+export type AvifSessionHandle = {
+  frame_count: number;
+  width: number;
+  height: number;
+  is_animated: boolean;
+  frame_rgba: (frameIndex: number) => Uint8Array;
+  free: () => void;
 };
 
 let initPromise: Promise<AvifWasmModule> | null = null;
@@ -52,6 +72,21 @@ export async function inspectAvifMeta(bytes: Uint8Array): Promise<AvifMeta> {
     frameCount: meta.frame_count,
     lossless: meta.lossless,
   };
+}
+
+export async function openAvifSession(bytes: Uint8Array): Promise<AvifSessionHandle> {
+  const wasm = await ensureAvifWasm();
+  return wasm.open_avif_session(bytes);
+}
+
+export async function openAvifSessionWithProgress(
+  bytes: Uint8Array,
+  onFrame: (current: number, total: number) => void
+): Promise<AvifSessionHandle> {
+  const wasm = await ensureAvifWasm();
+  return wasm.open_avif_session_with_progress(bytes, (current, total) => {
+    onFrame(current, total);
+  });
 }
 
 export function formatAvifBitDepthLabel(meta: AvifMeta): string {

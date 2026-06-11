@@ -69,3 +69,5 @@ Follow `SECURITY.md`. Do not discuss details publicly until patched.
 - Conversion success rates server-side (impossible — local only)
 
 User feedback via [GitHub Issues](https://github.com/dithmarpatpar300-lgtm/camaleon/issues) is the primary product signal.
+
+**Limit / astro / AVIF pipeline (regression reference):** [docs/LIMIT_PIPELINE.md](LIMIT_PIPELINE.md)

@@ -50,6 +50,8 @@ v1.8.7 correctly **blocks** these with `DimensionsBlockPanel`. Wave 2 adds a **c
 
 **Key decision:** resize happens **before** Wasm `validate_input`, producing a new in-memory buffer that fits `MAX_PIXELS`.
 
+**Regression reference (v2.0.0):** `docs/LIMIT_PIPELINE.md` — prepare order, `sessionLimitForBytes`, post-resize alpha assess.
+
 ---
 
 ## Phase A — Resize engine (Rust-free v1) ✅

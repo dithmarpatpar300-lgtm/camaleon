@@ -38,6 +38,8 @@ We will acknowledge within **72 hours** and aim to provide a fix or mitigation p
 
 Camaleon processes images **entirely in the user's browser**. We do not operate a file conversion API. Reports should focus on cases where file data could leave the client unintentionally, or where the deployed site behaves differently from the open-source code.
 
+**Maintainers:** limit/astro/AVIF regression rules — `docs/LIMIT_PIPELINE.md`.
+
 ## Safe harbor
 
 We support good-faith security research. Do not access other users' data (there is none on our servers), degrade service for others, or publicly disclose before we have had reasonable time to respond.

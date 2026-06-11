@@ -2,6 +2,7 @@ import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
 import { ensureTiffWasm } from "@/lib/tiff/tiff-wasm-client";
 import { importWasmGlue } from "@/lib/wasm/load-glue";
+import { sessionLimitForBytes } from "@/lib/transmutation/limits";
 import type { ToolDefinition } from "@/lib/tools/types";
 import {
   wrapAlphaAssessment,
@@ -11,10 +12,24 @@ import {
 
 export type SemanticAlphaContext = {
   pageIndex?: number;
+  /** Override Wasm session ceiling; otherwise derived from `bytes` length. */
+  sessionInputLimitBytes?: number;
+  deviceMemoryGb?: number;
 };
+
+function resolveAssessSessionLimit(
+  bytes: ArrayBuffer,
+  ctx: SemanticAlphaContext
+): number {
+  if (ctx.sessionInputLimitBytes != null && ctx.sessionInputLimitBytes > 0) {
+    return ctx.sessionInputLimitBytes;
+  }
+  return sessionLimitForBytes(bytes.byteLength, ctx.deviceMemoryGb);
+}
 
 type AssessWasmModule = {
   assess_alpha: (input: Uint8Array) => AlphaAssessmentHandle;
+  set_session_input_limit?: (maxBytes: number) => void;
 };
 
 async function ensurePngWasm(): Promise<AssessWasmModule> {
@@ -29,36 +44,48 @@ async function ensureWebpWasm(): Promise<AssessWasmModule> {
   return module as unknown as AssessWasmModule;
 }
 
+function applyLimit(wasm: AssessWasmModule, limitBytes?: number): void {
+  if (limitBytes != null && limitBytes > 0) {
+    wasm.set_session_input_limit?.(limitBytes);
+  }
+}
+
 export async function assessSemanticAlpha(
   tool: ToolDefinition,
   bytes: ArrayBuffer,
   ctx: SemanticAlphaContext = {}
 ): Promise<AlphaAssessment> {
   const input = new Uint8Array(bytes);
+  const limit = resolveAssessSessionLimit(bytes, ctx);
 
   switch (tool.fromFormat) {
     case "PNG": {
       const wasm = await ensurePngWasm();
+      applyLimit(wasm, limit);
       return wrapAlphaAssessment(wasm.assess_alpha(input));
     }
     case "WEBP": {
       const wasm = await ensureWebpWasm();
+      applyLimit(wasm, limit);
       return wrapAlphaAssessment(wasm.assess_alpha(input));
     }
     case "GIF": {
       const wasm = await ensureGifWasm();
+      applyLimit(wasm as unknown as AssessWasmModule, limit);
       return wrapAlphaAssessment(
         (wasm as unknown as AssessWasmModule).assess_alpha(input)
       );
     }
     case "BMP": {
       const wasm = await ensureBmpWasm();
+      applyLimit(wasm as unknown as AssessWasmModule, limit);
       return wrapAlphaAssessment(
         (wasm as unknown as AssessWasmModule).assess_alpha(input)
       );
     }
     case "TIFF": {
       const wasm = await ensureTiffWasm();
+      applyLimit(wasm as unknown as AssessWasmModule, limit);
       const pageIndex = ctx.pageIndex ?? 0;
       return wrapAlphaAssessment(
         (

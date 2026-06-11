@@ -47,6 +47,18 @@ export function effectiveSessionInputLimit(
   return hardLimit;
 }
 
+/** Alias kept for clarity at the call site in TransmutationPanel. */
+export const prepareSessionInputLimit = effectiveSessionInputLimit;
+
+/** Wasm session ceiling for a given byte length (prepare, alpha assess, worker meta). */
+export function sessionLimitForBytes(
+  fileSize: number,
+  deviceMemoryGb?: number
+): number {
+  const hardLimit = getHardLimitBytes(deviceMemoryGb);
+  return effectiveSessionInputLimit(getLimitZone(fileSize, hardLimit), hardLimit);
+}
+
 export function formatHardLimitLabel(hardLimit: number): string {
   return hardLimit === HARD_LIMIT_MOBILE_BYTES ? "100 MB" : "150 MB";
 }
