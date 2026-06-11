@@ -21,6 +21,8 @@
 
 **v1.12.2** (`dev`): **Estimation engine performance** — GIF fast inspect/incremental decode, alpha hint, multi-entry cache, SIMD128 + LTO. Release: `docs/releases/v1.12.2.md`.
 
+**Tier 3** (`dev`): **3.1.0 AVIF spike ✅** (zenavif, 1.81 MB Wasm) — next **3.1.1** AVIF→PNG · `docs/planning/tier3_1_avif_spike_results.md`
+
 **v1.12.1** (`main`): **Brand mark & favicon polish** — Lamina 3C chameleon in header + transparent favicon; reference PNG pipeline. Release: `docs/releases/v1.12.1.md`.
 
 **v1.12.0** (`main`): **Visual Identity & Discovery Shell** — UX-0–UX-8: surface system, ToolBrowser v2, Command Palette v2, transmute shell refresh, mobile hotfixes. Plan: `docs/planning/pre_tier3_ui_ux_plan.md` · Release: `docs/releases/v1.12.0.md`.
@@ -264,7 +266,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
 | **Semantic Alpha Engine** | **v1.11.0** (`main`) | Honest transparency across lossy tools | ✅ **Shipped** — `docs/releases/v1.11.0.md` |
-| **Tier 3** | v2.0.x | AVIF, SVG→raster, HEIC (spike) | **Next** — modern **image** formats only |
+| **Tier 3** | v2.0.x | AVIF, SVG→raster, HEIC (spike) | **Next** — Tier 3.1 AVIF→PNG/JPEG first — `docs/planning/tier3_plan.md` |
 | **Tier 4a** | v2.x | Compress, Resize | Image **optimization** — same raster domain |
 | **Tier 4b** | v2.x | Crop, Rotate/Flip, favicon pack | Image **editing** |
 | **Tier 5** | TBD | PDF tools | **Deferred** — documents; separate planning required |

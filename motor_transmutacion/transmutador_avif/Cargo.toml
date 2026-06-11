@@ -1,0 +1,22 @@
+[package]
+name = "transmutador_avif"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "AVIF → PNG/JPEG (Tier 3 Phase 3.1 spike)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+core_utils = { path = "../core_utils" }
+zenavif = "0.1.6"
+zenavif-parse = "0.6.2"
+image = { version = "0.25", default-features = false, features = ["png"] }
+rgb = "0.8"
+
+[dev-dependencies]
+image = { version = "0.25", default-features = false, features = ["png"] }
+imgref = "1.12"
+ravif = { version = "0.13", default-features = false }

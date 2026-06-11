@@ -1424,7 +1424,7 @@ Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm b
 
 | Format | Direction | Technical note |
 |--------|-----------|---------------|
-| **AVIF → PNG/JPEG** | Decode | `ravif` pure-Rust decoder; `avif-native` uses libdav1d (C) — spike required for Wasm feasibility |
+| **AVIF → PNG/JPEG** | Decode | `zenavif` + rav1d (pure Rust, spike primary); fallback `image`+`avif-native` (libdav1d C). Plan: `docs/planning/tier3_plan.md`. Note: `ravif` is **encode-only**. |
 | **PNG/JPEG → AVIF** | Encode | `ravif` encode; known large bundle. Budget spike before commit. |
 | **SVG → PNG/JPEG** | Rasterize | `resvg` + `usvg`; adds ~2–4 MB to bundle; DPI/background parameters |
 | **HEIC/HEIF → JPEG** | Decode | No pure-Rust decoder; `libheif` WASM port fragile. Honest UI message if deferred. |
