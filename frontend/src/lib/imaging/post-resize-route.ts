@@ -29,6 +29,13 @@ export function resolvePostResizeWasmConfig(
       encodeSource: "png",
     };
   }
+  if (out === "avif") {
+    return {
+      module: "transmutador_avif_encode",
+      outputExtension: "avif",
+      encodeSource: "png",
+    };
+  }
   return null;
 }
 

@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 2.1.1-avif  
+**Version:** 2.2.0-avif  
 **Last updated:** 2026-06-11  
-**Status:** v2.1.1 on `main` — Tier 3.1 AVIF pair complete (Phase 3.1.0–3.1.2); Engine v1.5.1
+**Status:** v2.2.0 on `dev` — Tier 3.2 AVIF encode pair complete (Phase 3.2.0–3.2.2); Engine v1.6.0
 
 ---
 
@@ -25,7 +25,7 @@ Camaleon is an **image platform** first. Expansion follows a fixed priority ladd
 | Ladder | Name | What it is | Status |
 |--------|------|------------|--------|
 | **A** | **Image transmutation** | Format-to-format raster conversion (decode → policy → encode) | ✅ **Shipped** — Tiers 1–2 + Semantic Alpha Engine (v1.11.0) |
-| **B** | **Modern image formats** | AVIF, SVG→raster, HEIC (spike-gated) | 🚧 **Tier 3 in progress** — AVIF→PNG/JPEG ✅ v2.1.1; encode next (3.2) |
+| **B** | **Modern image formats** | AVIF, SVG→raster, HEIC (spike-gated) | 🚧 **Tier 3 in progress** — AVIF suite ✅ v2.2.0; SVG analysis next (3.3) |
 | **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | 📋 **Tier 4a** — planned after Tier 3 |
 | **D** | **Image editing** | Crop, rotate, flip on raster (Wasm + canvas UI) | 📋 **Tier 4b** — planned after Tier 4a |
 | **E** | **Documents** | PDF merge/split, PDF→images — non-raster domain | 🚫 **Deferred** — far horizon; separate planning doc required |
@@ -935,6 +935,27 @@ pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 
 ---
 
+### 6.11 `transmutador_avif_encode` (Implemented — Tier 3, Phase 3.2.0–3.2.2, v2.2.0)
+
+**Purpose:** PNG → AVIF / JPEG → AVIF encode paths. Complements `transmutador_avif` decode.
+
+**Status:** Implemented — Phase 3.2.0 spike (split crate), 3.2.1 PNG→AVIF, 3.2.2 JPEG→AVIF.
+
+**Dependencies:** `ravif` 0.13 (`default-features = false`), `image`, `core_utils`, `wasm-bindgen`
+
+**Key behaviors:**
+
+- Separate Wasm module (~1.67 MB) — merged decode+encode exceeded NFR-7
+- `transmutar_png_a_avif_*` / `transmutar_jpg_a_avif_*` with quality (1–100, default 60) and speed (1–10, default 6)
+- Semantic alpha on PNG path — meaningful alpha → auxiliary AV1 plane
+- `estimate_png_to_avif_size` / `estimate_jpg_to_avif_size` (full encode parity)
+- `OutputFormat::Avif` validation in `core_utils`
+- StripAll default — no metadata copied from source raster into AVIF container
+
+**Spike reference:** `docs/planning/tier3_2_avif_encode_spike_results.md`
+
+---
+
 ## 7. Frontend Specifications
 
 ### 7.1 Dropzone (Implemented — Phase 3)
@@ -1319,6 +1340,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 2.2.0-avif | 2026-06-11 | Chief Architect | Tier 3.2.0–3.2.2: `transmutador_avif_encode` PNG/JPEG→AVIF; split Wasm crate; quality+speed; engine v1.6.0; app v2.2.0; Tier 3.3 SVG analysis doc | `docs/releases/v2.2.0.md` |
 | 2.1.1-avif | 2026-06-11 | Chief Architect | Tier 3.1.2: AVIF→JPEG; frame-preview worker + cache; estimate/transmute sync; engine v1.5.1; app v2.1.1 | `docs/releases/v2.1.1.md` |
 | 2.0.0-avif | 2026-06-11 | Chief Architect | Tier 3.1.0–3.1.1: `transmutador_avif` AVIF→PNG; animated frame scrubber; limit pipeline hotfixes + `docs/LIMIT_PIPELINE.md`; engine v1.5.0; app v2.0.0 | `docs/releases/v2.0.0.md` |
 | 1.12.2-estimate | 2026-06-11 | Chief Architect | Pre²-Tier 3: GIF fast inspect/incremental composite; alpha hint prepare→worker; multi-entry ResultCache; `flatten_rgba` + SIMD128 alpha scan; release LTO/SIMD; engine v1.4.3 | `docs/releases/v1.12.2.md` |
@@ -1445,6 +1467,13 @@ Low-risk, high-value conversions using the `image` crate without new native depe
 
 Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm bundle spikes before commitment.
 
+**Shipped v2.2.0 (Phase 3.2.0–3.2.2 on `dev`):**
+
+| Direction | Crate | Status |
+|-----------|-------|--------|
+| **PNG → AVIF** | `transmutador_avif_encode` | ✅ ravif encode; quality + speed; semantic alpha; estimate |
+| **JPEG → AVIF** | `transmutador_avif_encode` | ✅ generational loss hint; quality + speed; estimate |
+
 **Shipped v2.1.1 (Phase 3.1.0–3.1.2 on `main`):**
 
 | Direction | Crate | Status |
@@ -1452,12 +1481,11 @@ Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm b
 | **AVIF → PNG** | `transmutador_avif` | ✅ zenavif decode; frame index; MIAF normalize; estimate |
 | **AVIF → JPEG** | `transmutador_avif` | ✅ assess_alpha; quality + background; estimate with alpha hint |
 
-**Planned (Tier 3.2–3.4):**
+**Planned (Tier 3.3–3.4):**
 
 | Format | Direction | Technical note |
 |--------|-----------|---------------|
-| **PNG/JPEG → AVIF** | Encode | `ravif` encode; known large bundle. Budget spike before commit. |
-| **SVG → PNG/JPEG** | Rasterize | `resvg` + `usvg`; adds ~2–4 MB to bundle; DPI/background parameters |
+| **SVG → PNG/JPEG** | Rasterize | `resvg` + `usvg`; analysis in `docs/planning/tier3_3_svg_analysis.md`; spike-gated |
 | **HEIC/HEIF → JPEG** | Decode | No pure-Rust decoder; `libheif` WASM port fragile. Honest UI message if deferred. |
 
 **Limit pipeline (maintainers):** `docs/LIMIT_PIPELINE.md` — byte zones, 40 MP astro downscale, Wasm session ceilings.

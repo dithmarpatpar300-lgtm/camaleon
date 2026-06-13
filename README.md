@@ -2,11 +2,11 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v2.1.1** (App) · Engine v1.5.1 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v2.2.0** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v2.1.1)
+## What works today (v2.2.0)
 
 | Capability | Status |
 |------------|--------|
@@ -17,8 +17,8 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **TIFF suite** | TIFF→PNG/JPG; multi-page picker; 16-bit normalization; palette/CMYK rejection |
 | **ICO suite** | ICO/CUR→PNG (multi-size picker); PNG→ICO (16/32/48/256, downscale only) |
 | **TGA suite** | TGA→PNG; raw/RLE; indexed + 32-bit alpha |
-| **AVIF decode** | AVIF→PNG, AVIF→JPEG; animated frame scrubber (worker + cache); MIAF normalize (**Tier 3**) |
-| **Seventeen active tools** | Tiers 1–2 + Tier 3.1 AVIF pair — `/transmute/[slug]` per conversion |
+| **AVIF suite** | AVIF→PNG/JPEG decode; PNG/JPEG→AVIF encode; animated frame scrubber; split encode Wasm (**Tier 3**) |
+| **Nineteen active tools** | Tiers 1–2 + full AVIF matrix — `/transmute/[slug]` per conversion |
 | **Adaptive limits** | Byte zones (50 MB soft / 150 MB hard), 40 MP pixel cap, oversize consent |
 | **Science imagery** | Client-side downscale (4K–12K presets) for images >40 MP before Wasm |
 | **Memory lifecycle** | Wasm worker recycled when leaving any transmute route (SPA-safe) |
@@ -29,7 +29,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 
-**Shipped on `main` (v2.1.1):** Tier 3.1 complete — AVIF→PNG/JPEG + preview UX. Prior: v2.0.0 baseline. See [docs/ROADMAP.md](docs/ROADMAP.md).
+**Shipped on `dev` (v2.2.0):** Tier 3.2 complete — PNG/JPEG→AVIF encode. **`main` (v2.1.1):** AVIF decode + preview UX. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 

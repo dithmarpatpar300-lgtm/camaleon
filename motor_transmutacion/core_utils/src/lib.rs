@@ -356,6 +356,7 @@ pub enum OutputFormat {
     Png,
     Jpeg,
     WebP,
+    Avif,
 }
 
 pub fn validate_output(bytes: &[u8], format: OutputFormat) -> Result<(), String> {
@@ -393,6 +394,20 @@ pub fn validate_output(bytes: &[u8], format: OutputFormat) -> Result<(), String>
             if &bytes[0..4] != b"RIFF" || &bytes[8..12] != b"WEBP" {
                 return Err(TransmutationError::ConversionFailed(
                     "output is not a valid WebP (missing RIFF/WEBP signature)".into(),
+                )
+                .to_string());
+            }
+        }
+        OutputFormat::Avif => {
+            if bytes.len() < 12 {
+                return Err(TransmutationError::ConversionFailed(
+                    "output is not a valid AVIF (too short)".into(),
+                )
+                .to_string());
+            }
+            if &bytes[4..8] != b"ftyp" {
+                return Err(TransmutationError::ConversionFailed(
+                    "output is not a valid AVIF (missing ftyp box)".into(),
                 )
                 .to_string());
             }
@@ -967,6 +982,21 @@ mod tests {
     fn validate_output_webp_bad_magic() {
         let err = validate_output(b"not a WebP file", OutputFormat::WebP).unwrap_err();
         assert!(err.contains("WebP") || err.contains("RIFF"));
+    }
+
+    #[test]
+    fn validate_output_avif_ok() {
+        let mut avif = Vec::new();
+        avif.extend_from_slice(&8u32.to_le_bytes());
+        avif.extend_from_slice(b"ftyp");
+        avif.extend_from_slice(b"avif");
+        assert!(validate_output(&avif, OutputFormat::Avif).is_ok());
+    }
+
+    #[test]
+    fn validate_output_avif_bad_magic() {
+        let err = validate_output(b"not an AVIF file", OutputFormat::Avif).unwrap_err();
+        assert!(err.contains("AVIF") || err.contains("ftyp"));
     }
 
     fn minimal_bmp_header(width: u32, height: u32, bit_count: u16, compression: u32) -> Vec<u8> {

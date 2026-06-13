@@ -136,6 +136,26 @@ type EstimateAvifToJpgSizeFn = (
   alpha_confidence: number,
   alpha_meaningful: number
 ) => number;
+type TransmutarPngToAvifWithOptions = (
+  input: Uint8Array,
+  quality: number,
+  speed: number
+) => Uint8Array;
+type EstimatePngToAvifSizeFn = (
+  input: Uint8Array,
+  quality: number,
+  speed: number
+) => number;
+type TransmutarJpgToAvifWithOptions = (
+  input: Uint8Array,
+  quality: number,
+  speed: number
+) => Uint8Array;
+type EstimateJpgToAvifSizeFn = (
+  input: Uint8Array,
+  quality: number,
+  speed: number
+) => number;
 
 type SessionLimitFn = (maxBytes: number) => void;
 
@@ -225,6 +245,12 @@ let estimateAvifToPngSize: EstimateAvifToPngSizeFn | null = null;
 let transmutarAvifJpgWithOptions: TransmutarAvifJpgWithOptions | null = null;
 let estimateAvifToJpgSize: EstimateAvifToJpgSizeFn | null = null;
 
+let setAvifEncodeSessionLimit: SessionLimitFn | null = null;
+let transmutarPngToAvifWithOptions: TransmutarPngToAvifWithOptions | null = null;
+let estimatePngToAvifSize: EstimatePngToAvifSizeFn | null = null;
+let transmutarJpgToAvifWithOptions: TransmutarJpgToAvifWithOptions | null = null;
+let estimateJpgToAvifSize: EstimateJpgToAvifSizeFn | null = null;
+
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
 
@@ -240,6 +266,7 @@ let initTiffPromise: Promise<void> | null = null;
 let initIcoPromise: Promise<void> | null = null;
 let initTgaPromise: Promise<void> | null = null;
 let initAvifPromise: Promise<void> | null = null;
+let initAvifEncodePromise: Promise<void> | null = null;
 
 async function initJpgWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_jpg");
@@ -465,6 +492,33 @@ function ensureAvifWasmInitialized(): Promise<void> {
   return initAvifPromise;
 }
 
+async function initAvifEncodeWasm(): Promise<void> {
+  const module = await importWasmGlue("transmutador_avif_encode");
+  await module.default();
+  transmutarPngToAvifWithOptions = wasmExport<TransmutarPngToAvifWithOptions>(
+    module,
+    "transmutar_png_a_avif_with_options"
+  );
+  estimatePngToAvifSize = wasmExport<EstimatePngToAvifSizeFn>(
+    module,
+    "estimate_png_to_avif_size"
+  );
+  transmutarJpgToAvifWithOptions = wasmExport<TransmutarJpgToAvifWithOptions>(
+    module,
+    "transmutar_jpg_a_avif_with_options"
+  );
+  estimateJpgToAvifSize = wasmExport<EstimateJpgToAvifSizeFn>(
+    module,
+    "estimate_jpg_to_avif_size"
+  );
+  setAvifEncodeSessionLimit = pickSessionLimit(module);
+}
+
+function ensureAvifEncodeWasmInitialized(): Promise<void> {
+  if (!initAvifEncodePromise) initAvifEncodePromise = initAvifEncodeWasm();
+  return initAvifEncodePromise;
+}
+
 function postResponse(response: WorkerResponse): void {
   if (response.ok && response.bytes) {
     self.postMessage(response, { transfer: [response.bytes] });
@@ -488,6 +542,7 @@ function resetAllSessionLimits(): void {
   setIcoSessionLimit?.(SOFT_LIMIT_BYTES);
   setTgaSessionLimit?.(SOFT_LIMIT_BYTES);
   setAvifSessionLimit?.(SOFT_LIMIT_BYTES);
+  setAvifEncodeSessionLimit?.(SOFT_LIMIT_BYTES);
 }
 
 function purgeWorkerState(id: string): WorkerResponse {
@@ -516,6 +571,7 @@ type RouteFlags = {
   isTgaToPng: boolean;
   isAvifToPng: boolean;
   isAvifToJpg: boolean;
+  isAvifEncode: boolean;
   isEncode: boolean;
   encodeSource?: EncodeSource;
 };
@@ -549,6 +605,9 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     req.module === "transmutador_avif" && (req.outputExtension ?? "png") === "png";
   const isAvifToJpg =
     req.module === "transmutador_avif" && req.outputExtension === "jpg";
+  const isAvifEncode = req.module === "transmutador_avif_encode";
+  const encodeSource =
+    isEncode || isAvifEncode ? req.encodeSource : undefined;
   return {
     isJpg,
     isPng,
@@ -565,14 +624,18 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     isTgaToPng,
     isAvifToPng,
     isAvifToJpg,
+    isAvifEncode,
     isEncode,
-    encodeSource: isEncode ? req.encodeSource : undefined,
+    encodeSource,
   };
 }
 
 function resolveMimeExtension(route: RouteFlags): { mime: string; extension: OutputExtension } {
   if (route.isEncode) {
     return { mime: "image/webp", extension: "webp" };
+  }
+  if (route.isAvifEncode) {
+    return { mime: "image/avif", extension: "avif" };
   }
   if (
     route.isWebpToJpg ||
@@ -692,6 +755,19 @@ function runFullEncode(
     const frameIndex = opts?.frameIndex ?? 0;
     if (!transmutarAvifWithCompression) throw new Error("Wasm module not initialized");
     return transmutarAvifWithCompression(input, compression, frameIndex);
+  }
+  if (route.isAvifEncode) {
+    if (!route.encodeSource) {
+      throw new Error("encodeSource is required for transmutador_avif_encode");
+    }
+    const quality = opts?.quality ?? 60;
+    const speed = opts?.speed ?? 6;
+    if (route.encodeSource === "jpeg") {
+      if (!transmutarJpgToAvifWithOptions) throw new Error("Wasm module not initialized");
+      return transmutarJpgToAvifWithOptions(input, quality, speed);
+    }
+    if (!transmutarPngToAvifWithOptions) throw new Error("Wasm module not initialized");
+    return transmutarPngToAvifWithOptions(input, quality, speed);
   }
   if (route.isJpg) {
     if (opts?.compression != null && transmutarJpgWithCompression) {
@@ -853,6 +929,19 @@ function runSizeEstimate(
       alphaMeaningful
     );
   }
+  if (route.isAvifEncode) {
+    if (!route.encodeSource) {
+      throw new Error("encodeSource is required for transmutador_avif_encode");
+    }
+    const quality = opts?.quality ?? 60;
+    const speed = opts?.speed ?? 6;
+    if (route.encodeSource === "jpeg") {
+      if (!estimateJpgToAvifSize) throw new Error("Wasm estimate export not initialized");
+      return estimateJpgToAvifSize(input, quality, speed);
+    }
+    if (!estimatePngToAvifSize) throw new Error("Wasm estimate export not initialized");
+    return estimatePngToAvifSize(input, quality, speed);
+  }
   if (route.isJpg) {
     const compression = opts?.compression ?? 6;
     if (!estimateJpgToPngSize) throw new Error("Wasm estimate export not initialized");
@@ -906,6 +995,10 @@ function applySessionInputLimit(route: RouteFlags, maxBytes: number): void {
     setAvifSessionLimit?.(maxBytes);
     return;
   }
+  if (route.isAvifEncode) {
+    setAvifEncodeSessionLimit?.(maxBytes);
+    return;
+  }
   if (route.isEncode) {
     setEncodeSessionLimit?.(maxBytes);
     return;
@@ -925,6 +1018,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     "transmutador_ico",
     "transmutador_tga",
     "transmutador_avif",
+    "transmutador_avif_encode",
   ];
   if (!req.module || !knownModules.includes(req.module)) {
     return { id: req.id, ok: false, error: `Unknown module: ${req.module ?? "none"}` };
@@ -956,6 +1050,8 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       await ensureTgaWasmInitialized();
     } else if (route.isAvifToPng || route.isAvifToJpg) {
       await ensureAvifWasmInitialized();
+    } else if (route.isAvifEncode) {
+      await ensureAvifEncodeWasmInitialized();
     } else if (route.isEncode) {
       await ensureEncodeWasmInitialized();
     } else {

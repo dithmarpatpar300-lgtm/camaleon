@@ -1,6 +1,7 @@
-//! AVIF → PNG transmutator (Tier 3 Phase 3.1).
+//! AVIF → PNG/JPEG transmutator (Tier 3 Phase 3.1).
 //!
-//! Decode via zenavif (pure Rust rav1d-safe); re-encode PNG with configurable DEFLATE level.
+//! Decode via zenavif (pure Rust rav1d-safe); re-encode PNG/JPEG with configurable options.
+//! PNG/JPEG → AVIF encode lives in `transmutador_avif_encode` (Phase 3.2+).
 //! Metadata strip: StripAll (SPEC §5.10) — HEIF EXIF/XMP/ICC not propagated.
 
 mod avif_container;

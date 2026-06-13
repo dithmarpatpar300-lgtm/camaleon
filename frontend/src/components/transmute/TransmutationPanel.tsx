@@ -141,7 +141,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     tool.outputExtension) as OutputExtension;
   const encodeSource: EncodeSource | undefined = postResizeWasm?.encodeSource
     ? postResizeWasm.encodeSource
-    : tool.module === "transmutador_encode"
+    : tool.module === "transmutador_encode" || tool.module === "transmutador_avif_encode"
       ? tool.fromFormat === "PNG"
         ? "png"
         : "jpeg"

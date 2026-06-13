@@ -1,27 +1,20 @@
 [package]
-name = "transmutador_avif"
+name = "transmutador_avif_encode"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "AVIF → PNG/JPEG (Tier 3 Phase 3.1)"
+description = "PNG/JPEG → AVIF encode (Tier 3 Phase 3.2)"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = "0.2"
-js-sys = "0.3"
-core_utils = { path = "../core_utils", features = ["wasm"] }
-zenavif = "0.1.6"
-zenavif-parse = "0.6.2"
-image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
-rgb = "0.8"
-
-[[bin]]
-name = "avif-diagnose"
-path = "src/bin/avif_diagnose.rs"
-
-[dev-dependencies]
+core_utils = { path = "../core_utils" }
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 imgref = "1.12"
 ravif = { version = "0.13", default-features = false }
+
+[dev-dependencies]
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+transmutador_avif = { path = "../transmutador_avif" }

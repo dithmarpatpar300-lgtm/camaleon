@@ -34,6 +34,8 @@ export async function warmupTransmutatorModule(module: TransmutationModule): Pro
       return ensureTgaWasm().then(() => undefined);
     case "transmutador_avif":
       return ensureAvifWasm().then(() => undefined);
+    case "transmutador_avif_encode":
+      return warmupCrate("transmutador_avif_encode");
     default:
       throw new Error(`Unknown module: ${module}`);
   }

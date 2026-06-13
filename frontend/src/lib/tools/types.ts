@@ -28,7 +28,7 @@ export type RgbColor = { r: number; g: number; b: number };
 
 export type SliderOptionSpec = {
   kind: "slider";
-  key: "quality" | "compression" | "iconSize";
+  key: "quality" | "compression" | "iconSize" | "speed";
   min: number;
   max: number;
   step: number;

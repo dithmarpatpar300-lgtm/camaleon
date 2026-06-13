@@ -73,6 +73,14 @@ const en: Dictionary = {
         title: "AVIF to JPG — Camaleon",
         description: "Convert AVIF to JPEG in your browser. Compressed for web — local and private.",
       },
+      "png-to-avif": {
+        title: "PNG to AVIF — Camaleon",
+        description: "Convert PNG to AVIF in your browser. Modern AV1 compression — local and private.",
+      },
+      "jpg-to-avif": {
+        title: "JPEG to AVIF — Camaleon",
+        description: "Convert JPEG to AVIF in your browser. Smaller modern delivery format — local and private.",
+      },
     },
   },
 
@@ -131,8 +139,8 @@ const en: Dictionary = {
           body: "Nothing is uploaded. Your images never leave this tab.",
         },
         tools: {
-          title: "17 conversion tools",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, and AVIF (PNG + JPEG) — lossless and lossy paths where it matters.",
+          title: "19 conversion tools",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, and AVIF (encode + decode) — lossless and lossy paths where it matters.",
         },
         limits: {
           title: "Honest limits",
@@ -163,6 +171,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v220: {
+        title: "PNG & JPEG → AVIF",
+        summary:
+          "Eighteenth and nineteenth tools: create AVIF in your browser from PNG or JPEG. Quality and speed sliders, semantic alpha on PNG, and honest generational-loss copy on JPEG.",
+        technical:
+          "Tier 3.2.0–3.2.2: transmutador_avif_encode (ravif, ~1.67 MB Wasm split from decode). estimate_png/jpg_to_avif_size; worker encodeSource routing. Engine v1.6.0.",
+        highlights: {
+          pngAvif: {
+            title: "PNG → AVIF",
+            body: "Encode modern AV1 stills locally — quality + speed control; meaningful alpha preserved when pixels are truly transparent.",
+          },
+          jpgAvif: {
+            title: "JPEG → AVIF",
+            body: "Complete the inbound AVIF pair — smaller files for web delivery with a clear lossy-on-lossy honesty hint.",
+          },
+          encodeCrate: {
+            title: "Split encode module",
+            body: "AVIF encode ships as its own lazy-loaded Wasm crate so decode and encode each stay within the 3 MB bundle budget.",
+          },
+        },
+      },
       v211: {
         title: "AVIF → JPEG + smoother previews",
         summary:
@@ -806,6 +835,50 @@ const en: Dictionary = {
           hint: "Only affects images with transparency.",
           customAria: "Custom background color",
           swatches: { white: "White", black: "Black", gray: "Gray" },
+        },
+      },
+    },
+    "jpg-to-avif": {
+      actionTitle: "Compress to AVIF",
+      description: "Convert JPEG to AVIF — re-compress with AV1 for smaller web delivery.",
+      fidelityHint:
+        "Two lossy generations: JPEG was already compressed; AVIF adds another lossy pass. Quality loss is irreversible. Encode can take several seconds on large images — use higher speed for faster results.",
+      options: {
+        quality: {
+          label: "AVIF Quality",
+          hint: "Higher quality = larger file. Lossy — not reversible.",
+          lowerLabel: "Smaller",
+          upperLabel: "Sharper",
+          presets: { web: "Web", balanced: "Balanced", high: "High" },
+        },
+        speed: {
+          label: "Encode Speed",
+          hint: "Higher speed = faster processing, often larger output. Lower speed spends more CPU for better compression.",
+          lowerLabel: "Smaller file",
+          upperLabel: "Faster",
+          presets: { quality: "Quality", balanced: "Balanced", fast: "Fast" },
+        },
+      },
+    },
+    "png-to-avif": {
+      actionTitle: "Compress to AVIF",
+      description: "Convert PNG to AVIF — modern AV1 delivery format with quality and encode-speed controls.",
+      fidelityHint:
+        "AVIF encode is lossy — pixels are re-compressed with AV1. Meaningful transparency is preserved when present. Encode can take several seconds on large images; higher speed finishes faster but may produce larger files.",
+      options: {
+        quality: {
+          label: "AVIF Quality",
+          hint: "Higher quality = larger file. Lossy — not reversible.",
+          lowerLabel: "Smaller",
+          upperLabel: "Sharper",
+          presets: { web: "Web", balanced: "Balanced", high: "High" },
+        },
+        speed: {
+          label: "Encode Speed",
+          hint: "Higher speed = faster processing, often larger output. Lower speed spends more CPU for better compression.",
+          lowerLabel: "Smaller file",
+          upperLabel: "Faster",
+          presets: { quality: "Quality", balanced: "Balanced", fast: "Fast" },
         },
       },
     },

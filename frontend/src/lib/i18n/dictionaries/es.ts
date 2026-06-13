@@ -73,6 +73,14 @@ const es: Dictionary = {
         title: "AVIF a JPG — Camaleon",
         description: "Convierte AVIF a JPEG en tu navegador. Comprimido para web — local y privado.",
       },
+      "png-to-avif": {
+        title: "PNG a AVIF — Camaleon",
+        description: "Convierte PNG a AVIF en tu navegador. Compresion AV1 moderna — local y privado.",
+      },
+      "jpg-to-avif": {
+        title: "JPEG a AVIF — Camaleon",
+        description: "Convierte JPEG a AVIF en tu navegador. Formato de entrega moderno mas pequeno — local y privado.",
+      },
     },
   },
 
@@ -131,8 +139,8 @@ const es: Dictionary = {
           body: "No se sube nada. Tus imágenes nunca salen de esta pestaña.",
         },
         tools: {
-          title: "17 herramientas de conversión",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA y AVIF (PNG + JPEG) — rutas con y sin pérdida donde importa.",
+          title: "19 herramientas de conversión",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA y AVIF (codificar + decodificar) — rutas con y sin pérdida donde importa.",
         },
         limits: {
           title: "Límites honestos",
@@ -163,6 +171,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v220: {
+        title: "PNG y JPEG → AVIF",
+        summary:
+          "Decimoctava y decimonovena herramientas: crea AVIF en el navegador desde PNG o JPEG. Sliders de calidad y velocidad, alpha semántico en PNG y aviso honesto de pérdida generacional en JPEG.",
+        technical:
+          "Tier 3.2.0–3.2.2: transmutador_avif_encode (ravif, ~1,67 MB Wasm separado del decode). estimate_png/jpg_to_avif_size; worker encodeSource. Motor v1.6.0.",
+        highlights: {
+          pngAvif: {
+            title: "PNG → AVIF",
+            body: "Codifica AV1 moderno en local — control de calidad y velocidad; alpha significativo preservado cuando los píxeles son realmente transparentes.",
+          },
+          jpgAvif: {
+            title: "JPEG → AVIF",
+            body: "Completa el par AVIF de entrada — archivos más pequeños para la web con aviso claro de pérdida lossy-on-lossy.",
+          },
+          encodeCrate: {
+            title: "Módulo encode separado",
+            body: "El encode AVIF es su propio Wasm lazy-load para que decode y encode cumplan cada uno el presupuesto de 3 MB.",
+          },
+        },
+      },
       v211: {
         title: "AVIF → JPEG + vistas previas más fluidas",
         summary:
@@ -792,6 +821,50 @@ const es: Dictionary = {
           hint: "Solo afecta imagenes con transparencia.",
           customAria: "Color de fondo personalizado",
           swatches: { white: "Blanco", black: "Negro", gray: "Gris" },
+        },
+      },
+    },
+    "jpg-to-avif": {
+      actionTitle: "Comprimir a AVIF",
+      description: "Convierte JPEG a AVIF — recomprime con AV1 para entrega web mas liviana.",
+      fidelityHint:
+        "Dos generaciones con perdida: el JPEG ya estaba comprimido; AVIF anade otra pasada con perdida. La perdida de calidad es irreversible. La codificacion puede tardar varios segundos en imagenes grandes — usa mayor velocidad para resultados mas rapidos.",
+      options: {
+        quality: {
+          label: "Calidad AVIF",
+          hint: "Mayor calidad = archivo mas grande. Con perdida — no reversible.",
+          lowerLabel: "Mas pequeno",
+          upperLabel: "Mas nitido",
+          presets: { web: "Web", balanced: "Balanceado", high: "Alto" },
+        },
+        speed: {
+          label: "Velocidad de codificacion",
+          hint: "Mayor velocidad = proceso mas rapido, a menudo archivo mas grande. Menor velocidad usa mas CPU para mejor compresion.",
+          lowerLabel: "Archivo menor",
+          upperLabel: "Mas rapido",
+          presets: { quality: "Calidad", balanced: "Balanceado", fast: "Rapido" },
+        },
+      },
+    },
+    "png-to-avif": {
+      actionTitle: "Comprimir a AVIF",
+      description: "Convierte PNG a AVIF — formato AV1 moderno con controles de calidad y velocidad de codificacion.",
+      fidelityHint:
+        "La codificacion AVIF es con perdida — los pixeles se recomprimen con AV1. La transparencia significativa se conserva cuando existe. La codificacion puede tardar varios segundos en imagenes grandes; mayor velocidad termina antes pero puede producir archivos mas grandes.",
+      options: {
+        quality: {
+          label: "Calidad AVIF",
+          hint: "Mayor calidad = archivo mas grande. Con perdida — no reversible.",
+          lowerLabel: "Mas pequeno",
+          upperLabel: "Mas nitido",
+          presets: { web: "Web", balanced: "Balanceado", high: "Alto" },
+        },
+        speed: {
+          label: "Velocidad de codificacion",
+          hint: "Mayor velocidad = proceso mas rapido, a menudo archivo mas grande. Menor velocidad usa mas CPU para mejor compresion.",
+          lowerLabel: "Archivo menor",
+          upperLabel: "Mas rapido",
+          presets: { quality: "Calidad", balanced: "Balanceado", fast: "Rapido" },
         },
       },
     },

@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v2.1.1** (`main`) | Tier 3.1 complete — AVIF→PNG/JPEG (Phase 3.1.0–3.1.2) |
-| **Engine (Rust workspace)** | v1.5.1 | Ten Wasm crates incl. **`transmutador_avif`** (zenavif) |
-| **SPEC** | v2.1.1-avif | §6.10 transmutador_avif; `docs/LIMIT_PIPELINE.md` |
+| **Frontend (app)** | **v2.2.0** (`dev`) | Tier 3.2 complete — PNG/JPEG→AVIF (Phase 3.2.0–3.2.2) |
+| **Engine (Rust workspace)** | v1.6.0 | Eleven Wasm crates incl. **`transmutador_avif`** + **`transmutador_avif_encode`** |
+| **SPEC** | v2.2.0-avif | §6.10–6.11 AVIF decode/encode; `docs/LIMIT_PIPELINE.md` |
 
-**v2.1.1** (`main`): **AVIF→JPEG** + animated preview UX (worker, cache, estimate sync). **17 tools.** Release: `docs/releases/v2.1.1.md`. Next: **Tier 3.2** AVIF encode spike · `docs/planning/tier3_plan.md`
+**v2.2.0** (`dev`): **PNG/JPEG→AVIF** encode pair + split Wasm crate. **19 tools.** Release: `docs/releases/v2.2.0.md`. Next: **Tier 3.3** SVG spike · `docs/planning/tier3_3_svg_analysis.md`
+
+**v2.1.1** (`main`): **AVIF→JPEG** + animated preview UX. **17 tools.** Release: `docs/releases/v2.1.1.md`.
 
 **v2.0.0** (`main`): Tier 3 baseline — AVIF→PNG, limit pipeline. Release: `docs/releases/v2.0.0.md`
 
@@ -268,7 +270,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
 | **Semantic Alpha Engine** | **v1.11.0** (`main`) | Honest transparency across lossy tools | ✅ **Shipped** — `docs/releases/v1.11.0.md` |
-| **Tier 3** | v2.0.x | AVIF, SVG→raster, HEIC (spike) | **Next** — Tier 3.1 AVIF→PNG/JPEG first — `docs/planning/tier3_plan.md` |
+| **Tier 3** | v2.0.x–v2.3.x | AVIF ✅, SVG→raster, HEIC (spike) | **In progress** — 3.2 encode ✅ on `dev`; **3.3 SVG** next — `docs/planning/tier3_plan.md` |
 | **Tier 4a** | v2.x | Compress, Resize | Image **optimization** — same raster domain |
 | **Tier 4b** | v2.x | Crop, Rotate/Flip, favicon pack | Image **editing** |
 | **Tier 5** | TBD | PDF tools | **Deferred** — documents; separate planning required |

@@ -8,9 +8,10 @@ export type TransmutationModule =
   | "transmutador_tiff"
   | "transmutador_ico"
   | "transmutador_tga"
-  | "transmutador_avif";
+  | "transmutador_avif"
+  | "transmutador_avif_encode";
 
-export type OutputExtension = "png" | "jpg" | "webp" | "ico";
+export type OutputExtension = "png" | "jpg" | "webp" | "ico" | "avif";
 
 /** Discriminates PNG vs JPEG source when module is `transmutador_encode`. */
 export type EncodeSource = "png" | "jpeg";
@@ -29,6 +30,8 @@ export type TransmutationOptions = {
   entryIndex?: number;
   /** PNG → ICO target edge length (16, 32, 48, or 256). */
   iconSize?: number;
+  /** AVIF encode speed (ravif 1–10; higher = faster). */
+  speed?: number;
 };
 
 export type WorkerPurpose = "transmute" | "estimate" | "purge";
@@ -57,7 +60,7 @@ export type WorkerRequest = {
   options?: TransmutationOptions;
   /** Required when module is transmutador_webp (png vs jpg). */
   outputExtension?: OutputExtension;
-  /** Required when module is transmutador_encode — which encode export to call. */
+  /** Required when module is `transmutador_encode` or `transmutador_avif_encode`. */
   encodeSource?: EncodeSource;
   purpose?: WorkerPurpose;
   fingerprint?: string;
