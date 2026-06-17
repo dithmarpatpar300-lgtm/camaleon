@@ -22,6 +22,16 @@ export type PerformancePrefs = {
   autoEstimate?: PerformanceToggleMode;
 };
 
+export type NoticeRailDensity = "normal" | "minimal";
+export type PrepareProgressStylePref = "ring" | "bar";
+
+export type NoticesPrefs = {
+  /** Hide informational notices in the staged workspace rail. */
+  railDensity?: NoticeRailDensity;
+  /** Prepare gate progress indicator style. */
+  prepareProgressStyle?: PrepareProgressStylePref;
+};
+
 export type UserSettings = {
   /** When false, skip auto changelog modal on version bump; What's New remains available. */
   showChangelogOnUpdate: boolean;
@@ -29,6 +39,8 @@ export type UserSettings = {
   transmutation?: TransmutationDefaults;
   /** Performance overrides (S3). Empty = fully adaptive. */
   performance?: PerformancePrefs;
+  /** Notice rail and prepare UI prefs (S4). */
+  notices?: NoticesPrefs;
 };
 
 const DEFAULTS: UserSettings = {
@@ -55,6 +67,7 @@ export function readUserSettings(): UserSettings {
         : DEFAULTS.showChangelogOnUpdate,
     transmutation: merged.transmutation,
     performance: merged.performance,
+    notices: merged.notices,
   };
 }
 

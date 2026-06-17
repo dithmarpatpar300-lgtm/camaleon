@@ -1326,7 +1326,9 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **S3 (v2.3.3):** Performance overrides — tier (conservative/balanced/aggressive), result cache, auto-estimate; `performance-prefs.ts` + `applyPerformancePrefs` in `useAdaptiveResourceProfile`.
 
-**Planned (S4–S5):** notice rail density, offline toolkit — see `docs/planning/settings_panel_plan.md`.
+**S4 (v2.3.4):** Notices & prepare — rail density (`normal`/`minimal`), prepare progress style (`ring`/`bar`); `notices-prefs.ts` + `filterNoticesForDensity`.
+
+**Planned (S5):** offline toolkit — see `docs/planning/settings_panel_plan.md`.
 
 **Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`.
 
@@ -1378,6 +1380,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 2.3.4-settings-s4 | 2026-06-11 | Chief Architect | §7.13 Settings S4 — notice density + prepare progress; app v2.3.4 | `docs/releases/v2.3.4.md` |
 | 2.3.3-settings-s3 | 2026-06-11 | Chief Architect | §7.13 Settings S3 — performance overrides in drawer; app v2.3.3 | `docs/releases/v2.3.3.md` |
 | 2.3.2-settings-s2 | 2026-06-11 | Chief Architect | §7.13 Settings S2 — transmutation defaults in drawer; app v2.3.2 | `docs/releases/v2.3.2.md` |
 | 2.3.1-settings-s1 | 2026-06-11 | Chief Architect | §7.13 User Settings Panel S1 shipped — drawer, utility cluster polish, static theme segment; app v2.3.1 | `docs/releases/v2.3.1.md` |

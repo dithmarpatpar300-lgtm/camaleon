@@ -70,6 +70,7 @@ export function PerformanceSettingsSection({ drawerOpen }: Props) {
   return (
     <SettingsSection title={t("settings.performance.section")}>
       <SettingsRow
+        layout="stacked"
         label={t("settings.performance.tierLabel")}
         description={t("settings.performance.tierHint")}
       >
@@ -78,10 +79,11 @@ export function PerformanceSettingsSection({ drawerOpen }: Props) {
           options={tierOptions}
           onChange={persistTier}
           ariaLabel={t("settings.performance.tierLabel")}
-          compact
+          fullWidth
         />
       </SettingsRow>
       <SettingsRow
+        layout="stacked"
         label={t("settings.performance.cacheLabel")}
         description={t("settings.performance.cacheHint")}
       >
@@ -90,9 +92,11 @@ export function PerformanceSettingsSection({ drawerOpen }: Props) {
           options={toggleOptions}
           onChange={(v) => persistToggle("resultCache", v)}
           ariaLabel={t("settings.performance.cacheLabel")}
+          fullWidth
         />
       </SettingsRow>
       <SettingsRow
+        layout="stacked"
         label={t("settings.performance.autoEstimateLabel")}
         description={t("settings.performance.autoEstimateHint")}
         bordered={false}
@@ -102,6 +106,7 @@ export function PerformanceSettingsSection({ drawerOpen }: Props) {
           options={toggleOptions}
           onChange={(v) => persistToggle("autoEstimate", v)}
           ariaLabel={t("settings.performance.autoEstimateLabel")}
+          fullWidth
         />
       </SettingsRow>
       <div className="flex justify-end px-4 py-3">

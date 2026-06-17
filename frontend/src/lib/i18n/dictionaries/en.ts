@@ -157,6 +157,19 @@ const en: Dictionary = {
       resetAction: "Reset to adaptive",
       resetDone: "Performance settings restored to adaptive defaults.",
     },
+    notices: {
+      section: "Notices & prepare",
+      densityLabel: "Notice detail",
+      densityHint: "Minimal hides informational notices; warnings and errors always show.",
+      densityNormal: "Normal",
+      densityMinimal: "Minimal",
+      progressLabel: "Prepare progress",
+      progressHint: "Ring or bar indicator while a file is being prepared.",
+      progressRing: "Ring",
+      progressBar: "Bar",
+      resetAction: "Reset to defaults",
+      resetDone: "Notice and prepare preferences restored.",
+    },
     updates: {
       section: "Updates",
       changelogLabel: "Release notes on update",
@@ -240,6 +253,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v234: {
+        title: "Notices & prepare settings",
+        summary:
+          "Choose notice rail density and prepare progress style in Settings — minimal mode hides info-only notices.",
+        technical:
+          "Settings S4: notices-prefs.ts, filterNoticesForDensity in NoticeRail, prepare style in user-settings with legacy migration. Vitest test:notices-prefs. App v2.3.4.",
+        highlights: {
+          noticeDensity: {
+            title: "Quieter notice rail",
+            body: "Minimal density hides informational notices; warnings about limits, performance, and fidelity stay visible.",
+          },
+          prepareProgress: {
+            title: "Prepare progress in Settings",
+            body: "Pick ring or bar for file prepare — same preference as the in-flow toggle, now in the drawer.",
+          },
+        },
+      },
       v233: {
         title: "Performance settings",
         summary:

@@ -157,6 +157,19 @@ const es: Dictionary = {
       resetAction: "Restablecer adaptativo",
       resetDone: "Rendimiento restablecido a valores adaptativos.",
     },
+    notices: {
+      section: "Avisos y preparacion",
+      densityLabel: "Detalle de avisos",
+      densityHint: "Minimal oculta avisos informativos; advertencias y errores siempre se muestran.",
+      densityNormal: "Normal",
+      densityMinimal: "Minimal",
+      progressLabel: "Progreso de preparacion",
+      progressHint: "Indicador en anillo o barra mientras se prepara el archivo.",
+      progressRing: "Anillo",
+      progressBar: "Barra",
+      resetAction: "Restablecer valores",
+      resetDone: "Preferencias de avisos y preparacion restablecidas.",
+    },
     updates: {
       section: "Actualizaciones",
       changelogLabel: "Notas al actualizar",
@@ -240,6 +253,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v234: {
+        title: "Ajustes de avisos y preparacion",
+        summary:
+          "Elige densidad del rail de avisos y estilo de progreso en Ajustes — minimal oculta avisos solo informativos.",
+        technical:
+          "Settings S4: notices-prefs.ts, filterNoticesForDensity en NoticeRail, estilo prepare en user-settings con migracion legacy. Vitest test:notices-prefs. App v2.3.4.",
+        highlights: {
+          noticeDensity: {
+            title: "Rail de avisos mas limpio",
+            body: "Densidad minimal oculta avisos informativos; las advertencias de limites, rendimiento y fidelidad siguen visibles.",
+          },
+          prepareProgress: {
+            title: "Progreso de preparacion en Ajustes",
+            body: "Elige anillo o barra al preparar archivos — misma preferencia que el toggle en flujo, ahora en el panel.",
+          },
+        },
+      },
       v233: {
         title: "Ajustes de rendimiento",
         summary:

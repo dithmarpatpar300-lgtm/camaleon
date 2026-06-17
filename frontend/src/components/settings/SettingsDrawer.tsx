@@ -21,6 +21,7 @@ import { ThemeSegment } from "./ThemeSegment";
 import { LanguageSegment } from "./LanguageSegment";
 import { TransmutationDefaultsSection } from "./TransmutationDefaultsSection";
 import { PerformanceSettingsSection } from "./PerformanceSettingsSection";
+import { NoticesSettingsSection } from "./NoticesSettingsSection";
 
 const EXIT_MS = 240;
 
@@ -111,6 +112,8 @@ function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => vo
             <TransmutationDefaultsSection drawerOpen={open} />
 
             <PerformanceSettingsSection drawerOpen={open} />
+
+            <NoticesSettingsSection drawerOpen={open} />
 
             <SettingsSection title={t("settings.updates.section")}>
               <SettingsRow

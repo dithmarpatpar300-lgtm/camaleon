@@ -1,6 +1,6 @@
 # Settings / Opciones Panel — System Plan
 
-> **Status:** **S3 shipped** v2.3.3 on `dev` · **S2** v2.3.2 · **S1** v2.3.1  
+> **Status:** **S4 shipped** v2.3.4 on `dev` · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1  
 > **Scope:** User-facing preferences (local-first, `localStorage` only)  
 > **Doctrine:** NFR-1 privacy — no server sync; document keys in `/privacy`  
 > **SPEC anchor:** §7.13 User Settings Panel
@@ -23,7 +23,8 @@ Consolidate scattered browser preferences into a single **Settings drawer** whil
 | **A — Global UX** | Theme, locale, animations | No | `localStorage` + cookies (SSR) |
 | **B — Comms** | Changelog on update, onboarding reset | No | `camaleon-user-settings-v1` |
 | **C — Transmutation defaults** | JPEG quality, PNG compression, alpha background, AVIF quality/speed | Yes — `TransmutationOptions` | `camaleon-user-settings-v1.transmutation` ✅ S2 |
-| **D — Performance** | Result cache, auto-estimate, resource tier | Yes — worker meta | **S3 v2.3.3** |
+| **D — Performance** | Result cache, auto-estimate, resource tier | Yes — worker meta | `camaleon-user-settings-v1.performance` ✅ S3 |
+| **E — Notices & prepare** | Rail density, prepare progress | No | `camaleon-user-settings-v1.notices` ✅ S4 |
 | **E — Session / tool** | Sliders in `StagedWorkspace` | Yes — per conversion | React state (not Settings) |
 
 **Model:** **Hybrid** — global for UX and performance; family defaults for encode knobs; per-tool session overrides in the workspace panel.
@@ -61,7 +62,7 @@ Pattern: `resolveSpecDefault(tool, spec)` → user override ?? registry baseline
 | Auto-estimate on load | `autoEstimate` in `ResourceProfile` |
 | Performance profile | Override `computeResourceProfile` tier |
 
-### S4 — Notices & accessibility (planned)
+### S4 — Notices & accessibility ✅ (v2.3.4)
 
 | Setting | Maps to |
 |---------|---------|
@@ -99,6 +100,7 @@ frontend/src/lib/prefs/
   user-settings.ts      ← camaleon-user-settings-v1 schema
   transmutation-defaults.ts ← global encode defaults (S2)
   performance-prefs.ts      ← tier/cache/estimate overrides (S3)
+  notices-prefs.ts          ← rail density + prepare progress (S4)
 
 frontend/src/lib/transmutation/
   build-default-options.ts ← applies resolveSpecDefault per tool
@@ -112,6 +114,7 @@ frontend/src/components/settings/
   LanguageSegment.tsx
   SettingsModeSegment.tsx
   PerformanceSettingsSection.tsx
+  NoticesSettingsSection.tsx
 
 frontend/src/providers/
   SettingsProvider.tsx  ← open/close + mount drawer
@@ -171,7 +174,10 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 
 ### S4 — Notices
 
-- [ ] Notice rail density + prepare progress style
+- [x] `notices-prefs.ts` + `filterNoticesForDensity`
+- [x] Settings section “Notices & prepare”
+- [x] Prepare progress style in user-settings (legacy key migration)
+- [x] Live re-apply via `subscribeNoticesPrefs`
 
 ### S5 — Offline
 

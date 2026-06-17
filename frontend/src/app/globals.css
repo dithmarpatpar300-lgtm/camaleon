@@ -750,6 +750,25 @@ dialog.whats-new-drawer {
   }
 }
 
+/* Settings mode segments — full-width row under stacked labels */
+.settings-mode-segment--full {
+  display: flex;
+  width: 100%;
+  gap: 2px;
+}
+
+.settings-mode-segment-btn--full {
+  min-width: 0;
+  flex: 1 1 0;
+  height: auto;
+  min-height: 1.625rem;
+  padding: 0.25rem 0.35rem;
+  font-size: 0.6875rem;
+  line-height: 1.25;
+  white-space: normal;
+  text-wrap: balance;
+}
+
 /* ------------------------------------------------------------------ */
 /* Utility cluster — circular icon buttons (settings, theme)           */
 /* ------------------------------------------------------------------ */

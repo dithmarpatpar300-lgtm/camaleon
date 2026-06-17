@@ -12,7 +12,8 @@ type SettingsModeSegmentProps<T extends string> = {
   options: readonly Option<T>[];
   onChange: (value: T) => void;
   ariaLabel: string;
-  compact?: boolean;
+  /** Distribute options evenly across the row (for stacked settings rows). */
+  fullWidth?: boolean;
 };
 
 export function SettingsModeSegment<T extends string>({
@@ -20,15 +21,15 @@ export function SettingsModeSegment<T extends string>({
   options,
   onChange,
   ariaLabel,
-  compact = false,
+  fullWidth = false,
 }: SettingsModeSegmentProps<T>) {
   return (
     <div
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        "theme-segment-track flex-wrap",
-        compact ? "text-[10px]" : "text-xs"
+        "theme-segment-track text-xs font-medium",
+        fullWidth ? "settings-mode-segment--full" : "inline-flex flex-wrap"
       )}
     >
       {options.map((option) => {
@@ -41,7 +42,7 @@ export function SettingsModeSegment<T extends string>({
             aria-pressed={isActive}
             className={cn(
               "theme-segment-btn",
-              compact && "min-w-[2.75rem] px-1",
+              fullWidth && "settings-mode-segment-btn--full",
               isActive && "theme-segment-btn--active"
             )}
           >

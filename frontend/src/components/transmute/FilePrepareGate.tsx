@@ -9,6 +9,7 @@ import {
   setPrepareProgressStyle,
   type PrepareProgressStyle,
 } from "@/lib/transmutation/prepare/progress-preference";
+import { subscribeNoticesPrefs } from "@/lib/prefs/notices-prefs";
 import { useI18n } from "@/providers/I18nProvider";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,8 @@ export function FilePrepareGate({
   useEffect(() => {
     setProgressStyle(getPrepareProgressStyle());
   }, []);
+
+  useEffect(() => subscribeNoticesPrefs(() => setProgressStyle(getPrepareProgressStyle())), []);
 
   const pct = Math.round(progress * 100);
   const prevProgressRef = useRef(progress);

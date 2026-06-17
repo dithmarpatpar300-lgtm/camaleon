@@ -1,6 +1,6 @@
 {
   "name": "camaleon-frontend",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -11,6 +11,7 @@
     "test:notices": "vitest run src/lib/notices",
     "test:defaults": "vitest run src/lib/prefs/transmutation-defaults.test.ts",
     "test:performance": "vitest run src/lib/prefs/performance-prefs.test.ts",
+    "test:notices-prefs": "vitest run src/lib/prefs/notices-prefs.test.ts",
     "test:semantic-alpha": "node scripts/verify-needs-semantic-alpha.mjs",
     "build:wasm": "node scripts/build-wasm.mjs",
     "build:cf": "opennextjs-cloudflare build && node scripts/sync-wasm-assets.mjs",
