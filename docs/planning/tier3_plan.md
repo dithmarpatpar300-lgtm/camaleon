@@ -6,7 +6,7 @@
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
 > **Notice Rail:** `docs/planning/notice_system_plan.md` (shipped v2.3.0)  
-> **Settings panel:** `docs/planning/settings_panel_plan.md` (S1 ✅)
+> **Settings panel:** `docs/planning/settings_panel_plan.md` (S1–S4 ✅ on `main`)
 
 ---
 
@@ -18,7 +18,7 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 |-----------|-----|------------|----------|----------------|--------|
 | **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.1.1** | **3.1.0–3.1.2 ✅ shipped** |
 | **3.2** | AVIF encode | PNG → AVIF, JPEG → AVIF | **`transmutador_avif_encode`** (+ decode in `transmutador_avif`) | **v2.2.0** | **3.2.0–3.2.2 ✅ shipped on `dev`** |
-| **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` (TBD) | v2.3.x | **Analysis ✅** — spike-gated (`resvg`); see `tier3_3_svg_analysis.md` |
+| **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` | **v2.4.x** | **Analysis ✅** — spike-gated (`resvg`); see `tier3_3_svg_analysis.md` + `tier3_3_svg_implementation_plan.md` |
 | **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | TBD | v2.x | Spike-gated (no pure-Rust decoder) |
 | **3.5** | PWA / offline shell | App + tools work without network after first visit | Service Worker + web manifest (`@serwist/next`) | v2.x | **Last Tier 3 deliverable** — after 3.4.x |
 

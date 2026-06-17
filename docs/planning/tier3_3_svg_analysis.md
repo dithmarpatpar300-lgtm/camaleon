@@ -1,8 +1,10 @@
 # Tier 3 Phase 3.3 — SVG Format Science & Transmutation Plan
 
-> **Date:** 2026-06-11  
+> **Date:** 2026-06-11 (updated 2026-06-11 post–v2.3.4)  
 > **Status:** Analysis complete — **implementation blocked on 3.3.0 spike**  
-> **Prerequisite:** Tier 3.2 AVIF encode pair ✅ (19 tools)  
+> **Prerequisites:** v2.3.4 on `main` — 19 tools, AVIF suite, Notice Rail (v2.3.0), Settings S1–S4 (v2.3.1–2.3.4)  
+> **Implementation plan:** `docs/planning/tier3_3_svg_implementation_plan.md`  
+> **Target versions:** v2.4.0 (spike) · v2.4.1 (SVG→PNG) · v2.4.2 (SVG→JPEG)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — parse → honest options → rasterize → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**
 
@@ -360,19 +362,41 @@ set_session_input_limit / reset_session_input_limit
 
 ---
 
-## 10. Frontend integration (mirror AVIF / WebP)
+## 10. Frontend integration (mirror AVIF / WebP + v2.3.x)
 
 | Step | Work |
 |------|------|
 | ToolRegistry | `svg-to-png`, `svg-to-jpg` — `status: "soon"` until spike passes |
 | Worker | `initSvgWasm` lazy-load; `TransmutationModule` += `"transmutador_svg"` |
-| Options UI | Dimension controls (W×H or scale presets) + compression / quality / background |
-| Prepare | `inspect_svg_meta` with session limit; show intrinsic size |
+| Options UI | **Output scale presets** (preferred MVP) or W×H with aspect lock + compression / quality / background |
+| Prepare | `inspect_svg_meta` with session limit; show intrinsic size + output MP |
+| Defaults | `buildDefaultOptions(tool)` — Settings S2 for compression, quality, background |
 | LimitContext | 40 MP on **output** W×H; astro downscale before render |
+| Notices | `tool-notice-profiles`: `expensive`; fidelity + font/renderer hints |
+| Performance | `useAdaptiveResourceProfile` — no SVG-specific tier logic |
 | i18n | Fidelity hints, font substitution, renderer subset honesty |
 | MIME | `image/svg+xml`, extension `.svg` |
 
 **End state after 3.3.2:** **21 active tools** (19 + 2 SVG outbound).
+
+---
+
+## 9.5 Alignment with v2.3.x platform (2026-06-11)
+
+The analysis below remains valid; these **platform changes since draft** must be wired in implementation — not optional polish.
+
+| Platform feature | Shipped | SVG integration |
+|------------------|---------|-----------------|
+| **Settings S2** transmutation defaults | v2.3.2 | `svg-to-png` compression + `svg-to-jpg` quality/background via `buildDefaultOptions` / `resolveSpecDefault` |
+| **Settings S3** performance | v2.3.3 | `useAdaptiveResourceProfile` — estimate debounce, result cache; full render estimates are expensive |
+| **Notice Rail** | v2.3.0 | `tool-notice-profiles.ts`: `svg-to-*` → `expensive`; extend `CostFactorKey` for output dimensions |
+| **Settings S4** notices density | v2.3.4 | No SVG-specific work — `NoticeRail` filters `info` in minimal mode |
+| **Prepare progress** | S4 + `FilePrepareGate` | Ring/bar from `notices-prefs`; do not add separate SVG progress keys |
+| **User settings storage** | `camaleon-user-settings-v1` | No new keys for SVG — only transmutation defaults sub-object |
+
+**Estimate UX:** SVG estimate ≈ full parse + render (same order as transmute). Reuse v1.12.2+ coalescing via `useFileMetrics` + performance profile debounce — not a separate code path.
+
+**Honesty (NFR-8):** Settings do not change the fidelity story — UI must still say *vector converted to pixels at N×M*, not “lossless SVG preservation.”
 
 ---
 
@@ -383,7 +407,7 @@ set_session_input_limit / reset_session_input_limit
 | **SVG → PNG** | Prefer `CountingWriter` on `PngEncoder` after rasterize — same as WebP→PNG if raster buffer cached |
 | **SVG → JPEG** | Full encode for estimate (acceptable) or counting writer |
 
-**Cost:** Estimate requires **parse + render** at chosen size — same order as transmute. Coalesce slider updates (v1.12.2 pattern). Heavy SVG + large output → friendly "this may take a moment" copy (same class as AVIF encode backlog).
+**Cost:** Estimate requires **parse + render** at chosen size — same order as transmute. Coalesce via `useFileMetrics` + `useAdaptiveResourceProfile` debounce (Settings S3). Heavy SVG + large output → Notice Rail performance notices (`expensive` profile) — same class as AVIF encode.
 
 ---
 
@@ -474,7 +498,7 @@ set_session_input_limit / reset_session_input_limit
 | Item | Notes |
 |------|-------|
 | **AVIF encode slow UX** | ✅ Shipped via **Operational Notice Rail** (`docs/planning/notice_system_plan.md`) — Phases A–D |
-| **SVG rasterize slow UX (Phase E)** | Wire `transmutador_svg` in `tool-notice-profiles.ts`: `estimateCost/transmuteCost: expensive`; factors `outputWidth`, `outputHeight`, `has_filters`; reuse `notices.estimate.fullRender` pattern |
+| **SVG rasterize slow UX** | Wire `transmutador_svg` in `tool-notice-profiles.ts`: `estimateCost/transmuteCost: expensive`; extend `CostFactorKey` with `outputWidth` / `outputHeight` or `outputScale`; reuse existing L2/L3 performance notices |
 | **SVG → AVIF** | Revisit after 3.3 stable if demand |
 | **SVG animation export** | GIF/WebP sequence — far horizon |
 | **Raster → SVG trace** | Different ladder — not format swap |
@@ -485,6 +509,7 @@ set_session_input_limit / reset_session_input_limit
 
 | Document | Role |
 |----------|------|
+| `docs/planning/tier3_3_svg_implementation_plan.md` | **Execution plan** — phases, file list, v2.4.x versioning |
 | `docs/planning/tier3_plan.md` | Tier 3 umbrella + execution order |
 | `docs/SPEC.md` §12.4 | Normative Tier 3 table |
 | `docs/LIMIT_PIPELINE.md` | 40 MP + session bytes |

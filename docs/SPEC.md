@@ -25,7 +25,7 @@ Camaleon is an **image platform** first. Expansion follows a fixed priority ladd
 | Ladder | Name | What it is | Status |
 |--------|------|------------|--------|
 | **A** | **Image transmutation** | Format-to-format raster conversion (decode → policy → encode) | ✅ **Shipped** — Tiers 1–2 + Semantic Alpha Engine (v1.11.0) |
-| **B** | **Modern image formats** | AVIF, SVG→raster, HEIC (spike-gated) | 🚧 **Tier 3 in progress** — AVIF suite ✅ v2.2.0; SVG analysis next (3.3) |
+| **B** | **Modern image formats** | AVIF, SVG→raster, HEIC (spike-gated) | 🚧 **Tier 3 in progress** — AVIF suite ✅ on `main`; **SVG 3.3 next** (spike-gated) |
 | **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | 📋 **Tier 4a** — planned after Tier 3 |
 | **D** | **Image editing** | Crop, rotate, flip on raster (Wasm + canvas UI) | 📋 **Tier 4b** — planned after Tier 4a |
 | **E** | **Documents** | PDF merge/split, PDF→images — non-raster domain | 🚫 **Deferred** — far horizon; separate planning doc required |
@@ -1512,7 +1512,7 @@ Low-risk, high-value conversions using the `image` crate without new native depe
 
 Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm bundle spikes before commitment.
 
-**Shipped v2.2.0 (Phase 3.2.0–3.2.2 on `dev`):**
+**Shipped v2.2.0 (Phase 3.2.0–3.2.2 on `main`):**
 
 | Direction | Crate | Status |
 |-----------|-------|--------|

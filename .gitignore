@@ -27,6 +27,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Local-only planning (not for GitHub)
+/docs/planning/_private/
+
 # Wasm build artifacts (generated)
 /frontend/public/wasm/
 /motor_transmutacion/public/wasm/
