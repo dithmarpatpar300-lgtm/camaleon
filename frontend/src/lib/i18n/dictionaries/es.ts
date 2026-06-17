@@ -119,6 +119,26 @@ const es: Dictionary = {
       themeLight: "Claro",
       themeDark: "Oscuro",
     },
+    tools: {
+      section: "Valores predeterminados",
+      jpegQualityLabel: "Calidad JPEG",
+      jpegQualityHint: "Predeterminado para rutas con perdida hacia JPEG (PNG/WebP/GIF/BMP/TIFF, etc.).",
+      pngCompressionLabel: "Compresion PNG",
+      pngCompressionHint: "Esfuerzo predeterminado (1 rapido – 9 minimo) para rutas que generan PNG.",
+      avifQualityLabel: "Calidad AVIF",
+      avifQualityHint: "Predeterminado para herramientas PNG/JPEG → AVIF.",
+      avifSpeedLabel: "Velocidad AVIF",
+      avifSpeedHint: "Velocidad ravif predeterminada (1 lento – 10 rapido) al codificar AVIF.",
+      backgroundLabel: "Fondo para alpha",
+      backgroundHint: "Fondo predeterminado al aplanar transparencia hacia JPEG.",
+      backgroundSwatches: {
+        white: "Fondo blanco",
+        black: "Fondo negro",
+        gray: "Fondo gris",
+      },
+      resetAction: "Restablecer fabrica",
+      resetDone: "Valores de transmutacion restablecidos.",
+    },
     updates: {
       section: "Actualizaciones",
       changelogLabel: "Notas al actualizar",
@@ -202,6 +222,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v232: {
+        title: "Valores predeterminados de transmutacion",
+        summary:
+          "Define calidad JPEG, compresion PNG, opciones AVIF y fondo alpha en Ajustes — cada herramienta arranca con tus valores.",
+        technical:
+          "Settings S2: transmutation-defaults.ts, build-default-options.ts, resolveSpecDefault por formato de salida. Almacenado en camaleon-user-settings-v1.transmutation. Vitest test:defaults. App v2.3.2.",
+        highlights: {
+          defaults: {
+            title: "Tus defaults de codificacion",
+            body: "Ajusta una vez en Ajustes; PNG→JPG, JPG→PNG, PNG→AVIF y rutas con alpha los usan en la siguiente conversion.",
+          },
+          settingsTools: {
+            title: "Seccion Herramientas en Ajustes",
+            body: "Nuevo bloque de defaults con restablecer fabrica — los sliders de cada herramienta siguen pudiendo sobreescribir en sesion.",
+          },
+        },
+      },
       v231: {
         title: "Panel de ajustes",
         summary:

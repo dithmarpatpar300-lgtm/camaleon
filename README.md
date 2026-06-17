@@ -2,11 +2,11 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v2.3.1** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v2.3.2** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v2.3.1)
+## What works today (v2.3.2)
 
 | Capability | Status |
 |------------|--------|
@@ -14,7 +14,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **WebP suite** | WebP→PNG/JPG; PNG/JPEG→WebP (lossless WebP) |
 | **GIF suite** | GIF→PNG/JPG; frame scrubber; GIF89a compositing; animated preview |
 | **BMP suite** | BMP→PNG/JPG; semantic alpha; growth warnings via Notice Rail |
-| **Settings panel (S1)** | Preferences drawer — language, theme, release notes control (**v2.3.1**) |
+| **Settings panel** | S1 drawer + **S2 transmutation defaults** (quality, compression, AVIF, alpha bg) (**v2.3.1–2.3.2**) |
 | **Operational Notice Rail** | Adaptive context for all 19 tools — slow-path, limits, fidelity (**v2.3.0**) |
 | **TIFF suite** | TIFF→PNG/JPG; multi-page picker; 16-bit normalization; palette/CMYK rejection |
 | **ICO suite** | ICO/CUR→PNG (multi-size picker); PNG→ICO (16/32/48/256, downscale only) |
@@ -31,7 +31,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 
-**Shipped on `dev` (v2.3.1):** Settings panel S1. **`main` (v2.3.0):** Notice Rail + AVIF encode. See [docs/ROADMAP.md](docs/ROADMAP.md).
+**Shipped on `dev` (v2.3.2):** Settings S2 transmutation defaults. **`main` (v2.3.0):** Notice Rail + AVIF encode. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 

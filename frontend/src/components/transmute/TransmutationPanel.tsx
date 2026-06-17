@@ -44,6 +44,8 @@ import { cn } from "@/lib/utils";
 import { Dropzone } from "./Dropzone";
 import { PageDropOverlay } from "./PageDropOverlay";
 import { FilePrepareGate } from "./FilePrepareGate";
+import { buildDefaultOptions } from "@/lib/transmutation/build-default-options";
+import { getEffectiveTransmutationDefaults } from "@/lib/prefs/transmutation-defaults";
 import { StagedWorkspace } from "./StagedWorkspace";
 
 type PanelStatus = "idle" | "preparing" | "staged" | "processing" | "success" | "error";
@@ -63,20 +65,6 @@ type TransmutationPanelProps = { tool: ToolDefinition };
 /** Duration that gate and workspace crossfade simultaneously. */
 const CROSSFADE_MS = 460;
 
-function buildDefaultOptions(specs: ToolDefinition["optionSpecs"]): TransmutationOptions {
-  const opts: TransmutationOptions = {};
-  if (!specs) return opts;
-  for (const s of specs) {
-    if (s.key === "background") {
-      opts.background = s.defaultValue as import("@/lib/tools/types").RgbColor;
-    } else {
-      opts[s.key] = s.defaultValue as number;
-    }
-  }
-  return opts;
-}
-
-
 export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const { t } = useI18n();
   const [status, setStatus] = useState<PanelStatus>("idle");
@@ -95,7 +83,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
    * simultaneously so they can crossfade. Cleared after CROSSFADE_MS.
    */
   const [crossfading, setCrossfading] = useState(false);
-  const [options, setOptions] = useState<TransmutationOptions>(() => buildDefaultOptions(tool.optionSpecs));
+  const [options, setOptions] = useState<TransmutationOptions>(() =>
+    buildDefaultOptions(tool.optionSpecs, tool)
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -309,7 +299,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setStaged(pending);
       setPendingFile(null);
       setOptions({
-        ...buildDefaultOptions(tool.optionSpecs),
+        ...buildDefaultOptions(tool.optionSpecs, tool),
         frameIndex: 0,
         pageIndex: 0,
         entryIndex: ctx.icoMeta?.defaultEntryIndex ?? 0,
@@ -531,7 +521,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setOversizeConsented(false);
     setAstroResizeMode(false);
     setResizing(false);
-    setOptions(buildDefaultOptions(tool.optionSpecs));
+    setOptions(buildDefaultOptions(tool.optionSpecs, tool));
     metrics.resetMetrics();
   }, [tool, metrics, prepared]);
 
@@ -583,8 +573,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   );
   const currentBackground =
     options.background ??
-    backgroundSpec?.defaultValue ??
-    { r: 255, g: 255, b: 255 };
+    (backgroundSpec ? getEffectiveTransmutationDefaults().alphaBackground : { r: 255, g: 255, b: 255 });
   const backgroundSwatches = backgroundSpec
     ? getOptionSpecStrings(tool.id, backgroundSpec, t).swatches
     : [];

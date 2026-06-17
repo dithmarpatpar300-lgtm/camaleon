@@ -1322,7 +1322,9 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Header:** `SettingsTrigger` (gear) in `UtilityCluster`; quick theme/locale toggles remain for one-click access.
 
-**Planned (S2–S5):** transmutation defaults, performance overrides, notice rail density, offline toolkit — see `docs/planning/settings_panel_plan.md`.
+**Planned (S3–S5):** performance overrides, notice rail density, offline toolkit — see `docs/planning/settings_panel_plan.md`.
+
+**S2 (v2.3.2):** Transmutation defaults — JPEG quality, PNG compression, AVIF quality/speed, alpha background; `resolveSpecDefault` + `build-default-options.ts`.
 
 **Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`.
 
@@ -1374,6 +1376,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 2.3.2-settings-s2 | 2026-06-11 | Chief Architect | §7.13 Settings S2 — transmutation defaults in drawer; app v2.3.2 | `docs/releases/v2.3.2.md` |
 | 2.3.1-settings-s1 | 2026-06-11 | Chief Architect | §7.13 User Settings Panel S1 shipped — drawer, utility cluster polish, static theme segment; app v2.3.1 | `docs/releases/v2.3.1.md` |
 | 2.3.0-notices | 2026-06-11 | Chief Architect | §7.12 Operational Notice Rail shipped — adaptive context for all 19 tools; legacy notice components removed; app v2.3.0 | `docs/releases/v2.3.0.md` |
 | 2.2.0-avif | 2026-06-11 | Chief Architect | Tier 3.2.0–3.2.2: `transmutador_avif_encode` PNG/JPEG→AVIF; split Wasm crate; quality+speed; engine v1.6.0; app v2.2.0; Tier 3.3 SVG analysis doc | `docs/releases/v2.2.0.md` |

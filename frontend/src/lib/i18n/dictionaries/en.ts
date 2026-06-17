@@ -119,6 +119,26 @@ const en: Dictionary = {
       themeLight: "Light",
       themeDark: "Dark",
     },
+    tools: {
+      section: "Transmutation defaults",
+      jpegQualityLabel: "JPEG quality",
+      jpegQualityHint: "Default for PNG/WebP/GIF/BMP/TIFF → JPEG and similar lossy routes.",
+      pngCompressionLabel: "PNG compression",
+      pngCompressionHint: "Default effort (1 fast – 9 smallest) for routes that output PNG.",
+      avifQualityLabel: "AVIF quality",
+      avifQualityHint: "Default for PNG/JPEG → AVIF encode tools.",
+      avifSpeedLabel: "AVIF encode speed",
+      avifSpeedHint: "Default ravif speed (1 slowest – 10 fastest) for AVIF encode.",
+      backgroundLabel: "Alpha flatten background",
+      backgroundHint: "Default background when transparency is flattened to JPEG.",
+      backgroundSwatches: {
+        white: "White background",
+        black: "Black background",
+        gray: "Gray background",
+      },
+      resetAction: "Reset to factory",
+      resetDone: "Transmutation defaults restored to factory values.",
+    },
     updates: {
       section: "Updates",
       changelogLabel: "Release notes on update",
@@ -202,6 +222,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v232: {
+        title: "Transmutation defaults",
+        summary:
+          "Set global JPEG quality, PNG compression, AVIF encode options, and alpha flatten background in Settings — every tool starts with your preferred values.",
+        technical:
+          "Settings S2: transmutation-defaults.ts, build-default-options.ts, resolveSpecDefault by output format. Stored in camaleon-user-settings-v1.transmutation. Vitest test:defaults. App v2.3.2.",
+        highlights: {
+          defaults: {
+            title: "Your encode defaults, everywhere",
+            body: "Adjust sliders once in Settings; PNG→JPG, JPG→PNG, PNG→AVIF, and alpha flatten routes pick them up on the next conversion.",
+          },
+          settingsTools: {
+            title: "Tools section in Settings",
+            body: "New Transmutation defaults block with reset to factory — session sliders on each tool still override when you need a one-off change.",
+          },
+        },
+      },
       v231: {
         title: "Settings panel",
         summary:

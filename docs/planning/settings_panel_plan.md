@@ -1,6 +1,6 @@
 # Settings / Opciones Panel — System Plan
 
-> **Status:** **S1 shipped** v2.3.1 on `dev` — shell + General + Updates  
+> **Status:** **S2 shipped** v2.3.2 on `dev` · **S1** v2.3.1  
 > **Scope:** User-facing preferences (local-first, `localStorage` only)  
 > **Doctrine:** NFR-1 privacy — no server sync; document keys in `/privacy`  
 > **SPEC anchor:** §7.13 User Settings Panel
@@ -22,7 +22,7 @@ Consolidate scattered browser preferences into a single **Settings drawer** whil
 |-------|----------|----------------------|---------|
 | **A — Global UX** | Theme, locale, animations | No | `localStorage` + cookies (SSR) |
 | **B — Comms** | Changelog on update, onboarding reset | No | `camaleon-user-settings-v1` |
-| **C — Transmutation defaults** | JPEG quality, PNG compression, alpha background | Yes — `TransmutationOptions` | Planned S2 |
+| **C — Transmutation defaults** | JPEG quality, PNG compression, alpha background, AVIF quality/speed | Yes — `TransmutationOptions` | `camaleon-user-settings-v1.transmutation` ✅ S2 |
 | **D — Performance** | Result cache, auto-estimate, resource tier | Yes — worker meta | Planned S3 |
 | **E — Session / tool** | Sliders in `StagedWorkspace` | Yes — per conversion | React state (not Settings) |
 
@@ -42,16 +42,16 @@ Consolidate scattered browser preferences into a single **Settings drawer** whil
 | View release history | Entry to `WhatsNewDrawer` | UI navigation |
 | Show welcome again | Reset onboarding flag | `camaleon-onboarding-complete` |
 
-### S2 — Transmutation defaults (planned)
+### S2 — Transmutation defaults ✅ (v2.3.2)
 
 | Default | Tools affected | Wasm field |
 |---------|----------------|------------|
-| JPEG quality | All → JPEG routes | `quality` |
-| PNG compression | All → PNG routes | `compression` |
-| Alpha flatten background | PNG/WebP/GIF → JPEG | `background` |
-| AVIF encode speed | PNG/JPEG → AVIF | `speed` |
+| JPEG quality | → JPEG (non-AVIF) | `quality` |
+| PNG compression | → PNG | `compression` |
+| Alpha flatten background | → JPEG with alpha | `background` |
+| AVIF quality / speed | → AVIF encode | `quality`, `speed` |
 
-Pattern: `getDefaultForTool(toolId, key) → userDefault[family] ?? toolRegistry.defaultValue`.
+Pattern: `resolveSpecDefault(tool, spec)` → user override ?? registry baseline.
 
 ### S3 — Performance (planned)
 
@@ -97,6 +97,10 @@ Pattern: `getDefaultForTool(toolId, key) → userDefault[family] ?? toolRegistry
 frontend/src/lib/prefs/
   prefs.ts              ← theme/locale bootstrap (existing)
   user-settings.ts      ← camaleon-user-settings-v1 schema
+  transmutation-defaults.ts ← global encode defaults (S2)
+
+frontend/src/lib/transmutation/
+  build-default-options.ts ← applies resolveSpecDefault per tool
 
 frontend/src/components/settings/
   SettingsDrawer.tsx    ← surface-raised right drawer (matches WhatsNewDrawer)
@@ -151,8 +155,8 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 
 ### S2 — Transmutation defaults
 
-- [ ] `transmutation-defaults.ts` + hook in `StagedWorkspace`
-- [ ] Settings section “Herramientas”
+- [x] `transmutation-defaults.ts` + hook in `TransmutationPanel` via `build-default-options.ts`
+- [x] Settings section “Transmutation defaults”
 - [ ] “Use as default” on tool panel (optional)
 
 ### S3 — Performance
