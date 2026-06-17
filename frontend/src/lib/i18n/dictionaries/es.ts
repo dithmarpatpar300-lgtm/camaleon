@@ -139,6 +139,24 @@ const es: Dictionary = {
       resetAction: "Restablecer fabrica",
       resetDone: "Valores de transmutacion restablecidos.",
     },
+    performance: {
+      section: "Rendimiento",
+      tierLabel: "Perfil de rendimiento",
+      tierHint: "Anula la deteccion adaptativa. Auto usa senales del dispositivo.",
+      tierAuto: "Auto",
+      tierConservative: "Conservador",
+      tierBalanced: "Equilibrado",
+      tierAggressive: "Agresivo",
+      cacheLabel: "Cache de resultados",
+      cacheHint: "Reutiliza la salida codificada al mover sliders en rutas compatibles.",
+      autoEstimateLabel: "Auto-estimar tamano",
+      autoEstimateHint: "Estima el tamano de salida al cambiar opciones.",
+      modeAuto: "Auto",
+      modeOn: "Si",
+      modeOff: "No",
+      resetAction: "Restablecer adaptativo",
+      resetDone: "Rendimiento restablecido a valores adaptativos.",
+    },
     updates: {
       section: "Actualizaciones",
       changelogLabel: "Notas al actualizar",
@@ -222,6 +240,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v233: {
+        title: "Ajustes de rendimiento",
+        summary:
+          "Anula el tier adaptativo, la cache de resultados y el auto-estimado desde Ajustes — los cambios se aplican al instante.",
+        technical:
+          "Settings S3: performance-prefs.ts, buildResourceProfileForTier, applyPerformancePrefs en useAdaptiveResourceProfile. Almacenado en camaleon-user-settings-v1.performance. Vitest test:performance. App v2.3.3.",
+        highlights: {
+          performancePrefs: {
+            title: "Ajusta a tu dispositivo",
+            body: "Elige Conservador, Equilibrado o Agresivo para anular la deteccion automatica — o fuerza cache y estimado de forma independiente.",
+          },
+          settingsPerformance: {
+            title: "Seccion Rendimiento en Ajustes",
+            body: "Nuevo bloque con segmentos Auto/Si/No y restablecer adaptativo — mismo patron estatico que el tema.",
+          },
+        },
+      },
       v232: {
         title: "Valores predeterminados de transmutacion",
         summary:

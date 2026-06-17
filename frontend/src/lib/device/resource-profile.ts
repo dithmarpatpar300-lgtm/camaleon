@@ -20,6 +20,33 @@ export type ResourceSignals = {
   visibilityState?: DocumentVisibilityState;
 };
 
+/** Tier-derived tuning knobs (shared by auto-detect and manual tier override). */
+export function buildResourceProfileForTier(
+  tier: ResourceTier,
+  fileSize: number,
+  score?: number
+): ResourceProfile {
+  const debounceMs = tier === "high" ? 400 : tier === "mid" ? 600 : 800;
+  const maxAutoEstimateBytes =
+    tier === "high" ? 40_000_000 : tier === "mid" ? 25_000_000 : 15_000_000;
+  const enableResultCache = tier !== "low";
+  const cacheMaxOutputBytes = tier === "high" ? 25_000_000 : tier === "mid" ? 15_000_000 : 0;
+  const cacheMaxEntries = tier === "high" ? 5 : tier === "mid" ? 3 : 0;
+  const autoEstimate = fileSize <= maxAutoEstimateBytes;
+  const resolvedScore = score ?? (tier === "high" ? 75 : tier === "mid" ? 50 : 25);
+
+  return {
+    score: resolvedScore,
+    tier,
+    debounceMs,
+    autoEstimate,
+    maxAutoEstimateBytes,
+    enableResultCache,
+    cacheMaxOutputBytes,
+    cacheMaxEntries,
+  };
+}
+
 export function computeResourceProfile(
   fileSize: number,
   signals: ResourceSignals
@@ -46,21 +73,5 @@ export function computeResourceProfile(
 
   const tier: ResourceTier = score >= 65 ? "high" : score >= 35 ? "mid" : "low";
 
-  const debounceMs = tier === "high" ? 400 : tier === "mid" ? 600 : 800;
-  const maxAutoEstimateBytes = tier === "high" ? 40_000_000 : tier === "mid" ? 25_000_000 : 15_000_000;
-  const enableResultCache = tier !== "low";
-  const cacheMaxOutputBytes = tier === "high" ? 25_000_000 : tier === "mid" ? 15_000_000 : 0;
-  const cacheMaxEntries = tier === "high" ? 5 : tier === "mid" ? 3 : 0;
-  const autoEstimate = fileSize <= maxAutoEstimateBytes;
-
-  return {
-    score,
-    tier,
-    debounceMs,
-    autoEstimate,
-    maxAutoEstimateBytes,
-    enableResultCache,
-    cacheMaxOutputBytes,
-    cacheMaxEntries,
-  };
+  return buildResourceProfileForTier(tier, fileSize, score);
 }

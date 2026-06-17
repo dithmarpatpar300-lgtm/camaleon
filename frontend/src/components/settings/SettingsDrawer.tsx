@@ -20,6 +20,7 @@ import { SettingsSwitch } from "./SettingsSwitch";
 import { ThemeSegment } from "./ThemeSegment";
 import { LanguageSegment } from "./LanguageSegment";
 import { TransmutationDefaultsSection } from "./TransmutationDefaultsSection";
+import { PerformanceSettingsSection } from "./PerformanceSettingsSection";
 
 const EXIT_MS = 240;
 
@@ -108,6 +109,8 @@ function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => vo
             </SettingsSection>
 
             <TransmutationDefaultsSection drawerOpen={open} />
+
+            <PerformanceSettingsSection drawerOpen={open} />
 
             <SettingsSection title={t("settings.updates.section")}>
               <SettingsRow

@@ -1,6 +1,6 @@
 # Settings / Opciones Panel — System Plan
 
-> **Status:** **S2 shipped** v2.3.2 on `dev` · **S1** v2.3.1  
+> **Status:** **S3 shipped** v2.3.3 on `dev` · **S2** v2.3.2 · **S1** v2.3.1  
 > **Scope:** User-facing preferences (local-first, `localStorage` only)  
 > **Doctrine:** NFR-1 privacy — no server sync; document keys in `/privacy`  
 > **SPEC anchor:** §7.13 User Settings Panel
@@ -23,7 +23,7 @@ Consolidate scattered browser preferences into a single **Settings drawer** whil
 | **A — Global UX** | Theme, locale, animations | No | `localStorage` + cookies (SSR) |
 | **B — Comms** | Changelog on update, onboarding reset | No | `camaleon-user-settings-v1` |
 | **C — Transmutation defaults** | JPEG quality, PNG compression, alpha background, AVIF quality/speed | Yes — `TransmutationOptions` | `camaleon-user-settings-v1.transmutation` ✅ S2 |
-| **D — Performance** | Result cache, auto-estimate, resource tier | Yes — worker meta | Planned S3 |
+| **D — Performance** | Result cache, auto-estimate, resource tier | Yes — worker meta | **S3 v2.3.3** |
 | **E — Session / tool** | Sliders in `StagedWorkspace` | Yes — per conversion | React state (not Settings) |
 
 **Model:** **Hybrid** — global for UX and performance; family defaults for encode knobs; per-tool session overrides in the workspace panel.
@@ -53,7 +53,7 @@ Consolidate scattered browser preferences into a single **Settings drawer** whil
 
 Pattern: `resolveSpecDefault(tool, spec)` → user override ?? registry baseline.
 
-### S3 — Performance (planned)
+### S3 — Performance ✅ (v2.3.3)
 
 | Setting | Maps to |
 |---------|---------|
@@ -98,6 +98,7 @@ frontend/src/lib/prefs/
   prefs.ts              ← theme/locale bootstrap (existing)
   user-settings.ts      ← camaleon-user-settings-v1 schema
   transmutation-defaults.ts ← global encode defaults (S2)
+  performance-prefs.ts      ← tier/cache/estimate overrides (S3)
 
 frontend/src/lib/transmutation/
   build-default-options.ts ← applies resolveSpecDefault per tool
@@ -109,6 +110,8 @@ frontend/src/components/settings/
   SettingsSwitch.tsx
   ThemeSegment.tsx
   LanguageSegment.tsx
+  SettingsModeSegment.tsx
+  PerformanceSettingsSection.tsx
 
 frontend/src/providers/
   SettingsProvider.tsx  ← open/close + mount drawer
@@ -161,8 +164,10 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 
 ### S3 — Performance
 
-- [ ] Override `computeResourceProfile`
-- [ ] Settings section “Rendimiento”
+- [x] `performance-prefs.ts` + `applyPerformancePrefs`
+- [x] `buildResourceProfileForTier` refactor
+- [x] Settings section “Performance” / “Rendimiento”
+- [x] Live re-apply via `subscribePerformancePrefs`
 
 ### S4 — Notices
 

@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { computeResourceProfile, type ResourceProfile, type ResourceSignals } from "@/lib/device/resource-profile";
+import {
+  applyPerformancePrefs,
+  readPerformancePrefs,
+  subscribePerformancePrefs,
+} from "@/lib/prefs/performance-prefs";
 
 type NavConnection = {
   effectiveType?: string;
@@ -12,6 +17,7 @@ type NavConnection = {
 
 export function useAdaptiveResourceProfile(fileSize: number): ResourceProfile {
   const [signals, setSignals] = useState<ResourceSignals>({});
+  const [prefsRevision, setPrefsRevision] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -39,8 +45,10 @@ export function useAdaptiveResourceProfile(fileSize: number): ResourceProfile {
     };
   }, []);
 
-  return useMemo(
-    () => computeResourceProfile(fileSize, signals),
-    [fileSize, signals]
-  );
+  useEffect(() => subscribePerformancePrefs(() => setPrefsRevision((v) => v + 1)), []);
+
+  return useMemo(() => {
+    const base = computeResourceProfile(fileSize, signals);
+    return applyPerformancePrefs(base, readPerformancePrefs(), fileSize);
+  }, [fileSize, signals, prefsRevision]);
 }

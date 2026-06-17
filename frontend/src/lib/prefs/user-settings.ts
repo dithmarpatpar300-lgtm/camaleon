@@ -10,11 +10,25 @@ export type TransmutationDefaults = {
   avifSpeed?: number;
 };
 
+export type PerformanceTierMode = "auto" | "conservative" | "balanced" | "aggressive";
+export type PerformanceToggleMode = "auto" | "on" | "off";
+
+export type PerformancePrefs = {
+  /** Override adaptive tier detection. */
+  tier?: PerformanceTierMode;
+  /** Result cache for slider re-encode paths. */
+  resultCache?: PerformanceToggleMode;
+  /** Auto-run size estimate when options change. */
+  autoEstimate?: PerformanceToggleMode;
+};
+
 export type UserSettings = {
   /** When false, skip auto changelog modal on version bump; What's New remains available. */
   showChangelogOnUpdate: boolean;
   /** Global transmutation slider defaults (S2). Empty = use registry baselines. */
   transmutation?: TransmutationDefaults;
+  /** Performance overrides (S3). Empty = fully adaptive. */
+  performance?: PerformancePrefs;
 };
 
 const DEFAULTS: UserSettings = {
@@ -40,6 +54,7 @@ export function readUserSettings(): UserSettings {
         ? merged.showChangelogOnUpdate
         : DEFAULTS.showChangelogOnUpdate,
     transmutation: merged.transmutation,
+    performance: merged.performance,
   };
 }
 

@@ -1322,9 +1322,11 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Header:** `SettingsTrigger` (gear) in `UtilityCluster`; quick theme/locale toggles remain for one-click access.
 
-**Planned (S3–S5):** performance overrides, notice rail density, offline toolkit — see `docs/planning/settings_panel_plan.md`.
-
 **S2 (v2.3.2):** Transmutation defaults — JPEG quality, PNG compression, AVIF quality/speed, alpha background; `resolveSpecDefault` + `build-default-options.ts`.
+
+**S3 (v2.3.3):** Performance overrides — tier (conservative/balanced/aggressive), result cache, auto-estimate; `performance-prefs.ts` + `applyPerformancePrefs` in `useAdaptiveResourceProfile`.
+
+**Planned (S4–S5):** notice rail density, offline toolkit — see `docs/planning/settings_panel_plan.md`.
 
 **Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`.
 
@@ -1376,6 +1378,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 2.3.3-settings-s3 | 2026-06-11 | Chief Architect | §7.13 Settings S3 — performance overrides in drawer; app v2.3.3 | `docs/releases/v2.3.3.md` |
 | 2.3.2-settings-s2 | 2026-06-11 | Chief Architect | §7.13 Settings S2 — transmutation defaults in drawer; app v2.3.2 | `docs/releases/v2.3.2.md` |
 | 2.3.1-settings-s1 | 2026-06-11 | Chief Architect | §7.13 User Settings Panel S1 shipped — drawer, utility cluster polish, static theme segment; app v2.3.1 | `docs/releases/v2.3.1.md` |
 | 2.3.0-notices | 2026-06-11 | Chief Architect | §7.12 Operational Notice Rail shipped — adaptive context for all 19 tools; legacy notice components removed; app v2.3.0 | `docs/releases/v2.3.0.md` |

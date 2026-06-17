@@ -139,6 +139,24 @@ const en: Dictionary = {
       resetAction: "Reset to factory",
       resetDone: "Transmutation defaults restored to factory values.",
     },
+    performance: {
+      section: "Performance",
+      tierLabel: "Performance profile",
+      tierHint: "Override adaptive tier detection. Auto uses device signals.",
+      tierAuto: "Auto",
+      tierConservative: "Conservative",
+      tierBalanced: "Balanced",
+      tierAggressive: "Aggressive",
+      cacheLabel: "Result cache",
+      cacheHint: "Reuse encoded output when sliders change on supported routes.",
+      autoEstimateLabel: "Auto-estimate size",
+      autoEstimateHint: "Run output size estimate when options change.",
+      modeAuto: "Auto",
+      modeOn: "On",
+      modeOff: "Off",
+      resetAction: "Reset to adaptive",
+      resetDone: "Performance settings restored to adaptive defaults.",
+    },
     updates: {
       section: "Updates",
       changelogLabel: "Release notes on update",
@@ -222,6 +240,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v233: {
+        title: "Performance settings",
+        summary:
+          "Override adaptive tier, result cache, and auto-estimate from Settings — changes apply live without reloading.",
+        technical:
+          "Settings S3: performance-prefs.ts, buildResourceProfileForTier, applyPerformancePrefs in useAdaptiveResourceProfile. Stored in camaleon-user-settings-v1.performance. Vitest test:performance. App v2.3.3.",
+        highlights: {
+          performancePrefs: {
+            title: "Tune for your device",
+            body: "Pick Conservative, Balanced, or Aggressive to override auto tier detection — or force cache and estimate on/off independently.",
+          },
+          settingsPerformance: {
+            title: "Performance section in Settings",
+            body: "New Performance block with Auto/On/Off segments and reset to adaptive — same static segment pattern as theme.",
+          },
+        },
+      },
       v232: {
         title: "Transmutation defaults",
         summary:
