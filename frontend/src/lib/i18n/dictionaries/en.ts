@@ -171,6 +171,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v230: {
+        title: "Operational Notice Rail",
+        summary:
+          "A new context rail in every conversion tool explains when estimation or transmutation may take longer, when limits apply, and when format-specific caveats matter — adaptive across all 19 tools.",
+        technical:
+          "NoticeRail + lib/notices resolvers (limit, fidelity, performance, estimate). tool-notice-profiles.ts per tool; L0–L3 cost tiers; useEstimateElapsed; cacheReadySlow; FilePrepareGate detailLabel. Vitest test:notices. Legacy notice components removed. App v2.3.0.",
+        highlights: {
+          noticeRail: {
+            title: "Context rail for every tool",
+            body: "Up to two prioritized notices between options and size metrics — warnings, limits, and format honesty without modal fatigue.",
+          },
+          adaptivePerf: {
+            title: "Adaptive slow-path guidance",
+            body: "AVIF encode, large megapixel files, low speed presets, and elevated byte zones trigger clear, friendly expectations before you transmute.",
+          },
+          estimateLifecycle: {
+            title: "Smarter estimate & transmute feedback",
+            body: "Long-running estimates show progress copy after 3 seconds; heavy settings get a “may take a while” ready state and transmute spinner hints.",
+          },
+        },
+      },
       v220: {
         title: "PNG & JPEG → AVIF",
         summary:
@@ -517,15 +538,8 @@ const en: Dictionary = {
     engineInit: "Initializing...",
     engineLabel: "Engine: {status}",
     fmtError: "This tool accepts: {formats}",
-    notReadyError: "Engine is still initializing. Please wait a moment and try again.",
     unexpectedError: "An unexpected error occurred",
     prepareFailed: "Could not prepare this file. Try another image or a different format.",
-    transmuteUnavailable: "File exceeds engine limit",
-    largeFile: {
-      title: "File exceeds engine limit",
-      body: "This file is larger than the {limit} limit. You can adjust options, but conversion is disabled until you use a smaller file.",
-      bmpBody: "Uncompressed BMP files grow quickly — this file exceeds the {limit} limit. Resize or re-export from source before converting.",
-    },
     hardLimit: {
       title: "File too large",
       body: "This file exceeds the maximum supported size ({limit}). Try resizing it or use a desktop tool before converting here.",
@@ -570,9 +584,6 @@ const en: Dictionary = {
     resizedMeta: {
       notice: "Resized from {width} × {height} — original file unchanged",
     },
-    outputSizeNotice: {
-      body: "Estimated output is {size} — above the usual {limit} threshold. Conversion can continue; processing may take longer and use more memory.",
-    },
     previewAlt: "Preview of {fileName}",
     transparencyNotice: {
       title: "This image has transparency",
@@ -593,6 +604,7 @@ const en: Dictionary = {
       pixelsBlocked: "Dimensions exceed the browser limit — estimate unavailable.",
       estimateInterrupted: "Estimate was interrupted — tap Calculate again.",
       cacheReady: "Ready to transmute",
+      cacheReadySlow: "Ready — conversion may take a while on this file and settings",
     },
     avifFrame: {
       hint: "Frames load in the background — once ready, scrubbing is instant. Pick which frame to export.",
@@ -607,9 +619,6 @@ const en: Dictionary = {
       loadingMeta: "Reading GIF frames…",
       loadingPreview: "Rendering preview…",
       noPreview: "Preview unavailable",
-    },
-    bmpEstimate: {
-      growthWarning: "Estimated PNG is larger than this BMP — noisy or high-entropy content may not compress well with DEFLATE.",
     },
     tiffPage: {
       title: "TIFF page",
@@ -948,6 +957,41 @@ const en: Dictionary = {
     avifFrameRange: "That animation frame does not exist. Pick a frame within the file.",
     engineNotReady: "The transmutation engine is still starting. Please try again.",
     generic: "Transmutation failed. Please try again.",
+  },
+
+  notices: {
+    performance: {
+      L1: "This conversion may take a few seconds depending on file size and options.",
+      L2: "Estimate and transmutation may take longer on this file — processing runs entirely in your browser on one CPU core.",
+      L2SlowEncode: "Low encode speed prioritizes compression over time — updating the estimate or transmuting may take several minutes on large images. Try a higher speed preset for faster results.",
+      L3: "Large file or heavy settings — conversion may take several minutes. Avoid changing sliders while an estimate is running.",
+      L3SlowEncode: "Low encode speed on a large or elevated file — this may take several minutes. Raise encode speed or reduce dimensions before transmuting.",
+    },
+    limit: {
+      outputSize:
+        "Estimated output is {size} — above the usual {limit} threshold. Conversion can continue; processing may take longer and use more memory.",
+      nearPixelLimit:
+        "This image is near the {megapixels} MP browser limit — conversion uses significant memory.",
+      highRamPeak:
+        "Large-file mode — peak memory use will be higher than usual. Close other heavy tabs if the browser feels slow.",
+      astroTier:
+        "Very large dimensions — use the resize presets above to downscale before conversion.",
+    },
+    fidelity: {
+      bmpPngGrowth:
+        "BMP to PNG often increases file size — PNG stores the full uncompressed raster.",
+    },
+    estimate: {
+      cheapSlow: "Still calculating…",
+      moderateSlow: "Still calculating — this format may take a moment for an accurate size.",
+      expensiveSlow:
+        "Still calculating — this tool runs a full preview encode for an accurate size estimate.",
+      errorRaw: "{message}",
+    },
+    transmute: {
+      slowL2: "Transmuting — this may take a while on your current settings.",
+      slowL3: "Transmuting — large file or heavy settings; please keep this tab open.",
+    },
   },
 
   toast: {

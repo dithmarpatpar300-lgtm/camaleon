@@ -171,6 +171,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v230: {
+        title: "Rail de avisos operacionales",
+        summary:
+          "Un nuevo rail de contexto en cada herramienta explica cuándo la estimación o transmutación pueden tardar más, cuándo aplican límites y avisos específicos del formato — adaptativo en las 19 herramientas.",
+        technical:
+          "NoticeRail + resolvers lib/notices (limit, fidelity, performance, estimate). tool-notice-profiles.ts por herramienta; tiers L0–L3; useEstimateElapsed; cacheReadySlow; detailLabel en FilePrepareGate. Vitest test:notices. Componentes legacy eliminados. App v2.3.0.",
+        highlights: {
+          noticeRail: {
+            title: "Rail de contexto en cada herramienta",
+            body: "Hasta dos avisos priorizados entre opciones y métricas — advertencias, límites y honestidad de formato sin modales invasivos.",
+          },
+          adaptivePerf: {
+            title: "Guía adaptativa en rutas lentas",
+            body: "Encode AVIF, archivos de muchos megapíxeles, presets de velocidad baja y zonas elevadas muestran expectativas claras antes de transmutar.",
+          },
+          estimateLifecycle: {
+            title: "Feedback más inteligente en estimación y transmutación",
+            body: "Estimaciones largas muestran copy de progreso tras 3 segundos; ajustes pesados obtienen estado “puede tardar” y hints en el spinner.",
+          },
+        },
+      },
       v220: {
         title: "PNG y JPEG → AVIF",
         summary:
@@ -517,15 +538,8 @@ const es: Dictionary = {
     engineInit: "Inicializando...",
     engineLabel: "Motor: {status}",
     fmtError: "Esta herramienta acepta: {formats}",
-    notReadyError: "El motor aun esta inicializando. Espera un momento e intentalo de nuevo.",
     unexpectedError: "Ocurrio un error inesperado",
     prepareFailed: "No se pudo preparar este archivo. Prueba otra imagen o un formato distinto.",
-    transmuteUnavailable: "Archivo supera el limite del motor",
-    largeFile: {
-      title: "Archivo supera el limite del motor",
-      body: "Este archivo es mayor que el limite de {limit}. Puedes ajustar opciones, pero la conversion esta deshabilitada hasta usar un archivo mas pequeno.",
-      bmpBody: "Los BMP sin comprimir crecen rapido — este archivo supera el limite de {limit}. Reduce dimensiones o reexporta desde el origen antes de convertir.",
-    },
     hardLimit: {
       title: "Archivo demasiado grande",
       body: "Este archivo supera el tamano maximo admitido ({limit}). Intenta reducirlo o usa una herramienta de escritorio antes de convertir aqui.",
@@ -570,9 +584,6 @@ const es: Dictionary = {
     resizedMeta: {
       notice: "Redimensionado desde {width} × {height} — archivo original sin cambios",
     },
-    outputSizeNotice: {
-      body: "La salida estimada es {size} — por encima del umbral habitual de {limit}. La conversion puede continuar; el proceso puede tardar mas y usar mas memoria.",
-    },
     previewAlt: "Vista previa de {fileName}",
     transparencyNotice: {
       title: "Esta imagen tiene transparencia",
@@ -593,6 +604,7 @@ const es: Dictionary = {
       pixelsBlocked: "Las dimensiones superan el limite del navegador — estimacion no disponible.",
       estimateInterrupted: "La estimacion se interrumpio — toca Calcular de nuevo.",
       cacheReady: "Listo para transmutar",
+      cacheReadySlow: "Listo — la conversión puede tardar con este archivo y ajustes",
     },
     avifFrame: {
       hint: "Los fotogramas cargan en segundo plano — al terminar, el deslizador responde al instante. Elige cual exportar.",
@@ -607,9 +619,6 @@ const es: Dictionary = {
       loadingMeta: "Leyendo fotogramas del GIF…",
       loadingPreview: "Generando vista previa…",
       noPreview: "Vista previa no disponible",
-    },
-    bmpEstimate: {
-      growthWarning: "El PNG estimado es mayor que este BMP — contenido ruidoso o de alta entropia puede comprimirse peor con DEFLATE.",
     },
     tiffPage: {
       title: "Pagina TIFF",
@@ -934,6 +943,41 @@ const es: Dictionary = {
     avifFrameRange: "Ese fotograma no existe. Elige un fotograma dentro del archivo.",
     engineNotReady: "El motor de transmutacion aun esta iniciando. Intentalo de nuevo.",
     generic: "La transmutacion fallo. Intentalo de nuevo.",
+  },
+
+  notices: {
+    performance: {
+      L1: "Esta conversion puede tardar unos segundos segun el tamano y las opciones.",
+      L2: "La estimacion y transmutacion pueden tardar mas en este archivo — el proceso corre en tu navegador en un solo nucleo.",
+      L2SlowEncode: "Velocidad de encode baja — prioriza compresion sobre tiempo. Actualizar la estimacion o transmutar puede tardar varios minutos en imagenes grandes. Prueba un preset de velocidad mas alto.",
+      L3: "Archivo grande o ajustes exigentes — la conversion puede tardar varios minutos. Evita mover sliders mientras corre una estimacion.",
+      L3SlowEncode: "Velocidad de encode baja en un archivo grande o elevado — puede tardar varios minutos. Sube la velocidad de encode o reduce dimensiones antes de transmutar.",
+    },
+    limit: {
+      outputSize:
+        "La salida estimada es {size} — por encima del umbral habitual de {limit}. La conversion puede continuar; el proceso puede tardar mas y usar mas memoria.",
+      nearPixelLimit:
+        "Esta imagen esta cerca del limite de {megapixels} MP del navegador — la conversion usa mucha memoria.",
+      highRamPeak:
+        "Modo archivo grande — el pico de memoria sera mayor de lo habitual. Cierra otras pestanas pesadas si el navegador va lento.",
+      astroTier:
+        "Dimensiones muy grandes — usa los presets de redimension arriba antes de convertir.",
+    },
+    fidelity: {
+      bmpPngGrowth:
+        "BMP a PNG suele aumentar el tamano — PNG almacena el raster sin comprimir.",
+    },
+    estimate: {
+      cheapSlow: "Calculando…",
+      moderateSlow: "Calculando — este formato puede tardar un momento para un tamano preciso.",
+      expensiveSlow:
+        "Calculando — esta herramienta ejecuta un encode de vista previa completo para estimar el tamano.",
+      errorRaw: "{message}",
+    },
+    transmute: {
+      slowL2: "Transmutando — puede tardar con los ajustes actuales.",
+      slowL3: "Transmutando — archivo grande o ajustes exigentes; mantén esta pestaña abierta.",
+    },
   },
 
   toast: {

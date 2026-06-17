@@ -6,6 +6,8 @@ import { formatBytes } from "@/lib/format/bytes";
 import { Button } from "@/components/ui/Button";
 import type { SizeDelta } from "@/lib/format/metrics";
 import type { LimitBlockReason } from "@/lib/transmutation/limit-context";
+import type { CostTier } from "@/lib/notices/types";
+import { resolveCacheReadyKey } from "@/lib/notices/resolve-ready-label";
 import { cn } from "@/lib/utils";
 
 type MetricsPanelProps = {
@@ -18,6 +20,7 @@ type MetricsPanelProps = {
   cacheWarm: boolean;
   autoEstimate: boolean;
   ready: boolean;
+  costTier?: CostTier;
   onRequestEstimate: () => void;
 };
 
@@ -31,10 +34,12 @@ export function MetricsPanel({
   cacheWarm,
   autoEstimate,
   ready,
+  costTier = "L0",
   onRequestEstimate,
 }: MetricsPanelProps) {
   const { t } = useI18n();
   const showCacheHint = cacheWarm && !estimating;
+  const cacheReadyKey = resolveCacheReadyKey(costTier);
 
   return (
     <div className="mb-3 rounded-xl border border-border/50 bg-bg-elevated/80 px-4 py-2.5 text-xs">
@@ -72,9 +77,6 @@ export function MetricsPanel({
       {canEstimate && !autoEstimate && !estimateDelta && !estimating && !estimateError && (
         <p className="py-1 text-text-muted">{t("panel.metrics.largeFileHint")}</p>
       )}
-      {estimateError && (
-        <p className="py-1 text-error" role="alert">{estimateError}</p>
-      )}
       <p
         className={cn(
           "py-1 text-center text-text-muted transition-opacity duration-300",
@@ -83,7 +85,7 @@ export function MetricsPanel({
         aria-live="polite"
         aria-hidden={!showCacheHint}
       >
-        {t("panel.metrics.cacheReady")}
+        {t(cacheReadyKey)}
       </p>
     </div>
   );

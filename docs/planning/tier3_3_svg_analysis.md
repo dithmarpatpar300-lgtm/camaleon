@@ -473,7 +473,8 @@ set_session_input_limit / reset_session_input_limit
 
 | Item | Notes |
 |------|-------|
-| **AVIF encode slow UX** | Friendly warnings for large PNG + low speed (user-requested; defer post-3.3.0) |
+| **AVIF encode slow UX** | ✅ Shipped via **Operational Notice Rail** (`docs/planning/notice_system_plan.md`) — Phases A–D |
+| **SVG rasterize slow UX (Phase E)** | Wire `transmutador_svg` in `tool-notice-profiles.ts`: `estimateCost/transmuteCost: expensive`; factors `outputWidth`, `outputHeight`, `has_filters`; reuse `notices.estimate.fullRender` pattern |
 | **SVG → AVIF** | Revisit after 3.3 stable if demand |
 | **SVG animation export** | GIF/WebP sequence — far horizon |
 | **Raster → SVG trace** | Different ladder — not format swap |

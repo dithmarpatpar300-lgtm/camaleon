@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v2.2.0** (`dev`) | Tier 3.2 complete — PNG/JPEG→AVIF (Phase 3.2.0–3.2.2) |
+| **Frontend (app)** | **v2.3.0** (`dev`) | Operational Notice Rail — adaptive UX for all 19 tools |
 | **Engine (Rust workspace)** | v1.6.0 | Eleven Wasm crates incl. **`transmutador_avif`** + **`transmutador_avif_encode`** |
-| **SPEC** | v2.2.0-avif | §6.10–6.11 AVIF decode/encode; `docs/LIMIT_PIPELINE.md` |
+| **SPEC** | v2.3.0-notices | §7.12 Notice Rail; §6.10–6.11 AVIF decode/encode |
 
-**v2.2.0** (`dev`): **PNG/JPEG→AVIF** encode pair + split Wasm crate. **19 tools.** Release: `docs/releases/v2.2.0.md`. Next: **Tier 3.3** SVG spike · `docs/planning/tier3_3_svg_analysis.md`
+**v2.3.0** (`dev`): **Operational Notice Rail** — contextual warnings for estimate/transmute latency, limits, fidelity. **19 tools.** Release: `docs/releases/v2.3.0.md`. Next: **Tier 3.3** SVG spike · `docs/planning/tier3_3_svg_analysis.md`
+
+**v2.2.0** (`dev`): **PNG/JPEG→AVIF** encode pair. Release: `docs/releases/v2.2.0.md`.
 
 **v2.1.1** (`main`): **AVIF→JPEG** + animated preview UX. **17 tools.** Release: `docs/releases/v2.1.1.md`.
 

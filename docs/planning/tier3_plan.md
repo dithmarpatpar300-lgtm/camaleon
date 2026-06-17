@@ -570,7 +570,7 @@ Full format science, parameter model, security, spike gates, and phase checklist
 
 **One-line doctrine:** SVG is a **vector scene**, not a pixel codec; Camaleon **rasterizes** at user-chosen dimensions, then reuses the PNG/JPEG encoders. Implementation starts with **3.3.0 spike** only after Chief Architect go/no-go.
 
-**Backlog (user-requested, not blocking 3.3):** friendly UX warnings when **AVIF encode** (or SVG rasterize at huge output size) may take several minutes on large inputs — same honesty class as NFR-8.
+**Notice Rail (shipped):** operational context warnings for slow estimate/transmute — `docs/planning/notice_system_plan.md`. AVIF encode UX ✅; SVG rasterize hooks in **Phase E** at 3.3 implementation.
 
 ---
 
@@ -588,6 +588,8 @@ Full format science, parameter model, security, spike gates, and phase checklist
 | `docs/releases/v2.1.1.md` | **Shipped v2.1.1** (Phase 3.1.2 + preview UX) |
 | `docs/planning/tier3_2_avif_encode_spike_results.md` | ✅ Phase 3.2.0 encode spike |
 | `docs/planning/tier3_3_svg_analysis.md` | ✅ Phase 3.3 format science & plan (pre-spike) |
+| `docs/planning/notice_system_plan.md` | ✅ Operational Notice Rail — **shipped v2.3.0** |
+| `docs/releases/v2.3.0.md` | **Shipped v2.3.0** — Notice Rail UX |
 | `docs/ROADMAP.md` backlog row | PWA / offline shell — owner phase **3.5.x** |
 | `motor_transmutacion/transmutador_webp/` | Closest implementation mirror |
 

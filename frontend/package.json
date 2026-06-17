@@ -1,12 +1,14 @@
 {
   "name": "camaleon-frontend",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:notices": "vitest run src/lib/notices",
     "test:semantic-alpha": "node scripts/verify-needs-semantic-alpha.mjs",
     "build:wasm": "node scripts/build-wasm.mjs",
     "build:cf": "opennextjs-cloudflare build && node scripts/sync-wasm-assets.mjs",
@@ -26,6 +28,7 @@
     "@types/react-dom": "^19.0.0",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.7.0",
+    "vitest": "^3.2.4",
     "wrangler": "^4.98.0"
   }
 }

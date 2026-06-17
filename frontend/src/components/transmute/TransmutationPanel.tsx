@@ -31,6 +31,9 @@ import { getOptionSpecStrings, resolveToolFidelityHint } from "@/lib/i18n/tool-c
 import { downscaleImageBytes } from "@/lib/imaging/downscale";
 import { releaseFramePreviewSessions } from "@/lib/imaging/frame-preview-cache";
 import { resolvePostResizeWasmConfig, supportsClientResize } from "@/lib/imaging/post-resize-route";
+import { computeCostTier } from "@/lib/notices/compute-performance-notices";
+import { computeTransmuteDetailKey } from "@/lib/notices/compute-estimate-notices";
+import type { ToolNoticeContext } from "@/lib/notices/tool-notice-profiles";
 import { mimeTypeForTool } from "@/lib/imaging/supports-client-resize";
 import { assessSemanticAlpha, needsSemanticAlpha } from "@/lib/semantic-alpha";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
@@ -588,6 +591,40 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   const activeFile = pendingFile ?? staged;
 
+  const transmuteNoticeContext: ToolNoticeContext = useMemo(
+    () => ({
+      sourceMeta: prepared?.sourceMeta ?? null,
+      animatedFrameCount:
+        prepared?.gifSession?.is_animated
+          ? prepared.gifSession.frame_count
+          : undefined,
+    }),
+    [prepared]
+  );
+
+  const transmuteDetailLabel = useMemo(() => {
+    if (status !== "processing" || !prepared) return undefined;
+    const tier = computeCostTier({
+      toolId: tool.id,
+      sourceMeta: prepared.sourceMeta,
+      options,
+      zone: metrics.limitContext.zone,
+      resourceProfile: profile,
+      noticeContext: transmuteNoticeContext,
+    });
+    const key = computeTransmuteDetailKey(tier);
+    return key ? t(key) : undefined;
+  }, [
+    status,
+    prepared,
+    tool.id,
+    options,
+    metrics.limitContext.zone,
+    profile,
+    transmuteNoticeContext,
+    t,
+  ]);
+
   return (
     <div className="space-y-6">
       {status === "idle" && (
@@ -686,6 +723,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
             progress={processingProgress}
             phase="transmuting"
             phaseLabelKey="prepare.phases.transmuting"
+            detailLabel={transmuteDetailLabel}
           />
         </div>
       )}

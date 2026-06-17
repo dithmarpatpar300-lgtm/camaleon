@@ -8,6 +8,7 @@ import {
   formatMegapixels,
   pixelCountFromMeta,
 } from "@/lib/transmutation/limit-context";
+import { isNearPixelLimit } from "@/lib/notices/pixel-limit";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/providers/I18nProvider";
@@ -28,10 +29,7 @@ export function OversizeConsentPanel({
     estimatePeakRamBytes(fileSize, sourceMeta?.width, sourceMeta?.height)
   );
   const pixelCount = pixelCountFromMeta(sourceMeta);
-  const nearPixelLimit =
-    pixelCount != null &&
-    pixelCount <= MAX_PIXELS &&
-    pixelCount >= MAX_PIXELS * 0.9;
+  const nearPixelLimit = isNearPixelLimit(pixelCount);
 
   return (
     <div

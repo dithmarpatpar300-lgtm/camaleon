@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 2.2.0-avif  
+**Version:** 2.3.0-notices  
 **Last updated:** 2026-06-11  
-**Status:** v2.2.0 on `dev` — Tier 3.2 AVIF encode pair complete (Phase 3.2.0–3.2.2); Engine v1.6.0
+**Status:** v2.3.0 on `dev` — Operational Notice Rail (all 19 tools); Engine v1.6.0 unchanged
 
 ---
 
@@ -1128,11 +1128,11 @@ components/
 │               # ✅ CommandPalette (UI-7)
 │               # ✅ UtilityCluster, KeyboardShortcutsDialog (v1.6.0)
 │               # □ Mega-menu (deferred per §7.7)
-├── transmute/  # ✅ ToolCard, ToolGrid, Dropzone, TransmutationDropzone,
-                #   Hero, PrivacyBanner (UI-2)
-                # ✅ OptionsControls, TransmutationPanel (UI-3)
-                # ✅ TransparencyNotice, BackgroundColorPill, PageDropOverlay (UI-6 / pill v1.2.0-patch)
+├── transmute/  # ✅ ToolCard, ToolGrid, Dropzone, Hero, PrivacyBanner (UI-2)
+                # ✅ OptionsControls, TransmutationPanel, NoticeRail, NoticePanel (v2.3.0)
+                # ✅ TransparencyNotice, BackgroundColorPill, PageDropOverlay (UI-6)
                 # ✅ MetricsPanel + EstimatedMetricsValue SWR animation (v1.5.0)
+                # ✅ OversizeConsentPanel, DimensionsBlockPanel, AstroResizePanel (limits)
 providers/      # ✅ ThemeProvider (UI-1)
                 # ✅ I18nProvider (UI-4)
                 # ✅ ToastProvider (UI-6)
@@ -1292,6 +1292,20 @@ Every push to `main` that users should **notice** must go through the Release Co
 
 This UI track runs after the §5.8 backend refinements (now complete) and feeds Phase 4 MVP polish per ROADMAP.
 
+### 7.12 Operational Notice Rail (Implemented — v2.3.0)
+
+**Purpose:** Centralize non-blocking contextual notices in the staged transmutation workspace — performance expectations, limit warnings, fidelity hints, and estimate lifecycle copy.
+
+**Placement:** `NoticeRail` between `OptionsControls` and `MetricsPanel` in `StagedWorkspace` (max 2 visible notices).
+
+**Severity model:** `error` | `warn` | `info` | `status`.
+
+**Adaptive profiles:** `frontend/src/lib/notices/tool-notice-profiles.ts` — per-tool `estimateCost` / `transmuteCost` decoupled from `ToolRegistry`.
+
+**Blocking panels unchanged:** `OversizeConsentPanel`, `DimensionsBlockPanel`, `AstroResizePanel` remain dedicated CTAs.
+
+**Reference:** `docs/planning/notice_system_plan.md`
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -1340,6 +1354,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 2.3.0-notices | 2026-06-11 | Chief Architect | §7.12 Operational Notice Rail shipped — adaptive context for all 19 tools; legacy notice components removed; app v2.3.0 | `docs/releases/v2.3.0.md` |
 | 2.2.0-avif | 2026-06-11 | Chief Architect | Tier 3.2.0–3.2.2: `transmutador_avif_encode` PNG/JPEG→AVIF; split Wasm crate; quality+speed; engine v1.6.0; app v2.2.0; Tier 3.3 SVG analysis doc | `docs/releases/v2.2.0.md` |
 | 2.1.1-avif | 2026-06-11 | Chief Architect | Tier 3.1.2: AVIF→JPEG; frame-preview worker + cache; estimate/transmute sync; engine v1.5.1; app v2.1.1 | `docs/releases/v2.1.1.md` |
 | 2.0.0-avif | 2026-06-11 | Chief Architect | Tier 3.1.0–3.1.1: `transmutador_avif` AVIF→PNG; animated frame scrubber; limit pipeline hotfixes + `docs/LIMIT_PIPELINE.md`; engine v1.5.0; app v2.0.0 | `docs/releases/v2.0.0.md` |

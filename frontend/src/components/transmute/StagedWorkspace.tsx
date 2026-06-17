@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { sessionLimitForBytes } from "@/lib/transmutation/limits";
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
@@ -24,10 +25,13 @@ import { GifFrameScrubber } from "./GifFrameScrubber";
 import { OversizeConsentPanel } from "./OversizeConsentPanel";
 import { DimensionsBlockPanel } from "./DimensionsBlockPanel";
 import { AstroResizePanel } from "./AstroResizePanel";
-import { OutputSizeNotice } from "./OutputSizeNotice";
-import { BmpPngGrowthNotice } from "./BmpPngGrowthNotice";
 import { SourceImageMetaLine } from "./SourceImageMetaLine";
 import { ResizedMetaNotice } from "./ResizedMetaNotice";
+import { NoticeRail } from "./NoticeRail";
+import { useEstimateElapsed } from "@/hooks/useEstimateElapsed";
+import { computeStagedNotices } from "@/lib/notices/compute-staged-notices";
+import { computeCostTier } from "@/lib/notices/compute-performance-notices";
+import type { ToolNoticeContext } from "@/lib/notices/tool-notice-profiles";
 import { useI18n } from "@/providers/I18nProvider";
 
 type StagedWorkspaceProps = {
@@ -112,7 +116,6 @@ export function StagedWorkspace({
   const isAvifTool = tool.id === "avif-to-png" || tool.id === "avif-to-jpg";
   const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
   const isIcoTool = tool.id === "ico-to-png";
-  const isBmpToPng = tool.id === "bmp-to-png";
   const frameIndex = options.frameIndex ?? 0;
   const pageIndex = options.pageIndex ?? 0;
   const entryIndex = options.entryIndex ?? 0;
@@ -127,13 +130,70 @@ export function StagedWorkspace({
     !metrics.cacheWarm &&
     metrics.estimateDelta != null;
   const transmuteReady = canTransmute && !estimateSyncing;
-  const showBmpGrowthWarning =
-    isBmpToPng &&
-    metrics.estimateDelta != null &&
-    metrics.estimateDelta.deltaPct > 0;
-  const showOutputWarning =
-    limitContext.warnings.includes("output_may_exceed_hard_limit") &&
-    metrics.estimateDelta != null;
+  const estimateElapsedMs = useEstimateElapsed(metrics.estimating);
+
+  const noticeContext: ToolNoticeContext = useMemo(
+    () => ({
+      sourceMeta,
+      animatedFrameCount:
+        gifSession?.is_animated ? gifSession.frame_count : undefined,
+      tiffPageCount: tiffMeta?.pageCount,
+      icoEntryCount: icoMeta?.entryCount,
+    }),
+    [sourceMeta, gifSession, tiffMeta, icoMeta]
+  );
+
+  const noticePhase = metrics.estimating ? ("estimating" as const) : ("staged" as const);
+
+  const stagedNotices = useMemo(
+    () =>
+      computeStagedNotices({
+        toolId: tool.id,
+        sourceMeta,
+        options,
+        limitContext,
+        resourceProfile: profile,
+        estimateDelta: metrics.estimateDelta,
+        estimatedOutputSize: metrics.estimateDelta?.finalSize ?? null,
+        estimating: metrics.estimating,
+        estimateElapsedMs,
+        estimateError: metrics.estimateError,
+        needsInputConsent: limitContext.needsInputConsent,
+        canClientResize,
+        dimensionBlocked,
+        noticeContext,
+        phase: noticePhase,
+      }),
+    [
+      tool.id,
+      sourceMeta,
+      options,
+      limitContext,
+      profile,
+      metrics.estimateDelta,
+      metrics.estimating,
+      metrics.estimateError,
+      estimateElapsedMs,
+      canClientResize,
+      dimensionBlocked,
+      noticeContext,
+      noticePhase,
+    ]
+  );
+
+  const costTier = useMemo(
+    () =>
+      computeCostTier({
+        toolId: tool.id,
+        sourceMeta,
+        options,
+        zone: limitContext.zone,
+        resourceProfile: profile,
+        noticeContext,
+      }),
+    [tool.id, sourceMeta, options, limitContext.zone, profile, noticeContext]
+  );
+
   const avifSessionLimit = sessionLimitForBytes(fileSize, deviceMemoryGb);
 
   return (
@@ -261,6 +321,8 @@ export function StagedWorkspace({
         </div>
       )}
 
+      {!dimensionBlocked && <NoticeRail notices={stagedNotices} />}
+
       {!dimensionBlocked && (
         <div className={hasOptions ? "mb-5" : "mb-5 border-t border-border pt-4"}>
           <MetricsPanel
@@ -273,19 +335,11 @@ export function StagedWorkspace({
             cacheWarm={metrics.cacheWarm}
             autoEstimate={profile.autoEstimate}
             ready={ready}
+            costTier={costTier}
             onRequestEstimate={onRequestEstimate}
           />
         </div>
       )}
-
-      {showOutputWarning && metrics.estimateDelta && (
-        <OutputSizeNotice
-          estimatedSize={metrics.estimateDelta.finalSize}
-          hardLimitBytes={limitContext.hardLimitBytes}
-        />
-      )}
-
-      {showBmpGrowthWarning && <BmpPngGrowthNotice />}
 
       {!dimensionBlocked && (
         <Button onClick={onTransmutar} disabled={!transmuteReady} className="w-full">
