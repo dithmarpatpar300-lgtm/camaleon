@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v2.3.4** (`main`) | Settings panel S1–S4 + Operational Notice Rail — **19 tools** |
-| **Engine (Rust workspace)** | v1.6.0 | Eleven Wasm crates incl. **`transmutador_avif`** + **`transmutador_avif_encode`** |
-| **SPEC** | v2.3.4-settings | §7.12 Notice Rail; §7.13 Settings S1–S4; §6.10–6.11 AVIF decode/encode |
+| **Frontend (app)** | **v2.3.5** (`dev`) · **v2.3.4** (`main`) | Settings S1–S4 + Notice Rail + **SVG→PNG** — **20 tools** on `dev` |
+| **Engine (Rust workspace)** | v1.6.0 | Twelve Wasm crates incl. **`transmutador_svg`** (+ AVIF decode/encode) |
+| **SPEC** | v2.3.5-svg | §6.12 `transmutador_svg`; §7.12 Notice Rail; §7.13 Settings S1–S4 |
 
-**v2.3.4** (`main`): **Settings S4** — notice rail density + prepare progress style. Releases: `docs/releases/v2.3.1.md`–`v2.3.4.md`. Next: **Settings S5** offline toolkit · **Tier 3.3** SVG spike · `docs/planning/tier3_3_svg_analysis.md`
+**v2.3.5** (`dev`): **SVG → PNG** — `transmutador_svg`, output scale presets, prepare probe. Release: `docs/releases/v2.3.5.md`. Next: **SVG→JPEG (3.3.2)** · **Settings S5** offline toolkit.
+
+**v2.3.4** (`main`): **Settings S4** — notice rail density + prepare progress style. Releases: `docs/releases/v2.3.1.md`–`v2.3.4.md`.
 
 **v2.3.0** (`main`): **Operational Notice Rail** — contextual warnings for estimate/transmute latency, limits, fidelity. Release: `docs/releases/v2.3.0.md`.
 

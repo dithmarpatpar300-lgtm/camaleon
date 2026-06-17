@@ -10,7 +10,8 @@ export type ImageFormat =
   | "TIFF"
   | "ICO"
   | "TGA"
-  | "AVIF";
+  | "AVIF"
+  | "SVG";
 export type ToolCategory = "image";
 export type ToolFidelity = "lossless" | "lossy";
 export type ToolStatus = "active" | "soon";
@@ -28,7 +29,7 @@ export type RgbColor = { r: number; g: number; b: number };
 
 export type SliderOptionSpec = {
   kind: "slider";
-  key: "quality" | "compression" | "iconSize" | "speed";
+  key: "quality" | "compression" | "iconSize" | "speed" | "outputScale";
   min: number;
   max: number;
   step: number;

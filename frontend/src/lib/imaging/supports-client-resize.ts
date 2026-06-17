@@ -18,6 +18,8 @@ export function mimeTypeForTool(tool: ToolDefinition): string {
       return "image/x-tga";
     case "AVIF":
       return "image/avif";
+    case "SVG":
+      return "image/svg+xml";
     default:
       return "application/octet-stream";
   }

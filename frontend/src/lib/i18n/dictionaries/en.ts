@@ -81,6 +81,10 @@ const en: Dictionary = {
         title: "JPEG to AVIF — Camaleon",
         description: "Convert JPEG to AVIF in your browser. Smaller modern delivery format — local and private.",
       },
+      "svg-to-png": {
+        title: "SVG to PNG — Camaleon",
+        description: "Rasterize SVG to PNG in your browser. Choose output size — local and private.",
+      },
     },
   },
 
@@ -221,8 +225,8 @@ const en: Dictionary = {
           body: "Nothing is uploaded. Your images never leave this tab.",
         },
         tools: {
-          title: "19 conversion tools",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, and AVIF (encode + decode) — lossless and lossy paths where it matters.",
+          title: "20 conversion tools",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, AVIF (encode + decode), and SVG → PNG — lossless and lossy paths where it matters.",
         },
         limits: {
           title: "Honest limits",
@@ -253,6 +257,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v235: {
+        title: "SVG → PNG",
+        summary:
+          "Rasterize vector SVG to PNG locally — pick output size presets, keep alpha when the artwork supports it.",
+        technical:
+          "Tier 3.3: transmutador_svg (resvg/usvg 0.44), inspect_svg_meta prepare probe, outputScale presets, worker routes, Notice Rail expensive profile. Spike doc tier3_3_svg_spike_results.md. App v2.3.5 — 20 tools.",
+        highlights: {
+          svgToPng: {
+            title: "New: SVG → PNG",
+            body: "Convert logos, icons, and illustrations at the pixel size you need — rendered entirely in your browser with resvg.",
+          },
+          outputScale: {
+            title: "Output size presets",
+            body: "Scale by percent or fit the longest edge to 512–2048 px. The 40 MP safety cap still applies to protect your tab.",
+          },
+        },
+      },
       v234: {
         title: "Notices & prepare settings",
         summary:
@@ -654,6 +675,7 @@ const en: Dictionary = {
       analyze: "Analyzing image…",
       analyzeGif: "Reading animation frames…",
       analyzeAvif: "Decoding AVIF…",
+      analyzeSvg: "Parsing SVG…",
       analyzeBmp: "Reading bitmap header…",
       analyzeSkippedLimit: "Skipping deep analysis — file exceeds engine limit",
       finalize: "Preparing workspace…",
@@ -673,6 +695,7 @@ const en: Dictionary = {
   panel: {
     stagedFileSize: "{size}",
     changeFile: "Change",
+    svgIntrinsic: "Intrinsic vector size: {width} × {height}",
     cancel: "Cancel",
     transmuteButton: "Transmute",
     transmuteSyncing: "Updating estimate…",
@@ -714,6 +737,7 @@ const en: Dictionary = {
       action: "Reduce dimensions in a desktop editor, or export a smaller preview from your source archive.",
       resizeHint: "You can downscale in your browser to continue — resolution is reduced, but tone and color are preserved.",
       resizeCta: "Resize to continue",
+      svgScaleHint: "Lower the output scale preset — raster dimensions must stay within the browser pixel limit.",
     },
     astroResize: {
       title: "Downscale to continue",
@@ -1060,6 +1084,32 @@ const en: Dictionary = {
         },
       },
     },
+    "svg-to-png": {
+      actionTitle: "Rasterize to PNG",
+      description: "Vector SVG → PNG at your chosen output size. Pixels are rendered locally with the resvg engine.",
+      fidelityHint:
+        "This is not a format swap — the SVG is rasterized at the output dimensions you pick. Illustrator/Inkscape may differ from resvg. Text without embedded fonts may substitute glyphs.",
+      options: {
+        outputScale: {
+          label: "Output size",
+          hint: "Percent presets scale the intrinsic viewBox; pixel presets fit the longest edge. Aspect ratio is locked.",
+          presets: {
+            p100: "100%",
+            p200: "200%",
+            px512: "512 px",
+            px1024: "1024 px",
+            px2048: "2048 px",
+          },
+        },
+        compression: {
+          label: "PNG Compression",
+          hint: "Raster pixels are lossless — higher compression = smaller file + slower processing.",
+          lowerLabel: "Faster",
+          upperLabel: "Smaller",
+          presets: { fast: "Fast", balanced: "Balanced", minimal: "Minimal" },
+        },
+      },
+    },
     "tiff-to-jpg": {
       actionTitle: "Compress for Web",
       description: "Convert TIFF to JPEG — much smaller files for sharing scans and print masters online.",
@@ -1134,6 +1184,12 @@ const en: Dictionary = {
     fidelity: {
       bmpPngGrowth:
         "BMP to PNG often increases file size — PNG stores the full uncompressed raster.",
+      svgVectorToRaster:
+        "SVG is rasterized at your chosen output size — not a reversible vector export.",
+      svgFontSubstitution:
+        "This SVG contains text — glyphs may differ from your design app unless fonts are embedded in the file.",
+      svgRendererSubset:
+        "Filters and advanced SVG features may render differently than in Illustrator or Inkscape.",
     },
     estimate: {
       cheapSlow: "Still calculating…",

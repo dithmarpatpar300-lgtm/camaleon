@@ -45,6 +45,7 @@ import { Dropzone } from "./Dropzone";
 import { PageDropOverlay } from "./PageDropOverlay";
 import { FilePrepareGate } from "./FilePrepareGate";
 import { buildDefaultOptions } from "@/lib/transmutation/build-default-options";
+import { svgOptionsWithDimensions, svgSourceMetaForScale } from "@/lib/svg/svg-prepare";
 import { getEffectiveTransmutationDefaults } from "@/lib/prefs/transmutation-defaults";
 import { StagedWorkspace } from "./StagedWorkspace";
 
@@ -161,6 +162,24 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   const handleOptionsChange = useCallback(
     (next: TransmutationOptions) => {
+      if (tool.id === "svg-to-png" && prepared?.svgMeta) {
+        const withDims = svgOptionsWithDimensions(next, prepared.svgMeta);
+        if (
+          next.outputScale != null &&
+          next.outputScale !== options.outputScale
+        ) {
+          setPrepared({
+            ...prepared,
+            sourceMeta: svgSourceMetaForScale(
+              prepared.svgMeta,
+              withDims.outputScale ?? 100
+            ),
+          });
+        }
+        setOptions(withDims);
+        return;
+      }
+
       setOptions(next);
       if (
         (tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg") &&
@@ -220,7 +239,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         });
       }
     },
-    [tool, prepared, staged?.bytes, options.pageIndex, options.entryIndex]
+    [tool, prepared, staged?.bytes, options.pageIndex, options.entryIndex, options.outputScale]
   );
 
   const handleFileSelect = useCallback(async (file: File) => {
@@ -298,12 +317,18 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setHasAlpha(ctx.hasAlpha);
       setStaged(pending);
       setPendingFile(null);
-      setOptions({
-        ...buildDefaultOptions(tool.optionSpecs, tool),
+      const defaults = buildDefaultOptions(tool.optionSpecs, tool);
+      const baseOptions = {
+        ...defaults,
         frameIndex: 0,
         pageIndex: 0,
         entryIndex: ctx.icoMeta?.defaultEntryIndex ?? 0,
-      });
+      };
+      if (ctx.svgMeta && tool.id === "svg-to-png") {
+        setOptions(svgOptionsWithDimensions(baseOptions, ctx.svgMeta));
+      } else {
+        setOptions(baseOptions);
+      }
       setStatus("staged");
       setCrossfading(true);
       setTimeout(() => setCrossfading(false), CROSSFADE_MS);
@@ -647,6 +672,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 avifMeta={prepared.avifMeta}
                 tiffMeta={prepared.tiffMeta}
                 icoMeta={prepared.icoMeta}
+                svgMeta={prepared.svgMeta}
                 fileBytes={stagedFileBytes}
                 sourceMeta={prepared.sourceMeta}
                 originalSourceMeta={prepared.originalSourceMeta}

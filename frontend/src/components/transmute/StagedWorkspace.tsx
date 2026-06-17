@@ -8,6 +8,7 @@ import type { AvifMeta } from "@/lib/avif/avif-wasm-client";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
 import { AvifFrameScrubber } from "./AvifFrameScrubber";
 import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
+import type { SvgMeta } from "@/lib/svg/svg-wasm-client";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
 import { IcoEntryScrubber } from "./IcoEntryScrubber";
 import { TiffPageScrubber } from "./TiffPageScrubber";
@@ -45,6 +46,7 @@ type StagedWorkspaceProps = {
   avifMeta: AvifMeta | null;
   tiffMeta: TiffMeta | null;
   icoMeta: IcoMeta | null;
+  svgMeta: SvgMeta | null;
   fileBytes: Uint8Array | null;
   sourceMeta: SourceImageMeta | null;
   originalSourceMeta?: SourceImageMeta | null;
@@ -87,6 +89,7 @@ export function StagedWorkspace({
   avifMeta,
   tiffMeta,
   icoMeta,
+  svgMeta,
   fileBytes,
   sourceMeta,
   originalSourceMeta,
@@ -116,6 +119,7 @@ export function StagedWorkspace({
   const isAvifTool = tool.id === "avif-to-png" || tool.id === "avif-to-jpg";
   const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
   const isIcoTool = tool.id === "ico-to-png";
+  const isSvgTool = tool.id === "svg-to-png";
   const frameIndex = options.frameIndex ?? 0;
   const pageIndex = options.pageIndex ?? 0;
   const entryIndex = options.entryIndex ?? 0;
@@ -139,8 +143,9 @@ export function StagedWorkspace({
         gifSession?.is_animated ? gifSession.frame_count : undefined,
       tiffPageCount: tiffMeta?.pageCount,
       icoEntryCount: icoMeta?.entryCount,
+      svgMeta: svgMeta ?? undefined,
     }),
-    [sourceMeta, gifSession, tiffMeta, icoMeta]
+    [sourceMeta, gifSession, tiffMeta, icoMeta, svgMeta]
   );
 
   const noticePhase = metrics.estimating ? ("estimating" as const) : ("staged" as const);
@@ -162,6 +167,7 @@ export function StagedWorkspace({
         canClientResize,
         dimensionBlocked,
         noticeContext,
+        svgMeta,
         phase: noticePhase,
       }),
     [
@@ -177,6 +183,7 @@ export function StagedWorkspace({
       canClientResize,
       dimensionBlocked,
       noticeContext,
+      svgMeta,
       noticePhase,
     ]
   );
@@ -206,6 +213,14 @@ export function StagedWorkspace({
           />
           <p className="text-xs text-text-muted">{formatBytes(fileSize)}</p>
           <SourceImageMetaLine meta={sourceMeta} />
+          {isSvgTool && svgMeta && (
+            <p className="text-xs text-text-muted">
+              {t("panel.svgIntrinsic", {
+                width: Math.round(svgMeta.intrinsicWidth),
+                height: Math.round(svgMeta.intrinsicHeight),
+              })}
+            </p>
+          )}
           {originalSourceMeta && <ResizedMetaNotice originalMeta={originalSourceMeta} />}
         </div>
         <Button variant="ghost" size="sm" className="shrink-0" onClick={onReset}>
@@ -219,6 +234,9 @@ export function StagedWorkspace({
           isAstronomicalScale={limitContext.isAstronomicalScale}
           canResize={canClientResize}
           onStartResize={canClientResize ? onStartResize : undefined}
+          blockActionKey={
+            isSvgTool ? "panel.dimensionsBlock.svgScaleHint" : undefined
+          }
         />
       )}
 
@@ -310,7 +328,7 @@ export function StagedWorkspace({
         </div>
       )}
 
-      {!dimensionBlocked && hasOptions && (
+      {(!dimensionBlocked || isSvgTool) && hasOptions && (
         <div className="mb-5 border-t border-border pt-4">
           <OptionsControls
             toolId={tool.id}

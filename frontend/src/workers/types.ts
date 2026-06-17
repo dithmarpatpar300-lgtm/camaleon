@@ -9,7 +9,8 @@ export type TransmutationModule =
   | "transmutador_ico"
   | "transmutador_tga"
   | "transmutador_avif"
-  | "transmutador_avif_encode";
+  | "transmutador_avif_encode"
+  | "transmutador_svg";
 
 export type OutputExtension = "png" | "jpg" | "webp" | "ico" | "avif";
 
@@ -32,6 +33,12 @@ export type TransmutationOptions = {
   iconSize?: number;
   /** AVIF encode speed (ravif 1–10; higher = faster). */
   speed?: number;
+  /** SVG raster export scale preset (percent or max-edge px). */
+  outputScale?: number;
+  /** Computed SVG raster width (sent to Wasm). */
+  outputWidth?: number;
+  /** Computed SVG raster height (sent to Wasm). */
+  outputHeight?: number;
 };
 
 export type WorkerPurpose = "transmute" | "estimate" | "purge";

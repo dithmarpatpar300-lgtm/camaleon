@@ -4,7 +4,7 @@
 > **Status:** Analysis complete — **implementation blocked on 3.3.0 spike**  
 > **Prerequisites:** v2.3.4 on `main` — 19 tools, AVIF suite, Notice Rail (v2.3.0), Settings S1–S4 (v2.3.1–2.3.4)  
 > **Implementation plan:** `docs/planning/tier3_3_svg_implementation_plan.md`  
-> **Target versions:** v2.4.0 (spike) · v2.4.1 (SVG→PNG) · v2.4.2 (SVG→JPEG)  
+> **Target versions:** v2.3.5 (spike + SVG→PNG) · v2.3.6 (SVG→JPEG)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — parse → honest options → rasterize → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**
 
@@ -432,12 +432,12 @@ The analysis below remains valid; these **platform changes since draft** must be
 
 ### 3.3.0 — SVG rasterize spike
 
-- [ ] Crate `transmutador_svg` skeleton + `wasm-pack` release build
-- [ ] Measure `.wasm` size; font embedding strategy
-- [ ] Fixture matrix §7.4
-- [ ] Security: external href blocked
-- [ ] `tier3_3_svg_spike_results.md`
-- [ ] Chief Architect go/no-go
+- [x] Crate `transmutador_svg` skeleton + `wasm-pack` release build
+- [x] Measure `.wasm` size; font embedding strategy (documented — subset deferred to 3.3.1)
+- [x] Fixture matrix §7.4
+- [x] Security: external href blocked
+- [x] `tier3_3_svg_spike_results.md`
+- [x] Chief Architect go/no-go — **GO**
 
 ### 3.3.1 — SVG → PNG
 

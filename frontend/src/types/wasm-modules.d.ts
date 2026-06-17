@@ -309,3 +309,31 @@ declare module "*/transmutador_tga/transmutador_tga.js" {
   export function estimate_tga_to_png_size(input_bytes: Uint8Array, compression: number): number;
   export default function init(): Promise<void>;
 }
+
+declare module "*/transmutador_svg/transmutador_svg.js" {
+  export class SvgMetaJs {
+    readonly intrinsic_width: number;
+    readonly intrinsic_height: number;
+    readonly has_view_box: boolean;
+    readonly has_text: boolean;
+    readonly has_filters: boolean;
+    readonly has_external_refs: boolean;
+    readonly embedded_raster_count: number;
+  }
+  export function inspect_svg_meta(input_bytes: Uint8Array): SvgMetaJs;
+  export function transmutar_svg_a_png(
+    input_bytes: Uint8Array,
+    out_w: number,
+    out_h: number,
+    compression: number
+  ): Uint8Array;
+  export function estimate_svg_to_png_size(
+    input_bytes: Uint8Array,
+    out_w: number,
+    out_h: number,
+    compression: number
+  ): number;
+  export function set_session_input_limit(max_bytes: number): void;
+  export function reset_session_input_limit(): void;
+  export default function init(): Promise<void>;
+}

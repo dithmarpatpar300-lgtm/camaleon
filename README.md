@@ -2,11 +2,11 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v2.3.4** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v2.3.5** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v2.3.4)
+## What works today (v2.3.5)
 
 | Capability | Status |
 |------------|--------|
@@ -15,12 +15,13 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **GIF suite** | GIF→PNG/JPG; frame scrubber; GIF89a compositing; animated preview |
 | **BMP suite** | BMP→PNG/JPG; semantic alpha; growth warnings via Notice Rail |
 | **Settings panel** | S1–**S4** (defaults, performance, notices/prepare) (**v2.3.1–2.3.4**) |
-| **Operational Notice Rail** | Adaptive context for all 19 tools — slow-path, limits, fidelity (**v2.3.0**) |
+| **Operational Notice Rail** | Adaptive context for all 20 tools — slow-path, limits, fidelity (**v2.3.0**) |
 | **TIFF suite** | TIFF→PNG/JPG; multi-page picker; 16-bit normalization; palette/CMYK rejection |
 | **ICO suite** | ICO/CUR→PNG (multi-size picker); PNG→ICO (16/32/48/256, downscale only) |
 | **TGA suite** | TGA→PNG; raw/RLE; indexed + 32-bit alpha |
 | **AVIF suite** | AVIF→PNG/JPEG decode; PNG/JPEG→AVIF encode; animated frame scrubber; split encode Wasm (**Tier 3**) |
-| **Nineteen active tools** | Tiers 1–2 + full AVIF matrix — `/transmute/[slug]` per conversion |
+| **SVG → PNG** | Vector rasterize (resvg); output scale presets; alpha-aware PNG; `.svg`/`.svgz` (**v2.3.5**, Tier 3.3) |
+| **Twenty active tools** | Tiers 1–2 + AVIF + SVG — `/transmute/[slug]` per conversion |
 | **Adaptive limits** | Byte zones (50 MB soft / 150 MB hard), 40 MP pixel cap, oversize consent |
 | **Science imagery** | Client-side downscale (4K–12K presets) for images >40 MP before Wasm |
 | **Memory lifecycle** | Wasm worker recycled when leaving any transmute route (SPA-safe) |
@@ -31,7 +32,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 
-**Shipped on `main` (v2.3.4):** Settings S1–S4 (drawer, transmutation defaults, performance, notices/prepare) + Notice Rail (v2.3.0). See [docs/ROADMAP.md](docs/ROADMAP.md).
+**Latest on `dev` (v2.3.5):** SVG → PNG (Tier 3.3) + spike `transmutador_svg`. **`main` remains v2.3.4** until merge. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 

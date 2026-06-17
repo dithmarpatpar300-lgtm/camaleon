@@ -14,6 +14,7 @@ type DimensionsBlockPanelProps = {
   isAstronomicalScale: boolean;
   canResize?: boolean;
   onStartResize?: () => void;
+  blockActionKey?: string;
 };
 
 export function DimensionsBlockPanel({
@@ -21,6 +22,7 @@ export function DimensionsBlockPanel({
   isAstronomicalScale,
   canResize = false,
   onStartResize,
+  blockActionKey = "panel.dimensionsBlock.action",
 }: DimensionsBlockPanelProps) {
   const { t } = useI18n();
   const pixelCount = pixelCountFromMeta(sourceMeta);
@@ -63,7 +65,7 @@ export function DimensionsBlockPanel({
         </>
       ) : (
         <p className="mt-2 text-xs text-error/80">
-          {t("panel.dimensionsBlock.action")}
+          {t(blockActionKey)}
         </p>
       )}
     </div>

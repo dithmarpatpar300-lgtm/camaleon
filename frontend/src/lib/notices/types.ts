@@ -21,7 +21,8 @@ export type CostFactorKey =
   | "quality"
   | "frameIndex"
   | "pageIndex"
-  | "entryIndex";
+  | "entryIndex"
+  | "outputScale";
 
 export type ToolNoticeProfile = {
   estimateCost: OperationCost;

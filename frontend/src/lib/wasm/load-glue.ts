@@ -10,7 +10,8 @@ export type WasmCrate =
   | "transmutador_ico"
   | "transmutador_tga"
   | "transmutador_avif"
-  | "transmutador_avif_encode";
+  | "transmutador_avif_encode"
+  | "transmutador_svg";
 
 export type WasmGlueModule = {
   default: () => Promise<void>;

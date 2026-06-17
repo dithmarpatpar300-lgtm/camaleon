@@ -31,6 +31,7 @@ export function OptionsControls({ toolId, specs, values, onChange }: OptionsCont
             toolId={toolId}
             spec={spec}
             value={values[spec.key] as number}
+            allValues={values}
             onChange={(v) => onChange({ ...values, [spec.key]: v })}
             t={t}
           />
@@ -53,23 +54,33 @@ function SliderControl({
   toolId,
   spec,
   value,
+  allValues,
   onChange,
   t,
 }: {
   toolId: string;
   spec: Extract<ToolOptionSpec, { kind: "slider" }>;
   value: number;
+  allValues: TransmutationOptions;
   onChange: (v: number) => void;
   t: ReturnType<typeof useI18n>["t"];
 }) {
   const strings = getOptionSpecStrings(toolId, spec, t);
+  const valueLabel =
+    spec.key === "iconSize"
+      ? `${value}px`
+      : spec.key === "outputScale" &&
+          allValues.outputWidth != null &&
+          allValues.outputHeight != null
+        ? `${allValues.outputWidth} × ${allValues.outputHeight}`
+        : String(value);
 
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium text-text-secondary">{strings.label}</span>
         <span className="font-mono text-xs tabular-nums text-text-primary">
-          {spec.key === "iconSize" ? `${value}px` : value}
+          {valueLabel}
         </span>
       </div>
       {strings.presets.length > 0 && (
@@ -86,7 +97,7 @@ function SliderControl({
           ))}
         </div>
       )}
-      {spec.key !== "iconSize" && (
+      {spec.key !== "iconSize" && spec.key !== "outputScale" && (
         <div className="flex items-center gap-3">
           {strings.lowerLabel && <span className="shrink-0 text-xs text-text-muted">{strings.lowerLabel}</span>}
           <input type="range" min={spec.min} max={spec.max} step={spec.step} value={value}

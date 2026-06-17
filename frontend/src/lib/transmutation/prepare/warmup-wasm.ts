@@ -3,6 +3,7 @@ import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
 import { ensureIcoWasm } from "@/lib/ico/ico-wasm-client";
 import { ensureAvifWasm } from "@/lib/avif/avif-wasm-client";
+import { ensureSvgWasm } from "@/lib/svg/svg-wasm-client";
 import { ensureTgaWasm } from "@/lib/tga/tga-wasm-client";
 import { ensureTiffWasm } from "@/lib/tiff/tiff-wasm-client";
 import { importWasmGlue } from "@/lib/wasm/load-glue";
@@ -36,6 +37,8 @@ export async function warmupTransmutatorModule(module: TransmutationModule): Pro
       return ensureAvifWasm().then(() => undefined);
     case "transmutador_avif_encode":
       return warmupCrate("transmutador_avif_encode");
+    case "transmutador_svg":
+      return ensureSvgWasm().then(() => undefined);
     default:
       throw new Error(`Unknown module: ${module}`);
   }

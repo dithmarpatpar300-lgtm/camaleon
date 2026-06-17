@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 2.3.4-settings  
+**Version:** 2.3.5-svg  
 **Last updated:** 2026-06-11  
-**Status:** v2.3.4 on `main` — Settings panel S1–S4 (General, defaults, performance, notices); §7.12 Notice Rail; Engine v1.6.0
+**Status:** v2.3.5 on `dev` (SVG→PNG) · v2.3.4 on `main` — Settings S1–S4; §7.12 Notice Rail; Engine v1.6.0
 
 ---
 
@@ -956,6 +956,27 @@ pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 
 ---
 
+### 6.12 `transmutador_svg` (Implemented — Tier 3, Phase 3.3.0–3.3.1, v2.3.5)
+
+**Purpose:** SVG → PNG rasterization. Vector scene → pixels at user-chosen output dimensions.
+
+**Status:** Implemented — 3.3.0 spike (GO), 3.3.1 SVG→PNG tool.
+
+**Dependencies:** `resvg` 0.44 / `usvg` 0.44 (`default-features = false`, `text`), `image` (png/jpeg), `core_utils`, `wasm-bindgen`
+
+**Key behaviors:**
+
+- Parse via `usvg`, render via `resvg` → PNG encode (`image` crate)
+- `inspect_svg_meta` — intrinsic size, text/filter flags (prepare, no full raster)
+- `transmutar_svg_a_png(bytes, out_w, out_h, compression)` — `MAX_PIXELS` on **output** W×H
+- External `href` blocked (`data:` only); gzip `.svgz` via `Tree::from_data`
+- Notice Rail `expensive` profile; output scale presets in UI
+- Alpha compositing preserved on PNG path when artwork uses transparency
+
+**Spike reference:** `docs/planning/tier3_3_svg_spike_results.md`
+
+---
+
 ## 7. Frontend Specifications
 
 ### 7.1 Dropzone (Implemented — Phase 3)
@@ -1380,6 +1401,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 2.3.5-svg | 2026-06-11 | Chief Architect | §6.12 `transmutador_svg` SVG→PNG; Tier 3.3.0 spike + 3.3.1 tool; 20 tools; app v2.3.5 | `docs/releases/v2.3.5.md` |
 | 2.3.4-settings-s4 | 2026-06-11 | Chief Architect | §7.13 Settings S4 — notice density + prepare progress; app v2.3.4 | `docs/releases/v2.3.4.md` |
 | 2.3.3-settings-s3 | 2026-06-11 | Chief Architect | §7.13 Settings S3 — performance overrides in drawer; app v2.3.3 | `docs/releases/v2.3.3.md` |
 | 2.3.2-settings-s2 | 2026-06-11 | Chief Architect | §7.13 Settings S2 — transmutation defaults in drawer; app v2.3.2 | `docs/releases/v2.3.2.md` |

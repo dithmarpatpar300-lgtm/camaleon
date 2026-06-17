@@ -81,6 +81,10 @@ const es: Dictionary = {
         title: "JPEG a AVIF — Camaleon",
         description: "Convierte JPEG a AVIF en tu navegador. Formato de entrega moderno mas pequeno — local y privado.",
       },
+      "svg-to-png": {
+        title: "SVG a PNG — Camaleon",
+        description: "Rasteriza SVG a PNG en tu navegador. Elige el tamano de salida — local y privado.",
+      },
     },
   },
 
@@ -221,8 +225,8 @@ const es: Dictionary = {
           body: "No se sube nada. Tus imágenes nunca salen de esta pestaña.",
         },
         tools: {
-          title: "19 herramientas de conversión",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA y AVIF (codificar + decodificar) — rutas con y sin pérdida donde importa.",
+          title: "20 herramientas de conversión",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, AVIF (codificar + decodificar) y SVG → PNG — rutas con y sin pérdida donde importa.",
         },
         limits: {
           title: "Límites honestos",
@@ -253,6 +257,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v235: {
+        title: "SVG → PNG",
+        summary:
+          "Rasteriza SVG vectorial a PNG en local — elige presets de tamano de salida y conserva alpha cuando el arte lo permite.",
+        technical:
+          "Tier 3.3: transmutador_svg (resvg/usvg 0.44), inspect_svg_meta en prepare, presets outputScale, rutas worker, perfil expensive en Notice Rail. Spike tier3_3_svg_spike_results.md. App v2.3.5 — 20 herramientas.",
+        highlights: {
+          svgToPng: {
+            title: "Nuevo: SVG → PNG",
+            body: "Convierte logos, iconos e ilustraciones al tamano en pixeles que necesites — renderizado en tu navegador con resvg.",
+          },
+          outputScale: {
+            title: "Presets de tamano de salida",
+            body: "Escala por porcentaje o ajusta el lado largo a 512–2048 px. El tope de 40 MP sigue protegiendo tu pestaña.",
+          },
+        },
+      },
       v234: {
         title: "Ajustes de avisos y preparacion",
         summary:
@@ -654,6 +675,7 @@ const es: Dictionary = {
       analyze: "Analizando imagen…",
       analyzeGif: "Leyendo fotogramas de animacion…",
       analyzeAvif: "Decodificando AVIF…",
+      analyzeSvg: "Analizando SVG…",
       analyzeBmp: "Leyendo cabecera del bitmap…",
       analyzeSkippedLimit: "Analisis profundo omitido — archivo supera el limite del motor",
       finalize: "Preparando espacio de trabajo…",
@@ -673,6 +695,7 @@ const es: Dictionary = {
   panel: {
     stagedFileSize: "{size}",
     changeFile: "Cambiar",
+    svgIntrinsic: "Tamano vectorial intrinseco: {width} × {height}",
     cancel: "Cancelar",
     transmuteButton: "Transmutar",
     transmuteSyncing: "Actualizando estimación…",
@@ -714,6 +737,7 @@ const es: Dictionary = {
       action: "Reduce dimensiones en un editor de escritorio, o exporta una vista previa mas pequena desde tu archivo fuente.",
       resizeHint: "Puedes reducir en el navegador para continuar — se pierde resolucion, pero se conservan tono y color.",
       resizeCta: "Redimensionar para continuar",
+      svgScaleHint: "Reduce el preset de escala de salida — las dimensiones raster deben respetar el limite de pixeles del navegador.",
     },
     astroResize: {
       title: "Reducir para continuar",
@@ -1046,6 +1070,32 @@ const es: Dictionary = {
         },
       },
     },
+    "svg-to-png": {
+      actionTitle: "Rasterizar a PNG",
+      description: "SVG vectorial → PNG al tamano de salida que elijas. Los pixeles se renderizan localmente con resvg.",
+      fidelityHint:
+        "No es un cambio de formato — el SVG se rasteriza a las dimensiones elegidas. Illustrator/Inkscape pueden diferir de resvg. Texto sin fuentes embebidas puede sustituir glifos.",
+      options: {
+        outputScale: {
+          label: "Tamano de salida",
+          hint: "Los presets en % escalan el viewBox intrinseco; los presets en px ajustan el lado mas largo. Se mantiene la proporcion.",
+          presets: {
+            p100: "100%",
+            p200: "200%",
+            px512: "512 px",
+            px1024: "1024 px",
+            px2048: "2048 px",
+          },
+        },
+        compression: {
+          label: "Compresion PNG",
+          hint: "Pixeles raster sin perdida — mas compresion = archivo mas pequeno + proceso mas lento.",
+          lowerLabel: "Mas rapido",
+          upperLabel: "Mas pequeno",
+          presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+      },
+    },
     "tiff-to-jpg": {
       actionTitle: "Comprimir para Web",
       description: "Convierte TIFF a JPEG — archivos mucho mas pequenos para compartir escaneos y masters en linea.",
@@ -1120,6 +1170,12 @@ const es: Dictionary = {
     fidelity: {
       bmpPngGrowth:
         "BMP a PNG suele aumentar el tamano — PNG almacena el raster sin comprimir.",
+      svgVectorToRaster:
+        "El SVG se rasteriza al tamano de salida elegido — no es una exportacion vectorial reversible.",
+      svgFontSubstitution:
+        "Este SVG contiene texto — los glifos pueden diferir de tu app de diseno si no hay fuentes embebidas.",
+      svgRendererSubset:
+        "Filtros y funciones SVG avanzadas pueden renderizarse distinto que en Illustrator o Inkscape.",
     },
     estimate: {
       cheapSlow: "Calculando…",

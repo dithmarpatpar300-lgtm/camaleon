@@ -1,10 +1,10 @@
 # Tier 3.3 — SVG Implementation Plan
 
 > **Date:** 2026-06-11  
-> **Status:** Ready to execute — **blocked on 3.3.0 spike go/no-go**  
+> **Status:** **3.3.0 spike GO** — see `tier3_3_svg_spike_results.md`; proceed to 3.3.1 after font subset commit  
 > **Prerequisites:** v2.3.4 on `main` (Settings S1–S4, Notice Rail, 19 tools, AVIF suite)  
 > **Science & format analysis:** `docs/planning/tier3_3_svg_analysis.md` (updated 2026-06-11)  
-> **Target app versions:** **v2.4.0** (spike) · **v2.4.1** (SVG→PNG) · **v2.4.2** (SVG→JPEG)  
+> **Target app versions:** **v2.3.5** (spike + SVG→PNG) · **v2.3.6** (SVG→JPEG)  
 > **End state:** **21 active tools**
 
 ---
@@ -48,7 +48,7 @@ Implementation follows the **same spine** as AVIF encode (3.2) and WebP suites:
 
 ## 2. Phase breakdown
 
-### Phase 3.3.0 — Spike (`transmutador_svg`) → **v2.4.0**
+### Phase 3.3.0 — Spike (`transmutador_svg`) → **v2.3.5**
 
 **Goal:** Prove `resvg` + `usvg` Wasm ≤ 3 MB (NFR-7), security resolver, fixture matrix.
 
@@ -72,7 +72,7 @@ Implementation follows the **same spine** as AVIF encode (3.2) and WebP suites:
 
 ---
 
-### Phase 3.3.1 — SVG → PNG → **v2.4.1**
+### Phase 3.3.1 — SVG → PNG → **v2.3.5**
 
 **Goal:** First user-facing tool; dimension UX; honest copy.
 
@@ -158,14 +158,14 @@ SVG has no fixed pixel grid — must expose **output width × height** (aspect l
 
 #### 2.8 Release
 
-- `docs/releases/v2.4.1.md`
+- `docs/releases/v2.3.5.md`
 - What's New `v241`
 - SPEC §6.12 `transmutador_svg`, §12.4 row update
 - `npm run build` + manual smoke
 
 ---
 
-### Phase 3.3.2 — SVG → JPEG → **v2.4.2**
+### Phase 3.3.2 — SVG → JPEG → **v2.3.6**
 
 | Task | Detail |
 |------|--------|
@@ -176,7 +176,7 @@ SVG has no fixed pixel grid — must expose **output width × height** (aspect l
 | Settings S2 | JPEG quality + alpha background via existing defaults |
 | Fidelity notices | Generational loss + vector→raster honesty |
 | Integration tests | StripAll; JPEG magic validation |
-| Release v2.4.2 | 21 tools total |
+| Release v2.3.6 | 21 tools total |
 
 ---
 
@@ -228,7 +228,7 @@ docs/planning/tier3_3_svg_spike_results.md   # after 3.3.0
 docs/SPEC.md                                  # §6.12 + §12.4 + amendment log
 docs/ROADMAP.md
 docs/planning/tier3_plan.md                   # 3.3 status rows
-docs/releases/v2.4.x.md
+docs/releases/v2.3.x.md
 ```
 
 ---
@@ -265,9 +265,9 @@ docs/releases/v2.4.x.md
 
 | Phase | Branch | Tag |
 |-------|--------|-----|
-| 3.3.0 spike | `dev` | `v2.4.0` (spike-only release optional) |
-| 3.3.1 | `dev` → `main` | `v2.4.1` |
-| 3.3.2 | `dev` → `main` | `v2.4.2` |
+| 3.3.0 spike | `dev` | `v2.3.5` (spike + tool) |
+| 3.3.1 | `dev` → `main` | `v2.3.5` |
+| 3.3.2 | `dev` → `main` | `v2.3.6` |
 
 Engine version: bump **motor workspace** patch/minor only if Wasm API surface changes (likely **1.7.0** at first SVG ship — record in release notes).
 

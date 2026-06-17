@@ -24,15 +24,18 @@ const crates = [
   "transmutador_tga",
   "transmutador_avif",
   "transmutador_avif_encode",
+  "transmutador_svg",
 ];
 
 for (const crate of crates) {
   const cratePath = join(repoRoot, "motor_transmutacion", crate);
   const outDir = join(wasmOutBase, crate);
+  const noDefaultFeatures =
+    crate === "transmutador_svg" ? " --no-default-features" : "";
 
   console.log(`build-wasm: ${crate} → ${outDir}`);
   execSync(
-    `wasm-pack build --target web --out-dir "${outDir}" --out-name ${crate}`,
+    `wasm-pack build --target web --out-dir "${outDir}" --out-name ${crate}${noDefaultFeatures}`,
     {
       cwd: cratePath,
       stdio: "inherit",

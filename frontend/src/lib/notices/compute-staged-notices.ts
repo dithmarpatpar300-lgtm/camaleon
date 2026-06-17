@@ -5,6 +5,7 @@ import type { SizeDelta } from "@/lib/format/metrics";
 import type { TransmutationOptions } from "@/workers/types";
 import { computeEstimateNotices } from "./compute-estimate-notices";
 import { computeFidelityNotices } from "./compute-fidelity-notices";
+import { computeSvgHonestyNotices } from "./compute-svg-honesty-notices";
 import { computeLimitNotices } from "./compute-limit-notices";
 import {
   computePerformanceNotices,
@@ -29,6 +30,7 @@ export type StagedNoticeContext = {
   canClientResize: boolean;
   dimensionBlocked: boolean;
   noticeContext?: ToolNoticeContext;
+  svgMeta?: import("@/lib/svg/svg-wasm-client").SvgMeta | null;
   phase?: NoticePhase;
 };
 
@@ -66,6 +68,10 @@ export function computeStagedNotices(ctx: StagedNoticeContext): Notice[] {
     ...computeFidelityNotices({
       toolId: ctx.toolId,
       estimateDelta: ctx.estimateDelta,
+    }),
+    ...computeSvgHonestyNotices({
+      toolId: ctx.toolId,
+      svgMeta: ctx.svgMeta ?? ctx.noticeContext?.svgMeta,
     }),
     ...computePerformanceNotices(perfCtx),
     ...nonErrorEstimate,

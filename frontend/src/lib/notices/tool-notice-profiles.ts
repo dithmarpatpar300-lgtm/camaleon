@@ -1,4 +1,5 @@
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
+import type { SvgMeta } from "@/lib/svg/svg-wasm-client";
 import { pixelCountFromMeta } from "@/lib/transmutation/limit-context";
 import type { CostFactorKey, OperationCost, ToolNoticeProfile } from "./types";
 
@@ -7,6 +8,7 @@ export type ToolNoticeContext = {
   animatedFrameCount?: number;
   tiffPageCount?: number;
   icoEntryCount?: number;
+  svgMeta?: SvgMeta | null;
 };
 
 const DEFAULT_PROFILE: ToolNoticeProfile = {
@@ -66,6 +68,11 @@ const TOOL_PROFILES: Record<string, ToolNoticeProfile> = {
     transmuteCost: "expensive",
     costFactors: ["speed", "quality"],
   },
+  "svg-to-png": {
+    estimateCost: "expensive",
+    transmuteCost: "expensive",
+    costFactors: ["compression", "outputScale"],
+  },
 };
 
 function withAnimatedGifOverride(
@@ -107,6 +114,7 @@ export function hasExtremeCostFactors(
     frameIndex?: number;
     pageIndex?: number;
     entryIndex?: number;
+    outputScale?: number;
   }
 ): boolean {
   if (!costFactors?.length) return false;
@@ -120,6 +128,9 @@ export function hasExtremeCostFactors(
     if (factor === "frameIndex" && (options.frameIndex ?? 0) > 0) return true;
     if (factor === "pageIndex" && (options.pageIndex ?? 0) > 0) return true;
     if (factor === "entryIndex" && (options.entryIndex ?? 0) > 0) return true;
+    if (factor === "outputScale" && options.outputScale != null && options.outputScale >= 1024) {
+      return true;
+    }
   }
   return false;
 }

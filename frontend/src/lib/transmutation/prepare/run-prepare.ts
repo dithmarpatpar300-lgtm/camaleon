@@ -10,6 +10,12 @@ import {
 } from "@/lib/avif/avif-wasm-client";
 import { inspectTiffMeta, setTiffSessionInputLimit } from "@/lib/tiff/tiff-wasm-client";
 import {
+  inspectSvgMeta,
+  setSvgSessionInputLimit,
+  type SvgMeta,
+} from "@/lib/svg/svg-wasm-client";
+import { isSvgTool, svgSourceMetaForScale } from "@/lib/svg/svg-prepare";
+import {
   MAX_PIXELS,
   pixelCountFromMeta,
 } from "@/lib/transmutation/limit-context";
@@ -96,6 +102,7 @@ export async function prepareFileForTool(
   let icoMeta = null;
   let alphaAssessment = null;
   let avifMeta = null;
+  let svgMeta: SvgMeta | null = null;
 
   if (isGifTool(tool.id)) {
     emit(onProgress, "analyze", 0, {
@@ -149,6 +156,17 @@ export async function prepareFileForTool(
     avifMeta = await inspectAvifMeta(new Uint8Array(bytes));
     // Animated AVIF: metadata + decode probe only — frame previews load lazily (non-blocking).
     emit(onProgress, "analyze", 1);
+  } else if (isSvgTool(tool.id)) {
+    emit(onProgress, "analyze", 0, {
+      phaseLabelKey: "prepare.phases.analyzeSvg",
+      indeterminate: true,
+    });
+    await yieldToMain();
+    if (sessionLimit != null) {
+      await setSvgSessionInputLimit(sessionLimit);
+    }
+    svgMeta = await inspectSvgMeta(new Uint8Array(bytes));
+    emit(onProgress, "analyze", 1);
   } else {
     emit(onProgress, "analyze", 0);
     await yieldToMain();
@@ -165,6 +183,10 @@ export async function prepareFileForTool(
     icoEntryIndex: icoMeta?.defaultEntryIndex ?? 0,
     sessionInputLimitBytes: sessionLimit,
   });
+
+  if (svgMeta) {
+    sourceMeta = svgSourceMetaForScale(svgMeta, 100);
+  }
 
   const pixelCount = pixelCountFromMeta(sourceMeta);
   const exceedsPixelLimit = pixelCount != null && pixelCount > MAX_PIXELS;
@@ -200,6 +222,7 @@ export async function prepareFileForTool(
     avifMeta,
     tiffMeta,
     icoMeta,
+    svgMeta,
     sourceMeta,
   };
 }

@@ -2,6 +2,7 @@ import type { AvifMeta } from "@/lib/avif/avif-wasm-client";
 import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
 import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
+import type { SvgMeta } from "@/lib/svg/svg-wasm-client";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import type { AlphaAssessment } from "@/lib/semantic-alpha";
 
@@ -33,6 +34,7 @@ export type PreparedFileContext = {
   avifMeta: AvifMeta | null;
   tiffMeta: TiffMeta | null;
   icoMeta: IcoMeta | null;
+  svgMeta: SvgMeta | null;
   /** Effective dimensions after optional client resize. */
   sourceMeta: SourceImageMeta | null;
   /** Original header meta before downscale (science imagery path). */
