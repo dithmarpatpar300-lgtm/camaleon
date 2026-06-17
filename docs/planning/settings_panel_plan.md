@@ -1,6 +1,6 @@
 # Settings / Opciones Panel — System Plan
 
-> **Status:** **S4 shipped** v2.3.4 on `dev` · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1  
+> **Status:** **S4 shipped** v2.3.4 · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1 (Settings on `main`)  
 > **Scope:** User-facing preferences (local-first, `localStorage` only)  
 > **Doctrine:** NFR-1 privacy — no server sync; document keys in `/privacy`  
 > **SPEC anchor:** §7.13 User Settings Panel

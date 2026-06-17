@@ -136,7 +136,7 @@ export const legalPagesEn: Record<LegalPageId, LegalPageContent> = {
         listItems: [
           "Locale cookie (`camaleon-locale`) — remembers English or Spanish.",
           "Theme cookie (`camaleon-theme`) — remembers dark or light mode.",
-          "localStorage — mirrors locale and theme; stores release-comms and settings preferences (`camaleon-user-settings-v1`, including optional transmutation defaults, onboarding and last-seen release keys).",
+          "localStorage — mirrors locale and theme; stores release-comms and settings preferences (`camaleon-user-settings-v1`, including optional transmutation defaults, performance overrides, notice/prepare UI prefs, onboarding and last-seen release keys).",
           "These values are not used for tracking or advertising — only for language, theme, and in-app preferences.",
         ],
       },

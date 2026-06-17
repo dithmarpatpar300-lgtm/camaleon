@@ -1,7 +1,7 @@
 # Tier 3 — Modern Image Formats (AVIF first)
 
 > **Branch:** `dev` (implementation) → merge to `main` at **v2.2.x**  
-> **Status:** **v2.2.0 on `dev`** — Tier 3.2 complete (Phase 3.2.0–3.2.2); Tier 3.3 SVG analysis ✅  
+> **Status:** **v2.3.4 on `main`** — Tier 3.2 complete (Phase 3.2.0–3.2.2); Settings S1–S4 ✅; Tier 3.3 SVG analysis ✅  
 > **Prerequisite:** Pre-Tier 3 UI/UX ✅ (v1.12.0) · Brand mark ✅ (v1.12.1) · Estimation engine perf ✅ (v1.12.2)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  

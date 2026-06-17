@@ -15,13 +15,15 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v2.3.0** (`dev`) | Operational Notice Rail — adaptive UX for all 19 tools |
+| **Frontend (app)** | **v2.3.4** (`main`) | Settings panel S1–S4 + Operational Notice Rail — **19 tools** |
 | **Engine (Rust workspace)** | v1.6.0 | Eleven Wasm crates incl. **`transmutador_avif`** + **`transmutador_avif_encode`** |
-| **SPEC** | v2.3.0-notices | §7.12 Notice Rail; §6.10–6.11 AVIF decode/encode |
+| **SPEC** | v2.3.4-settings | §7.12 Notice Rail; §7.13 Settings S1–S4; §6.10–6.11 AVIF decode/encode |
 
-**v2.3.0** (`dev`): **Operational Notice Rail** — contextual warnings for estimate/transmute latency, limits, fidelity. **19 tools.** Release: `docs/releases/v2.3.0.md`. Next: **Tier 3.3** SVG spike · `docs/planning/tier3_3_svg_analysis.md`
+**v2.3.4** (`main`): **Settings S4** — notice rail density + prepare progress style. Releases: `docs/releases/v2.3.1.md`–`v2.3.4.md`. Next: **Settings S5** offline toolkit · **Tier 3.3** SVG spike · `docs/planning/tier3_3_svg_analysis.md`
 
-**v2.2.0** (`dev`): **PNG/JPEG→AVIF** encode pair. Release: `docs/releases/v2.2.0.md`.
+**v2.3.0** (`main`): **Operational Notice Rail** — contextual warnings for estimate/transmute latency, limits, fidelity. Release: `docs/releases/v2.3.0.md`.
+
+**v2.2.0** (`main`): **PNG/JPEG→AVIF** encode pair. Release: `docs/releases/v2.2.0.md`.
 
 **v2.1.1** (`main`): **AVIF→JPEG** + animated preview UX. **17 tools.** Release: `docs/releases/v2.1.1.md`.
 
@@ -272,7 +274,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
 | **Semantic Alpha Engine** | **v1.11.0** (`main`) | Honest transparency across lossy tools | ✅ **Shipped** — `docs/releases/v1.11.0.md` |
-| **Tier 3** | v2.0.x–v2.3.x | AVIF ✅, SVG→raster, HEIC (spike) | **In progress** — 3.2 encode ✅ on `dev`; **3.3 SVG** next — `docs/planning/tier3_plan.md` |
+| **Tier 3** | v2.0.x–v2.3.x | AVIF ✅, SVG→raster, HEIC (spike) | **In progress** — 3.2 encode ✅ on `main`; Settings S1–S4 ✅; **3.3 SVG** next — `docs/planning/tier3_plan.md` |
 | **Tier 4a** | v2.x | Compress, Resize | Image **optimization** — same raster domain |
 | **Tier 4b** | v2.x | Crop, Rotate/Flip, favicon pack | Image **editing** |
 | **Tier 5** | TBD | PDF tools | **Deferred** — documents; separate planning required |
@@ -304,6 +306,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-11 | Chief Architect (Cursor) | **v2.3.1–2.3.4 merged to `main`:** Settings panel S1–S4 (drawer, transmutation defaults, performance overrides, notices/prepare); app v2.3.4; SPEC v2.3.4-settings |
 | 2026-06-08 | Chief Architect (Cursor) | **Semantic Alpha Engine (v1.11 WIP on `dev`):** `core_utils::semantic_alpha`, Wasm assess exports, frontend prepare integration; TIFF opaque RGBA false-positive fixed; Phases 0/4/5 remain before `main` |
 | 2026-06-08 | Chief Architect (Cursor) | **v1.10.2–1.10.4 merged to `main`:** ICO↔PNG (`transmutador_ico`), TGA→PNG (`transmutador_tga`); 15 active tools; Wave 2 tool-complete |
 | 2026-06-08 | Chief Architect (Cursor) | **v1.10.0–1.10.1 on `dev`:** `transmutador_tiff`, TIFF→PNG + TIFF→JPEG, 12 active tools; spike doc + Wave 2 plan phases 7.0–7.2 complete |

@@ -140,7 +140,7 @@ export const legalPagesEs: Record<LegalPageId, LegalPageContent> = {
         listItems: [
           "Cookie de idioma (`camaleon-locale`) — recuerda ingles o espanol.",
           "Cookie de tema (`camaleon-theme`) — recuerda modo oscuro o claro.",
-          "localStorage — refleja idioma y tema; guarda preferencias de comunicacion y ajustes (`camaleon-user-settings-v1`, incluidos defaults opcionales de transmutacion, claves de bienvenida y ultima version vista).",
+          "localStorage — refleja idioma y tema; guarda preferencias de comunicacion y ajustes (`camaleon-user-settings-v1`, incluidos defaults opcionales de transmutacion, overrides de rendimiento, preferencias de avisos/preparacion, claves de bienvenida y ultima version vista).",
           "Estos valores no se usan para rastreo ni publicidad — solo idioma, tema y preferencias en la app.",
         ],
       },

@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 2.3.0-notices  
+**Version:** 2.3.4-settings  
 **Last updated:** 2026-06-11  
-**Status:** v2.3.0 on `dev` — Operational Notice Rail (all 19 tools); Engine v1.6.0 unchanged
+**Status:** v2.3.4 on `main` — Settings panel S1–S4 (General, defaults, performance, notices); §7.12 Notice Rail; Engine v1.6.0
 
 ---
 
@@ -1306,7 +1306,7 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Reference:** `docs/planning/notice_system_plan.md`
 
-### 7.13 User Settings Panel (Implemented — S1)
+### 7.13 User Settings Panel (Implemented — S1–S4)
 
 **Purpose:** Consolidate user preferences in a right-side drawer (`SettingsDrawer`) — same surface language as `WhatsNewDrawer` (`surface-raised`, `PanelScrollFade`, slide animation).
 

@@ -31,7 +31,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 
-**Shipped on `dev` (v2.3.4):** Settings S4 notices & prepare. **`main` (v2.3.0):** Notice Rail + AVIF encode. See [docs/ROADMAP.md](docs/ROADMAP.md).
+**Shipped on `main` (v2.3.4):** Settings S1–S4 (drawer, transmutation defaults, performance, notices/prepare) + Notice Rail (v2.3.0). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Core principles
 

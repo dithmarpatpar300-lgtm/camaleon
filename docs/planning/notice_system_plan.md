@@ -1,6 +1,6 @@
 # Operational Notice Rail — System Plan
 
-> **Status:** Shipped **v2.3.0** on `dev`  
+> **Status:** Shipped **v2.3.0** on `main`  
 > **Scope:** All 19 active transmutation tools  
 > **Doctrine:** NFR-8 honesty — operational context without invasiveness  
 > **SPEC anchor:** §7.12 Operational Notice Rail
