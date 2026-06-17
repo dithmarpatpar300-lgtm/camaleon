@@ -1190,7 +1190,7 @@ Privacy reassurance is a first-class, **verifiable** element (NFR-1), not market
 | Center-left (tool routes) | Registry-driven breadcrumb: action title + `FROM → TO` mono slug on `/transmute/[slug]` | ✅ v1.6.0 |
 | Center-left | `Transmutaciones` command palette trigger (`⌘K` / `Ctrl+K`) — active state (`accent-subtle` + ring) when open | ✅ v1.6.0 |
 | Shell | `.glass-header` — lighter acrylic than Command Palette (12px blur) | ✅ v1.6.0 |
-| Right | `UtilityCluster` — EN/ES + theme toggle in bordered segment control | ✅ v1.6.0 |
+| Right | `UtilityCluster` — settings gear + EN/ES + theme toggle in bordered segment control | ✅ v1.6.0 · settings S1 |
 
 ### 7.9 Footer Anatomy (Implemented — v1.6.0, extended v1.9.0)
 
@@ -1306,6 +1306,26 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Reference:** `docs/planning/notice_system_plan.md`
 
+### 7.13 User Settings Panel (Implemented — S1)
+
+**Purpose:** Consolidate user preferences in a right-side drawer (`SettingsDrawer`) — same surface language as `WhatsNewDrawer` (`surface-raised`, `PanelScrollFade`, slide animation).
+
+**S1 scope (General + Updates):**
+
+| Setting | Storage | Affects engine? |
+|---------|---------|-----------------|
+| Language EN/ES | `camaleon-locale` + cookie | No |
+| Theme light/dark | `camaleon-theme` + cookie | No |
+| Release notes on update | `camaleon-user-settings-v1` | No — gates `ReleaseNotesModal` |
+| View release history | — | Opens `WhatsNewDrawer` |
+| Reset welcome message | clears `camaleon-onboarding-complete` | No |
+
+**Header:** `SettingsTrigger` (gear) in `UtilityCluster`; quick theme/locale toggles remain for one-click access.
+
+**Planned (S2–S5):** transmutation defaults, performance overrides, notice rail density, offline toolkit — see `docs/planning/settings_panel_plan.md`.
+
+**Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`.
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -1354,6 +1374,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 2.3.1-settings-s1 | 2026-06-11 | Chief Architect | §7.13 User Settings Panel S1 shipped — drawer, utility cluster polish, static theme segment; app v2.3.1 | `docs/releases/v2.3.1.md` |
 | 2.3.0-notices | 2026-06-11 | Chief Architect | §7.12 Operational Notice Rail shipped — adaptive context for all 19 tools; legacy notice components removed; app v2.3.0 | `docs/releases/v2.3.0.md` |
 | 2.2.0-avif | 2026-06-11 | Chief Architect | Tier 3.2.0–3.2.2: `transmutador_avif_encode` PNG/JPEG→AVIF; split Wasm crate; quality+speed; engine v1.6.0; app v2.2.0; Tier 3.3 SVG analysis doc | `docs/releases/v2.2.0.md` |
 | 2.1.1-avif | 2026-06-11 | Chief Architect | Tier 3.1.2: AVIF→JPEG; frame-preview worker + cache; estimate/transmute sync; engine v1.5.1; app v2.1.1 | `docs/releases/v2.1.1.md` |

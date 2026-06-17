@@ -102,6 +102,37 @@ const en: Dictionary = {
     switchToDark: "Switch to dark theme",
   },
 
+  settings: {
+    title: "Settings",
+    subtitle: "Preferences",
+    close: "Close settings",
+    openAria: "Open settings",
+    versionFootnote: "Camaleon v{version}",
+    general: {
+      section: "General",
+      languageLabel: "Language",
+      languageHint: "Interface copy and tool descriptions.",
+      langEn: "English",
+      langEs: "Spanish",
+      themeLabel: "Theme",
+      themeHint: "Light or dark appearance across the app.",
+      themeLight: "Light",
+      themeDark: "Dark",
+    },
+    updates: {
+      section: "Updates",
+      changelogLabel: "Release notes on update",
+      changelogHint: "Show what's new when you visit after a version bump.",
+      whatsNewLabel: "Release history",
+      whatsNewHint: "Browse all shipped versions and highlights.",
+      whatsNewAction: "Open What's New",
+      welcomeLabel: "Welcome message",
+      welcomeHint: "Show the first-visit privacy intro again on the home page.",
+      welcomeAction: "Show again",
+      welcomeResetDone: "Welcome message will appear on your next home visit.",
+    },
+  },
+
   footer: {
     privacy: "100% local. Your files never leave your device.",
     about: "About",
@@ -171,6 +202,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v231: {
+        title: "Settings panel",
+        summary:
+          "A new preferences drawer centralizes language, theme, and update notifications — plus a refined header utility cluster with an animated settings cog.",
+        technical:
+          "SettingsProvider + SettingsDrawer (S1). user-settings.ts (camaleon-user-settings-v1). ThemeSegment uses static active cells. Utility cluster alignment + settings trigger states. SPEC §7.13. App v2.3.1.",
+        highlights: {
+          settingsPanel: {
+            title: "Preferences in one place",
+            body: "Open the gear in the header for language, theme, release notes toggle, What's New, and welcome reset — without losing quick header toggles.",
+          },
+          utilityCluster: {
+            title: "Polished header controls",
+            body: "Settings, language, and theme buttons align cleanly; the cog glows green when idle and turns red while Settings is open.",
+          },
+          releasePrefs: {
+            title: "Control update prompts",
+            body: "Choose whether to see release notes after a version bump — the full history stays one tap away.",
+          },
+        },
+      },
       v230: {
         title: "Operational Notice Rail",
         summary:

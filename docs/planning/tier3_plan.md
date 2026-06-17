@@ -4,7 +4,9 @@
 > **Status:** **v2.2.0 on `dev`** — Tier 3.2 complete (Phase 3.2.0–3.2.2); Tier 3.3 SVG analysis ✅  
 > **Prerequisite:** Pre-Tier 3 UI/UX ✅ (v1.12.0) · Brand mark ✅ (v1.12.1) · Estimation engine perf ✅ (v1.12.2)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
-> **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**
+> **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
+> **Notice Rail:** `docs/planning/notice_system_plan.md` (shipped v2.3.0)  
+> **Settings panel:** `docs/planning/settings_panel_plan.md` (S1 ✅)
 
 ---
 
@@ -751,7 +753,7 @@ flowchart TB
 
 #### 3.5.2 — Full toolkit download (optional)
 
-- [ ] Settings or first-run CTA: “Download all tools for offline use”
+- [ ] Settings or first-run CTA: “Download all tools for offline use” — see also `docs/planning/settings_panel_plan.md` §S5
 - [ ] Precache entire `public/wasm/` (post-3.4 crate list)
 - [ ] Progress UI + storage failure handling
 - [ ] Desktop-first; hidden or warned on constrained mobile

@@ -13,6 +13,11 @@ export function markOnboardingComplete(): void {
   localStorage.setItem(ONBOARDING_STORAGE_KEY, "1");
 }
 
+/** Clears onboarding dismissal so the welcome panel can show again on home. */
+export function resetOnboarding(): void {
+  localStorage.removeItem(ONBOARDING_STORAGE_KEY);
+}
+
 export function getLastSeenRelease(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem(LAST_SEEN_RELEASE_KEY);

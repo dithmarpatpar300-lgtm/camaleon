@@ -13,6 +13,7 @@ import {
   markReleaseSeen,
   snoozeReleaseNotes,
 } from "@/lib/releases";
+import { getShowChangelogOnUpdate } from "@/lib/prefs/user-settings";
 
 export function useReleaseCommsState() {
   const pathname = usePathname();
@@ -37,6 +38,7 @@ export function useReleaseCommsState() {
 
   const shouldShowChangelog = useMemo(() => {
     if (!ready || !isHome || changelogDismissed || shouldShowOnboarding) return false;
+    if (!getShowChangelogOnUpdate()) return false;
     if (!isOnboardingComplete() && !getLastSeenRelease()) return false;
     if (isReleaseSnoozed()) return false;
     return isVersionNewer(APP_VERSION, getLastSeenRelease());

@@ -651,9 +651,9 @@ dialog.whats-new-drawer {
  */
 .lang-pill-thumb {
   position: absolute;
-  top: 2px;
-  bottom: 2px;
-  left: 0;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
   width: var(--lang-btn-w, 1.875rem);
   border-radius: 9999px;
   background-color: var(--color-bg-elevated);
@@ -670,6 +670,270 @@ dialog.whats-new-drawer {
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.12),
     inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* Settings panel — wider segment tracks with inner breathing room */
+.segment-pill-track {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  padding: 3px;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+  background-color: color-mix(in srgb, var(--color-bg-elevated) 40%, transparent);
+}
+
+.segment-pill-track .lang-pill-thumb {
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+}
+
+/*
+ * Settings theme selector — static active cell (no sliding thumb).
+ * Avoids desync with html theme crossfade; color/background fade only.
+ */
+.theme-segment-track {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+  background-color: color-mix(in srgb, var(--color-bg-elevated) 40%, transparent);
+}
+
+.theme-segment-btn {
+  display: inline-flex;
+  height: 1.625rem;
+  min-width: 4rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(0.5rem - 4px);
+  padding: 0 0.35rem;
+  color: var(--color-text-muted);
+  background-color: transparent;
+  box-shadow: none;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.theme-segment-btn:hover:not(.theme-segment-btn--active) {
+  color: var(--color-text-secondary);
+}
+
+.theme-segment-btn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+
+.theme-segment-btn--active {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-elevated);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-border) 65%, transparent);
+}
+
+.light .theme-segment-btn--active {
+  background-color: var(--color-bg-surface);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-border) 90%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-segment-btn {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Utility cluster — circular icon buttons (settings, theme)           */
+/* ------------------------------------------------------------------ */
+
+.utility-cluster-shell {
+  display: flex;
+  height: 2.125rem; /* 34px — room for 26px buttons + vertical inset */
+  shrink: 0;
+  align-items: center;
+  gap: 0.125rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background-color: color-mix(in srgb, var(--color-bg-elevated) 40%, transparent);
+  padding: 0.25rem 0.375rem;
+}
+
+.utility-cluster-divider {
+  height: 0.875rem;
+  width: 1px;
+  background-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+}
+
+.utility-cluster-icon-btn {
+  display: inline-flex;
+  height: 1.625rem; /* 26px */
+  width: 1.625rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.utility-cluster-icon-btn:hover {
+  border-color: var(--color-border);
+  background-color: color-mix(in srgb, var(--color-bg-elevated) 65%, transparent);
+  color: var(--color-text-primary);
+}
+
+.utility-cluster-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg-base), 0 0 0 4px var(--color-accent);
+}
+
+/* Settings trigger — idle green invite, open warm-red active */
+.settings-trigger-btn--idle {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 18%, transparent),
+    0 0 12px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.settings-trigger-btn--idle:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 65%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  color: var(--color-accent-hover);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 28%, transparent),
+    0 0 16px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+.settings-trigger-btn--open {
+  border-color: color-mix(in srgb, var(--color-error) 55%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-error) 14%, transparent);
+  color: var(--color-error);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-error) 22%, transparent),
+    0 0 14px color-mix(in srgb, var(--color-error) 18%, transparent);
+}
+
+.settings-trigger-btn--open:hover {
+  border-color: color-mix(in srgb, var(--color-error) 70%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+
+.light .settings-trigger-btn--idle {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 25%, transparent),
+    0 0 10px color-mix(in srgb, var(--color-accent) 18%, transparent);
+}
+
+.settings-trigger-icon {
+  transition: transform 420ms cubic-bezier(0.34, 1.2, 0.64, 1);
+  transform-origin: center;
+}
+
+.settings-trigger-icon--open {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-trigger-icon {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Settings panel — prominent toggle switch                            */
+/* ------------------------------------------------------------------ */
+
+.settings-switch {
+  position: relative;
+  display: inline-flex;
+  height: 1.75rem;
+  width: 3rem;
+  flex-shrink: 0;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background-color: color-mix(in srgb, var(--color-bg-elevated) 60%, transparent);
+  transition:
+    border-color 220ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.settings-switch:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-bg-base),
+    0 0 0 4px var(--color-accent);
+}
+
+.settings-switch--on {
+  border-color: color-mix(in srgb, var(--color-accent) 70%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-bg-elevated));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 20%, transparent),
+    0 0 14px color-mix(in srgb, var(--color-accent) 28%, transparent);
+}
+
+.light .settings-switch--on {
+  border-color: color-mix(in srgb, var(--color-accent) 55%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-accent) 42%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 22%, transparent),
+    0 0 12px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.settings-switch-thumb {
+  pointer-events: none;
+  display: inline-block;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 9999px;
+  background-color: var(--color-bg-surface);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-border) 70%, transparent);
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.settings-switch--on .settings-switch-thumb {
+  transform: translateX(1.35rem);
+  background-color: #ffffff;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.22),
+    0 0 8px color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+.light .settings-switch-thumb {
+  background-color: #ffffff;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.14),
+    inset 0 0 0 1px color-mix(in srgb, var(--color-border) 90%, transparent);
+}
+
+.light .settings-switch--on .settings-switch-thumb {
+  background-color: #ffffff;
+}
+
+.settings-switch-thumb--off {
+  transform: translateX(0.2rem);
 }
 
 /* ------------------------------------------------------------------ */

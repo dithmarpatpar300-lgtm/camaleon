@@ -2,12 +2,15 @@
 
 import { LanguageSelector } from "./LanguageSelector";
 import { ThemeToggle } from "./ThemeToggle";
+import { SettingsTrigger } from "./SettingsTrigger";
 
 export function UtilityCluster() {
   return (
-    <div className="flex h-8 shrink-0 items-center gap-0.5 rounded-full border border-border bg-bg-elevated/40 px-1.5 py-0.5">
+    <div className="utility-cluster-shell">
+      <SettingsTrigger />
+      <div className="utility-cluster-divider" aria-hidden />
       <LanguageSelector />
-      <div className="h-3.5 w-px bg-border/80" aria-hidden />
+      <div className="utility-cluster-divider" aria-hidden />
       <ThemeToggle />
     </div>
   );

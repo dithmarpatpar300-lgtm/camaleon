@@ -1,18 +1,19 @@
 "use client";
 
-import { IconButton } from "@/components/ui/IconButton";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useI18n } from "@/providers/I18nProvider";
+import { cn } from "@/lib/utils";
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
   const { t } = useI18n();
 
   return (
-    <IconButton
+    <button
+      type="button"
       onClick={toggleTheme}
       aria-label={theme === "dark" ? t("theme.switchToLight") : t("theme.switchToDark")}
-      className="!h-7 !w-7 !rounded-full border border-border/50 hover:border-border/80"
+      className="utility-cluster-icon-btn"
     >
       {/*
        * key={theme} forces React to unmount/remount the span on every toggle,
@@ -29,6 +30,6 @@ export function ThemeToggle() {
           </svg>
         )}
       </span>
-    </IconButton>
+    </button>
   );
 }

@@ -33,7 +33,7 @@ export function LanguageSelector() {
     <div
       role="group"
       aria-label="Language"
-      className="relative flex h-7 items-stretch text-[11px] font-medium leading-none"
+      className="relative flex items-stretch p-[3px] text-[11px] font-medium leading-none"
       style={
         {
           "--active-idx": activeIndex,
@@ -53,7 +53,7 @@ export function LanguageSelector() {
             aria-label={getAriaLabel(l, t)}
             aria-current={isActive ? "true" : undefined}
             className={[
-              "relative z-10 flex items-center justify-center uppercase",
+              "relative z-10 flex h-[1.625rem] items-center justify-center uppercase",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset",
               "transition-colors duration-150",
               isActive ? "text-text-primary" : "text-text-muted hover:text-text-secondary",

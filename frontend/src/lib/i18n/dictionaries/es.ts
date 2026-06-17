@@ -102,6 +102,37 @@ const es: Dictionary = {
     switchToDark: "Cambiar a tema oscuro",
   },
 
+  settings: {
+    title: "Ajustes",
+    subtitle: "Preferencias",
+    close: "Cerrar ajustes",
+    openAria: "Abrir ajustes",
+    versionFootnote: "Camaleon v{version}",
+    general: {
+      section: "General",
+      languageLabel: "Idioma",
+      languageHint: "Textos de la interfaz y descripciones de herramientas.",
+      langEn: "Ingles",
+      langEs: "Espanol",
+      themeLabel: "Tema",
+      themeHint: "Apariencia clara u oscura en toda la app.",
+      themeLight: "Claro",
+      themeDark: "Oscuro",
+    },
+    updates: {
+      section: "Actualizaciones",
+      changelogLabel: "Notas al actualizar",
+      changelogHint: "Mostrar novedades cuando visites tras una nueva version.",
+      whatsNewLabel: "Historial de versiones",
+      whatsNewHint: "Consulta todas las versiones publicadas y sus mejoras.",
+      whatsNewAction: "Abrir Novedades",
+      welcomeLabel: "Mensaje de bienvenida",
+      welcomeHint: "Vuelve a mostrar la intro de privacidad en la pagina de inicio.",
+      welcomeAction: "Mostrar de nuevo",
+      welcomeResetDone: "El mensaje de bienvenida aparecera en tu proxima visita al inicio.",
+    },
+  },
+
   footer: {
     privacy: "100% local. Tus archivos nunca salen de tu dispositivo.",
     about: "Acerca de",
@@ -171,6 +202,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v231: {
+        title: "Panel de ajustes",
+        summary:
+          "Un nuevo drawer de preferencias centraliza idioma, tema y avisos de actualizacion — mas un cluster del header refinado con tuerca animada.",
+        technical:
+          "SettingsProvider + SettingsDrawer (S1). user-settings.ts (camaleon-user-settings-v1). ThemeSegment con celdas activas estaticas. Alineacion utility cluster + estados del trigger. SPEC §7.13. App v2.3.1.",
+        highlights: {
+          settingsPanel: {
+            title: "Preferencias en un solo lugar",
+            body: "Abre la tuerca del header para idioma, tema, toggle de notas de version, Novedades y reset de bienvenida — sin perder los toggles rapidos.",
+          },
+          utilityCluster: {
+            title: "Controles del header pulidos",
+            body: "Settings, idioma y tema alineados; la tuerca brilla en verde en reposo y rojo con Ajustes abierto.",
+          },
+          releasePrefs: {
+            title: "Controla avisos de actualizacion",
+            body: "Elige si ver notas de version tras un bump — el historial completo sigue a un toque.",
+          },
+        },
+      },
       v230: {
         title: "Rail de avisos operacionales",
         summary:
