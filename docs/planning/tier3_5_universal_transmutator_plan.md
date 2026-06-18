@@ -14,7 +14,7 @@
 
 **Solution:** **Universal Transmutator** — one home-page drop zone. User drops any **supported** input → UI lists **only real outbound tools** from the registry → user picks output → browser navigates to the existing transmutator with the file **already handed off**.
 
-**Not in scope (MVP):** in-place conversion without navigation, multi-file batch, HEIC, new output formats, server upload.
+**Not in scope (MVP):** in-place conversion without navigation, multi-file batch (**→ Tier 3.6** `tier3_6_multi_file_plan.md`), HEIC, new output formats, server upload.
 
 ---
 
@@ -233,7 +233,7 @@ IndexedDB handoff for **new tab** / refresh survival — only if product demands
 | `.svg` drop | Only PNG, JPG (2 options) |
 | `.ico` drop | Only PNG |
 | `.heic` drop | Unsupported message; no redirect |
-| Multi-file drop | First file only + optional toast “one file at a time” |
+| Multi-file drop | First file only + toast “one file at a time” (until **Tier 3.6**) |
 | Drop on home background | Ignored (no overlay) |
 | Handoff expired | Tool page opens idle; toast “session expired, drop again” |
 | Wrong tool handoff (tampered id) | Idle + toast |
