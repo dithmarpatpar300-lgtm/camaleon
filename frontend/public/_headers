@@ -1,6 +1,9 @@
 /_next/static/*
   Cache-Control: public,max-age=31536000,immutable
 
+/version.json
+  Cache-Control: no-store, must-revalidate
+
 /wasm/*
   Cache-Control: public,max-age=31536000,immutable
   Access-Control-Allow-Origin: *

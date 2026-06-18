@@ -526,8 +526,11 @@ Tier 3.6 **supersedes** that behavior in controlled phases on batch-enabled tool
 | **v3.2.1** | 3.6.0 core | `dev` | 14 raster slugs; camera JPEG 512 KiB scan; batch decode validation |
 | **v3.2.4** | 3.6.1 A+B | `dev` | Universal homogeneous multi-drop; batch-handoff; buildCohorts; mixed-format hint |
 | **v3.2.3** | 3.6.0 **complete** | `dev` | Batch UX (initial gate, encode-only rerun, cache redownload, hints); `commitItems` sync fix |
+| **v3.2.7** | — | `dev` | App updates (3.2.5–3.2.6), toast system, floating notices, modal blur/toast veil hotfixes |
+| **v3.2.6** | — | `dev` | Settings auto-detect updates + Check now |
+| **v3.2.5** | — | `dev` | App update module, AppUpdateNotice pill, deep refresh |
 
-**Next:** Tier **3.6.1** Slice C — Universal mixed-format cohort picker (see §14.2).
+**Next:** Tier **3.6.1** Slice C — Universal mixed-format cohort picker (see §14.2). **Then:** Settings **S7** Batch & Universal prefs (see `settings_panel_plan.md`).
 
 ---
 

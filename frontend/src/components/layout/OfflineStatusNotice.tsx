@@ -39,7 +39,7 @@ export function OfflineStatusNotice() {
       role="status"
       aria-live="polite"
       className={cn(
-        "offline-status-notice pointer-events-auto fixed z-[60]",
+        "offline-status-notice pointer-events-auto",
         kind === "simulated" && "offline-status-notice--forced",
         kind === "serverDown" && "offline-status-notice--server-down"
       )}

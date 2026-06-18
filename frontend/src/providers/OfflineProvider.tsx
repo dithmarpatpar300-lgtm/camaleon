@@ -21,10 +21,7 @@ import {
   applyForceOfflineNetworkPolicy,
 } from "@/lib/offline/force-offline";
 import { installServerReachabilityListeners } from "@/lib/offline/server-reachability";
-import {
-  activateWaitingServiceWorker,
-  registerServiceWorker,
-} from "@/lib/offline/sw-registration";
+import { getServiceWorkerRegistration } from "@/lib/offline/sw-registration";
 
 type OfflineContextValue = {
   /** Effective UX connectivity. */
@@ -35,8 +32,6 @@ type OfflineContextValue = {
   setForceOffline: (enabled: boolean) => void;
   swSupported: boolean;
   swRegistered: boolean;
-  updateAvailable: boolean;
-  reloadForUpdate: () => void;
 };
 
 const OfflineContext = createContext<OfflineContextValue | null>(null);
@@ -46,7 +41,6 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   const [serverReachable, setServerReachable] = useState(true);
   const [forceOffline, setForceOfflineState] = useState(false);
   const [swRegistered, setSwRegistered] = useState(false);
-  const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
     setNetworkOnline(readBrowserOnline());
@@ -68,9 +62,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    void registerServiceWorker(() => {
-      if (!cancelled) setUpdateAvailable(true);
-    }).then((reg) => {
+    void getServiceWorkerRegistration().then((reg) => {
       if (!cancelled) setSwRegistered(Boolean(reg));
     });
     return () => {
@@ -97,11 +89,6 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     }
   }, [forceOffline, swRegistered]);
 
-  const reloadForUpdate = useCallback(() => {
-    activateWaitingServiceWorker();
-    window.location.reload();
-  }, []);
-
   const online = networkOnline && serverReachable && !forceOffline;
 
   const value = useMemo<OfflineContextValue>(
@@ -113,8 +100,6 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       setForceOffline,
       swSupported: isServiceWorkerSupported(),
       swRegistered,
-      updateAvailable,
-      reloadForUpdate,
     }),
     [
       online,
@@ -123,8 +108,6 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       forceOffline,
       setForceOffline,
       swRegistered,
-      updateAvailable,
-      reloadForUpdate,
     ]
   );
 

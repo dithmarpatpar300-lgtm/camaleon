@@ -2,21 +2,13 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useI18n } from "@/providers/I18nProvider";
-import { useReleaseComms } from "@/providers/ReleaseCommsProvider";
-import { useToast } from "@/providers/ToastProvider";
 import { APP_VERSION } from "@/lib/site";
-import { resetOnboarding } from "@/lib/releases/storage";
-import {
-  getShowChangelogOnUpdate,
-  setShowChangelogOnUpdate,
-} from "@/lib/prefs/user-settings";
 import { SurfaceDialog } from "@/components/ui/SurfaceDialog";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { PanelScrollFade } from "@/components/ui/PanelScrollFade";
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsRow } from "./SettingsRow";
-import { SettingsSwitch } from "./SettingsSwitch";
 import { ThemeSegment } from "./ThemeSegment";
 import { LanguageSegment } from "./LanguageSegment";
 import { TransmutationDefaultsSection } from "./TransmutationDefaultsSection";
@@ -24,6 +16,7 @@ import { PerformanceSettingsSection } from "./PerformanceSettingsSection";
 import { NoticesSettingsSection } from "./NoticesSettingsSection";
 import { OfflineSettingsSection } from "./OfflineSettingsSection";
 import { RiskSettingsSection } from "./RiskSettingsSection";
+import { UpdatesSettingsSection } from "./UpdatesSettingsSection";
 
 const EXIT_MS = 240;
 
@@ -37,35 +30,6 @@ type Props = {
 
 function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => void; open: boolean }) {
   const { t } = useI18n();
-  const { openWhatsNew } = useReleaseComms();
-  const { toast } = useToast();
-  const [showChangelog, setShowChangelog] = useState(true);
-
-  useEffect(() => {
-    if (!open) return;
-    setShowChangelog(getShowChangelogOnUpdate());
-  }, [open]);
-
-  const handleChangelogToggle = useCallback((next: boolean) => {
-    setShowChangelog(next);
-    setShowChangelogOnUpdate(next);
-  }, []);
-
-  const handleViewWhatsNew = useCallback(() => {
-    onRequestClose();
-    openWhatsNew();
-  }, [onRequestClose, openWhatsNew]);
-
-  const handleResetWelcome = useCallback(() => {
-    resetOnboarding();
-    toast({ message: t("settings.updates.welcomeResetDone"), variant: "success" });
-  }, [t, toast]);
-
-  const actionButtonClass = cn(
-    "rounded-lg border border-border bg-bg-elevated/50 px-3 py-2 text-xs font-medium text-text-secondary",
-    "transition-colors hover:border-accent/25 hover:bg-bg-elevated hover:text-text-primary",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-  );
 
   return (
     <>
@@ -121,32 +85,7 @@ function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => vo
 
             <RiskSettingsSection drawerOpen={open} />
 
-            <SettingsSection title={t("settings.updates.section")}>
-              <SettingsRow
-                label={t("settings.updates.changelogLabel")}
-                description={t("settings.updates.changelogHint")}
-              >
-                <SettingsSwitch
-                  checked={showChangelog}
-                  onChange={handleChangelogToggle}
-                  label={t("settings.updates.changelogLabel")}
-                />
-              </SettingsRow>
-              <SettingsRow label={t("settings.updates.whatsNewLabel")} description={t("settings.updates.whatsNewHint")}>
-                <button type="button" onClick={handleViewWhatsNew} className={actionButtonClass}>
-                  {t("settings.updates.whatsNewAction")}
-                </button>
-              </SettingsRow>
-              <SettingsRow
-                label={t("settings.updates.welcomeLabel")}
-                description={t("settings.updates.welcomeHint")}
-                bordered={false}
-              >
-                <button type="button" onClick={handleResetWelcome} className={actionButtonClass}>
-                  {t("settings.updates.welcomeAction")}
-                </button>
-              </SettingsRow>
-            </SettingsSection>
+            <UpdatesSettingsSection drawerOpen={open} onRequestClose={onRequestClose} />
 
             <p className="px-1 text-center font-mono text-[10px] tabular-nums text-text-muted/80">
               {t("settings.versionFootnote", { version: APP_VERSION })}

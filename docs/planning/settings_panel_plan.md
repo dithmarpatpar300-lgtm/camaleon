@@ -1,6 +1,6 @@
 # Settings / Opciones Panel — System Plan
 
-> **Status:** **S5 shipped** v3.0.0 · **Offline mode** v3.0.1 · **S4** v2.3.4 · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1  
+> **Status:** **S5 shipped** v3.0.0 · **Offline mode** v3.0.1 · **Updates** v3.2.6 · **S4** v2.3.4 · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1  
 > **Scope:** User-facing preferences (local-first, `localStorage` only)  
 > **Doctrine:** NFR-1 privacy — no server sync; document keys in `/privacy`  
 > **SPEC anchor:** §7.13 User Settings Panel
@@ -82,6 +82,31 @@ See **`docs/planning/tier3_4_pwa_offline_analysis.md` §6** for full product doc
 | **Clear offline cache** | `caches.delete()` + reset precache pref | Action |
 
 **Doctrine:** Never force bulk download. Model B (shell + lazy Wasm per tool) is automatic; Model C (full toolkit) requires explicit user consent in Settings.
+
+### Updates ✅ (v3.2.6)
+
+| Setting | Maps to | Default |
+|---------|---------|---------|
+| **Auto-detect updates** | SW poll + `/version.json` beacon → `AppUpdateNotice` | **ON** |
+| **Check now** | Manual `pollForUpdates()` from Settings | Action |
+| **Show changelog on update** | Post-reload `ReleaseNotesModal` | ON |
+| **Open What's New / Reset welcome** | Release comms navigation | Actions |
+
+**Files:** `updates-prefs.ts`, `UpdatesSettingsSection.tsx`, `AppUpdateProvider.tsx`.
+
+### S7 — Batch & Universal (planned, pre–Slice C)
+
+See analysis in Tier 3.6 planning — prefs to ship **before or with Slice C**:
+
+| Setting | Purpose | Default |
+|---------|---------|---------|
+| **Universal multi-drop** | Disable homogeneous multi-file on home | ON |
+| **Select all on batch load** | Initial checkbox state in batch workspace | all |
+| **Mixed format policy** | `hint` (Slice B) → `picker` (Slice C) | hint |
+| **Aggregate size warning** | Warn when total batch bytes exceed threshold | ON |
+| **Unsupported skipped toast** | Toast when files filtered on dedicated route | ON |
+
+**Files (planned):** `batch-universal-prefs.ts`, `BatchUniversalSettingsSection.tsx`.
 
 ---
 
@@ -190,6 +215,16 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 
 - [x] Tier 3.4 PWA integration — `OfflineSettingsSection`, `offline-prefs.ts`, `precacheFullToolkit`
 
+### Updates ✅ (v3.2.6)
+
+- [x] `updates-prefs.ts` + `UpdatesSettingsSection`
+- [x] Auto-detect toggle + Check now + toasts (v3.2.7 toast system)
+
+### S7 — Batch & Universal (planned)
+
+- [ ] `batch-universal-prefs.ts` + settings section
+- [ ] Wire `defaultSelection`, `universalMultiDrop`, `mixedFormatPolicy` before Slice C
+
 ---
 
 ## 8. Related docs
@@ -205,4 +240,4 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 
 ---
 
-*Last updated: 2026-06-11 — S1 implementation started.*
+*Last updated: 2026-06-11 — Updates v3.2.6 shipped; S7 Batch & Universal planned pre–Slice C.*

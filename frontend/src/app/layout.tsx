@@ -9,11 +9,11 @@ import { ToastProvider } from "@/providers/ToastProvider";
 import { ReleaseCommsProvider } from "@/providers/ReleaseCommsProvider";
 import { SettingsProvider } from "@/providers/SettingsProvider";
 import { RiskModeProvider } from "@/providers/RiskModeProvider";
+import { AppUpdateProvider } from "@/providers/AppUpdateProvider";
 import { OfflineProvider } from "@/providers/OfflineProvider";
+import { FloatingNoticesRoot } from "@/components/layout/FloatingNoticesRoot";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { OfflineStatusNotice } from "@/components/layout/OfflineStatusNotice";
-import { SwUpdatePrompt } from "@/components/layout/SwUpdatePrompt";
 import { OverlayScrollbar } from "@/components/layout/OverlayScrollbar";
 import { ScrollLockRouteGuard } from "@/components/layout/ScrollLockRouteGuard";
 import { AmbientBloom } from "@/components/layout/AmbientBloom";
@@ -79,6 +79,7 @@ export default async function RootLayout({
             <OverlayScrollbar />
             <ScrollLockRouteGuard />
             <OfflineProvider>
+            <AppUpdateProvider>
             <TransmutationWorkerProvider>
               <ToastProvider>
                 <ReleaseCommsProvider>
@@ -86,17 +87,17 @@ export default async function RootLayout({
                     <SettingsProvider>
                     <AmbientBloom />
                     <div className="relative z-10 flex min-h-screen min-w-0 flex-col overflow-x-clip">
-                      <SwUpdatePrompt />
-                      <OfflineStatusNotice />
                       <Header />
                       <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
                       <Footer />
                     </div>
+                    <FloatingNoticesRoot />
                     </SettingsProvider>
                   </RiskModeProvider>
                 </ReleaseCommsProvider>
               </ToastProvider>
             </TransmutationWorkerProvider>
+            </AppUpdateProvider>
             </OfflineProvider>
           </ThemeProvider>
         </I18nProvider>

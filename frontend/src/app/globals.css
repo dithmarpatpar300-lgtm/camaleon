@@ -596,8 +596,8 @@ dialog.command-palette::backdrop,
 dialog.surface-overlay::backdrop,
 dialog.whats-new-drawer::backdrop {
   background-color: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 
 dialog.surface-dialog--drawer::backdrop,
@@ -989,9 +989,7 @@ dialog.whats-new-drawer {
 
 /* Offline status notice — fixed pill below header, aligned with scrollbar gutter */
 .offline-status-notice {
-  top: calc(var(--header-height) + var(--layout-sticky-gap));
-  right: calc(var(--layout-edge-inline) + var(--overlay-scrollbar-gutter));
-  max-width: min(18.5rem, calc(100vw - var(--layout-edge-inline) - var(--overlay-scrollbar-gutter) - 1rem));
+  width: 100%;
   border-radius: 0.75rem;
   border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
   background-color: color-mix(in srgb, var(--color-bg-surface) 96%, transparent);
@@ -1051,8 +1049,7 @@ dialog.whats-new-drawer {
 
 @media (max-width: 639px) {
   .offline-status-notice {
-    right: var(--layout-edge-inline);
-    max-width: min(18.5rem, calc(100vw - var(--layout-edge-inline) * 2));
+    max-width: 100%;
   }
 }
 
@@ -1062,6 +1059,261 @@ dialog.whats-new-drawer {
   box-shadow:
     0 8px 24px rgba(15, 20, 18, 0.08),
     0 1px 0 rgba(255, 255, 255, 0.85) inset;
+}
+
+.app-update-notice {
+  width: 100%;
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-bg-surface) 96%, transparent);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.24),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: blur(12px);
+}
+
+.app-update-notice__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem 0.75rem;
+  padding: 0.75rem 0.875rem;
+}
+
+.app-update-notice__icon {
+  display: inline-flex;
+  height: 1.375rem;
+  width: 1.375rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.app-update-notice__message {
+  margin: 0;
+  flex: 1 1 10rem;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.app-update-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.app-update-notice__primary {
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent);
+  background-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  padding: 0.3125rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease;
+}
+
+.app-update-notice__primary:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--color-accent) 26%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+
+.app-update-notice__primary:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.app-update-notice__secondary {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: color 160ms ease;
+}
+
+.app-update-notice__secondary:hover:not(:disabled) {
+  color: var(--color-text-secondary);
+  text-decoration: underline;
+}
+
+.light .app-update-notice {
+  border-color: color-mix(in srgb, var(--color-accent) 22%, var(--color-border));
+  background-color: color-mix(in srgb, var(--color-bg-surface) 94%, transparent);
+  box-shadow:
+    0 10px 28px rgba(15, 20, 18, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+}
+
+@media (max-width: 639px) {
+  .app-update-notice__actions {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* Floating notice hosts — portal to body, always visible (z-index 100). */
+.floating-notices-bottom-host,
+.floating-notices-top-host {
+  position: fixed;
+  pointer-events: none;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  z-index: 100;
+}
+
+.floating-notices-bottom-host {
+  inset: auto 0 0 0;
+}
+
+.floating-notices-top-host {
+  top: 0;
+  right: 0;
+  left: auto;
+  bottom: auto;
+  width: min(18.5rem, calc(100vw - var(--layout-edge-inline) - var(--overlay-scrollbar-gutter) - 1rem));
+}
+
+.floating-notices-bottom-host:popover-open,
+.floating-notices-top-host:popover-open {
+  z-index: auto;
+}
+
+.floating-notices-bottom-host::backdrop,
+.floating-notices-top-host::backdrop {
+  display: none;
+}
+
+.floating-notice-stack {
+  position: fixed;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.floating-notice-stack__item {
+  pointer-events: auto;
+  width: 100%;
+  motion-safe:animate-[fadeIn_200ms_ease-out];
+}
+
+.floating-notice-stack__item--toasts {
+  animation: none;
+}
+
+.floating-notice-stack--bottom {
+  bottom: calc(var(--layout-edge-inline) + 0.5rem);
+  left: 50%;
+  width: min(28rem, calc(100vw - var(--layout-edge-inline) * 2));
+  transform: translateX(-50%);
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+
+.floating-notice-stack--top-right {
+  top: calc(var(--header-height) + var(--layout-sticky-gap));
+  right: calc(var(--layout-edge-inline) + var(--overlay-scrollbar-gutter));
+  width: min(18.5rem, calc(100vw - var(--layout-edge-inline) - var(--overlay-scrollbar-gutter) - 1rem));
+  flex-direction: column;
+  align-items: stretch;
+}
+
+@media (max-width: 639px) {
+  .floating-notice-stack--bottom {
+    bottom: calc(var(--layout-edge-inline) + 0.25rem);
+    width: calc(100vw - var(--layout-edge-inline) * 2);
+  }
+
+  .floating-notice-stack--top-right {
+    right: var(--layout-edge-inline);
+    width: min(18.5rem, calc(100vw - var(--layout-edge-inline) * 2));
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Toast system — viewport mask peek (PanelScrollFade-style, no overlay) */
+/* ------------------------------------------------------------------ */
+
+.toast-viewport-shell {
+  position: relative;
+  width: 100%;
+}
+
+.toast-viewport {
+  --toast-gap: 0.75rem;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: none;
+  scrollbar-width: none;
+}
+
+.toast-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.toast-viewport__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--toast-gap);
+}
+
+.toast-card--entering {
+  animation: toastEnter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toast-card--exiting {
+  animation: toastExit 240ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+@keyframes toastEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 5rem;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+    max-height: 0;
+    margin-top: calc(var(--toast-gap) * -1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-card--entering,
+  .toast-card--exiting {
+    animation: none;
+  }
 }
 
 .utility-cluster-icon-btn {

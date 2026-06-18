@@ -2,9 +2,24 @@ import { isServiceWorkerSupported } from "@/lib/offline/connectivity";
 
 export type SwUpdateCallback = () => void;
 
-export async function registerServiceWorker(
-  onUpdateWaiting?: SwUpdateCallback
-): Promise<ServiceWorkerRegistration | null> {
+const updateListeners = new Set<SwUpdateCallback>();
+
+let registerPromise: Promise<ServiceWorkerRegistration | null> | null = null;
+
+export function subscribeSwUpdateWaiting(callback: SwUpdateCallback): () => void {
+  updateListeners.add(callback);
+  return () => {
+    updateListeners.delete(callback);
+  };
+}
+
+function notifyUpdateWaiting(): void {
+  for (const callback of updateListeners) {
+    callback();
+  }
+}
+
+async function registerServiceWorkerInternal(): Promise<ServiceWorkerRegistration | null> {
   if (typeof window === "undefined") return null;
   if (process.env.NODE_ENV !== "production") return null;
   if (!isServiceWorkerSupported()) return null;
@@ -15,7 +30,7 @@ export async function registerServiceWorker(
     });
 
     if (registration.waiting && navigator.serviceWorker.controller) {
-      onUpdateWaiting?.();
+      notifyUpdateWaiting();
     }
 
     registration.addEventListener("updatefound", () => {
@@ -26,21 +41,32 @@ export async function registerServiceWorker(
           installing.state === "installed" &&
           navigator.serviceWorker.controller
         ) {
-          onUpdateWaiting?.();
+          notifyUpdateWaiting();
         }
       });
-    });
-
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing) return;
-      refreshing = true;
     });
 
     return registration;
   } catch {
     return null;
   }
+}
+
+export function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
+  if (!registerPromise) {
+    registerPromise = registerServiceWorkerInternal();
+  }
+  return registerPromise;
+}
+
+/** @deprecated Use getServiceWorkerRegistration + subscribeSwUpdateWaiting */
+export async function registerServiceWorker(
+  onUpdateWaiting?: SwUpdateCallback
+): Promise<ServiceWorkerRegistration | null> {
+  if (onUpdateWaiting) {
+    subscribeSwUpdateWaiting(onUpdateWaiting);
+  }
+  return getServiceWorkerRegistration();
 }
 
 export function activateWaitingServiceWorker(): void {

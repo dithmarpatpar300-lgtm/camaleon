@@ -47,6 +47,11 @@ export type OfflinePrefs = {
   dismissedMobileWarning?: boolean;
 };
 
+export type UpdatesPrefs = {
+  /** Poll service worker + /version.json for live releases. Default true. */
+  autoDetectUpdates?: boolean;
+};
+
 export type UserSettings = {
   /** When false, skip auto changelog modal on version bump; What's New remains available. */
   showChangelogOnUpdate: boolean;
@@ -60,6 +65,8 @@ export type UserSettings = {
   riskMode?: RiskModePrefs;
   /** Offline / cache prefs (S5). */
   offline?: OfflinePrefs;
+  /** App update detection prefs. */
+  updates?: UpdatesPrefs;
 };
 
 const DEFAULTS: UserSettings = {
@@ -98,6 +105,7 @@ export function readUserSettings(): UserSettings {
           }
         : { enabled: false },
     offline: merged.offline,
+    updates: merged.updates,
   };
 }
 

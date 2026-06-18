@@ -242,6 +242,17 @@ const es: Dictionary = {
     },
     updates: {
       section: "Actualizaciones",
+      autoDetectLabel: "Buscar actualizaciones automáticamente",
+      autoDetectHint:
+        "Consulta Live cada pocos minutos y al volver a esta pestaña. Desactívalo para revisar solo manualmente.",
+      checkNowLabel: "Buscar ahora",
+      checkNowHint: "Comprueba si hay versión nueva al instante — útil con la búsqueda automática desactivada.",
+      checkNowAction: "Buscar ahora",
+      checkNowRunning: "Buscando…",
+      checkUpToDate: "Ya tienes la última versión.",
+      checkFound: "Hay una actualización disponible — usa el aviso en la parte inferior de la pantalla.",
+      checkOffline: "Conéctate a internet para buscar actualizaciones.",
+      checkUnavailable: "La búsqueda de actualizaciones solo funciona en la app de producción.",
       changelogLabel: "Notas al actualizar",
       changelogHint: "Mostrar novedades cuando visites tras una nueva version.",
       whatsNewLabel: "Historial de versiones",
@@ -262,14 +273,20 @@ const es: Dictionary = {
     noticeServerDown:
       "Servidor de la app inaccesible (localhost detenido u host offline). Wasm en caché sigue si ya estaba cargado.",
     noticeExitOfflineMode: "Desactivar modo sin conexion",
-    updateAvailable: "Hay una nueva versión de Camaleon lista.",
-    updateReload: "Recargar",
     uncachedTool:
       "Esta herramienta aún no está en caché. Conéctate a internet una vez para descargar su motor, o activa «Descargar todas las herramientas» en Ajustes.",
     fallbackTitle: "Estás sin conexión",
     fallbackBody:
       "Camaleon necesita conexión en la primera visita. Abre la app en línea y luego la conversión sin conexión funcionará para las herramientas en caché.",
     fallbackHome: "Volver al inicio",
+  },
+
+  appUpdate: {
+    message: "La versión {version} está disponible",
+    messageGeneric: "Hay una nueva versión de Camaleon disponible",
+    update: "Actualizar",
+    later: "Más tarde",
+    updating: "Actualizando…",
   },
 
   connectivity: {
@@ -349,6 +366,69 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v327: {
+        title: "Toasts y pulido de UI",
+        summary:
+          "Sistema unificado de toasts para feedback en toda la app, avisos flotantes más inteligentes y correcciones del blur del modal y apilado de toasts con Ajustes abierto.",
+        technical:
+          "ToastProvider + ToastViewport (peek con máscara desde el 4.º toast), FloatingNoticesRoot (promote popover solo con dialog abierto); AppUpdateProvider/AppUpdateNotice (v3.2.5); updates-prefs auto-detect + Buscar ahora (v3.2.6); SurfaceDialog demote restaura blur ::backdrop en preview:cf. App v3.2.7.",
+        highlights: {
+          toastSystem: {
+            title: "Toasts centralizados",
+            body: "Las acciones de Ajustes y comprobaciones de actualización muestran toasts claros abajo al centro — en cola, auto-dismiss, con peek sutil cuando se apilan cuatro o más.",
+          },
+          floatingNotices: {
+            title: "Pila de avisos",
+            body: "El pill de actualización y los toasts comparten una pila flotante sin solaparse. Los toasts suben sobre paneles abiertos cuando hace falta.",
+          },
+          modalPolish: {
+            title: "Blur del modal",
+            body: "Ajustes y otros diálogos mantienen el backdrop difuminado en builds de producción — mismo aspecto que en dev local.",
+          },
+        },
+      },
+      v326: {
+        title: "Detección de actualizaciones en Ajustes",
+        summary:
+          "Elige si Camaleon busca versiones nuevas en Live automáticamente, o ejecuta una comprobación manual desde Ajustes cuando prefieras.",
+        technical:
+          "updates-prefs.ts (autoDetectUpdates en camaleon-user-settings-v1.updates); AppUpdateProvider respeta pref — sin poll interval/visibility/online si off; listener pasivo SW waiting; UpdatesSettingsSection con Buscar ahora + toasts. App v3.2.6.",
+        highlights: {
+          autoDetectToggle: {
+            title: "Comprobaciones automáticas",
+            body: "Activa o desactiva el polling en segundo plano en Ajustes → Actualizaciones. Por defecto activo — con off solo manual.",
+          },
+          checkNow: {
+            title: "Buscar ahora",
+            body: "Ejecuta una comprobación inmediata en Live desde Ajustes. Toast claro si estás al día o si hay pill de actualización.",
+          },
+          productionOnly: {
+            title: "Builds de producción",
+            body: "Las comprobaciones requieren la PWA desplegada con service worker — en dev local verás un aviso amigable.",
+          },
+        },
+      },
+      v325: {
+        title: "Actualizaciones inteligentes",
+        summary:
+          "Camaleon detecta nuevas versiones en Live en segundo plano y las aplica con un refresco profundo — sin pestañas obsoletas ni recargas superficiales.",
+        technical:
+          "Módulo app-update: beacon /version.json (no-store), poll SW cada 5 min + visibility/online; skipWaiting + espera controllerchange; purge shell cache (Wasm preservado); pill AppUpdateNotice reemplaza banner SwUpdatePrompt. App v3.2.5.",
+        highlights: {
+          deepUpdate: {
+            title: "Refresco profundo",
+            body: "Actualizar espera al nuevo service worker, limpia cachés obsoletas de la app y recarga con cache-bust — obtienes la versión real más reciente.",
+          },
+          liveDetection: {
+            title: "Detecta releases en Live",
+            body: "Las pestañas abiertas consultan actualizaciones cada pocos minutos y al volver — no necesitas F5 manual para saber que hay versión nueva.",
+          },
+          minimalNotice: {
+            title: "Aviso minimalista",
+            body: "Un pill flotante compacto reemplaza el banner superior anterior. Actualiza ahora o posponer 24 horas.",
+          },
+        },
+      },
       v324: {
         title: "Multi-archivo en el transmutador universal",
         summary:

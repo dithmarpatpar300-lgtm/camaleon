@@ -1,8 +1,9 @@
 "use client";
 
-import { forwardRef, type KeyboardEventHandler, type ReactNode, type Ref } from "react";
+import { forwardRef, type KeyboardEventHandler, type ReactNode, type Ref, useLayoutEffect } from "react";
 import { useModalDialog } from "@/hooks/useModalDialog";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { demoteFloatingNoticesLayer } from "@/lib/layout/floating-notices-layer";
 import { mergeRefs } from "@/lib/merge-refs";
 import { cn } from "@/lib/utils";
 import { ModalPortal } from "./ModalPortal";
@@ -59,6 +60,11 @@ export const SurfaceDialog = forwardRef<HTMLDialogElement, SurfaceDialogProps>(
     const isMounted = forceMount || (mounted ?? open);
 
     useScrollLock(scrollLock && isMounted && open);
+
+    useLayoutEffect(() => {
+      if (open) return;
+      demoteFloatingNoticesLayer();
+    }, [open]);
 
     if (!isMounted) return null;
 
