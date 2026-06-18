@@ -27,6 +27,15 @@ export function getRootMetadata(locale: Locale): Metadata {
   return {
     title: t(locale, "meta.title"),
     description: t(locale, "meta.description"),
+    applicationName: "Camaleon",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "Camaleon",
+    },
+    formatDetection: {
+      telephone: false,
+    },
     openGraph: {
       title: t(locale, "meta.title"),
       description: t(locale, "meta.description"),

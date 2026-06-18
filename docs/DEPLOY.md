@@ -162,6 +162,22 @@ npm error The npm ci command can only install with an existing package-lock.json
 
 ---
 
+## PWA / Service Worker QA (v3.0.0+)
+
+After `npm run build:cf` or deploy to Cloudflare:
+
+1. Confirm `frontend/public/sw.js` exists after build and is copied to `.open-next/assets/sw.js` (generated — do not commit).
+2. Confirm `frontend/public/pwa/icon-192.png` and `icon-512.png` are in deploy assets.
+3. In Chrome DevTools → **Application** → **Service Workers**: SW registered on production build only (disabled in `next dev`).
+4. **Full offline smoke (production-like):** `npm run preview:cf` → visit online → Settings S5 “Download all conversion tools” → stop preview server → reload any `/transmute/*` route → transmute + download.
+5. **NFR-1 regression:** while offline, DevTools Network shows **no upload** of file bytes.
+6. **Offline mode:** Settings → Offline & cache → **Enable offline mode** (with network up) → verify same-origin requests are cache-only; disable when done.
+7. **SW update:** deploy a new build → revisit site → “New version” banner appears → reload applies update (`skipWaiting: false` until user confirms).
+
+**Note:** `npm run dev` does not register Serwist — full offline reload requires a production build (`preview:cf` or deploy).
+
+---
+
 ## References
 
 - [Cloudflare Next.js guide](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/)

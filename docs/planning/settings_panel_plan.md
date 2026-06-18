@@ -1,6 +1,6 @@
 # Settings / Opciones Panel — System Plan
 
-> **Status:** **S4 shipped** v2.3.4 · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1 (Settings on `main`)  
+> **Status:** **S5 shipped** v3.0.0 · **Offline mode** v3.0.1 · **S4** v2.3.4 · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1  
 > **Scope:** User-facing preferences (local-first, `localStorage` only)  
 > **Doctrine:** NFR-1 privacy — no server sync; document keys in `/privacy`  
 > **SPEC anchor:** §7.13 User Settings Panel
@@ -67,16 +67,17 @@ Pattern: `resolveSpecDefault(tool, spec)` → user override ?? registry baseline
 | Setting | Maps to |
 |---------|---------|
 | Notice rail detail (`normal` / `minimal`) | Filter INFO severities in `NoticeRail` |
-| Prepare progress style (`ring` / `bar`) | Existing `progress-preference.ts` — surface in UI |
+| Prepare progress style (`ring` / `bar`) | `notices-prefs.ts` — surfaced in S4 |
 
-### S5 — Storage / offline (Tier 3.4)
+### S5 — Storage / offline ✅ (v3.0.0 + v3.0.1)
 
 See **`docs/planning/tier3_4_pwa_offline_analysis.md` §6** for full product doctrine.
 
 | Setting | Maps to | Default |
 |---------|---------|---------|
 | **Download all conversion tools** (opt-in toggle) | Service Worker Layer 3 precache — all `/wasm/transmutador_*` | **OFF** |
-| **Offline status** | SW active, `navigator.onLine`, cached tool list | Read-only |
+| **Offline mode** (v3.0.1) | Tab-scoped cache-only — `force-offline.ts` + SW message | **OFF** |
+| **Offline status** | SW active, connectivity pip, cached engine coverage | Read-only |
 | **Storage used** | Cache Storage size estimate | Read-only |
 | **Clear offline cache** | `caches.delete()` + reset precache pref | Action |
 
@@ -185,9 +186,9 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 - [x] Prepare progress style in user-settings (legacy key migration)
 - [x] Live re-apply via `subscribeNoticesPrefs`
 
-### S5 — Offline
+### S5 — Offline ✅ (v3.0.0 + v3.0.1)
 
-- [ ] Tier 3.4 PWA integration
+- [x] Tier 3.4 PWA integration — `OfflineSettingsSection`, `offline-prefs.ts`, `precacheFullToolkit`
 
 ---
 

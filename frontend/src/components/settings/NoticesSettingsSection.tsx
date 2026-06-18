@@ -8,8 +8,8 @@ import {
   resetNoticesPrefs,
   writeNoticesPrefs,
   type NoticeRailDensity,
+  type PrepareProgressStylePref,
 } from "@/lib/prefs/notices-prefs";
-import type { PrepareProgressStyle } from "@/lib/transmutation/prepare/progress-preference";
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsRow } from "./SettingsRow";
@@ -34,7 +34,7 @@ export function NoticesSettingsSection({ drawerOpen }: Props) {
     setPrefs(getEffectiveNoticesPrefs());
   }, []);
 
-  const persistProgressStyle = useCallback((prepareProgressStyle: PrepareProgressStyle) => {
+  const persistProgressStyle = useCallback((prepareProgressStyle: PrepareProgressStylePref) => {
     writeNoticesPrefs({ prepareProgressStyle });
     setPrefs(getEffectiveNoticesPrefs());
   }, []);

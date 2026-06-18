@@ -1,3 +1,6 @@
+import { isWasmCrateCached } from "@/lib/offline/cache-status";
+import { readForceOffline } from "@/lib/offline/force-offline";
+
 /** Crate folder names under `public/wasm/`. */
 export type WasmCrate =
   | "transmutador_jpg"
@@ -29,6 +32,13 @@ export function wasmExport<T>(module: WasmGlueModule, name: string): T {
  * these paths when bundling the Cloudflare worker (`webpackIgnore` is webpack-only).
  */
 export async function importWasmGlue(crate: WasmCrate): Promise<WasmGlueModule> {
+  if (readForceOffline()) {
+    const cached = await isWasmCrateCached(crate);
+    if (!cached) {
+      throw new Error("SIMULATED_OFFLINE: conversion engine not cached");
+    }
+  }
+
   const parts = ["/wasm/", crate, "/", crate, ".js"] as const;
   const spec: string = parts.join("");
   return import(/* webpackIgnore: true */ spec) as Promise<WasmGlueModule>;

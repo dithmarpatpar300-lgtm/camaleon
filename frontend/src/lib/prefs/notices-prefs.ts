@@ -3,6 +3,8 @@ import { NOTICE_PRIORITY } from "@/lib/notices/types";
 import type { NoticesPrefs, PrepareProgressStylePref } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
 
+export type { PrepareProgressStylePref };
+
 export type NoticeRailDensity = NonNullable<NoticesPrefs["railDensity"]>;
 
 const LEGACY_PREPARE_KEY = "camaleon:prepareProgressStyle";

@@ -178,6 +178,55 @@ const es: Dictionary = {
       resetAction: "Restablecer valores",
       resetDone: "Preferencias de avisos y preparacion restablecidas.",
     },
+    offline: {
+      section: "Sin conexion y cache",
+      description:
+        "Camaleon guarda la app y los motores de conversion en tu navegador tras una visita en linea. La transmutacion siempre es local — el modo sin conexion solo afecta lo que se puede descargar de la red.",
+      modeOnline: "En linea",
+      modeOffline: "Sin conexion",
+      modeOfflineActive: "Modo sin conexion",
+      modeOnlineDetail: "Red disponible. Las herramientas en cache funcionan; los motores nuevos se descargan bajo demanda.",
+      modeOfflineDetail: "Sin red detectada. Solo estan disponibles la app y motores en cache.",
+      modeOfflineActiveDetail:
+        "Esta pestaña usa solo la app y motores en cache — las peticiones de red estan bloqueadas. Tu Wi‑Fi puede seguir conectado.",
+      badgeSwActive: "Service worker",
+      badgeSwPending: "SW pendiente",
+      badgeNetworkUp: "Red activa",
+      badgeNetworkDown: "Sin red",
+      statusLabel: "Motores en cache",
+      enginesHint: "{pct}% de motores Wasm almacenados en este dispositivo.",
+      statusOnline: "En linea — service worker activo.",
+      statusOffline: "Sin conexion — usando app y motores en cache.",
+      swPending: "Registrando service worker…",
+      swUnsupported: "La cache sin conexion no esta disponible en este navegador.",
+      storageLabel: "Tamano de cache Wasm",
+      storageHint: "Cache Storage aproximada usada por motores de conversion.",
+      cacheProgressLabel: "Cobertura de motores en cache",
+      fullToolkitLabel: "Descargar todas las herramientas",
+      fullToolkitHint:
+        "Opta por guardar todos los motores Wasm (~10–17 MB). Las 21 herramientas funcionan sin conexion sin visitarlas antes.",
+      precacheProgress: "Descargando motores… {done}/{total}",
+      precacheDone: "Todas las herramientas estan en cache para uso sin conexion.",
+      precacheFailed: "No se pudieron descargar todos los motores. Intentalo de nuevo en linea.",
+      needOnline: "Conectate a internet para descargar los motores sin conexion.",
+      clearAction: "Borrar cache sin conexion",
+      clearDone: "Cache sin conexion borrada.",
+      mobileWarning:
+        "Los navegadores moviles pueden eliminar datos en cache por falta de espacio. Se recomienda escritorio para el kit completo.",
+      offlineModeTitle: "Modo sin conexion",
+      offlineModeHint:
+        "Trabaja solo desde cache en esta pestaña. Requiere una visita previa en linea con service worker activo y herramientas en cache (usa “Descargar todas las herramientas” arriba).",
+      offlineModeNote:
+        "Mismo comportamiento cache-only que offline real tras deploy o npm run preview:cf. Herramientas aun no cacheadas fallaran hasta descargarlas en linea. Primera visita e incognito siempre necesitan red una vez.",
+      offlineModeEnter: "Activar modo sin conexion",
+      offlineModeExit: "Desactivar modo sin conexion",
+      offlineModeOn: "Modo sin conexion activado en esta pestaña.",
+      offlineModeOff: "Modo sin conexion desactivado.",
+      alreadyOffline: "Ya estas sin conexion — no hace falta activar el modo offline.",
+      fireTestTitle: "Lista de verificacion offline",
+      fireTestHint:
+        "Offline completo tras una configuracion en linea: visita Camaleon en linea (produccion o npm run preview:cf), opcionalmente descarga todas las herramientas, luego deten el servidor o usa modo avion — la app recarga desde cache. Incognito o un dispositivo que nunca visito la app no cargara hasta conectarse una vez. Cargar desde cache puede ser mas lento; es normal.",
+    },
     risk: {
       section: "Advanced / Risk",
       intro:
@@ -203,6 +252,32 @@ const es: Dictionary = {
       welcomeAction: "Mostrar de nuevo",
       welcomeResetDone: "El mensaje de bienvenida aparecera en tu proxima visita al inicio.",
     },
+  },
+
+  offline: {
+    banner: "Estás sin conexión — las herramientas en caché siguen funcionando en este dispositivo.",
+    bannerForced: "Modo sin conexion — solo cache en esta pestaña.",
+    noticeOffline: "Sin conexión de red. Las herramientas en caché siguen funcionando en este dispositivo.",
+    noticeOfflineMode: "Modo sin conexion — solo cache. Desactivalo cuando necesites actualizaciones.",
+    noticeServerDown:
+      "Servidor de la app inaccesible (localhost detenido u host offline). Wasm en caché sigue si ya estaba cargado.",
+    noticeExitOfflineMode: "Desactivar modo sin conexion",
+    updateAvailable: "Hay una nueva versión de Camaleon lista.",
+    updateReload: "Recargar",
+    uncachedTool:
+      "Esta herramienta aún no está en caché. Conéctate a internet una vez para descargar su motor, o activa «Descargar todas las herramientas» en Ajustes.",
+    fallbackTitle: "Estás sin conexión",
+    fallbackBody:
+      "Camaleon necesita conexión en la primera visita. Abre la app en línea y luego la conversión sin conexión funcionará para las herramientas en caché.",
+    fallbackHome: "Volver al inicio",
+  },
+
+  connectivity: {
+    online: "En linea",
+    offline: "Sin conexion",
+    offlineMode: "Modo sin conexion",
+    serverDown: "Servidor inaccesible",
+    statusTitle: "Conexion: {mode}",
   },
 
   footer: {
@@ -274,6 +349,48 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v301: {
+        title: "Pulido modo sin conexión",
+        summary:
+          "Modo sin conexión honesto en Ajustes, panel offline rediseñado y offline completo validado en producción tras la primera visita en línea.",
+        technical:
+          "Modo offline cache-only (fetch guard + SW SET_FORCE_OFFLINE); hero y checklist en OfflineSettingsSection; ConnectivityDot + OfflineStatusNotice; sonda de servidor; guard uncached en load-glue. App v3.0.1.",
+        highlights: {
+          offlineMode: {
+            title: "Modo sin conexión",
+            body: "Actívalo en Ajustes para usar solo shell y motores en caché en esta pestaña — igual que offline real en producción.",
+          },
+          offlineSettings: {
+            title: "Panel Sin conexión y caché",
+            body: "Estadísticas de motores, descarga completa, checklist offline y borrar caché — con guía honesta para producción.",
+          },
+          connectivityUx: {
+            title: "UX de conectividad",
+            body: "Pip de estado minimal en la cabecera y aviso flotante cuando estás offline o en modo sin conexión — sin banner invasivo.",
+          },
+        },
+      },
+      v300: {
+        title: "PWA sin conexión",
+        summary:
+          "PWA instalable con service worker — convierte imágenes sin conexión tras la primera visita en línea. Ajustes S5 para descargar todos los motores.",
+        technical:
+          "SW Serwist: precache shell + 21 rutas; CacheFirst /wasm/**; OfflineProvider + banner; SwUpdatePrompt; S5 precacheFullToolkit; NFR-9 shell offline. App v3.0.0 — Tier 3 completo.",
+        highlights: {
+          pwaShell: {
+            title: "Funciona sin conexión",
+            body: "Visita en línea — luego transmuta y descarga sin red para las herramientas en caché.",
+          },
+          fullToolkit: {
+            title: "Descargar todas las herramientas (S5)",
+            body: "Actívalo en Ajustes → Sin conexión y caché para precachear todos los motores Wasm de las 21 herramientas.",
+          },
+          swUpdates: {
+            title: "Actualizaciones controladas",
+            body: "Las nuevas versiones te piden recargar — la transmutación nunca se interrumpe a mitad de sesión.",
+          },
+        },
+      },
       v238: {
         title: "Risk mode y hotfixes",
         summary:

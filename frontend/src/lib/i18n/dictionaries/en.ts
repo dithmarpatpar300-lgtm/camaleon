@@ -178,6 +178,55 @@ const en: Dictionary = {
       resetAction: "Reset to defaults",
       resetDone: "Notice and prepare preferences restored.",
     },
+    offline: {
+      section: "Offline & cache",
+      description:
+        "Camaleon stores the app and conversion engines in your browser after an online visit. Transmutation itself always runs locally — offline mode only affects what can be fetched from the network.",
+      modeOnline: "Online",
+      modeOffline: "Offline",
+      modeOfflineActive: "Offline mode",
+      modeOnlineDetail: "Network available. Cached tools work; new engines download on demand.",
+      modeOfflineDetail: "No network detected. Only cached app shell and engines are available.",
+      modeOfflineActiveDetail:
+        "This tab uses only cached shell and engines — network fetches are blocked. Your Wi‑Fi may still be connected.",
+      badgeSwActive: "Service worker",
+      badgeSwPending: "SW pending",
+      badgeNetworkUp: "Network up",
+      badgeNetworkDown: "Network down",
+      statusLabel: "Cached engines",
+      enginesHint: "{pct}% of Wasm engines stored on this device.",
+      statusOnline: "Online — service worker active.",
+      statusOffline: "Offline — using cached app and engines.",
+      swPending: "Service worker registering…",
+      swUnsupported: "Offline cache is not available in this browser.",
+      storageLabel: "Wasm cache size",
+      storageHint: "Approximate Cache Storage used by conversion engines.",
+      cacheProgressLabel: "Engine cache coverage",
+      fullToolkitLabel: "Download all conversion tools",
+      fullToolkitHint:
+        "Opt in to cache every Wasm engine (~10–17 MB). All 21 tools work offline without visiting each one first.",
+      precacheProgress: "Downloading engines… {done}/{total}",
+      precacheDone: "All conversion tools are cached for offline use.",
+      precacheFailed: "Could not download all engines. Try again while online.",
+      needOnline: "Connect to the internet to download offline engines.",
+      clearAction: "Clear offline cache",
+      clearDone: "Offline cache cleared.",
+      mobileWarning:
+        "Mobile browsers may evict cached data under storage pressure. Desktop is recommended for full offline toolkit.",
+      offlineModeTitle: "Offline mode",
+      offlineModeHint:
+        "Work from cache only in this tab. Requires a prior online visit with the service worker active and cached tools (use “Download all conversion tools” above).",
+      offlineModeNote:
+        "Same cache-only behaviour as true offline after deploy or npm run preview:cf. Tools not yet cached will fail until downloaded online. First visit and incognito always need network once.",
+      offlineModeEnter: "Enable offline mode",
+      offlineModeExit: "Disable offline mode",
+      offlineModeOn: "Offline mode enabled for this tab.",
+      offlineModeOff: "Offline mode disabled.",
+      alreadyOffline: "You are already offline — offline mode is not needed.",
+      fireTestTitle: "Offline checklist",
+      fireTestHint:
+        "Fully offline after one online setup: visit Camaleon online (production or npm run preview:cf), optionally download all tools, then stop the server or use airplane mode — the app reloads from cache. Incognito or a device that never visited online cannot load until connected once. Loading from cache may feel slower; that is expected.",
+    },
     risk: {
       section: "Advanced / Risk",
       intro:
@@ -203,6 +252,32 @@ const en: Dictionary = {
       welcomeAction: "Show again",
       welcomeResetDone: "Welcome message will appear on your next home visit.",
     },
+  },
+
+  offline: {
+    banner: "You are offline — cached tools still work on this device.",
+    bannerForced: "Offline mode — using cache only in this tab.",
+    noticeOffline: "No network connection. Cached conversion tools still work on this device.",
+    noticeOfflineMode: "Offline mode — cache only. Disable when you need fresh updates.",
+    noticeServerDown:
+      "App server unreachable (localhost stopped or host offline). Cached Wasm still works if already loaded.",
+    noticeExitOfflineMode: "Disable offline mode",
+    updateAvailable: "A new version of Camaleon is ready.",
+    updateReload: "Reload",
+    uncachedTool:
+      "This tool is not cached yet. Connect to the internet once to download its engine, or enable “Download all conversion tools” in Settings.",
+    fallbackTitle: "You are offline",
+    fallbackBody:
+      "Camaleon needs a network connection on first visit. Open the app while online, then offline conversion works for cached tools.",
+    fallbackHome: "Back to home",
+  },
+
+  connectivity: {
+    online: "Online",
+    offline: "Offline",
+    offlineMode: "Offline mode",
+    serverDown: "Server unreachable",
+    statusTitle: "Connection: {mode}",
   },
 
   footer: {
@@ -274,6 +349,48 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v301: {
+        title: "Offline mode polish",
+        summary:
+          "Honest Offline mode in Settings, redesigned offline panel, and production-validated full offline after your first online visit.",
+        technical:
+          "Offline mode cache-only (fetch guard + SW SET_FORCE_OFFLINE); OfflineSettingsSection hero + checklist; ConnectivityDot + OfflineStatusNotice; server reachability probe; load-glue uncached guard. App v3.0.1.",
+        highlights: {
+          offlineMode: {
+            title: "Offline mode",
+            body: "Enable in Settings to use only cached shell and engines in this tab — same behaviour as true offline in production.",
+          },
+          offlineSettings: {
+            title: "Offline & cache panel",
+            body: "Engine coverage stats, full toolkit download, offline checklist, and clear cache — with honest production guidance.",
+          },
+          connectivityUx: {
+            title: "Connectivity UX",
+            body: "Minimal status pip in the header and a dismissible notice when offline or in Offline mode — no invasive banner.",
+          },
+        },
+      },
+      v300: {
+        title: "Offline PWA shell",
+        summary:
+          "Installable PWA with service worker caching — convert images offline after your first online visit. Settings S5 opt-in downloads all engines.",
+        technical:
+          "Serwist SW: precache shell + 21 tool routes; CacheFirst /wasm/**; OfflineProvider + banner; SwUpdatePrompt; Settings S5 precacheFullToolkit; NFR-9 offline shell. App v3.0.0 — Tier 3 complete.",
+        highlights: {
+          pwaShell: {
+            title: "Works offline",
+            body: "Visit while online — then transmute and download without a network connection for cached tools.",
+          },
+          fullToolkit: {
+            title: "Download all tools (S5)",
+            body: "Opt in under Settings → Offline & cache to precache every Wasm engine for all 21 conversion tools.",
+          },
+          swUpdates: {
+            title: "Controlled updates",
+            body: "New versions prompt you to reload — transmutation is never interrupted mid-session.",
+          },
+        },
+      },
       v238: {
         title: "Risk mode & hotfixes",
         summary:

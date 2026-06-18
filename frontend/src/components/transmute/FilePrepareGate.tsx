@@ -5,11 +5,11 @@ import { DisplayFilename } from "@/components/ui/DisplayFilename";
 import { formatBytes } from "@/lib/format/bytes";
 import type { PreparePhaseId } from "@/lib/transmutation/prepare/types";
 import {
-  getPrepareProgressStyle,
-  setPrepareProgressStyle,
-  type PrepareProgressStyle,
-} from "@/lib/transmutation/prepare/progress-preference";
-import { subscribeNoticesPrefs } from "@/lib/prefs/notices-prefs";
+  getPrepareProgressStylePref,
+  setPrepareProgressStylePref,
+  subscribeNoticesPrefs,
+  type PrepareProgressStylePref,
+} from "@/lib/prefs/notices-prefs";
 import { useI18n } from "@/providers/I18nProvider";
 import { cn } from "@/lib/utils";
 
@@ -45,13 +45,13 @@ export function FilePrepareGate({
   detailLabel,
 }: FilePrepareGateProps) {
   const { t } = useI18n();
-  const [progressStyle, setProgressStyle] = useState<PrepareProgressStyle>("ring");
+  const [progressStyle, setProgressStyle] = useState<PrepareProgressStylePref>("ring");
 
   useEffect(() => {
-    setProgressStyle(getPrepareProgressStyle());
+    setProgressStyle(getPrepareProgressStylePref());
   }, []);
 
-  useEffect(() => subscribeNoticesPrefs(() => setProgressStyle(getPrepareProgressStyle())), []);
+  useEffect(() => subscribeNoticesPrefs(() => setProgressStyle(getPrepareProgressStylePref())), []);
 
   const pct = Math.round(progress * 100);
   const prevProgressRef = useRef(progress);
@@ -76,8 +76,8 @@ export function FilePrepareGate({
   );
 
   const toggleStyle = () => {
-    const next: PrepareProgressStyle = progressStyle === "ring" ? "bar" : "ring";
-    setPrepareProgressStyle(next);
+    const next: PrepareProgressStylePref = progressStyle === "ring" ? "bar" : "ring";
+    setPrepareProgressStylePref(next);
     setProgressStyle(next);
   };
 

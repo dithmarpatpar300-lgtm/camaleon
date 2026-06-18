@@ -15,11 +15,15 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v2.3.8** (`dev`/`main`) | Settings S1–S4 + **S6 Risk mode** + Notice Rail + **SVG→PNG/JPEG** — **21 tools** |
+| **Frontend (app)** | **v3.0.1** (`dev`) | PWA offline shell + **Offline mode** + Settings **S5** — **21 tools**, Tier 3 complete |
 | **Engine (Rust workspace)** | v1.6.0 | Twelve Wasm crates incl. **`transmutador_svg`** (+ AVIF decode/encode) |
-| **SPEC** | v2.3.8 | §6.12 `transmutador_svg`; §7.12 Notice Rail; §7.13 Settings S1–S4 + **S6 Risk** |
+| **SPEC** | v3.0.1 | NFR-9 offline shell; §7.13 Settings S1–S5 + **S6 Risk** |
 
-**v2.3.8** (`dev`/`main`): **Risk mode (S6)** + hotfixes. Next: **Tier 3.4 PWA / offline** — analysis: `docs/planning/tier3_4_pwa_offline_analysis.md`.
+**v3.0.1** (`dev`): **Offline mode polish** — cache-only toggle, connectivity UX, production QA. Release: `docs/releases/v3.0.1.md`.
+
+**v3.0.0** (`dev`): **PWA / offline shell (Tier 3.4 capstone)** — Serwist SW, Settings S5, offline UX. Release: `docs/releases/v3.0.0.md`. **Tier 4 next** (image optimization).
+
+**v2.3.8** (`main`): **Risk mode (S6)** + hotfixes. Release: `docs/releases/v2.3.8.md`.
 
 **v2.3.7** (internal dev milestone): Risk mode core — superseded by **v2.3.8** release bundle.
 
@@ -282,7 +286,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
 | **Semantic Alpha Engine** | **v1.11.0** (`main`) | Honest transparency across lossy tools | ✅ **Shipped** — `docs/releases/v1.11.0.md` |
-| **Tier 3** | v2.0.x–v2.4.x | AVIF ✅, SVG ✅, **PWA offline (3.4)** | **In progress** — format matrix complete (21 tools); **3.4 PWA next** — `docs/planning/tier3_plan.md` |
+| **Tier 3** | **v3.0.1** | AVIF ✅, SVG ✅, **PWA offline (3.4)** ✅ | **Complete** — 21 tools, 12 Wasm crates, installable offline PWA — `docs/planning/tier3_plan.md` |
 | **Tier 4a** | v2.x | Compress, Resize | Image **optimization** — same raster domain |
 | **Tier 4b** | v2.x | Crop, Rotate/Flip, favicon pack | Image **editing** |
 | **Tier 5** | TBD | PDF tools | **Deferred** — documents; separate planning required |

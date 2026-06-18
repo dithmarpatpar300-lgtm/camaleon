@@ -4,9 +4,6 @@ export const SOFT_LIMIT_BYTES = 50 * 1024 * 1024;
 export const HARD_LIMIT_DESKTOP_BYTES = 150 * 1024 * 1024;
 export const HARD_LIMIT_MOBILE_BYTES = 100 * 1024 * 1024;
 
-/** @deprecated Use SOFT_LIMIT_BYTES — kept for existing imports. */
-export const ENGINE_MAX_INPUT_BYTES = SOFT_LIMIT_BYTES;
-
 export const ENGINE_MAX_INPUT_LABEL = "50 MB";
 
 /** Must stay aligned with `core_utils::RISK_MAX_*` when Risk mode is active. */

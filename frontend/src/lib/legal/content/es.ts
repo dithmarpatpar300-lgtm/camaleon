@@ -140,8 +140,9 @@ export const legalPagesEs: Record<LegalPageId, LegalPageContent> = {
         listItems: [
           "Cookie de idioma (`camaleon-locale`) — recuerda ingles o espanol.",
           "Cookie de tema (`camaleon-theme`) — recuerda modo oscuro o claro.",
-          "localStorage — refleja idioma y tema; guarda preferencias de comunicacion y ajustes (`camaleon-user-settings-v1`, incluidos defaults opcionales de transmutacion, overrides de rendimiento, preferencias de avisos/preparacion, claves de bienvenida y ultima version vista).",
-          "Estos valores no se usan para rastreo ni publicidad — solo idioma, tema y preferencias en la app.",
+          "localStorage — refleja idioma y tema; guarda preferencias de comunicacion y ajustes (`camaleon-user-settings-v1`, incluidos defaults opcionales de transmutacion, overrides de rendimiento, preferencias de avisos/preparacion, opt-in de cache sin conexion, claves de bienvenida y ultima version vista).",
+          "Cache Storage (Service Worker) — cuando usas Camaleon en linea, la app puede almacenar localmente HTML, JavaScript, modulos WebAssembly y recursos estaticos para funcionar sin conexion. Es cache gestionada por tu navegador en tu dispositivo, no un archivo que recibimos. Puedes borrarla en Ajustes → Sin conexion y cache o en los controles de datos del sitio del navegador.",
+          "Estos valores no se usan para rastreo ni publicidad — solo idioma, tema, preferencias en la app y operacion sin conexion opcional.",
         ],
       },
       {

@@ -8,6 +8,7 @@ import { TOOLS } from "@/lib/tools/tool-registry";
 import { resolveToolActionTitle } from "@/lib/i18n/tool-copy";
 import { cn } from "@/lib/utils";
 import { BrandLink } from "@/components/brand/BrandLink";
+import { HeaderConnectivityStatus } from "@/components/connectivity/ConnectivityIndicator";
 import { UtilityCluster } from "./UtilityCluster";
 
 function paletteModKey(): string {
@@ -114,6 +115,7 @@ export function Header() {
     <header className="surface-header sticky top-0 z-50 border-b border-border overflow-x-clip">
       <div className="mx-auto flex h-14 min-w-0 max-w-6xl items-center gap-2 px-4 sm:gap-3 sm:px-6">
         <BrandLink />
+        <HeaderConnectivityStatus />
 
         {tool && actionTitle && (
           <div className="hidden min-w-0 max-w-[32%] items-center gap-2 truncate text-sm md:flex">

@@ -174,7 +174,7 @@ body {
   }
 }
 
-/* Sticky app header — more opaque than legacy glass-header (UX-4) */
+/* Sticky app header — more opaque than legacy surface-header (UX-4) */
 .surface-header {
   backdrop-filter: blur(12px) saturate(150%);
   -webkit-backdrop-filter: blur(12px) saturate(150%);
@@ -405,23 +405,6 @@ body {
   border-color: rgba(34, 197, 94, 0.5);
   background-color: rgba(34, 197, 94, 0.1);
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
-}
-
-/** @deprecated Use `.surface-header` */
-.glass-header {
-  backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
-  background-color: rgba(14, 15, 17, 0.88);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.05),
-    0 4px 16px rgba(0, 0, 0, 0.18);
-}
-
-.light .glass-header {
-  background-color: rgba(250, 250, 250, 0.90);
-  box-shadow:
-    0 1px 0 rgba(0, 0, 0, 0.06),
-    0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 /* Unified modal shell (UX-5 — SurfaceDialog) */
@@ -789,6 +772,61 @@ dialog.whats-new-drawer {
   height: 0.875rem;
   width: 1px;
   background-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+}
+
+/* Connectivity indicator — event-driven status dot (no JS animation loop) */
+.connectivity-dot--online {
+  background-color: var(--color-accent);
+  box-shadow:
+    0 0 4px var(--color-accent),
+    0 0 10px color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+
+.connectivity-dot--offline {
+  background-color: var(--color-error);
+  box-shadow:
+    0 0 4px var(--color-error),
+    0 0 10px color-mix(in srgb, var(--color-error) 55%, transparent);
+}
+
+.connectivity-dot--subtle.connectivity-dot--online {
+  background-color: color-mix(in srgb, var(--color-accent) 85%, transparent);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--color-accent) 40%, transparent);
+}
+
+.connectivity-dot--subtle.connectivity-dot--offline {
+  background-color: color-mix(in srgb, var(--color-error) 85%, transparent);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--color-error) 40%, transparent);
+}
+
+.connectivity-indicator--minimal {
+  opacity: 0.55;
+  transition: opacity 160ms ease;
+}
+
+.connectivity-indicator--minimal:hover,
+.connectivity-indicator--minimal:focus-within {
+  opacity: 1;
+}
+
+.connectivity-dot--pulse {
+  animation: connectivity-glow 2.8s ease-in-out infinite;
+}
+
+@keyframes connectivity-glow {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.88;
+    filter: brightness(1.15);
+  }
+}
+
+.connectivity-indicator {
+  padding: 0 0.25rem;
 }
 
 .utility-cluster-icon-btn {

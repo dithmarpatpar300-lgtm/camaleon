@@ -39,6 +39,7 @@ import { useRiskMode } from "@/providers/RiskModeProvider";
 import { RiskModeBanner } from "./RiskModeBanner";
 import { RiskDeactivatedNotice } from "./RiskDeactivatedNotice";
 import { HardFileBlockPanel } from "./HardFileBlockPanel";
+import { UncachedToolNotice } from "./UncachedToolNotice";
 
 type StagedWorkspaceProps = {
   tool: ToolDefinition;
@@ -221,6 +222,7 @@ export function StagedWorkspace({
       {!riskModeEnabled && showRiskDeactivatedNotice && limitBlocked && (
         <RiskDeactivatedNotice />
       )}
+      <UncachedToolNotice module={tool.module} />
       <div className="mb-5 flex items-center justify-between gap-3 border-b border-border/60 pb-4">
         <div className="min-w-0 flex-1">
           <DisplayFilename

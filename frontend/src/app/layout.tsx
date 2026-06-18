@@ -9,8 +9,11 @@ import { ToastProvider } from "@/providers/ToastProvider";
 import { ReleaseCommsProvider } from "@/providers/ReleaseCommsProvider";
 import { SettingsProvider } from "@/providers/SettingsProvider";
 import { RiskModeProvider } from "@/providers/RiskModeProvider";
+import { OfflineProvider } from "@/providers/OfflineProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { OfflineStatusNotice } from "@/components/layout/OfflineStatusNotice";
+import { SwUpdatePrompt } from "@/components/layout/SwUpdatePrompt";
 import { OverlayScrollbar } from "@/components/layout/OverlayScrollbar";
 import { ScrollLockRouteGuard } from "@/components/layout/ScrollLockRouteGuard";
 import { AmbientBloom } from "@/components/layout/AmbientBloom";
@@ -21,6 +24,7 @@ import {
   resolveThemeFromCookie,
   THEME_COOKIE_NAME,
 } from "@/lib/prefs";
+import { OFFLINE_BOOTSTRAP_SCRIPT } from "@/lib/offline/offline-bootstrap-script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -63,6 +67,9 @@ export default async function RootLayout({
         <script
           dangerouslySetInnerHTML={{ __html: PREFERENCES_BOOTSTRAP_SCRIPT }}
         />
+        <script
+          dangerouslySetInnerHTML={{ __html: OFFLINE_BOOTSTRAP_SCRIPT }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
@@ -71,6 +78,7 @@ export default async function RootLayout({
           <ThemeProvider initialTheme={initialTheme}>
             <OverlayScrollbar />
             <ScrollLockRouteGuard />
+            <OfflineProvider>
             <TransmutationWorkerProvider>
               <ToastProvider>
                 <ReleaseCommsProvider>
@@ -78,6 +86,8 @@ export default async function RootLayout({
                     <SettingsProvider>
                     <AmbientBloom />
                     <div className="relative z-10 flex min-h-screen min-w-0 flex-col overflow-x-clip">
+                      <SwUpdatePrompt />
+                      <OfflineStatusNotice />
                       <Header />
                       <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
                       <Footer />
@@ -87,6 +97,7 @@ export default async function RootLayout({
                 </ReleaseCommsProvider>
               </ToastProvider>
             </TransmutationWorkerProvider>
+            </OfflineProvider>
           </ThemeProvider>
         </I18nProvider>
       </body>

@@ -38,6 +38,15 @@ export type RiskModePrefs = {
   acknowledgedAt?: string;
 };
 
+export type OfflinePrefs = {
+  /** Opt-in precache of all Wasm conversion engines (Settings S5). */
+  fullToolkitPrecache?: boolean;
+  /** ISO timestamp when full toolkit precache last completed. */
+  precacheCompletedAt?: string;
+  /** User dismissed mobile storage warning for offline toolkit. */
+  dismissedMobileWarning?: boolean;
+};
+
 export type UserSettings = {
   /** When false, skip auto changelog modal on version bump; What's New remains available. */
   showChangelogOnUpdate: boolean;
@@ -49,6 +58,8 @@ export type UserSettings = {
   notices?: NoticesPrefs;
   /** Advanced / Risk mode (S6) — bypass Camaleon safety limits. */
   riskMode?: RiskModePrefs;
+  /** Offline / cache prefs (S5). */
+  offline?: OfflinePrefs;
 };
 
 const DEFAULTS: UserSettings = {
@@ -86,6 +97,7 @@ export function readUserSettings(): UserSettings {
                 : undefined,
           }
         : { enabled: false },
+    offline: merged.offline,
   };
 }
 

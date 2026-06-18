@@ -22,6 +22,7 @@ import { LanguageSegment } from "./LanguageSegment";
 import { TransmutationDefaultsSection } from "./TransmutationDefaultsSection";
 import { PerformanceSettingsSection } from "./PerformanceSettingsSection";
 import { NoticesSettingsSection } from "./NoticesSettingsSection";
+import { OfflineSettingsSection } from "./OfflineSettingsSection";
 import { RiskSettingsSection } from "./RiskSettingsSection";
 
 const EXIT_MS = 240;
@@ -115,6 +116,8 @@ function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => vo
             <PerformanceSettingsSection drawerOpen={open} />
 
             <NoticesSettingsSection drawerOpen={open} />
+
+            <OfflineSettingsSection drawerOpen={open} />
 
             <RiskSettingsSection drawerOpen={open} />
 

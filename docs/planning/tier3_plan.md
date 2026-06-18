@@ -1,7 +1,7 @@
 # Tier 3 — Modern Image Formats (AVIF first)
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v2.3.8 on `main`** — Tier 3.2 ✅ · Tier 3.3 SVG ✅ · Settings S1–S4 + **S6 Risk** ✅ · **Tier 3.4 PWA analysis ✅** (implementation next)  
+> **Status:** **v3.0.1 on `dev`** — Tier 3 **complete** (3.1–3.4 ✅) · Settings S1–S5 + **S6 Risk** ✅  
 > **Prerequisite:** Pre-Tier 3 UI/UX ✅ (v1.12.0) · Brand mark ✅ (v1.12.1) · Estimation engine perf ✅ (v1.12.2)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -19,7 +19,7 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 | **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.1.1** | **3.1.0–3.1.2 ✅ shipped** |
 | **3.2** | AVIF encode | PNG → AVIF, JPEG → AVIF | **`transmutador_avif_encode`** (+ decode in `transmutador_avif`) | **v2.2.0** | **3.2.0–3.2.2 ✅ shipped on `dev`** |
 | **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` | **v2.3.5–2.3.6** | **✅ shipped** — see `tier3_3_svg_analysis.md` |
-| **3.4** | PWA / offline shell | App + tools work without network after first visit | Service Worker + web manifest (`@serwist/next`) | v2.4.x | **Next** — **last Tier 3 deliverable** (§14) |
+| **3.4** | PWA / offline shell | App + tools work without network after first visit | Service Worker + web manifest (`@serwist/next`) | **v3.0.0** | **✅ shipped** — Tier 3 capstone (§14) |
 
 **Normative:** Tier 3 remains **image transmutation only** for format phases — no PDF, no optimization sliders (Tier 4a), no crop/rotate (Tier 4b). See §12.5–12.7 SPEC. Phase **3.4** is delivery/UX infrastructure (not a new transmutator crate) but is **in scope** as the Tier 3 capstone.
 
@@ -732,31 +732,32 @@ flowchart TB
 
 #### 3.4.0 — PWA MVP (partial offline)
 
-- [ ] `manifest.webmanifest` + icons (192/512)
-- [ ] `@serwist/next` integration; SW precache app shell
-- [ ] Runtime cache rule for `/wasm/**` (CacheFirst)
-- [ ] Offline banner + basic i18n EN/ES
-- [ ] Manual QA: visit tool online → airplane mode → transmute succeeds
-- [ ] `docs/releases/v2.x.x.md` + What's New entry at ship version
+- [x] `manifest.webmanifest` + icons (192/512)
+- [x] `@serwist/next` integration; SW precache app shell
+- [x] Runtime cache rule for `/wasm/**` (CacheFirst)
+- [x] Offline banner + basic i18n EN/ES
+- [x] Manual QA: visit tool online → airplane mode → transmute succeeds
+- [x] `docs/releases/v3.0.0.md` + What's New entry at ship version
+- [x] `docs/releases/v3.0.1.md` — Offline mode polish + production QA
 
 **Exit gate:** Home + one visited `/transmute/*` route work offline; transmute + download succeed.
 
 #### 3.4.1 — Shell hardening + lazy Wasm default
 
-- [ ] Precache all active `/transmute/[slug]` static params (full tool route list post-3.4)
-- [ ] Cache `transmutation.worker.ts` + `frame-preview.worker.ts` reliably
-- [ ] Reduce `cookies()`-driven dynamic HTML where safe (static route optimization)
-- [ ] Uncached-route offline page component
-- [ ] SW update UX integrated with release version bump
+- [x] Precache all active `/transmute/[slug]` static params (full tool route list post-3.4)
+- [x] Cache `transmutation.worker.ts` + `frame-preview.worker.ts` reliably
+- [ ] Reduce `cookies()`-driven dynamic HTML where safe (static route optimization) — deferred
+- [x] Uncached-route offline page component
+- [x] SW update UX integrated with release version bump
 
 **Exit gate:** App shell opens offline; any tool used once online works offline thereafter.
 
 #### 3.4.2 — Full toolkit download (optional)
 
-- [ ] Settings or first-run CTA: “Download all tools for offline use” — see also `docs/planning/settings_panel_plan.md` §S5
-- [ ] Precache entire `public/wasm/` (post-3.4 crate list)
-- [ ] Progress UI + storage failure handling
-- [ ] Desktop-first; hidden or warned on constrained mobile
+- [x] Settings S5: “Download all tools for offline use” — `docs/planning/settings_panel_plan.md` §S5
+- [x] Precache entire `public/wasm/` (post-3.4 crate list)
+- [x] Progress UI + storage failure handling
+- [x] Desktop-first; hidden or warned on constrained mobile
 
 **Exit gate:** User can convert with any active Tier 3 tool offline without prior per-tool visit.
 
@@ -780,4 +781,4 @@ flowchart TB
 
 ---
 
-*Planning doc for Tier 3 — Modern Image Formats. Tier 3.3 SVG ✅ shipped (v2.3.5–2.3.6). **Next: Phase 3.4.x PWA/offline shell** — Tier 3 capstone.*
+*Planning doc for Tier 3 — Modern Image Formats. **Tier 3 complete (v3.0.1)** — PWA/offline shell shipped. **Next: Tier 4a** image optimization.*

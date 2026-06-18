@@ -25,7 +25,7 @@ Camaleon is an **image platform** first. Expansion follows a fixed priority ladd
 | Ladder | Name | What it is | Status |
 |--------|------|------------|--------|
 | **A** | **Image transmutation** | Format-to-format raster conversion (decode → policy → encode) | ✅ **Shipped** — Tiers 1–2 + Semantic Alpha Engine (v1.11.0) |
-| **B** | **Modern image formats** | AVIF, SVG→raster | 🚧 **Tier 3 in progress** — AVIF + SVG ✅ on `main`; **PWA 3.4 next** (Tier 3 capstone) |
+| **B** | **Modern image formats** | AVIF, SVG→raster | ✅ **Tier 3 complete (v3.0.1)** — AVIF + SVG + PWA offline shell |
 | **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | 📋 **Tier 4a** — planned after Tier 3 |
 | **D** | **Image editing** | Crop, rotate, flip on raster (Wasm + canvas UI) | 📋 **Tier 4b** — planned after Tier 4a |
 | **E** | **Documents** | PDF merge/split, PDF→images — non-raster domain | 🚫 **Deferred** — far horizon; separate planning doc required |
@@ -1330,7 +1330,7 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Reference:** `docs/planning/notice_system_plan.md`
 
-### 7.13 User Settings Panel (Implemented — S1–S4, S6)
+### 7.13 User Settings Panel (Implemented — S1–S5, S6)
 
 **Purpose:** Consolidate user preferences in a right-side drawer (`SettingsDrawer`) — same surface language as `WhatsNewDrawer` (`surface-raised`, `PanelScrollFade`, slide animation).
 
@@ -1352,6 +1352,10 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **S4 (v2.3.4):** Notices & prepare — rail density (`normal`/`minimal`), prepare progress style (`ring`/`bar`); `notices-prefs.ts` + `filterNoticesForDensity`.
 
+**S5 (v3.0.0): Offline & cache** — opt-in full toolkit precache (`offline.fullToolkitPrecache`); `offline-prefs.ts` + `OfflineSettingsSection`; `precacheFullToolkit()` posts to Service Worker; storage estimate + clear cache. Default Model B (lazy Wasm per tool used online); Model C opt-in downloads all 12 Wasm crates (~10–17 MB Cache Storage). Reference: `docs/planning/tier3_4_pwa_offline_analysis.md`.
+
+**S5 (v3.0.1): Offline mode** — voluntary cache-only in tab (`sessionStorage`); `force-offline.ts` + inline bootstrap fetch guard + SW `SET_FORCE_OFFLINE`; blocks uncached Wasm via `load-glue.ts`; `OfflineStatusNotice` + minimal `ConnectivityDot`; server reachability probe. Production QA: `preview:cf` + S5 → stop server → full offline. Reference: `docs/planning/force_offline_mode_notes.md`.
+
 **S6 (v2.3.8): Advanced / Risk mode** — global opt-in in `camaleon-user-settings-v1` (`riskMode.enabled`, `acknowledgedAt`). Requires explicit checkbox acknowledgment before enable. When active:
 
 | Effect | Detail |
@@ -1365,13 +1369,9 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **UI:** `RiskSettingsSection` in drawer; `RiskModeBanner` in staged workspace when active; `LimitUnlockHint` hidden when Risk on.
 
-**Wasm:** `core_utils::set_risk_mode` exported from all transmutation crates; worker calls `applyRiskMode` per request; prepare/alpha assess sync via `syncWasmRiskMode`.
+**Wasm:** `core_utils::set_risk_mode` exported from all transmutation crates; worker calls `applyRiskMode` per request; prepare/alpha assess sync via `syncWasmRiskMode`. Reference: `docs/planning/risk_mode_analysis.md`, `docs/LIMIT_PIPELINE.md`.
 
-**Reference:** `docs/planning/risk_mode_analysis.md`, `docs/LIMIT_PIPELINE.md`.
-
-**Planned (S5):** offline toolkit — see `docs/planning/settings_panel_plan.md`.
-
-**Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`. `RiskModeProvider` wraps `SettingsProvider` for reactive limit pipeline.
+**Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`. `RiskModeProvider` wraps `SettingsProvider` for reactive limit pipeline. `OfflineProvider` registers Service Worker and tracks connectivity.
 
 ---
 
@@ -1387,6 +1387,7 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 | NFR-6 | Code language | Source code and docs in **English** |
 | NFR-7 | Wasm bundle size | Each new transmutator crate `.wasm` binary target ≤ 3 MB uncompressed; aggregate `public/wasm/` ≤ 12 MB total. Measure after each Phase 5.x delivery and report in OpenCode technical report. |
 | NFR-8 | Format science honesty | UI copy for each new format must reflect correct lossless/lossy semantics per §5.12 and §12; no false "lossless" claims on lossy conversions. |
+| NFR-9 | Offline shell | After at least one online visit, cached app shell and previously loaded (or S5 opt-in precached) Wasm engines allow transmutation without network; file bytes never leave the device (extends NFR-1). First visit requires network; SW updates require user-controlled reload. |
 
 ---
 
@@ -1421,6 +1422,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.0.1-offline-mode | 2026-06-11 | Chief Architect | §7.13 S5 Offline mode; connectivity UX; force-offline architecture | `docs/releases/v3.0.1.md` |
+| 3.0.0-pwa-s5 | 2026-06-11 | Chief Architect | §7.13 S5 offline toolkit; NFR-9 offline shell; Serwist PWA; app v3.0.0; Tier 3 complete | `docs/releases/v3.0.0.md` |
 | 2.3.8-risk-hotfix | 2026-06-11 | Chief Architect | §7.13 S6 polish; overlay scrollbar instant drag; limit pipeline hotfixes; app v2.3.8 | `docs/releases/v2.3.8.md` |
 | 2.3.7-risk-s6 | 2026-06-11 | Chief Architect | §7.13 Settings S6 Risk mode; Wasm set_risk_mode; LIMIT_PIPELINE; app v2.3.7 | `docs/releases/v2.3.7.md` |
 | 2.3.6-svg-jpg | 2026-06-11 | Chief Architect | §6.12 SVG→JPEG; LimitUnlockHint; risk_mode_analysis.md; app v2.3.6 — 21 tools | `docs/releases/v2.3.6.md` |
