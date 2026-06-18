@@ -173,6 +173,7 @@ After `npm run build:cf` or deploy to Cloudflare:
 5. **NFR-1 regression:** while offline, DevTools Network shows **no upload** of file bytes.
 6. **Offline mode:** Settings → Offline & cache → **Enable offline mode** (with network up) → verify same-origin requests are cache-only; disable when done.
 7. **SW update:** deploy a new build → revisit site → “New version” banner appears → reload applies update (`skipWaiting: false` until user confirms).
+8. **Firefox Android (v3.1.2+):** after online visit + one reload → airplane mode → open `/` or `/transmute/*` in Firefox mobile. Must use **HTTPS** (production, tunnel, or `preview:cf` with `[t]` tunnel — not `http://LAN-IP`). **Expected:** cached Camaleon, not Firefox’s native offline page. Root cause: `navigationPreload` disabled in `sw.ts` ([Mozilla #1802711](https://bugzilla.mozilla.org/show_bug.cgi?id=1802711)).
 
 **Note:** `npm run dev` does not register Serwist — full offline reload requires a production build (`preview:cf` or deploy).
 

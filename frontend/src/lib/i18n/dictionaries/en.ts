@@ -349,6 +349,19 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v312: {
+        title: "Firefox offline fix",
+        summary:
+          "Offline reload and transmutator routes now work in Firefox on Android — same cached shell as Chrome and desktop.",
+        technical:
+          "sw.ts navigationPreload: false — Firefox resolves preloadResponse type error instead of rejecting (Mozilla #1802711). Precache + /~offline fallback unchanged. App v3.1.2.",
+        highlights: {
+          firefoxOffline: {
+            title: "Firefox on mobile",
+            body: "Airplane mode no longer shows the browser’s error page — Camaleon serves from cache after your first online visit.",
+          },
+        },
+      },
       v311: {
         title: "Universal transmutator",
         summary:

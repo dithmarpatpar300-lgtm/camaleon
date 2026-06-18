@@ -42,7 +42,9 @@ const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: false,
   clientsClaim: true,
-  navigationPreload: true,
+  // Off: precached HTML + offline fallback; Firefox Android returns preloadResponse
+  // type "error" instead of rejecting — breaks offline nav (Mozilla #1802711).
+  navigationPreload: false,
   runtimeCaching: [wasmRuntimeCache, ...defaultCache],
   fallbacks: {
     entries: [

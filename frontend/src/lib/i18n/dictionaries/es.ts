@@ -349,6 +349,19 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v312: {
+        title: "Offline en Firefox",
+        summary:
+          "Recarga sin conexión y rutas de transmutador funcionan en Firefox Android — mismo shell en caché que Chrome y escritorio.",
+        technical:
+          "sw.ts navigationPreload: false — Firefox resuelve preloadResponse type error en lugar de rechazar (Mozilla #1802711). Precache + fallback /~offline sin cambios. App v3.1.2.",
+        highlights: {
+          firefoxOffline: {
+            title: "Firefox en móvil",
+            body: "Modo avión ya no muestra la página de error del navegador — Camaleon sirve desde caché tras la primera visita online.",
+          },
+        },
+      },
       v311: {
         title: "Transmutador universal",
         summary:
