@@ -1,7 +1,7 @@
 # Tier 3 — Modern Image Formats (AVIF first)
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v2.3.8 on `main`** — Tier 3.2 ✅ · Tier 3.3 SVG ✅ (v2.3.5–2.3.6) · Settings S1–S4 + **S6 Risk** ✅ · **Tier 3.4 HEIC analysis ✅** (spike next)  
+> **Status:** **v2.3.8 on `main`** — Tier 3.2 ✅ · Tier 3.3 SVG ✅ (v2.3.5–2.3.6) · Settings S1–S4 + **S6 Risk** ✅ · **Next: Tier 3.4 PWA / offline shell**  
 > **Prerequisite:** Pre-Tier 3 UI/UX ✅ (v1.12.0) · Brand mark ✅ (v1.12.1) · Estimation engine perf ✅ (v1.12.2)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -19,12 +19,11 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 | **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.1.1** | **3.1.0–3.1.2 ✅ shipped** |
 | **3.2** | AVIF encode | PNG → AVIF, JPEG → AVIF | **`transmutador_avif_encode`** (+ decode in `transmutador_avif`) | **v2.2.0** | **3.2.0–3.2.2 ✅ shipped on `dev`** |
 | **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` | **v2.3.5–2.3.6** | **✅ shipped** — see `tier3_3_svg_analysis.md` |
-| **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | `transmutador_heic` | v2.4.x | **Spike ✅** (~542 KB Wasm) — 3.4.1 after license review · `tier3_4_heic_spike_results.md` |
-| **3.5** | PWA / offline shell | App + tools work without network after first visit | Service Worker + web manifest (`@serwist/next`) | v2.x | **Last Tier 3 deliverable** — after 3.4.x |
+| **3.4** | PWA / offline shell | App + tools work without network after first visit | Service Worker + web manifest (`@serwist/next`) | v2.4.x | **Next** — **last Tier 3 deliverable** (§14) |
 
-**Normative:** Tier 3 remains **image transmutation only** — no PDF, no optimization sliders (Tier 4a), no crop/rotate (Tier 4b). See §12.5–12.7 SPEC. Phase **3.5** is delivery/UX infrastructure (not a new transmutator crate) but is **in scope** as the Tier 3 capstone.
+**Normative:** Tier 3 remains **image transmutation only** for format phases — no PDF, no optimization sliders (Tier 4a), no crop/rotate (Tier 4b). See §12.5–12.7 SPEC. Phase **3.4** is delivery/UX infrastructure (not a new transmutator crate) but is **in scope** as the Tier 3 capstone.
 
-**End state after 3.3.2:** **21 active tools** (19 + 2 SVG outbound). **End state after 3.4.1:** **22 tools** (+ HEIC→JPEG). **End state after 3.5:** full modern-format tool matrix + **installable offline-capable PWA**.
+**End state after 3.3.2:** **21 active tools** (19 + 2 SVG outbound). **End state after 3.4:** full modern-format tool matrix (21 tools, 12 Wasm crates) + **installable offline-capable PWA**.
 
 ---
 
@@ -523,12 +522,11 @@ transmutador_avif + options.quality + background → transmutar_avif_a_jpg_with_
 3.2.0   AVIF encode spike (ravif, speed/quality, bundle budget)
 3.2.1   PNG → AVIF
 3.2.2   JPEG → AVIF
-3.3.x   SVG → PNG/JPEG (resvg spike)
-3.4.x   HEIC → JPEG (honest defer if spike fails)
-3.5.x   PWA / offline shell — **last Tier 3 item** (§13)
+3.3.x   SVG → PNG/JPEG (resvg spike) ✅
+3.4.x   PWA / offline shell — **last Tier 3 item** (§14)
 ```
 
-**Rationale:** AVIF **decode-only** first — highest user demand (files they cannot open), reuses PNG/JPEG encoders we trust. Encode is CPU-heavy in Wasm; honest UX requires separate spike. SVG/HEIC follow same spike-first doctrine as SPEC §12.4. **PWA/offline is deferred to 3.5.x** so the Wasm cache budget and tool registry are stable (all Tier 3 crates shipped) before precache/runtime-cache policy is finalized.
+**Rationale:** AVIF **decode-only** first — highest user demand (files they cannot open), reuses PNG/JPEG encoders we trust. Encode is CPU-heavy in Wasm; honest UX requires separate spike. SVG followed same spike-first doctrine as SPEC §12.4. **PWA/offline is Phase 3.4** so the Wasm cache budget and tool registry are stable (all Tier 3 format crates shipped) before precache/runtime-cache policy is finalized.
 
 ---
 
@@ -560,9 +558,9 @@ transmutador_avif + options.quality + background → transmutar_avif_a_jpg_with_
 | 7 | i18n EN/ES | 3.1.1 / 3.1.2 |
 | 8 | SPEC §6 stub | 3.1.0 (Architect) |
 | 9 | ROADMAP update | 3.1.3 |
-| 10 | PWA manifest + Service Worker | **3.5.x** (Tier 3 capstone) |
-| 11 | Offline UX + i18n | **3.5.x** |
-| 12 | Optional NFR-9 offline shell | **3.5 ship** (Architect) |
+| 10 | PWA manifest + Service Worker | **3.4.x** (Tier 3 capstone) |
+| 11 | Offline UX + i18n | **3.4.x** |
+| 12 | Optional NFR-9 offline shell | **3.4 ship** (Architect) |
 
 ---
 
@@ -573,16 +571,6 @@ Full format science, parameter model, security, spike gates, and phase checklist
 **Status:** **✅ Shipped** — `transmutador_svg`, SVG→PNG (v2.3.5), SVG→JPEG (v2.3.6); **21 tools** on `main`.
 
 **One-line doctrine:** SVG is a **vector scene**, not a pixel codec; Camaleon **rasterizes** at user-chosen dimensions, then reuses the PNG/JPEG encoders.
-
----
-
-## 12.1 Tier 3.4 HEIC — analysis pointer
-
-Full format science, HEVC decode logic, parameter model, backend candidates, spike gates, and phase checklist: **`docs/planning/tier3_4_heic_analysis.md`**.
-
-**Status:** **Spike ✅** (3.4.0, ~542 KB Wasm) — **3.4.1 HEIC→JPEG** after `heic` crate license review.
-
-**One-line doctrine:** HEIC is **HEIF + HEVC still images** — same container family as AVIF but **H.265 decode**; Camaleon **decodes to raster** and reuses PNG/JPEG encoders (JPEG first). Primary spike candidate: pure-Rust **`heic`** crate (re-evaluates SPEC "no pure-Rust decoder" note).
 
 ---
 
@@ -600,17 +588,16 @@ Full format science, HEVC decode logic, parameter model, backend candidates, spi
 | `docs/releases/v2.1.1.md` | **Shipped v2.1.1** (Phase 3.1.2 + preview UX) |
 | `docs/planning/tier3_2_avif_encode_spike_results.md` | ✅ Phase 3.2.0 encode spike |
 | `docs/planning/tier3_3_svg_analysis.md` | ✅ Phase 3.3 format science — **shipped** v2.3.5–2.3.6 |
-| `docs/planning/tier3_4_heic_analysis.md` | ✅ Phase 3.4 format science (pre-spike) |
 | `docs/planning/notice_system_plan.md` | ✅ Operational Notice Rail — **shipped v2.3.0** |
 | `docs/releases/v2.3.0.md` | **Shipped v2.3.0** — Notice Rail UX |
-| `docs/ROADMAP.md` backlog row | PWA / offline shell — owner phase **3.5.x** |
+| `docs/ROADMAP.md` backlog row | PWA / offline shell — owner phase **3.4.x** |
 | `motor_transmutacion/transmutador_webp/` | Closest implementation mirror |
 
 ---
 
-## 14. Phase 3.5 — PWA / offline shell (Tier 3 capstone)
+## 14. Phase 3.4 — PWA / offline shell (Tier 3 capstone)
 
-> **Schedule:** Implement **after Phase 3.4.x** (HEIC). This is the **last deliverable of Tier 3** — no format work ships after 3.5 until Tier 4.
+> **Schedule:** **Next Tier 3 deliverable** after Phase 3.3.x (SVG). Format matrix is **final** (21 tools, 12 Wasm crates). This is the **last deliverable of Tier 3** — no format work ships after 3.4 until Tier 4.
 >
 > **Product thesis:** Transmutation is already 100% client-side (NFR-1). Offline capability closes the gap: users should convert images **without internet** once the app shell and Wasm modules are cached — reinforcing privacy and local processing as the core promise.
 
@@ -644,7 +631,7 @@ User → File API (local)
 
 **Gap:** HTML, JS chunks, workers, and `/wasm/*` assets are fetched from Cloudflare (OpenNext) on each cold start — **no Service Worker** today.
 
-### 13.3 What still requires network (without 3.5)
+### 13.3 What still requires network (without 3.4)
 
 | Resource | Source | Offline without SW |
 |----------|--------|------------------|
@@ -661,7 +648,7 @@ User → File API (local)
 |-------|--------------|--------------|
 | App shell (JS + CSS + workers + fonts + icons) | ~2–5 MB | **Precache** (required) |
 | All Wasm crates (`public/wasm/`, lazy today) | ≤ **12 MB** aggregate (NFR-7) | **Runtime cache** or optional full precache |
-| **Full offline toolkit** | ~10–17 MB total | After 3.4.x — includes any new 3.2–3.4 crates |
+| **Full offline toolkit** | ~10–17 MB total | Final matrix — 12 Wasm crates (21 tools) |
 
 **Policy:** Default = **do not** precache all Wasm on mobile (storage quotas). Desktop / power users may opt into “download full toolkit” (§13.6 model C).
 
@@ -696,11 +683,11 @@ flowchart TB
 
 ### 13.6 Product models (target: B as default)
 
-| Model | Experience | Effort | Tier 3.5 target |
+| Model | Experience | Effort | Tier 3.4 target |
 |-------|------------|--------|-----------------|
-| **A — Partial offline** | Only routes/tools already visited | Low | **3.5.0 MVP** |
-| **B — Shell + lazy Wasm** | App opens offline; tools work after one online use each | Medium | **3.5.1 default** |
-| **C — Full toolkit download** | All Tier 3 tools offline after explicit download | Medium+ | **3.5.2 optional** |
+| **A — Partial offline** | Only routes/tools already visited | Low | **3.4.0 MVP** |
+| **B — Shell + lazy Wasm** | App opens offline; tools work after one online use each | Medium | **3.4.1 default** |
+| **C — Full toolkit download** | All Tier 3 tools offline after explicit download | Medium+ | **3.4.2 optional** |
 
 ### 13.7 Technical strategy (Next 15 + Cloudflare)
 
@@ -713,11 +700,11 @@ flowchart TB
 | 3 | Register SW **production only** (not `next dev`) |
 | 4 | Offline UX — connection banner, uncached-route message (i18n EN/ES) |
 | 5 | Update flow — “New version available” aligned with Release Comms |
-| 6 | SPEC amendment — optional **NFR-9** offline shell (Architect at 3.5 ship) |
+| 6 | SPEC amendment — optional **NFR-9** offline shell (Architect at 3.4 ship) |
 
 **Cloudflare / OpenNext:** No migration to static export required. SW caches browser-side; CDN and SW are complementary. Deploy path unchanged: `npm run build:wasm` → `opennextjs-cloudflare build` → `deploy`.
 
-**SSR hardening (3.5.1):** `layout.tsx` and tool pages use `cookies()` for locale/metadata — may force dynamic HTML. Medium-term: treat `localStorage` bootstrap as source of truth; static HTML per route improves precache predictability. Not a blocker for 3.5.0 (SW caches responses from visited sessions).
+**SSR hardening (3.4.1):** `layout.tsx` and tool pages use `cookies()` for locale/metadata — may force dynamic HTML. Medium-term: treat `localStorage` bootstrap as source of truth; static HTML per route improves precache predictability. Not a blocker for 3.4.0 (SW caches responses from visited sessions).
 
 ### 13.8 UX requirements (honesty)
 
@@ -735,13 +722,13 @@ flowchart TB
 |------|------------|
 | iOS Safari storage quotas | No full Wasm precache by default; encourage installed PWA |
 | Stale SW after deploy | `skipWaiting` + user-facing reload prompt |
-| Tier 3.2–3.4 grow Wasm budget | Finalize cache policy in **3.5** after all crates ship |
+| Tier 3 format matrix complete | Finalize cache policy in **3.4** after all crates ship |
 | Cold start with zero cache | Honest landing message — first visit requires network |
 | QA matrix | online → offline → transmute → reload → SW update |
 
-### 13.10 Phase checklist (3.5.x)
+### 13.10 Phase checklist (3.4.x)
 
-#### 3.5.0 — PWA MVP (partial offline)
+#### 3.4.0 — PWA MVP (partial offline)
 
 - [ ] `manifest.webmanifest` + icons (192/512)
 - [ ] `@serwist/next` integration; SW precache app shell
@@ -752,7 +739,7 @@ flowchart TB
 
 **Exit gate:** Home + one visited `/transmute/*` route work offline; transmute + download succeed.
 
-#### 3.5.1 — Shell hardening + lazy Wasm default
+#### 3.4.1 — Shell hardening + lazy Wasm default
 
 - [ ] Precache all active `/transmute/[slug]` static params (full tool route list post-3.4)
 - [ ] Cache `transmutation.worker.ts` + `frame-preview.worker.ts` reliably
@@ -762,7 +749,7 @@ flowchart TB
 
 **Exit gate:** App shell opens offline; any tool used once online works offline thereafter.
 
-#### 3.5.2 — Full toolkit download (optional)
+#### 3.4.2 — Full toolkit download (optional)
 
 - [ ] Settings or first-run CTA: “Download all tools for offline use” — see also `docs/planning/settings_panel_plan.md` §S5
 - [ ] Precache entire `public/wasm/` (post-3.4 crate list)
@@ -771,7 +758,7 @@ flowchart TB
 
 **Exit gate:** User can convert with any active Tier 3 tool offline without prior per-tool visit.
 
-### 13.11 QA gate (additions for 3.5)
+### 14.11 QA gate (additions for 3.4)
 
 1. All §8 gates still pass for format phases
 2. `npm run build` with Serwist enabled — no SW in dev
@@ -780,7 +767,7 @@ flowchart TB
 5. Verify **no file bytes** leave device when offline (NFR-1 regression)
 6. Post-deploy: old SW → new version prompt within one session
 
-### 13.12 Out of scope for 3.5
+### 14.12 Out of scope for 3.4
 
 | Item | Why |
 |------|-----|
@@ -791,4 +778,4 @@ flowchart TB
 
 ---
 
-*Planning doc for Tier 3 — Modern Image Formats. Tier 3.3 SVG ✅ shipped (v2.3.5–2.3.6). Next: **3.4.0 HEIC spike** per `tier3_4_heic_analysis.md`. Tier 3 closes with Phase 3.5.x PWA/offline after 3.4.x.*
+*Planning doc for Tier 3 — Modern Image Formats. Tier 3.3 SVG ✅ shipped (v2.3.5–2.3.6). **Next: Phase 3.4.x PWA/offline shell** — Tier 3 capstone.*

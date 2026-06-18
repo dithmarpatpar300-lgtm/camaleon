@@ -342,7 +342,7 @@ Click / `⌘K` → open palette → autofocus search input (unchanged).
 
 ## 10. Relation to Tier 3
 
-Tier 3 adds AVIF/SVG/HEIC tools — likely **+3–6 registry entries**. Without UX-2/UX-3, each new tool worsens scroll fatigue. **Recommend:** complete **UX-1** (legibility) immediately, **UX-2** (search + groups) before first Tier 3 tool ships.
+Tier 3 adds AVIF/SVG tools — **+4 registry entries** shipped. Without UX-2/UX-3, each new tool worsens scroll fatigue. **Recommend:** complete **UX-1** (legibility) immediately, **UX-2** (search + groups) before first Tier 3 tool ships.
 
 ---
 

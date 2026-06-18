@@ -25,7 +25,7 @@ Camaleon is an **image platform** first. Expansion follows a fixed priority ladd
 | Ladder | Name | What it is | Status |
 |--------|------|------------|--------|
 | **A** | **Image transmutation** | Format-to-format raster conversion (decode → policy → encode) | ✅ **Shipped** — Tiers 1–2 + Semantic Alpha Engine (v1.11.0) |
-| **B** | **Modern image formats** | AVIF, SVG→raster, HEIC (spike-gated) | 🚧 **Tier 3 in progress** — AVIF + SVG ✅ on `main`; **HEIC 3.4 analysis ✅** (spike next) |
+| **B** | **Modern image formats** | AVIF, SVG→raster | 🚧 **Tier 3 in progress** — AVIF + SVG ✅ on `main`; **PWA 3.4 next** (Tier 3 capstone) |
 | **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | 📋 **Tier 4a** — planned after Tier 3 |
 | **D** | **Image editing** | Crop, rotate, flip on raster (Wasm + canvas UI) | 📋 **Tier 4b** — planned after Tier 4a |
 | **E** | **Documents** | PDF merge/split, PDF→images — non-raster domain | 🚫 **Deferred** — far horizon; separate planning doc required |
@@ -1571,12 +1571,11 @@ Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm b
 | **AVIF → PNG** | `transmutador_avif` | ✅ zenavif decode; frame index; MIAF normalize; estimate |
 | **AVIF → JPEG** | `transmutador_avif` | ✅ assess_alpha; quality + background; estimate with alpha hint |
 
-**Planned (Tier 3.4):**
+**Next (Tier 3.4 — capstone):**
 
-| Format | Direction | Technical note |
-|--------|-----------|---------------|
-| **HEIC/HEIF → JPEG** | Decode | Primary MVP; pure-Rust **`heic`** crate spike (2026); `libheif` fallback — `docs/planning/tier3_4_heic_analysis.md` |
-| **HEIC/HEIF → PNG** | Decode | Optional 3.4.2 fast-follow after JPEG ships |
+| Deliverable | Scope | Technical note |
+|-------------|-------|----------------|
+| **PWA / offline shell** | Service Worker + manifest | `@serwist/next`; precache shell + runtime `/wasm/**` — `docs/planning/tier3_plan.md` §14 |
 
 **Shipped (Tier 3.3):**
 

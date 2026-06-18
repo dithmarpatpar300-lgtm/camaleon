@@ -19,7 +19,7 @@
 | **Engine (Rust workspace)** | v1.6.0 | Twelve Wasm crates incl. **`transmutador_svg`** (+ AVIF decode/encode) |
 | **SPEC** | v2.3.8 | §6.12 `transmutador_svg`; §7.12 Notice Rail; §7.13 Settings S1–S4 + **S6 Risk** |
 
-**v2.3.8** (`dev`/`main`): **Risk mode (S6)** + limit/estimate/notice hotfixes + overlay scrollbar drag fix. Release: `docs/releases/v2.3.8.md`. Next: **Tier 3.4 HEIC spike (3.4.0)** — analysis: `docs/planning/tier3_4_heic_analysis.md`.
+**v2.3.8** (`dev`/`main`): **Risk mode (S6)** + limit/estimate/notice hotfixes + overlay scrollbar drag fix. Release: `docs/releases/v2.3.8.md`. Next: **Tier 3.4 PWA / offline shell** — `docs/planning/tier3_plan.md` §14.
 
 **v2.3.7** (internal dev milestone): Risk mode core — superseded by **v2.3.8** release bundle.
 
@@ -282,7 +282,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Release Comms** | v1.9.0 (folded) | Onboarding + changelog modal + What's New drawer | ✅ Shipped — formal manifest entry at **v1.10.0** |
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
 | **Semantic Alpha Engine** | **v1.11.0** (`main`) | Honest transparency across lossy tools | ✅ **Shipped** — `docs/releases/v1.11.0.md` |
-| **Tier 3** | v2.0.x–v2.4.x | AVIF ✅, SVG ✅, **HEIC (spike)** | **In progress** — 3.3 SVG ✅ on `main`; **3.4 HEIC analysis ✅** — spike next — `docs/planning/tier3_plan.md` |
+| **Tier 3** | v2.0.x–v2.4.x | AVIF ✅, SVG ✅, **PWA offline (3.4)** | **In progress** — format matrix complete (21 tools); **3.4 PWA next** — `docs/planning/tier3_plan.md` |
 | **Tier 4a** | v2.x | Compress, Resize | Image **optimization** — same raster domain |
 | **Tier 4b** | v2.x | Crop, Rotate/Flip, favicon pack | Image **editing** |
 | **Tier 5** | TBD | PDF tools | **Deferred** — documents; separate planning required |

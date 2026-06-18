@@ -12,7 +12,7 @@
 Consolidate scattered browser preferences into a single **Settings drawer** while keeping quick-access controls in the header (`UtilityCluster`). Settings exposes choices that improve comprehension and comfort without weakening engine safety doctrine (§5.7, §5.10, §5.11).
 
 **S1 (shipped scope):** drawer shell, theme, language, release-comms preferences.  
-**S2–S5:** transmutation defaults, performance overrides, notice rail density, offline toolkit (Tier 3.5).
+**S2–S5:** transmutation defaults, performance overrides, notice rail density, offline toolkit (Tier 3.4).
 
 ---
 
@@ -69,7 +69,7 @@ Pattern: `resolveSpecDefault(tool, spec)` → user override ?? registry baseline
 | Notice rail detail (`normal` / `minimal`) | Filter INFO severities in `NoticeRail` |
 | Prepare progress style (`ring` / `bar`) | Existing `progress-preference.ts` — surface in UI |
 
-### S5 — Storage / offline (Tier 3.5)
+### S5 — Storage / offline (Tier 3.4)
 
 | Setting | Maps to |
 |---------|---------|
@@ -181,7 +181,7 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 
 ### S5 — Offline
 
-- [ ] Tier 3.5 PWA integration
+- [ ] Tier 3.4 PWA integration
 
 ---
 
@@ -190,7 +190,7 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 | Doc | Role |
 |-----|------|
 | `notice_system_plan.md` | Notice rail — S4 target |
-| `tier3_plan.md` §13 | Offline toolkit — S5 target |
+| `tier3_plan.md` §14 | Offline toolkit — S5 target |
 | `release_comms_module.md` | Changelog surfaces |
 | `SPEC.md` §5.10 | StripAll — not configurable |
 | `SPEC.md` §7.13 | Normative settings panel |
