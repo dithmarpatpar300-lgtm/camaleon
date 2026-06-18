@@ -1,7 +1,7 @@
 # Tier 3 — Modern Image Formats (AVIF first)
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v2.3.8 on `main`** — Tier 3.2 ✅ · Tier 3.3 SVG ✅ (v2.3.5–2.3.6) · Settings S1–S4 + **S6 Risk** ✅ · **Next: Tier 3.4 PWA / offline shell**  
+> **Status:** **v2.3.8 on `main`** — Tier 3.2 ✅ · Tier 3.3 SVG ✅ · Settings S1–S4 + **S6 Risk** ✅ · **Tier 3.4 PWA analysis ✅** (implementation next)  
 > **Prerequisite:** Pre-Tier 3 UI/UX ✅ (v1.12.0) · Brand mark ✅ (v1.12.1) · Estimation engine perf ✅ (v1.12.2)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -588,6 +588,7 @@ Full format science, parameter model, security, spike gates, and phase checklist
 | `docs/releases/v2.1.1.md` | **Shipped v2.1.1** (Phase 3.1.2 + preview UX) |
 | `docs/planning/tier3_2_avif_encode_spike_results.md` | ✅ Phase 3.2.0 encode spike |
 | `docs/planning/tier3_3_svg_analysis.md` | ✅ Phase 3.3 format science — **shipped** v2.3.5–2.3.6 |
+| `docs/planning/tier3_4_pwa_offline_analysis.md` | ✅ Phase 3.4 PWA/offline science & product plan |
 | `docs/planning/notice_system_plan.md` | ✅ Operational Notice Rail — **shipped v2.3.0** |
 | `docs/releases/v2.3.0.md` | **Shipped v2.3.0** — Notice Rail UX |
 | `docs/ROADMAP.md` backlog row | PWA / offline shell — owner phase **3.4.x** |
@@ -597,6 +598,7 @@ Full format science, parameter model, security, spike gates, and phase checklist
 
 ## 14. Phase 3.4 — PWA / offline shell (Tier 3 capstone)
 
+> **Full analysis:** **`docs/planning/tier3_4_pwa_offline_analysis.md`** — viability, cache layers, Settings S5 opt-in, what "download" means.  
 > **Schedule:** **Next Tier 3 deliverable** after Phase 3.3.x (SVG). Format matrix is **final** (21 tools, 12 Wasm crates). This is the **last deliverable of Tier 3** — no format work ships after 3.4 until Tier 4.
 >
 > **Product thesis:** Transmutation is already 100% client-side (NFR-1). Offline capability closes the gap: users should convert images **without internet** once the app shell and Wasm modules are cached — reinforcing privacy and local processing as the core promise.

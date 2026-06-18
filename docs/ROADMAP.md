@@ -19,7 +19,7 @@
 | **Engine (Rust workspace)** | v1.6.0 | Twelve Wasm crates incl. **`transmutador_svg`** (+ AVIF decode/encode) |
 | **SPEC** | v2.3.8 | §6.12 `transmutador_svg`; §7.12 Notice Rail; §7.13 Settings S1–S4 + **S6 Risk** |
 
-**v2.3.8** (`dev`/`main`): **Risk mode (S6)** + limit/estimate/notice hotfixes + overlay scrollbar drag fix. Release: `docs/releases/v2.3.8.md`. Next: **Tier 3.4 PWA / offline shell** — `docs/planning/tier3_plan.md` §14.
+**v2.3.8** (`dev`/`main`): **Risk mode (S6)** + hotfixes. Next: **Tier 3.4 PWA / offline** — analysis: `docs/planning/tier3_4_pwa_offline_analysis.md`.
 
 **v2.3.7** (internal dev milestone): Risk mode core — superseded by **v2.3.8** release bundle.
 

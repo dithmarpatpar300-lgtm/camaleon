@@ -1575,7 +1575,7 @@ Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm b
 
 | Deliverable | Scope | Technical note |
 |-------------|-------|----------------|
-| **PWA / offline shell** | Service Worker + manifest | `@serwist/next`; precache shell + runtime `/wasm/**` — `docs/planning/tier3_plan.md` §14 |
+| **PWA / offline shell** | Service Worker + manifest | `@serwist/next`; analysis: `docs/planning/tier3_4_pwa_offline_analysis.md` |
 
 **Shipped (Tier 3.3):**
 

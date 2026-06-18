@@ -71,10 +71,16 @@ Pattern: `resolveSpecDefault(tool, spec)` → user override ?? registry baseline
 
 ### S5 — Storage / offline (Tier 3.4)
 
-| Setting | Maps to |
-|---------|---------|
-| Download full Wasm toolkit | Service Worker precache (`tier3_plan.md` §13.6 model C) |
-| Cached modules status | SW cache inspection |
+See **`docs/planning/tier3_4_pwa_offline_analysis.md` §6** for full product doctrine.
+
+| Setting | Maps to | Default |
+|---------|---------|---------|
+| **Download all conversion tools** (opt-in toggle) | Service Worker Layer 3 precache — all `/wasm/transmutador_*` | **OFF** |
+| **Offline status** | SW active, `navigator.onLine`, cached tool list | Read-only |
+| **Storage used** | Cache Storage size estimate | Read-only |
+| **Clear offline cache** | `caches.delete()` + reset precache pref | Action |
+
+**Doctrine:** Never force bulk download. Model B (shell + lazy Wasm per tool) is automatic; Model C (full toolkit) requires explicit user consent in Settings.
 
 ---
 
@@ -190,7 +196,8 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 | Doc | Role |
 |-----|------|
 | `notice_system_plan.md` | Notice rail — S4 target |
-| `tier3_plan.md` §14 | Offline toolkit — S5 target |
+| `tier3_4_pwa_offline_analysis.md` | PWA/offline science — S5 target |
+| `tier3_plan.md` §14 | Offline checklist |
 | `release_comms_module.md` | Changelog surfaces |
 | `SPEC.md` §5.10 | StripAll — not configurable |
 | `SPEC.md` §7.13 | Normative settings panel |
