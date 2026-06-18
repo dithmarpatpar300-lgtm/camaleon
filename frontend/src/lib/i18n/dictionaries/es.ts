@@ -349,6 +349,44 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v321: {
+        title: "Batch multi-archivo + fix JPEG de cámara",
+        summary:
+          "Convierte varias imágenes a la vez en rutas compatibles — y las fotos de móvil/cámara con EXIF grande ya funcionan en batch y archivo único.",
+        technical:
+          "Tier 3.6.0 batch en 14 slugs raster; escaneo metadata JPEG 512 KiB (core_utils + probe frontend); validación decode en prepare batch; UX Convert again. Recompilar Wasm tras pull. App v3.2.1.",
+        highlights: {
+          batchRoutes: {
+            title: "Batch en rutas de herramienta",
+            body: "Arrastra varios archivos en JPG→PNG y otras 13 herramientas raster. Opciones compartidas, selección por fila, una descarga por archivo — procesado secuencialmente en el navegador.",
+          },
+          cameraJpeg: {
+            title: "JPEG de móvil y cámara",
+            body: "Las fotos con bloques EXIF grandes ya no se marcan como corruptas. Resolución y profundidad de bits al subir; estimate y transmute funcionan.",
+          },
+          batchUx: {
+            title: "Cuando termina un batch",
+            body: "Si todo está Hecho, usa Volver a convertir para repetir con otros ajustes — sin toasts engañosos de “selecciona un archivo listo”.",
+          },
+        },
+      },
+      v320: {
+        title: "Batch multi-archivo",
+        summary:
+          "Suelta varias imagenes en rutas de transmutador compatibles — opciones compartidas, elige que archivos convertir, una descarga por resultado.",
+        technical:
+          "Tier 3.6.0: workspace batch en 14 slugs raster; partitionFilesForTool; prepare/transmute secuencial; descarga por archivo con deduplicacion. Multi-drop universal en 3.6.1. App v3.2.0.",
+        highlights: {
+          batchRoutes: {
+            title: "Batch en rutas de herramienta",
+            body: "PNG→JPEG y otras 13 herramientas raster aceptan varios archivos. Elige un subconjunto o transmuta todos los listos — el procesamiento es de uno en uno en tu navegador.",
+          },
+          strictContract: {
+            title: "Formatos mixtos en una ruta",
+            body: "Los archivos incompatibles (p. ej. SVG en PNG→JPEG) se omiten con aviso claro — usa el Transmutador universal en inicio para drops de formatos mixtos.",
+          },
+        },
+      },
       v312: {
         title: "Offline en Firefox",
         summary:
@@ -928,6 +966,7 @@ const es: Dictionary = {
 
   dropzone: {
     idleLabel: "Arrastra una imagen aqui, o haz clic para seleccionar",
+    idleLabelBatch: "Arrastra imagenes aqui, o haz clic para seleccionar varios archivos",
     dragLabel: "Suelta para transmutar",
     processingLabel: "Transmutando...",
     ariaLabel: "Selecciona un archivo de imagen para transmutar",
@@ -936,6 +975,40 @@ const es: Dictionary = {
 
   panel: {
     handoffExpired: "Esa sesión de archivo expiró — suelta el archivo de nuevo en inicio o aquí.",
+    batch: {
+      toolbarSummary: "{total} archivos · {selected} seleccionados",
+      selectAll: "Seleccionar todo",
+      selectNone: "Quitar selección",
+      transmuteSelected: "Transmutar {count}",
+      transmuteAll: "Transmutar todos los listos",
+      preparing: "Preparando {current} / {total}",
+      processing: "{current} / {total} · {fileName}",
+      rowReady: "Listo",
+      rowElevated: "Listo · elevado",
+      rowBlocked: "Bloqueado",
+      rowError: "Error",
+      rowPreparing: "Preparando…",
+      rowDone: "Hecho",
+      skippedIncompatible:
+        "{count} archivo(s) omitido(s) — no aceptados en esta herramienta ({names}). Usa el Transmutador universal para formatos mixtos.",
+      noneCompatible: "Ningún archivo coincide con esta herramienta ({formats}).",
+      useUniversal: "Usar Transmutador universal",
+      notSupported: "El modo batch no está disponible en esta herramienta — solo se cargó el primer archivo.",
+      capped: "Solo se añadieron los primeros {max} archivos (límite de batch).",
+      selectAtLeastOne: "Selecciona al menos un archivo listo para transmutar.",
+      doneSummary: "{done} de {total} convertidos",
+      noneTransmuted: "No se convirtió ningún archivo — revisa el estado de cada fila o inténtalo de nuevo.",
+      allFailed: "Todos los archivos seleccionados fallaron — revisa los errores abajo.",
+      fileListAria: "Lista de archivos del batch",
+      missingPrepared: "Se perdieron los datos del archivo antes de transmutar — quítalo y vuelve a añadirlo.",
+      convertAgain: "Volver a convertir",
+      allDoneHint:
+        "Todos los archivos convertidos. Ajusta las opciones arriba y vuelve a convertir, o cancela para empezar un batch nuevo.",
+      transmuteAnother: "Transmutar más",
+      cancelBatch: "Cancelar batch",
+      aggregateWarning: "Tamaño total ~{size} — los archivos se procesan de uno en uno.",
+      elevatedBatchBody: "{count} archivo(s) necesitan confirmación de archivo grande antes de transmutar.",
+    },
     stagedFileSize: "{size}",
     changeFile: "Cambiar",
     svgIntrinsic: "Tamano vectorial intrinseco: {width} × {height}",

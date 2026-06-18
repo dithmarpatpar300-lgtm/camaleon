@@ -71,7 +71,8 @@ const JPEG_SOI: &[u8] = &[0xFF, 0xD8];
 const BMP_SIGNATURE: &[u8] = &[0x42, 0x4D];
 
 /// Maximum bytes to scan when searching for JPEG SOF markers.
-const JPEG_SCAN_LIMIT: usize = 64 * 1024;
+/// Phone/camera JPEGs often place SOF after large APP1 (EXIF) segments (>64 KiB).
+const JPEG_SCAN_LIMIT: usize = 512 * 1024;
 
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
@@ -321,7 +322,16 @@ fn probe_jpeg_dimensions(bytes: &[u8]) -> Result<(u32, u32), String> {
             continue;
         }
 
+        if (0xD0..=0xD7).contains(&marker) {
+            pos += 2;
+            continue;
+        }
+
         if marker == 0xD9 {
+            break;
+        }
+
+        if marker == 0xDA {
             break;
         }
 
@@ -757,6 +767,24 @@ mod tests {
         jpg.push(0xD9); // EOI immediately
         let err = probe_dimensions(&jpg).unwrap_err();
         assert!(err.contains("No SOF"));
+    }
+
+    #[test]
+    fn probe_jpeg_sof_after_large_app_segment() {
+        let base = make_minimal_jpeg(4000, 3000);
+        let app_data_len = 65_533usize;
+        let mut large = Vec::with_capacity(4 + app_data_len + base.len() - 2);
+        large.extend_from_slice(JPEG_SOI);
+        large.push(0xFF);
+        large.push(0xE1);
+        large.extend_from_slice(&65_535u16.to_be_bytes());
+        large.extend_from_slice(b"Exif\0\0");
+        large.extend(std::iter::repeat(0u8).take(app_data_len - 6));
+        large.extend_from_slice(&base[2..]);
+        assert!(large.len() > 65_536);
+        let (w, h) = probe_dimensions(&large).unwrap();
+        assert_eq!(w, 4000);
+        assert_eq!(h, 3000);
     }
 
     // ------------------------------------------------------------------

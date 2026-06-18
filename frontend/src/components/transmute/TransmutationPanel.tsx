@@ -60,6 +60,10 @@ import {
   resolveHandoffId,
 } from "@/lib/transmutation/file-handoff";
 import { useRiskMode } from "@/providers/RiskModeProvider";
+import { isBatchEnabledTool } from "@/lib/batch/batch-tool-allowlist";
+import { capBatchFiles } from "@/lib/batch/batch-limits";
+import { partitionFilesForTool } from "@/lib/batch/partition-for-tool";
+import { BatchTransmutationPanel } from "./BatchTransmutationPanel";
 
 type PanelStatus = "idle" | "preparing" | "staged" | "processing" | "success" | "error";
 
@@ -108,6 +112,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const [astroResizeMode, setAstroResizeMode] = useState(false);
   const [resizing, setResizing] = useState(false);
   const [showRiskDeactivatedNotice, setShowRiskDeactivatedNotice] = useState(false);
+  const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
 
   const deviceMemoryGb =
     typeof navigator !== "undefined"
@@ -154,6 +159,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
   const handleFileSelectRef = useRef<(file: File) => Promise<void>>(async () => {});
+  const batchEnabled = isBatchEnabledTool(tool.slug);
   const stagedByteSize =
     staged?.effectiveSize ?? staged?.file.size ?? pendingFile?.file.size ?? 0;
   const profile = useAdaptiveResourceProfile(stagedByteSize);
@@ -375,6 +381,86 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     }
   }, [tool, t, hardLimit, riskModeEnabled]);
 
+  const enterBatchMode = useCallback((files: File[]) => {
+    prepareIdRef.current += 1;
+    releasePreparedContext(preparedRef.current);
+    preparedRef.current = null;
+    releaseFramePreviewSessions();
+    setPrepared(null);
+    setPendingFile(null);
+    setStaged(null);
+    setResult(null);
+    setStatus("idle");
+    setErrorMessage(null);
+    setBatchFiles(files);
+  }, []);
+
+  const handleIncomingFiles = useCallback(
+    (incoming: File[]) => {
+      if (incoming.length === 0) return;
+      if (status === "processing" || status === "preparing") return;
+
+      const { accepted, rejected } = partitionFilesForTool(incoming, tool);
+
+      if (rejected.length > 0) {
+        const names = rejected.map((f) => f.name).join(", ");
+        toast({
+          message: t("panel.batch.skippedIncompatible", {
+            count: rejected.length,
+            names,
+          }),
+          variant: "info",
+        });
+      }
+
+      if (accepted.length === 0) {
+        setBatchFiles(null);
+        setStatus("error");
+        setErrorMessage(
+          rejected.length > 0
+            ? t("panel.batch.noneCompatible", {
+                formats: tool.acceptExtensions.join(", "),
+              })
+            : t("panel.fmtError", { formats: tool.acceptExtensions.join(", ") })
+        );
+        return;
+      }
+
+      if (accepted.length === 1) {
+        setBatchFiles(null);
+        void handleFileSelect(accepted[0]);
+        return;
+      }
+
+      if (!batchEnabled) {
+        toast({ message: t("panel.batch.notSupported"), variant: "info" });
+        setBatchFiles(null);
+        void handleFileSelect(accepted[0]);
+        return;
+      }
+
+      const capped = capBatchFiles(accepted, deviceMemoryGb);
+      if (capped.length < accepted.length) {
+        toast({
+          message: t("panel.batch.capped", { max: capped.length }),
+          variant: "info",
+        });
+      }
+
+      enterBatchMode(capped);
+    },
+    [
+      status,
+      tool,
+      toast,
+      t,
+      batchEnabled,
+      deviceMemoryGb,
+      handleFileSelect,
+      enterBatchMode,
+    ]
+  );
+
   handleFileSelectRef.current = handleFileSelect;
 
   const prevToolSlugRef = useRef(tool.slug);
@@ -382,6 +468,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     if (prevToolSlugRef.current !== tool.slug) {
       prepareIdRef.current += 1;
       prevToolSlugRef.current = tool.slug;
+      setBatchFiles(null);
     }
   }, [tool.slug]);
 
@@ -619,6 +706,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setResizing(false);
     setOptions(buildDefaultOptions(tool.optionSpecs, tool));
     metrics.resetMetrics();
+    setBatchFiles(null);
   }, [tool, metrics, prepared]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true); }, []);
@@ -627,8 +715,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     e.preventDefault(); setDragging(false);
     if (status === "processing" || status === "preparing") return;
     const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) handleFileSelect(files[0]);
-  }, [status, handleFileSelect]);
+    if (files.length > 0) handleIncomingFiles(files);
+  }, [status, handleIncomingFiles]);
 
   useEffect(() => {
     if (status !== "processing") return;
@@ -659,8 +747,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const hasOptions = panelOptionSpecs.length > 0;
 
   const { active: dropOverlayActive } = usePageFileDrop({
-    enabled: status === "idle" || status === "staged",
-    onFile: handleFileSelect,
+    enabled: (status === "idle" || status === "staged") && !batchFiles,
+    onFiles: handleIncomingFiles,
     acceptExtensions: tool.acceptExtensions,
   });
 
@@ -710,12 +798,29 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     t,
   ]);
 
+  if (batchFiles && batchFiles.length >= 2) {
+    return (
+      <div className="space-y-6">
+        <BatchTransmutationPanel
+          tool={tool}
+          files={batchFiles}
+          onReset={handleReset}
+        />
+        <PageDropOverlay active={false} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {status === "idle" && (
         <Dropzone accept={accept} status="idle" dragging={dragging} sourceFileName={null}
+          multiple={batchEnabled}
           onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-          onFileSelect={handleFileSelect} idleLabel={t("dropzone.idleLabel")} processingLabel={t("dropzone.processingLabel")}
+          onFileSelect={handleFileSelect}
+          onFilesSelect={handleIncomingFiles}
+          idleLabel={batchEnabled ? t("dropzone.idleLabelBatch") : t("dropzone.idleLabel")}
+          processingLabel={t("dropzone.processingLabel")}
         />
       )}
 

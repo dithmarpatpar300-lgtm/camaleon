@@ -330,6 +330,25 @@ fn ihdr_color_type_reader_rejects_non_png() {
 }
 
 #[test]
+fn decode_real_camera_jpeg_from_disk() {
+    let path = std::path::Path::new(r"D:\Photos\Recuerdos\Camera\20250824_232556.jpg");
+    if !path.exists() {
+        eprintln!("skip: camera fixture not on disk");
+        return;
+    }
+
+    let bytes = std::fs::read(path).expect("read camera jpeg");
+    let dims = core_utils::probe_dimensions(&bytes).expect("probe dimensions");
+    eprintln!("probed {}x{}", dims.0, dims.1);
+
+    core_utils::validate_input(&bytes).expect("validate_input should pass after extended SOF scan");
+
+    let png = jpg_bytes_to_png_bytes(&bytes, &default_options()).expect("decode+encode camera jpeg");
+    assert!(png.len() > 100);
+    assert_eq!(&png[0..4], &[0x89, 0x50, 0x4E, 0x47]);
+}
+
+#[test]
 fn estimate_size_matches_full_transmute() {
     let jpg = create_valid_jpeg_bytes();
     let opts = default_options();

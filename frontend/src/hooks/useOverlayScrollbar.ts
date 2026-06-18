@@ -181,6 +181,27 @@ export function useOverlayScrollbar(): {
     if (hasOverflowRef.current) {
       setState((s) => ({ ...s, visibility: "idle" }));
     }
+
+    // Layout may settle after fonts, images, or hydration — remeasure so thumb size is correct.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => syncGeometry({ hideIfNoOverflow: true }));
+    });
+
+    const onLoad = () => syncGeometry({ hideIfNoOverflow: true });
+    window.addEventListener("load", onLoad);
+
+    const fontsReady =
+      typeof document !== "undefined" && "fonts" in document
+        ? document.fonts.ready.then(() => syncGeometry({ hideIfNoOverflow: true }))
+        : Promise.resolve();
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      window.removeEventListener("load", onLoad);
+      void fontsReady;
+    };
   }, [syncGeometry]);
 
   useEffect(() => {
@@ -207,6 +228,7 @@ export function useOverlayScrollbar(): {
     if (typeof ResizeObserver !== "undefined") {
       ro = new ResizeObserver(() => syncGeometry());
       ro.observe(document.body);
+      ro.observe(document.documentElement);
     }
 
     return () => {

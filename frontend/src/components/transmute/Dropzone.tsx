@@ -11,10 +11,12 @@ type DropzoneProps = {
   status: DropzoneStatus;
   dragging: boolean;
   sourceFileName: string | null;
+  multiple?: boolean;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
   onFileSelect: (file: File) => void;
+  onFilesSelect?: (files: File[]) => void;
   idleLabel?: string;
   processingLabel?: string;
 };
@@ -24,10 +26,12 @@ export function Dropzone({
   status,
   dragging,
   sourceFileName,
+  multiple = false,
   onDragOver,
   onDragLeave,
   onDrop,
   onFileSelect,
+  onFilesSelect,
   idleLabel,
   processingLabel,
 }: DropzoneProps) {
@@ -53,10 +57,15 @@ export function Dropzone({
   const handleFileInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
-      if (files && files.length > 0) onFileSelect(files[0]);
+      if (!files || files.length === 0) return;
+      if (multiple && onFilesSelect) {
+        onFilesSelect(Array.from(files));
+      } else {
+        onFileSelect(files[0]);
+      }
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
-    [onFileSelect]
+    [multiple, onFileSelect, onFilesSelect]
   );
 
   const idleText = idleLabel ?? t("dropzone.idleLabel");
@@ -68,6 +77,7 @@ export function Dropzone({
         ref={fileInputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         onChange={handleFileInputChange}
         className="hidden"
       />

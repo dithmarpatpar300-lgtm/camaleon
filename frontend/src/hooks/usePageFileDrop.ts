@@ -1,26 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type UsePageFileDropOptions = {
   enabled: boolean;
-  onFile: (file: File) => void;
+  onFiles: (files: File[]) => void;
   acceptExtensions: string[];
 };
 
 export function usePageFileDrop({
   enabled,
-  onFile,
+  onFiles,
   acceptExtensions,
 }: UsePageFileDropOptions) {
   const counterRef = useRef(0);
   const [active, setActive] = useState(false);
   const enabledRef = useRef(enabled);
-  const onFileRef = useRef(onFile);
+  const onFilesRef = useRef(onFiles);
   const acceptRef = useRef(acceptExtensions);
 
   enabledRef.current = enabled;
-  onFileRef.current = onFile;
+  onFilesRef.current = onFiles;
   acceptRef.current = acceptExtensions;
 
   useEffect(() => {
@@ -59,14 +59,9 @@ export function usePageFileDrop({
       setActive(false);
       if (!enabledRef.current) return;
 
-      const files = e.dataTransfer?.files;
-      if (files && files.length > 0) {
-        const file = files[0];
-        const ext = "." + file.name.split(".").pop()?.toLowerCase();
-        if (acceptRef.current.includes(ext)) {
-          onFileRef.current(file);
-        }
-      }
+      const fileList = e.dataTransfer?.files;
+      if (!fileList || fileList.length === 0) return;
+      onFilesRef.current(Array.from(fileList));
     };
 
     window.addEventListener("dragenter", handleDragEnter);

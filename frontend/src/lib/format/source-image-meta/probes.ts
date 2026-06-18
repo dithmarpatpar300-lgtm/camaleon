@@ -1,4 +1,5 @@
 import type { SourceImageMeta } from "./types";
+import { scanJpegDimensions } from "./jpeg-scan";
 
 const PNG_SIG = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] as const;
 
@@ -38,33 +39,9 @@ export function probePngSourceMeta(bytes: ArrayBuffer): SourceImageMeta | null {
 }
 
 export function probeJpegSourceMeta(bytes: ArrayBuffer): SourceImageMeta | null {
-  const view = new Uint8Array(bytes);
-  if (view.length < 4 || view[0] !== 0xff || view[1] !== 0xd8) return null;
-
-  let pos = 2;
-  const limit = Math.min(view.length, 65536);
-
-  while (pos + 4 <= limit) {
-    if (view[pos] !== 0xff) return null;
-    const marker = view[pos + 1];
-    const len = (view[pos + 2] << 8) | view[pos + 3];
-    if (len < 2) return null;
-
-    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
-      if (pos + 9 <= view.length) {
-        const height = (view[pos + 5] << 8) | view[pos + 6];
-        const width = (view[pos + 7] << 8) | view[pos + 8];
-        if (width > 0 && height > 0) {
-          return { width, height, bitDepthLabel: "24-bit" };
-        }
-      }
-      return null;
-    }
-
-    pos += 2 + len;
-  }
-
-  return null;
+  const dims = scanJpegDimensions(new Uint8Array(bytes));
+  if (!dims) return null;
+  return { width: dims.width, height: dims.height, bitDepthLabel: "24-bit" };
 }
 
 export function probeGifSourceMeta(bytes: ArrayBuffer): SourceImageMeta | null {

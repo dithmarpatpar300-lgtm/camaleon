@@ -183,7 +183,51 @@ for (const item of selectedItemsInStableOrder) {
 7. **Progress:** global “2 / 5” + current file name while running.
 8. **Output:** one download per completed file (3.6.0); ZIP later (3.6.2).
 
-### 7.2 Rows in non-ready states
+### 7.2 Strict tool contract — homogeneous batch only (dedicated routes)
+
+**Dedicated tool routes** (e.g. `/transmute/png-to-jpg`) and **Universal Transmutator** serve **different contracts**:
+
+| Surface | Multi-format in one drop? | Behaviour |
+|---------|---------------------------|-----------|
+| **Universal Transmutator** | ✅ Yes (3.6.1+) | Partition into **cohorts**; user picks output per group |
+| **Dedicated tool route** | ❌ No | **Homogeneous batch only** — same `tool.acceptExtensions` |
+
+When the user drops **multiple files on a dedicated route**, including files this tool **cannot** accept (e.g. 4 PNG + 1 SVG on **PNG → JPEG**):
+
+1. **Partition at the gate** with `fileMatchesExtensions(file.name, tool.acceptExtensions)`.
+2. **Accepted files** (4 PNG) → continue into batch (or single-file if count === 1).
+3. **Rejected files** (1 SVG) → **never** enter the batch list, **never** process silently, **never** show as a row that will inevitably fail.
+4. Show a **graceful notice** (toast or dismissible banner), e.g.  
+   *“`icon.svg` is not PNG — skipped for this transmutator. To convert **mixed formats** in one go, use the **Universal transmutator** on the home page.”*
+5. Link / CTA: `/#universal-transmutator` (when anchor exists) or home.
+
+| Drop on png-to-jpg | Result |
+|--------------------|--------|
+| 5 PNG | Batch 5 |
+| 4 PNG + 1 SVG | Notice + batch 4 PNG |
+| 4 PNG + 1 JPEG | Notice + batch 4 PNG (JPEG not accepted on this route) |
+| Only SVG | No batch; format error + suggest Universal |
+| 0 accepted after filter | No batch; message + suggest Universal if mix was the cause |
+
+**Algorithm:**
+
+```typescript
+function partitionFilesForTool(files: File[], tool: ToolDefinition) {
+  const accepted: File[] = [];
+  const rejected: File[] = [];
+  for (const file of files) {
+    if (fileMatchesExtensions(file.name, tool.acceptExtensions)) accepted.push(file);
+    else rejected.push(file);
+  }
+  return { accepted, rejected };
+}
+```
+
+**i18n:** `panel.batch.skippedIncompatible` (with `{names}`, `{count}`), `panel.batch.noneCompatible`, `panel.batch.useUniversal`.
+
+**Non-allowlisted tools** (GIF, TIFF, …): multi-drop still shows “batch not supported for this tool” (single file only) — unchanged until later phases.
+
+### 7.3 Rows in non-ready states
 
 | Row status | Checkbox | Transmute all |
 |------------|----------|---------------|
@@ -355,6 +399,7 @@ When `items.length === 1`, render **existing** `StagedWorkspace` / flow — no b
 |------|----------|
 | Drop 1 file on tool route | Unchanged single-file UX |
 | Drop 5 same-format rasters on PNG→JPG | Batch workspace; 5 prepares |
+| Drop 4 PNG + 1 SVG on png-to-jpg | Grace notice + batch 4 PNG only (§7.2) |
 | Select 3 of 5 → Transmute | Exactly 3 transmute + download |
 | Transmute all with 2 blocked | Only 3 `ready` run; blocked rows explained |
 | Mixed PNG+SVG on universal | 2 cohort cards; no auto-navigation |
@@ -397,6 +442,7 @@ When `items.length === 1`, render **existing** `StagedWorkspace` / flow — no b
 | `lib/batch/batch-limits.ts` | `maxFilesPerBatch`, aggregate warnings |
 | `lib/batch/batch-prepare-queue.ts` | Sequential prepare + release |
 | `lib/batch/batch-tool-allowlist.ts` | Which slugs enable multi-drop |
+| `lib/batch/partition-for-tool.ts` | `partitionFilesForTool` + strict gate |
 | `lib/batch/batch-handoff.ts` | Stage/consume batch payload |
 | `lib/batch/*.test.ts` | Cohort + limit unit tests |
 | `components/transmute/BatchWorkspace.tsx` | Toolbar + list + progress |

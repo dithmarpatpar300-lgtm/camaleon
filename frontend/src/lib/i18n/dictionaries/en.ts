@@ -349,6 +349,44 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v321: {
+        title: "Multi-file batch + camera JPEG fix",
+        summary:
+          "Convert several images at once on supported routes — plus phone/camera photos with large EXIF now work in batch and single-file.",
+        technical:
+          "Tier 3.6.0 batch on 14 raster slugs; JPEG metadata scan 512 KiB (core_utils + frontend probe); batch prepare decode validation; Convert again UX. Rebuild Wasm after pull. App v3.2.1.",
+        highlights: {
+          batchRoutes: {
+            title: "Batch on tool routes",
+            body: "Drop multiple files on JPG→PNG and 13 other raster tools. Shared options, select rows, one download per file — processed sequentially in your browser.",
+          },
+          cameraJpeg: {
+            title: "Phone & camera JPEGs",
+            body: "Photos with large EXIF blocks are no longer misread as corrupt. Resolution and bit depth appear at upload; estimate and transmute succeed.",
+          },
+          batchUx: {
+            title: "After a batch finishes",
+            body: "When every file is Done, use Convert again to rerun with new settings — buttons no longer suggest transmuting zero ready files.",
+          },
+        },
+      },
+      v320: {
+        title: "Multi-file batch",
+        summary:
+          "Drop several images on supported transmutator routes — shared options, select which files to convert, one download per result.",
+        technical:
+          "Tier 3.6.0: batch workspace on 14 raster allowlisted slugs; partitionFilesForTool strict gate; sequential prepare/transmute; per-file download with dedupe. Universal multi-drop deferred to 3.6.1. App v3.2.0.",
+        highlights: {
+          batchRoutes: {
+            title: "Batch on tool routes",
+            body: "PNG→JPEG and 13 other raster tools accept multiple files. Pick a subset or transmute all ready rows — processing runs one file at a time in your browser.",
+          },
+          strictContract: {
+            title: "Mixed formats on a tool route",
+            body: "Incompatible files (e.g. SVG on PNG→JPEG) are skipped with a clear notice — use the Universal transmutator on the home page for mixed-format drops.",
+          },
+        },
+      },
       v312: {
         title: "Firefox offline fix",
         summary:
@@ -928,6 +966,7 @@ const en: Dictionary = {
 
   dropzone: {
     idleLabel: "Drag & drop an image here, or click to select",
+    idleLabelBatch: "Drag & drop images here, or click to select multiple files",
     dragLabel: "Release to transmute",
     processingLabel: "Transmuting...",
     ariaLabel: "Select an image file to transmute",
@@ -936,6 +975,40 @@ const en: Dictionary = {
 
   panel: {
     handoffExpired: "That file session expired — drop your file again on the home page or here.",
+    batch: {
+      toolbarSummary: "{total} files · {selected} selected",
+      selectAll: "Select all",
+      selectNone: "Select none",
+      transmuteSelected: "Transmute {count}",
+      transmuteAll: "Transmute all ready",
+      preparing: "Preparing {current} / {total}",
+      processing: "{current} / {total} · {fileName}",
+      rowReady: "Ready",
+      rowElevated: "Ready · elevated",
+      rowBlocked: "Blocked",
+      rowError: "Error",
+      rowPreparing: "Preparing…",
+      rowDone: "Done",
+      skippedIncompatible:
+        "{count} file(s) skipped — not accepted on this tool ({names}). Use the Universal transmutator for mixed formats.",
+      noneCompatible: "No files match this tool ({formats}).",
+      useUniversal: "Use Universal transmutator",
+      notSupported: "Batch mode is not supported for this tool — only the first file was loaded.",
+      capped: "Only the first {max} files were added (batch limit).",
+      selectAtLeastOne: "Select at least one ready file to transmute.",
+      doneSummary: "{done} of {total} converted",
+      noneTransmuted: "No files were converted — check row status or try again.",
+      allFailed: "Every selected file failed — see row errors below.",
+      fileListAria: "Batch file list",
+      missingPrepared: "File data was lost before transmute — remove and re-add this file.",
+      convertAgain: "Convert again",
+      allDoneHint:
+        "All files converted. Adjust options above and convert again, or cancel to start a new batch.",
+      transmuteAnother: "Transmute more",
+      cancelBatch: "Cancel batch",
+      aggregateWarning: "Total size ~{size} — files process one at a time.",
+      elevatedBatchBody: "{count} file(s) need large-file confirmation before transmute.",
+    },
     stagedFileSize: "{size}",
     changeFile: "Change",
     svgIntrinsic: "Intrinsic vector size: {width} × {height}",
