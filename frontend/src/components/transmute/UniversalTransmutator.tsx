@@ -9,12 +9,20 @@ import {
   markPendingHandoffNavigation,
   stageFileHandoffFromFile,
 } from "@/lib/transmutation/file-handoff";
+import {
+  markPendingBatchHandoffNavigation,
+  stageBatchHandoffFromFiles,
+} from "@/lib/batch/batch-handoff";
 import type { ToolDefinition } from "@/lib/tools/types";
+import type { InputCohort } from "@/lib/tools/universal-matrix";
+import {
+  batchOutputToolsForCohort,
+  resolveUniversalDrop,
+} from "@/lib/universal/universal-drop";
 import {
   buildAcceptAttribute,
   getAllSupportedInputExtensions,
   getToolsForFileName,
-  resolveInputFormatLabel,
   sortToolsForOutputPicker,
 } from "@/lib/tools/universal-matrix";
 import { cn } from "@/lib/utils";
@@ -29,9 +37,15 @@ export function UniversalTransmutator() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
 
+  const deviceMemoryGb =
+    typeof navigator !== "undefined"
+      ? (navigator as { deviceMemory?: number }).deviceMemory
+      : undefined;
+
   const [phase, setPhase] = useState<Phase>("idle");
   const [dragging, setDragging] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [cohort, setCohort] = useState<InputCohort | null>(null);
+  const [isBatchDrop, setIsBatchDrop] = useState(false);
   const [unsupportedName, setUnsupportedName] = useState<string | null>(null);
 
   const acceptAttr = useMemo(() => buildAcceptAttribute(), []);
@@ -40,26 +54,34 @@ export function UniversalTransmutator() {
     []
   );
 
-  const matchingTools = useMemo(
-    () => (file ? sortToolsForOutputPicker(getToolsForFileName(file.name)) : []),
-    [file]
+  const matchingTools = useMemo(() => {
+    if (!cohort) return [];
+    if (isBatchDrop) return batchOutputToolsForCohort(cohort);
+    const file = cohort.files[0];
+    return sortToolsForOutputPicker(getToolsForFileName(file.name));
+  }, [cohort, isBatchDrop]);
+
+  const totalBytes = useMemo(
+    () => (cohort ? cohort.files.reduce((sum, f) => sum + f.size, 0) : 0),
+    [cohort]
   );
 
-  const inputFormat = useMemo(
-    () => (file ? resolveInputFormatLabel(file.name, matchingTools) : null),
-    [file, matchingTools]
-  );
+  const inputFormat = useMemo(() => {
+    if (!cohort || cohort.files.length === 0) return null;
+    return cohort.familyLabel;
+  }, [cohort]);
 
   const reset = useCallback(() => {
     setPhase("idle");
-    setFile(null);
+    setCohort(null);
+    setIsBatchDrop(false);
     setUnsupportedName(null);
     setDragging(false);
     dragCounterRef.current = 0;
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
-  const redirectWithTool = useCallback(
+  const redirectSingleWithTool = useCallback(
     async (targetFile: File, tool: ToolDefinition) => {
       setPhase("redirecting");
       try {
@@ -74,36 +96,127 @@ export function UniversalTransmutator() {
     [router, t, toast]
   );
 
-  const stageFile = useCallback(
-    (next: File) => {
-      setUnsupportedName(null);
-      const tools = getToolsForFileName(next.name);
-      if (tools.length === 0) {
-        setFile(null);
-        setPhase("idle");
-        setUnsupportedName(next.name);
-        return;
+  const redirectBatchWithTool = useCallback(
+    async (files: File[], tool: ToolDefinition) => {
+      setPhase("redirecting");
+      try {
+        const id = await stageBatchHandoffFromFiles(files, tool.slug, deviceMemoryGb);
+        markPendingBatchHandoffNavigation(id);
+        router.push(`/transmute/${tool.slug}?batch=${encodeURIComponent(id)}`);
+      } catch {
+        setPhase("pick");
+        toast({ message: t("landing.universal.handoffFailed"), variant: "info" });
       }
-
-      setFile(next);
-      if (tools.length === 1) {
-        void redirectWithTool(next, tools[0]);
-        return;
-      }
-      setPhase("pick");
     },
-    [redirectWithTool]
+    [router, t, toast, deviceMemoryGb]
+  );
+
+  const beginPickPhase = useCallback((nextCohort: InputCohort, batch: boolean) => {
+    setUnsupportedName(null);
+    setCohort(nextCohort);
+    setIsBatchDrop(batch);
+    setPhase("pick");
+  }, []);
+
+  const stageSingleFile = useCallback(
+    (nextCohort: InputCohort) => {
+      const file = nextCohort.files[0];
+      const tools = getToolsForFileName(file.name);
+      if (tools.length === 1) {
+        setCohort(nextCohort);
+        setIsBatchDrop(false);
+        void redirectSingleWithTool(file, tools[0]);
+        return;
+      }
+      beginPickPhase(nextCohort, false);
+    },
+    [beginPickPhase, redirectSingleWithTool]
+  );
+
+  const stageBatchCohort = useCallback(
+    (nextCohort: InputCohort) => {
+      const tools = batchOutputToolsForCohort(nextCohort);
+      if (tools.length === 0) {
+        reset();
+        toast({ message: t("landing.universal.batch.noBatchRoute"), variant: "info" });
+        return;
+      }
+      if (tools.length === 1) {
+        setCohort(nextCohort);
+        setIsBatchDrop(true);
+        void redirectBatchWithTool(nextCohort.files, tools[0]);
+        return;
+      }
+      beginPickPhase(nextCohort, true);
+    },
+    [beginPickPhase, redirectBatchWithTool, reset, t, toast]
+  );
+
+  const notifyUnsupportedSkipped = useCallback(
+    (unsupported: File[]) => {
+      if (unsupported.length === 0) return;
+      toast({
+        message: t("landing.universal.batch.unsupportedSkipped", {
+          count: unsupported.length,
+          names: unsupported.map((f) => f.name).join(", "),
+        }),
+        variant: "info",
+      });
+    },
+    [t, toast]
   );
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
       if (!files || files.length === 0) return;
-      if (files.length > 1) {
-        toast({ message: t("landing.universal.oneFileOnly"), variant: "info" });
+
+      const resolution = resolveUniversalDrop(Array.from(files), deviceMemoryGb);
+
+      if (resolution.kind === "empty") return;
+
+      if (resolution.kind === "single" || resolution.kind === "batch") {
+        if (resolution.capped) {
+          toast({
+            message: t("landing.universal.batch.capped"),
+            variant: "info",
+          });
+        }
       }
-      stageFile(files[0]);
+
+      if (resolution.kind === "unsupported") {
+        setCohort(null);
+        setPhase("idle");
+        setUnsupportedName(resolution.names[0] ?? "");
+        return;
+      }
+
+      if (resolution.kind === "mixed_cohorts") {
+        toast({
+          message: t("landing.universal.batch.mixedFormats", {
+            count: resolution.cohortCount,
+          }),
+          variant: "info",
+        });
+        return;
+      }
+
+      notifyUnsupportedSkipped(resolution.unsupported);
+
+      if (resolution.kind === "single") {
+        stageSingleFile(resolution.cohort);
+        return;
+      }
+
+      stageBatchCohort(resolution.cohort);
     },
-    [stageFile, t, toast]
+    [
+      deviceMemoryGb,
+      notifyUnsupportedSkipped,
+      stageBatchCohort,
+      stageSingleFile,
+      t,
+      toast,
+    ]
   );
 
   const onDragEnter = useCallback(
@@ -158,13 +271,17 @@ export function UniversalTransmutator() {
 
   const onOutputSelect = useCallback(
     (tool: ToolDefinition) => {
-      if (!file) return;
-      void redirectWithTool(file, tool);
+      if (!cohort) return;
+      if (isBatchDrop) {
+        void redirectBatchWithTool(cohort.files, tool);
+        return;
+      }
+      void redirectSingleWithTool(cohort.files[0], tool);
     },
-    [file, redirectWithTool]
+    [cohort, isBatchDrop, redirectBatchWithTool, redirectSingleWithTool]
   );
 
-  const showDropzone = phase === "idle" || !file;
+  const showDropzone = phase === "idle" || !cohort;
 
   return (
     <section
@@ -190,6 +307,7 @@ export function UniversalTransmutator() {
           ref={fileInputRef}
           type="file"
           accept={acceptAttr}
+          multiple
           onChange={onInputChange}
           className="hidden"
         />
@@ -250,23 +368,49 @@ export function UniversalTransmutator() {
               {dragging ? t("landing.universal.dragLabel") : t("landing.universal.dropLabel")}
             </p>
             <p className="text-xs text-text-muted">{t("landing.universal.browseHint")}</p>
+            <p className="text-xs text-text-muted/80">{t("landing.universal.batch.dropHint")}</p>
           </div>
         )}
 
-        {file && phase !== "idle" && (
+        {cohort && phase !== "idle" && (
           <div className="mt-4 space-y-4">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border/70 bg-bg-elevated/40 px-3.5 py-2.5">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-text-primary">{file.name}</p>
-                <p className="mt-0.5 text-xs text-text-muted">
-                  {inputFormat && (
-                    <span className="font-mono uppercase tracking-wide text-text-secondary">
-                      {inputFormat}
-                    </span>
-                  )}
-                  {inputFormat && " · "}
-                  {formatBytes(file.size)}
-                </p>
+                {isBatchDrop ? (
+                  <>
+                    <p className="text-sm font-medium text-text-primary">
+                      {t("landing.universal.batch.filesSummary", {
+                        format: inputFormat ?? "",
+                        count: cohort.files.length,
+                      })}
+                    </p>
+                    <p className="mt-0.5 text-xs text-text-muted">
+                      {t("landing.universal.batch.totalSize", { size: formatBytes(totalBytes) })}
+                    </p>
+                    <ul className="mt-2 max-h-24 space-y-0.5 overflow-y-auto text-xs text-text-muted">
+                      {cohort.files.map((f) => (
+                        <li key={`${f.name}-${f.lastModified}`} className="truncate font-mono">
+                          {f.name}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p className="truncate text-sm font-medium text-text-primary">
+                      {cohort.files[0].name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-text-muted">
+                      {inputFormat && (
+                        <span className="font-mono uppercase tracking-wide text-text-secondary">
+                          {inputFormat}
+                        </span>
+                      )}
+                      {inputFormat && " · "}
+                      {formatBytes(cohort.files[0].size)}
+                    </p>
+                  </>
+                )}
               </div>
               {phase === "pick" && (
                 <button
@@ -274,7 +418,9 @@ export function UniversalTransmutator() {
                   onClick={reset}
                   className="shrink-0 text-xs font-medium text-text-muted transition-colors hover:text-text-primary"
                 >
-                  {t("landing.universal.changeFile")}
+                  {isBatchDrop
+                    ? t("landing.universal.batch.changeFiles")
+                    : t("landing.universal.changeFile")}
                 </button>
               )}
             </div>
@@ -282,7 +428,13 @@ export function UniversalTransmutator() {
             {phase === "pick" && (
               <>
                 <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-text-muted">
-                  {t("landing.universal.pickOutput", { count: String(matchingTools.length) })}
+                  {isBatchDrop
+                    ? t("landing.universal.batch.pickOutput", {
+                        count: String(matchingTools.length),
+                      })
+                    : t("landing.universal.pickOutput", {
+                        count: String(matchingTools.length),
+                      })}
                 </p>
                 <UniversalOutputPicker tools={matchingTools} onSelect={onOutputSelect} />
               </>

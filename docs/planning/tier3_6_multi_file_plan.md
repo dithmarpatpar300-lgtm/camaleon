@@ -524,9 +524,10 @@ Tier 3.6 **supersedes** that behavior in controlled phases on batch-enabled tool
 | App version | Tier phase | Branch | Notes |
 |-------------|------------|--------|-------|
 | **v3.2.1** | 3.6.0 core | `dev` | 14 raster slugs; camera JPEG 512 KiB scan; batch decode validation |
-| **v3.2.3** | 3.6.0 **complete** | `dev` | Batch UX (initial gate, encode-only rerun, cache redownload, hints); `commitItems` sync fix; **3.6.0 exit gate passed** |
+| **v3.2.4** | 3.6.1 A+B | `dev` | Universal homogeneous multi-drop; batch-handoff; buildCohorts; mixed-format hint |
+| **v3.2.3** | 3.6.0 **complete** | `dev` | Batch UX (initial gate, encode-only rerun, cache redownload, hints); `commitItems` sync fix |
 
-**Next:** Tier **3.6.1** — Universal multi-drop + cohort partition (see §14.2).
+**Next:** Tier **3.6.1** Slice C — Universal mixed-format cohort picker (see §14.2).
 
 ---
 

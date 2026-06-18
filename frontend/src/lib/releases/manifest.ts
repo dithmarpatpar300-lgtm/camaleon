@@ -1,4 +1,5 @@
 import type { ReleaseManifest } from "./types";
+import { releaseV324 } from "./entries/v3.2.4";
 import { releaseV323 } from "./entries/v3.2.3";
 import { releaseV322 } from "./entries/v3.2.2";
 import { releaseV321 } from "./entries/v3.2.1";
@@ -31,6 +32,7 @@ import { releaseV190 } from "./entries/v1.9.0";
 
 export const RELEASE_MANIFEST: ReleaseManifest = {
   entries: [
+    releaseV324,
     releaseV323,
     releaseV322,
     releaseV321,

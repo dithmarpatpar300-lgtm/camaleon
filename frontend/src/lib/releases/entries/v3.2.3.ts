@@ -8,10 +8,10 @@ export const releaseV323: ReleaseEntry = {
   tags: ["feature", "fix"],
   highlights: [
     {
-      id: "phase-complete",
+      id: "multi-file-routes",
       icon: "tool",
-      titleKey: "releaseComms.entries.v323.highlights.phaseComplete.title",
-      bodyKey: "releaseComms.entries.v323.highlights.phaseComplete.body",
+      titleKey: "releaseComms.entries.v323.highlights.multiFileRoutes.title",
+      bodyKey: "releaseComms.entries.v323.highlights.multiFileRoutes.body",
     },
     {
       id: "batch-ux",

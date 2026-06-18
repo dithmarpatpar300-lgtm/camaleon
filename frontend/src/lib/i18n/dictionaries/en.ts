@@ -349,14 +349,35 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
-      v323: {
-        title: "Multi-file batch — Phase 3.6.0 complete",
+      v324: {
+        title: "Universal multi-file drop",
         summary:
-          "The first slice of multi-file conversion is done — drop several images on supported routes, tune settings once, and convert with polished batch UX.",
+          "Drop several images of the same format on the home page — pick your output once and convert them together on the right tool.",
+        technical:
+          "Tier 3.6.1 Slice A+B: buildCohorts, batch-handoff (?batch=), resolveUniversalDrop, UniversalTransmutator multi-drop homogeneous; TransmutationPanel batch consumer. Mixed cohort UI deferred. App v3.2.4.",
+        highlights: {
+          universalBatch: {
+            title: "Many files, one format",
+            body: "On the Universal transmutator, drop multiple JPGs, PNGs, or other supported files of the same type. Choose batch output — we open the tool with every file loaded.",
+          },
+          batchHandoff: {
+            title: "Seamless handoff",
+            body: "Your files travel in-tab to the transmutator route — same privacy as single-file, no upload. Batch workspace appears ready to prepare and convert.",
+          },
+          mixedHint: {
+            title: "Mixed formats",
+            body: "Dropping different formats together shows a clear hint today. Full mixed-format batch picking is coming soon.",
+          },
+        },
+      },
+      v323: {
+        title: "Multi-file batch polish",
+        summary:
+          "Drop several images on supported tool routes, tune settings once, and convert with a smoother batch experience.",
         technical:
           "Tier 3.6.0 exit gate: 14 raster slugs; initial FilePrepareGate on first drop; inline prepare after; preparedOptions + hints; encode-only Convert again; cache Download again; commitItems sync fix. App v3.2.3.",
         highlights: {
-          phaseComplete: {
+          multiFileRoutes: {
             title: "Multi-file on tool routes",
             body: "Drop multiple files on JPG→PNG and 13 other raster tools. Shared options, select rows, one download per file — all in your browser, one at a time.",
           },
@@ -943,6 +964,18 @@ const en: Dictionary = {
       unsupported: "“{name}” is not a format Camaleon supports yet.",
       tryAgain: "Try another file",
       formatsHint: "Supported: {formats}",
+      batch: {
+        dropHint: "Drop one or many files of the same format to convert together.",
+        filesSummary: "{format} · {count} files",
+        totalSize: "Total ~{size}",
+        changeFiles: "Change files",
+        pickOutput: "Choose batch output · {count} options",
+        mixedFormats:
+          "{count} format groups detected — drop files of the same format for batch, or wait for mixed-format support.",
+        noBatchRoute: "No batch transmutator supports this many files of this format yet.",
+        unsupportedSkipped: "{count} unsupported file(s) skipped ({names}).",
+        capped: "Only the first batch limit of files were kept.",
+      },
     },
     tools: {
       available: "Available transmutations",
@@ -1017,6 +1050,7 @@ const en: Dictionary = {
 
   panel: {
     handoffExpired: "That file session expired — drop your file again on the home page or here.",
+    batchHandoffToolMismatch: "That batch session was for a different transmutator — drop your files again.",
     batch: {
       toolbarSummary: "{total} files · {selected} selected",
       selectAll: "Select all",

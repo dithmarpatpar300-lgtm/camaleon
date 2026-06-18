@@ -59,6 +59,11 @@ import {
   handoffPayloadToFile,
   resolveHandoffId,
 } from "@/lib/transmutation/file-handoff";
+import {
+  batchHandoffPayloadToFiles,
+  consumeBatchHandoff,
+  resolveBatchHandoffId,
+} from "@/lib/batch/batch-handoff";
 import { useRiskMode } from "@/providers/RiskModeProvider";
 import { isBatchEnabledTool } from "@/lib/batch/batch-tool-allowlist";
 import { capBatchFiles } from "@/lib/batch/batch-limits";
@@ -159,6 +164,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
   const handleFileSelectRef = useRef<(file: File) => Promise<void>>(async () => {});
+  const handleIncomingFilesRef = useRef<(files: File[]) => void>(() => {});
   const batchEnabled = isBatchEnabledTool(tool.slug);
   const stagedByteSize =
     staged?.effectiveSize ?? staged?.file.size ?? pendingFile?.file.size ?? 0;
@@ -462,6 +468,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   );
 
   handleFileSelectRef.current = handleFileSelect;
+  handleIncomingFilesRef.current = handleIncomingFiles;
 
   const prevToolSlugRef = useRef(tool.slug);
   useEffect(() => {
@@ -473,7 +480,39 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   }, [tool.slug]);
 
   useEffect(() => {
-    const queryHandoff = new URLSearchParams(window.location.search).get("handoff");
+    const params = new URLSearchParams(window.location.search);
+    const queryBatch = params.get("batch");
+    const batchId = resolveBatchHandoffId(queryBatch);
+
+    if (batchId) {
+      let cancelled = false;
+      const timer = window.setTimeout(() => {
+        if (cancelled) return;
+
+        const payload = consumeBatchHandoff(batchId);
+        if (queryBatch) {
+          router.replace(pathname, { scroll: false });
+        }
+        if (!payload) {
+          toast({ message: t("panel.handoffExpired"), variant: "info" });
+          return;
+        }
+        if (payload.toolSlug !== tool.slug) {
+          toast({ message: t("panel.batchHandoffToolMismatch"), variant: "info" });
+          return;
+        }
+
+        const files = batchHandoffPayloadToFiles(payload);
+        handleIncomingFilesRef.current(files);
+      }, 0);
+
+      return () => {
+        cancelled = true;
+        window.clearTimeout(timer);
+      };
+    }
+
+    const queryHandoff = params.get("handoff");
     const handoffId = resolveHandoffId(queryHandoff);
     if (!handoffId) return;
 

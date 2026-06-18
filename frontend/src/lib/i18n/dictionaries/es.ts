@@ -349,14 +349,35 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
-      v323: {
-        title: "Batch multi-archivo — Fase 3.6.0 completa",
+      v324: {
+        title: "Multi-archivo en el transmutador universal",
         summary:
-          "La primera parte de conversión multi-archivo está lista — suelta varias imágenes en rutas compatibles, ajusta una vez y convierte con UX batch pulida.",
+          "Suelta varias imágenes del mismo formato en inicio — elige la salida una vez y conviértelas juntas en la herramienta correcta.",
+        technical:
+          "Tier 3.6.1 Slice A+B: buildCohorts, batch-handoff (?batch=), resolveUniversalDrop, UniversalTransmutator multi-drop homogéneo; consumer batch en TransmutationPanel. UI cohortes mixtas pendiente. App v3.2.4.",
+        highlights: {
+          universalBatch: {
+            title: "Muchos archivos, un formato",
+            body: "En el transmutador universal, suelta varios JPG, PNG u otros archivos compatibles del mismo tipo. Elige la salida batch — abrimos la herramienta con todos cargados.",
+          },
+          batchHandoff: {
+            title: "Handoff fluido",
+            body: "Tus archivos viajan en la pestaña a la ruta del transmutador — misma privacidad que archivo único, sin subida. El workspace batch queda listo para preparar y convertir.",
+          },
+          mixedHint: {
+            title: "Formatos mixtos",
+            body: "Si sueltas formatos distintos juntos, verás un aviso claro hoy. La selección batch de formatos mixtos llegará pronto.",
+          },
+        },
+      },
+      v323: {
+        title: "Pulido batch multi-archivo",
+        summary:
+          "Suelta varias imágenes en rutas compatibles, ajusta una vez y convierte con una experiencia batch más fluida.",
         technical:
           "Exit gate Tier 3.6.0: 14 slugs raster; FilePrepareGate inicial en primer drop; prepare inline después; preparedOptions + hints; Convert again encode-only; Download again desde caché; fix commitItems sync. App v3.2.3.",
         highlights: {
-          phaseComplete: {
+          multiFileRoutes: {
             title: "Multi-archivo en rutas de herramienta",
             body: "Arrastra varios archivos en JPG→PNG y otras 13 herramientas raster. Opciones compartidas, selección por fila, una descarga por archivo — en tu navegador, de uno en uno.",
           },
@@ -943,6 +964,18 @@ const es: Dictionary = {
       unsupported: "«{name}» aún no es un formato que Camaleon admita.",
       tryAgain: "Probar otro archivo",
       formatsHint: "Compatibles: {formats}",
+      batch: {
+        dropHint: "Suelta uno o varios archivos del mismo formato para convertirlos juntos.",
+        filesSummary: "{format} · {count} archivos",
+        totalSize: "Total ~{size}",
+        changeFiles: "Cambiar archivos",
+        pickOutput: "Elige salida batch · {count} opciones",
+        mixedFormats:
+          "Se detectaron {count} grupos de formato — suelta archivos del mismo formato para batch; soporte mixto próximamente.",
+        noBatchRoute: "Ningún transmutador batch admite tantos archivos de este formato aún.",
+        unsupportedSkipped: "{count} archivo(s) no compatible(s) omitido(s) ({names}).",
+        capped: "Solo se conservó el límite máximo de archivos del batch.",
+      },
     },
     tools: {
       available: "Transmutaciones disponibles",
@@ -1017,6 +1050,7 @@ const es: Dictionary = {
 
   panel: {
     handoffExpired: "Esa sesión de archivo expiró — suelta el archivo de nuevo en inicio o aquí.",
+    batchHandoffToolMismatch: "Ese batch era para otro transmutador — suelta tus archivos de nuevo.",
     batch: {
       toolbarSummary: "{total} archivos · {selected} seleccionados",
       selectAll: "Seleccionar todo",
