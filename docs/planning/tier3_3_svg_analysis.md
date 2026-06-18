@@ -1,7 +1,7 @@
 # Tier 3 Phase 3.3 — SVG Format Science & Transmutation Plan
 
-> **Date:** 2026-06-11 (updated 2026-06-11 post–v2.3.4)  
-> **Status:** Analysis complete — **implementation blocked on 3.3.0 spike**  
+> **Date:** 2026-06-11 (updated 2026-06-11 post–v2.3.8)  
+> **Status:** **✅ Shipped** — v2.3.5 (SVG→PNG), v2.3.6 (SVG→JPEG), v2.3.8 (Risk mode + hotfixes)  
 > **Prerequisites:** v2.3.4 on `main` — 19 tools, AVIF suite, Notice Rail (v2.3.0), Settings S1–S4 (v2.3.1–2.3.4)  
 > **Implementation plan:** `docs/planning/tier3_3_svg_implementation_plan.md`  
 > **Target versions:** v2.3.5 (spike + SVG→PNG) · v2.3.6 (SVG→JPEG)  

@@ -1,7 +1,7 @@
 # Tier 3 — Modern Image Formats (AVIF first)
 
-> **Branch:** `dev` (implementation) → merge to `main` at **v2.2.x**  
-> **Status:** **v2.3.4 on `main`** — Tier 3.2 complete (Phase 3.2.0–3.2.2); Settings S1–S4 ✅; Tier 3.3 SVG analysis ✅  
+> **Branch:** `dev` (implementation) → merge to `main` at release tags  
+> **Status:** **v2.3.8 on `main`** — Tier 3.2 ✅ · Tier 3.3 SVG ✅ (v2.3.5–2.3.6) · Settings S1–S4 + **S6 Risk** ✅ · **Tier 3.4 HEIC analysis ✅** (spike next)  
 > **Prerequisite:** Pre-Tier 3 UI/UX ✅ (v1.12.0) · Brand mark ✅ (v1.12.1) · Estimation engine perf ✅ (v1.12.2)  
 > **Doctrine:** Same pipeline as Tiers 1–2 — decode → honest options → re-encode → StripAll → estimate-first  
 > **SPEC anchor:** §1.3 Ladder B · §5.1 mental model · §12.4 Tier 3 · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -18,13 +18,13 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 |-----------|-----|------------|----------|----------------|--------|
 | **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.1.1** | **3.1.0–3.1.2 ✅ shipped** |
 | **3.2** | AVIF encode | PNG → AVIF, JPEG → AVIF | **`transmutador_avif_encode`** (+ decode in `transmutador_avif`) | **v2.2.0** | **3.2.0–3.2.2 ✅ shipped on `dev`** |
-| **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` | **v2.4.x** | **Analysis ✅** — spike-gated (`resvg`); see `tier3_3_svg_analysis.md` + `tier3_3_svg_implementation_plan.md` |
-| **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | TBD | v2.x | Spike-gated (no pure-Rust decoder) |
+| **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` | **v2.3.5–2.3.6** | **✅ shipped** — see `tier3_3_svg_analysis.md` |
+| **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | `transmutador_heic` (TBD) | v2.4.x | **Analysis ✅** — spike-gated; see `tier3_4_heic_analysis.md` |
 | **3.5** | PWA / offline shell | App + tools work without network after first visit | Service Worker + web manifest (`@serwist/next`) | v2.x | **Last Tier 3 deliverable** — after 3.4.x |
 
 **Normative:** Tier 3 remains **image transmutation only** — no PDF, no optimization sliders (Tier 4a), no crop/rotate (Tier 4b). See §12.5–12.7 SPEC. Phase **3.5** is delivery/UX infrastructure (not a new transmutator crate) but is **in scope** as the Tier 3 capstone.
 
-**End state after 3.1:** **17 active tools** (15 + 2 AVIF outbound). **After 3.2.1:** **18 tools** (+ PNG→AVIF). **After 3.2.2:** **19 tools** (+ JPEG→AVIF). **End state after 3.5:** full modern-format tool matrix + **installable offline-capable PWA**.
+**End state after 3.3.2:** **21 active tools** (19 + 2 SVG outbound). **End state after 3.4.1:** **22 tools** (+ HEIC→JPEG). **End state after 3.5:** full modern-format tool matrix + **installable offline-capable PWA**.
 
 ---
 
@@ -570,9 +570,19 @@ transmutador_avif + options.quality + background → transmutar_avif_a_jpg_with_
 
 Full format science, parameter model, security, spike gates, and phase checklist: **`docs/planning/tier3_3_svg_analysis.md`**.
 
-**One-line doctrine:** SVG is a **vector scene**, not a pixel codec; Camaleon **rasterizes** at user-chosen dimensions, then reuses the PNG/JPEG encoders. Implementation starts with **3.3.0 spike** only after Chief Architect go/no-go.
+**Status:** **✅ Shipped** — `transmutador_svg`, SVG→PNG (v2.3.5), SVG→JPEG (v2.3.6); **21 tools** on `main`.
 
-**Notice Rail (shipped):** operational context warnings for slow estimate/transmute — `docs/planning/notice_system_plan.md`. AVIF encode UX ✅; SVG rasterize hooks in **Phase E** at 3.3 implementation.
+**One-line doctrine:** SVG is a **vector scene**, not a pixel codec; Camaleon **rasterizes** at user-chosen dimensions, then reuses the PNG/JPEG encoders.
+
+---
+
+## 12.1 Tier 3.4 HEIC — analysis pointer
+
+Full format science, HEVC decode logic, parameter model, backend candidates, spike gates, and phase checklist: **`docs/planning/tier3_4_heic_analysis.md`**.
+
+**Status:** **Analysis ✅** — implementation blocked on **3.4.0 spike** (Chief Architect go/no-go).
+
+**One-line doctrine:** HEIC is **HEIF + HEVC still images** — same container family as AVIF but **H.265 decode**; Camaleon **decodes to raster** and reuses PNG/JPEG encoders (JPEG first). Primary spike candidate: pure-Rust **`heic`** crate (re-evaluates SPEC "no pure-Rust decoder" note).
 
 ---
 
@@ -589,7 +599,8 @@ Full format science, parameter model, security, spike gates, and phase checklist
 | `docs/releases/v2.0.0.md` | **Shipped v2.0.0** (Phase 3.1.0–3.1.1) |
 | `docs/releases/v2.1.1.md` | **Shipped v2.1.1** (Phase 3.1.2 + preview UX) |
 | `docs/planning/tier3_2_avif_encode_spike_results.md` | ✅ Phase 3.2.0 encode spike |
-| `docs/planning/tier3_3_svg_analysis.md` | ✅ Phase 3.3 format science & plan (pre-spike) |
+| `docs/planning/tier3_3_svg_analysis.md` | ✅ Phase 3.3 format science — **shipped** v2.3.5–2.3.6 |
+| `docs/planning/tier3_4_heic_analysis.md` | ✅ Phase 3.4 format science (pre-spike) |
 | `docs/planning/notice_system_plan.md` | ✅ Operational Notice Rail — **shipped v2.3.0** |
 | `docs/releases/v2.3.0.md` | **Shipped v2.3.0** — Notice Rail UX |
 | `docs/ROADMAP.md` backlog row | PWA / offline shell — owner phase **3.5.x** |
@@ -780,4 +791,4 @@ flowchart TB
 
 ---
 
-*Planning doc for Tier 3 — Modern Image Formats. Tier 3.2.0 encode spike complete on `dev`; next: **3.2.1 PNG → AVIF**. Tier 3 closes with Phase 3.5.x PWA/offline after 3.4.x.*
+*Planning doc for Tier 3 — Modern Image Formats. Tier 3.3 SVG ✅ shipped (v2.3.5–2.3.6). Next: **3.4.0 HEIC spike** per `tier3_4_heic_analysis.md`. Tier 3 closes with Phase 3.5.x PWA/offline after 3.4.x.*

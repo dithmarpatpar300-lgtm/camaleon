@@ -25,7 +25,7 @@ Camaleon is an **image platform** first. Expansion follows a fixed priority ladd
 | Ladder | Name | What it is | Status |
 |--------|------|------------|--------|
 | **A** | **Image transmutation** | Format-to-format raster conversion (decode → policy → encode) | ✅ **Shipped** — Tiers 1–2 + Semantic Alpha Engine (v1.11.0) |
-| **B** | **Modern image formats** | AVIF, SVG→raster, HEIC (spike-gated) | 🚧 **Tier 3 in progress** — AVIF suite ✅ on `main`; **SVG 3.3 next** (spike-gated) |
+| **B** | **Modern image formats** | AVIF, SVG→raster, HEIC (spike-gated) | 🚧 **Tier 3 in progress** — AVIF + SVG ✅ on `main`; **HEIC 3.4 analysis ✅** (spike next) |
 | **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | 📋 **Tier 4a** — planned after Tier 3 |
 | **D** | **Image editing** | Crop, rotate, flip on raster (Wasm + canvas UI) | 📋 **Tier 4b** — planned after Tier 4a |
 | **E** | **Documents** | PDF merge/split, PDF→images — non-raster domain | 🚫 **Deferred** — far horizon; separate planning doc required |
@@ -1571,12 +1571,18 @@ Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm b
 | **AVIF → PNG** | `transmutador_avif` | ✅ zenavif decode; frame index; MIAF normalize; estimate |
 | **AVIF → JPEG** | `transmutador_avif` | ✅ assess_alpha; quality + background; estimate with alpha hint |
 
-**Planned (Tier 3.3–3.4):**
+**Planned (Tier 3.4):**
 
 | Format | Direction | Technical note |
 |--------|-----------|---------------|
-| **SVG → PNG/JPEG** | Rasterize | `resvg` + `usvg`; analysis in `docs/planning/tier3_3_svg_analysis.md`; spike-gated |
-| **HEIC/HEIF → JPEG** | Decode | No pure-Rust decoder; `libheif` WASM port fragile. Honest UI message if deferred. |
+| **HEIC/HEIF → JPEG** | Decode | Primary MVP; pure-Rust **`heic`** crate spike (2026); `libheif` fallback — `docs/planning/tier3_4_heic_analysis.md` |
+| **HEIC/HEIF → PNG** | Decode | Optional 3.4.2 fast-follow after JPEG ships |
+
+**Shipped (Tier 3.3):**
+
+| Format | Direction | Technical note |
+|--------|-----------|---------------|
+| **SVG → PNG/JPEG** | Rasterize | `transmutador_svg` + `resvg`/`usvg` — ✅ v2.3.5–2.3.6 |
 
 **Limit pipeline (maintainers):** `docs/LIMIT_PIPELINE.md` — byte zones, 40 MP astro downscale, Wasm session ceilings.
 
