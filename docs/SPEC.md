@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 2.3.6-svg  
+**Version:** 2.3.8  
 **Last updated:** 2026-06-11  
-**Status:** v2.3.6 on `dev` (SVG→PNG/JPEG) · v2.3.4 on `main` — Settings S1–S4; §7.12 Notice Rail; Engine v1.6.0
+**Status:** v2.3.8 on `dev`/`main` (Settings S6 Risk mode + hotfixes) · Engine v1.6.0 · 21 tools
 
 ---
 
@@ -1330,7 +1330,7 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Reference:** `docs/planning/notice_system_plan.md`
 
-### 7.13 User Settings Panel (Implemented — S1–S4)
+### 7.13 User Settings Panel (Implemented — S1–S4, S6)
 
 **Purpose:** Consolidate user preferences in a right-side drawer (`SettingsDrawer`) — same surface language as `WhatsNewDrawer` (`surface-raised`, `PanelScrollFade`, slide animation).
 
@@ -1352,9 +1352,26 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **S4 (v2.3.4):** Notices & prepare — rail density (`normal`/`minimal`), prepare progress style (`ring`/`bar`); `notices-prefs.ts` + `filterNoticesForDensity`.
 
+**S6 (v2.3.8): Advanced / Risk mode** — global opt-in in `camaleon-user-settings-v1` (`riskMode.enabled`, `acknowledgedAt`). Requires explicit checkbox acknowledgment before enable. When active:
+
+| Effect | Detail |
+|--------|--------|
+| Pixel limit (40 MP) | Bypassed in TS `computeLimitContext` and Wasm `set_risk_mode(true)` |
+| Elevated byte consent | Auto-consent |
+| Hard byte cap | Raised to 500 MB desktop / 250 MB mobile (≤4 GB RAM) |
+| Astro 12K preset | Unlocked (browser canvas limits still apply) |
+| SVG output scale block | Bypassed when output W×H > 40 MP |
+| Security (SVG external href) | **Never** bypassed |
+
+**UI:** `RiskSettingsSection` in drawer; `RiskModeBanner` in staged workspace when active; `LimitUnlockHint` hidden when Risk on.
+
+**Wasm:** `core_utils::set_risk_mode` exported from all transmutation crates; worker calls `applyRiskMode` per request; prepare/alpha assess sync via `syncWasmRiskMode`.
+
+**Reference:** `docs/planning/risk_mode_analysis.md`, `docs/LIMIT_PIPELINE.md`.
+
 **Planned (S5):** offline toolkit — see `docs/planning/settings_panel_plan.md`.
 
-**Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`.
+**Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`. `RiskModeProvider` wraps `SettingsProvider` for reactive limit pipeline.
 
 ---
 
@@ -1404,6 +1421,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 2.3.8-risk-hotfix | 2026-06-11 | Chief Architect | §7.13 S6 polish; overlay scrollbar instant drag; limit pipeline hotfixes; app v2.3.8 | `docs/releases/v2.3.8.md` |
+| 2.3.7-risk-s6 | 2026-06-11 | Chief Architect | §7.13 Settings S6 Risk mode; Wasm set_risk_mode; LIMIT_PIPELINE; app v2.3.7 | `docs/releases/v2.3.7.md` |
 | 2.3.6-svg-jpg | 2026-06-11 | Chief Architect | §6.12 SVG→JPEG; LimitUnlockHint; risk_mode_analysis.md; app v2.3.6 — 21 tools | `docs/releases/v2.3.6.md` |
 | 2.3.5-svg | 2026-06-11 | Chief Architect | §6.12 `transmutador_svg` SVG→PNG; Tier 3.3.0 spike + 3.3.1 tool; 20 tools; app v2.3.5 | `docs/releases/v2.3.5.md` |
 | 2.3.4-settings-s4 | 2026-06-11 | Chief Architect | §7.13 Settings S4 — notice density + prepare progress; app v2.3.4 | `docs/releases/v2.3.4.md` |

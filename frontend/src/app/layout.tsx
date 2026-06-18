@@ -8,6 +8,7 @@ import { TransmutationWorkerProvider } from "@/providers/TransmutationWorkerProv
 import { ToastProvider } from "@/providers/ToastProvider";
 import { ReleaseCommsProvider } from "@/providers/ReleaseCommsProvider";
 import { SettingsProvider } from "@/providers/SettingsProvider";
+import { RiskModeProvider } from "@/providers/RiskModeProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { OverlayScrollbar } from "@/components/layout/OverlayScrollbar";
@@ -73,14 +74,16 @@ export default async function RootLayout({
             <TransmutationWorkerProvider>
               <ToastProvider>
                 <ReleaseCommsProvider>
-                  <SettingsProvider>
+                  <RiskModeProvider>
+                    <SettingsProvider>
                     <AmbientBloom />
                     <div className="relative z-10 flex min-h-screen min-w-0 flex-col overflow-x-clip">
                       <Header />
                       <main className="min-w-0 flex-1 overflow-x-clip">{children}</main>
                       <Footer />
                     </div>
-                  </SettingsProvider>
+                    </SettingsProvider>
+                  </RiskModeProvider>
                 </ReleaseCommsProvider>
               </ToastProvider>
             </TransmutationWorkerProvider>

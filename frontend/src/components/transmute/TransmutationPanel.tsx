@@ -53,6 +53,7 @@ import {
 import { getEffectiveTransmutationDefaults } from "@/lib/prefs/transmutation-defaults";
 import { StagedWorkspace } from "./StagedWorkspace";
 import { LimitUnlockHint } from "./LimitUnlockHint";
+import { useRiskMode } from "@/providers/RiskModeProvider";
 
 type PanelStatus = "idle" | "preparing" | "staged" | "processing" | "success" | "error";
 
@@ -100,12 +101,26 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const [oversizeConsented, setOversizeConsented] = useState(false);
   const [astroResizeMode, setAstroResizeMode] = useState(false);
   const [resizing, setResizing] = useState(false);
+  const [showRiskDeactivatedNotice, setShowRiskDeactivatedNotice] = useState(false);
 
   const deviceMemoryGb =
     typeof navigator !== "undefined"
       ? (navigator as { deviceMemory?: number }).deviceMemory
       : undefined;
-  const hardLimit = getHardLimitBytes(deviceMemoryGb);
+  const { riskModeEnabled } = useRiskMode();
+  const prevRiskModeRef = useRef(riskModeEnabled);
+  const hardLimit = getHardLimitBytes(deviceMemoryGb, riskModeEnabled);
+
+  useEffect(() => {
+    if (prevRiskModeRef.current && !riskModeEnabled && staged) {
+      setShowRiskDeactivatedNotice(true);
+      setAstroResizeMode(false);
+    }
+    if (riskModeEnabled) {
+      setShowRiskDeactivatedNotice(false);
+    }
+    prevRiskModeRef.current = riskModeEnabled;
+  }, [riskModeEnabled, staged]);
 
   const prepareIdRef = useRef(0);
   const preparedRef = useRef(prepared);
@@ -163,6 +178,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     alphaAssessment: prepared?.alphaAssessment ?? null,
     resizeMaxEdge: prepared?.resizeMaxEdge,
     holdEstimate: crossfading || resizing,
+    riskModeEnabled,
   });
   const accept = tool.acceptExtensions.join(",");
 
@@ -259,7 +275,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       setStatus("error");
       setHardLimitBlocked(true);
       setErrorMessage(
-        t("panel.hardLimit.body", { limit: formatHardLimitLabel(hardLimit) })
+        t("panel.hardLimit.body", {
+          limit: formatHardLimitLabel(hardLimit, riskModeEnabled),
+        })
       );
       return;
     }
@@ -286,7 +304,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     }
 
     const limitZone = getLimitZone(file.size, hardLimit);
-    const sessionLimit = prepareSessionInputLimit(limitZone, hardLimit);
+    const sessionLimit = prepareSessionInputLimit(limitZone, hardLimit, riskModeEnabled);
 
     const pending = { file, bytes };
     setPendingFile(pending);
@@ -312,7 +330,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
             setPrepareDetailLabel(undefined);
           }
         },
-        { sessionInputLimitBytes: sessionLimit }
+        { sessionInputLimitBytes: sessionLimit, riskModeEnabled }
       );
 
       if (prepareId !== prepareIdRef.current) {
@@ -711,6 +729,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 onOversizeConsent={handleOversizeConsent}
                 onTransmutar={handleTransmutar}
                 onReset={handleReset}
+                showRiskDeactivatedNotice={showRiskDeactivatedNotice}
               />
             </div>
           )}

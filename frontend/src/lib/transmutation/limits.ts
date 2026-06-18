@@ -9,9 +9,22 @@ export const ENGINE_MAX_INPUT_BYTES = SOFT_LIMIT_BYTES;
 
 export const ENGINE_MAX_INPUT_LABEL = "50 MB";
 
+/** Must stay aligned with `core_utils::RISK_MAX_*` when Risk mode is active. */
+export const RISK_HARD_LIMIT_DESKTOP_BYTES = 500 * 1024 * 1024;
+export const RISK_HARD_LIMIT_MOBILE_BYTES = 250 * 1024 * 1024;
+
 export type LimitZone = "normal" | "elevated" | "hard";
 
-export function getHardLimitBytes(deviceMemoryGb?: number): number {
+export function getHardLimitBytes(
+  deviceMemoryGb?: number,
+  riskModeEnabled = false
+): number {
+  if (riskModeEnabled) {
+    if (deviceMemoryGb !== undefined && deviceMemoryGb <= 4) {
+      return RISK_HARD_LIMIT_MOBILE_BYTES;
+    }
+    return RISK_HARD_LIMIT_DESKTOP_BYTES;
+  }
   if (deviceMemoryGb !== undefined && deviceMemoryGb <= 4) {
     return HARD_LIMIT_MOBILE_BYTES;
   }
@@ -41,8 +54,10 @@ export function canProcessInZone(zone: LimitZone, consented: boolean): boolean {
 /** Wasm session ceiling for prepare probes and post-consent transmute/estimate. */
 export function effectiveSessionInputLimit(
   zone: LimitZone,
-  hardLimit: number
+  hardLimit: number,
+  riskModeEnabled = false
 ): number {
+  if (riskModeEnabled) return hardLimit;
   if (zone === "normal") return SOFT_LIMIT_BYTES;
   return hardLimit;
 }
@@ -53,12 +68,23 @@ export const prepareSessionInputLimit = effectiveSessionInputLimit;
 /** Wasm session ceiling for a given byte length (prepare, alpha assess, worker meta). */
 export function sessionLimitForBytes(
   fileSize: number,
-  deviceMemoryGb?: number
+  deviceMemoryGb?: number,
+  riskModeEnabled = false
 ): number {
-  const hardLimit = getHardLimitBytes(deviceMemoryGb);
-  return effectiveSessionInputLimit(getLimitZone(fileSize, hardLimit), hardLimit);
+  const hardLimit = getHardLimitBytes(deviceMemoryGb, riskModeEnabled);
+  return effectiveSessionInputLimit(
+    getLimitZone(fileSize, hardLimit),
+    hardLimit,
+    riskModeEnabled
+  );
 }
 
-export function formatHardLimitLabel(hardLimit: number): string {
+export function formatHardLimitLabel(
+  hardLimit: number,
+  riskModeEnabled = false
+): string {
+  if (riskModeEnabled) {
+    return hardLimit === RISK_HARD_LIMIT_MOBILE_BYTES ? "250 MB" : "500 MB";
+  }
   return hardLimit === HARD_LIMIT_MOBILE_BYTES ? "100 MB" : "150 MB";
 }

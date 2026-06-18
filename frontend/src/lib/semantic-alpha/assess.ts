@@ -5,6 +5,7 @@ import { ensureSvgWasm } from "@/lib/svg/svg-wasm-client";
 import { ensureTiffWasm } from "@/lib/tiff/tiff-wasm-client";
 import { importWasmGlue } from "@/lib/wasm/load-glue";
 import { sessionLimitForBytes } from "@/lib/transmutation/limits";
+import { syncWasmRiskMode } from "@/lib/wasm/risk-mode-sync";
 import type { ToolDefinition } from "@/lib/tools/types";
 import {
   wrapAlphaAssessment,
@@ -17,6 +18,7 @@ export type SemanticAlphaContext = {
   /** Override Wasm session ceiling; otherwise derived from `bytes` length. */
   sessionInputLimitBytes?: number;
   deviceMemoryGb?: number;
+  riskModeEnabled?: boolean;
 };
 
 function resolveAssessSessionLimit(
@@ -59,6 +61,11 @@ export async function assessSemanticAlpha(
 ): Promise<AlphaAssessment> {
   const input = new Uint8Array(bytes);
   const limit = resolveAssessSessionLimit(bytes, ctx);
+  const riskMode = ctx.riskModeEnabled === true;
+
+  if (riskMode) {
+    await syncWasmRiskMode(tool.module, true);
+  }
 
   switch (tool.fromFormat) {
     case "PNG": {

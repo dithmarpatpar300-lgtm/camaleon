@@ -188,6 +188,12 @@ type EstimateSvgToJpgSizeFn = (
 ) => number;
 
 type SessionLimitFn = (maxBytes: number) => void;
+type RiskModeFn = (enabled: boolean) => void;
+
+function pickRiskMode(mod: WasmGlueModule): RiskModeFn | null {
+  const fn = mod.set_risk_mode;
+  return typeof fn === "function" ? (fn as RiskModeFn) : null;
+}
 
 const WASM_ALPHA_HINT_NONE = 255;
 
@@ -215,17 +221,20 @@ function pickSessionLimit(mod: WasmGlueModule): SessionLimitFn | null {
 }
 
 let setJpgSessionLimit: SessionLimitFn | null = null;
+let setJpgRiskMode: RiskModeFn | null = null;
 let transmutarJpg: TransmutarFn | null = null;
 let transmutarJpgWithCompression: TransmutarJpgWithCompression | null = null;
 let estimateJpgToPngSize: EstimateJpgSizeFn | null = null;
 
 let setPngSessionLimit: SessionLimitFn | null = null;
+let setPngRiskMode: RiskModeFn | null = null;
 let transmutarPng: TransmutarFn | null = null;
 let transmutarPngWithQuality: TransmutarPngWithQuality | null = null;
 let transmutarPngWithOptions: TransmutarPngWithOptions | null = null;
 let estimatePngToJpgSize: EstimatePngSizeFn | null = null;
 
 let setWebpSessionLimit: SessionLimitFn | null = null;
+let setWebpRiskMode: RiskModeFn | null = null;
 let transmutarWebp: TransmutarFn | null = null;
 let transmutarWebpWithCompression: TransmutarWebpWithCompression | null = null;
 let estimateWebpToPngSize: EstimateWebpSizeFn | null = null;
@@ -233,12 +242,14 @@ let transmutarWebpJpgWithOptions: TransmutarWebpJpgWithOptions | null = null;
 let estimateWebpToJpgSize: EstimateWebpToJpgSizeFn | null = null;
 
 let setEncodeSessionLimit: SessionLimitFn | null = null;
+let setEncodeRiskMode: RiskModeFn | null = null;
 let transmutarPngToWebp: TransmutarFn | null = null;
 let estimatePngToWebpSize: EstimatePngToWebpSizeFn | null = null;
 let transmutarJpgToWebp: TransmutarFn | null = null;
 let estimateJpgToWebpSize: EstimatePngToWebpSizeFn | null = null;
 
 let setGifSessionLimit: SessionLimitFn | null = null;
+let setGifRiskMode: RiskModeFn | null = null;
 let transmutarGif: TransmutarFn | null = null;
 let transmutarGifWithCompression: TransmutarGifWithCompression | null = null;
 let estimateGifToPngSize: EstimateGifToPngSizeFn | null = null;
@@ -246,6 +257,7 @@ let transmutarGifJpgWithOptions: TransmutarGifJpgWithOptions | null = null;
 let estimateGifToJpgSize: EstimateGifToJpgSizeFn | null = null;
 
 let setBmpSessionLimit: SessionLimitFn | null = null;
+let setBmpRiskMode: RiskModeFn | null = null;
 let transmutarBmp: TransmutarFn | null = null;
 let transmutarBmpWithCompression: TransmutarBmpWithCompression | null = null;
 let estimateBmpToPngSize: EstimateBmpToPngSizeFn | null = null;
@@ -253,6 +265,7 @@ let transmutarBmpJpgWithOptions: TransmutarBmpJpgWithOptions | null = null;
 let estimateBmpToJpgSize: EstimateBmpToJpgSizeFn | null = null;
 
 let setTiffSessionLimit: SessionLimitFn | null = null;
+let setTiffRiskMode: RiskModeFn | null = null;
 let transmutarTiff: ((input: Uint8Array, page_index: number) => Uint8Array) | null = null;
 let transmutarTiffWithCompression: TransmutarTiffWithCompression | null = null;
 let estimateTiffToPngSize: EstimateTiffToPngSizeFn | null = null;
@@ -260,7 +273,9 @@ let transmutarTiffJpgWithOptions: TransmutarTiffJpgWithOptions | null = null;
 let estimateTiffToJpgSize: EstimateTiffToJpgSizeFn | null = null;
 
 let setIcoSessionLimit: SessionLimitFn | null = null;
+let setIcoRiskMode: RiskModeFn | null = null;
 let setTgaSessionLimit: SessionLimitFn | null = null;
+let setTgaRiskMode: RiskModeFn | null = null;
 let transmutarIco: ((input: Uint8Array, entry_index: number) => Uint8Array) | null = null;
 let transmutarIcoWithCompression: TransmutarIcoWithCompression | null = null;
 let estimateIcoToPngSize: EstimateIcoToPngSizeFn | null = null;
@@ -270,18 +285,21 @@ let transmutarTgaWithCompression: TransmutarTgaWithCompression | null = null;
 let estimateTgaToPngSize: EstimateTgaToPngSizeFn | null = null;
 
 let setAvifSessionLimit: SessionLimitFn | null = null;
+let setAvifRiskMode: RiskModeFn | null = null;
 let transmutarAvifWithCompression: TransmutarAvifWithCompression | null = null;
 let estimateAvifToPngSize: EstimateAvifToPngSizeFn | null = null;
 let transmutarAvifJpgWithOptions: TransmutarAvifJpgWithOptions | null = null;
 let estimateAvifToJpgSize: EstimateAvifToJpgSizeFn | null = null;
 
 let setAvifEncodeSessionLimit: SessionLimitFn | null = null;
+let setAvifEncodeRiskMode: RiskModeFn | null = null;
 let transmutarPngToAvifWithOptions: TransmutarPngToAvifWithOptions | null = null;
 let estimatePngToAvifSize: EstimatePngToAvifSizeFn | null = null;
 let transmutarJpgToAvifWithOptions: TransmutarJpgToAvifWithOptions | null = null;
 let estimateJpgToAvifSize: EstimateJpgToAvifSizeFn | null = null;
 
 let setSvgSessionLimit: SessionLimitFn | null = null;
+let setSvgRiskMode: RiskModeFn | null = null;
 let transmutarSvgToPng: TransmutarSvgToPngFn | null = null;
 let estimateSvgToPngSize: EstimateSvgToPngSizeFn | null = null;
 let transmutarSvgToJpg: TransmutarSvgToJpgFn | null = null;
@@ -315,6 +333,7 @@ async function initJpgWasm(): Promise<void> {
   );
   estimateJpgToPngSize = wasmExport<EstimateJpgSizeFn>(module, "estimate_jpg_to_png_size");
   setJpgSessionLimit = pickSessionLimit(module);
+  setJpgRiskMode = pickRiskMode(module);
 }
 
 async function initPngWasm(): Promise<void> {
@@ -331,6 +350,7 @@ async function initPngWasm(): Promise<void> {
   );
   estimatePngToJpgSize = wasmExport<EstimatePngSizeFn>(module, "estimate_png_to_jpg_size");
   setPngSessionLimit = pickSessionLimit(module);
+  setPngRiskMode = pickRiskMode(module);
 }
 
 async function initWebpWasm(): Promise<void> {
@@ -348,6 +368,7 @@ async function initWebpWasm(): Promise<void> {
   );
   estimateWebpToJpgSize = wasmExport<EstimateWebpToJpgSizeFn>(module, "estimate_webp_to_jpg_size");
   setWebpSessionLimit = pickSessionLimit(module);
+  setWebpRiskMode = pickRiskMode(module);
 }
 
 function ensureJpgWasmInitialized(): Promise<void> {
@@ -373,6 +394,7 @@ async function initEncodeWasm(): Promise<void> {
   transmutarJpgToWebp = wasmExport<TransmutarFn>(module, "transmutar_jpg_a_webp");
   estimateJpgToWebpSize = wasmExport<EstimatePngToWebpSizeFn>(module, "estimate_jpg_to_webp_size");
   setEncodeSessionLimit = pickSessionLimit(module);
+  setEncodeRiskMode = pickRiskMode(module);
 }
 
 function ensureEncodeWasmInitialized(): Promise<void> {
@@ -395,6 +417,7 @@ async function initGifWasm(): Promise<void> {
   );
   estimateGifToJpgSize = wasmExport<EstimateGifToJpgSizeFn>(module, "estimate_gif_to_jpg_size");
   setGifSessionLimit = pickSessionLimit(module);
+  setGifRiskMode = pickRiskMode(module);
 }
 
 function ensureGifWasmInitialized(): Promise<void> {
@@ -417,6 +440,7 @@ async function initBmpWasm(): Promise<void> {
   );
   estimateBmpToJpgSize = wasmExport<EstimateBmpToJpgSizeFn>(module, "estimate_bmp_to_jpg_size");
   setBmpSessionLimit = pickSessionLimit(module);
+  setBmpRiskMode = pickRiskMode(module);
 }
 
 function ensureBmpWasmInitialized(): Promise<void> {
@@ -448,6 +472,7 @@ async function initTiffWasm(): Promise<void> {
     "estimate_tiff_to_jpg_size"
   );
   setTiffSessionLimit = pickSessionLimit(module);
+  setTiffRiskMode = pickRiskMode(module);
 }
 
 function ensureTiffWasmInitialized(): Promise<void> {
@@ -476,6 +501,7 @@ async function initIcoWasm(): Promise<void> {
     "estimate_png_to_ico_size"
   );
   setIcoSessionLimit = pickSessionLimit(module);
+  setIcoRiskMode = pickRiskMode(module);
 }
 
 function ensureIcoWasmInitialized(): Promise<void> {
@@ -495,6 +521,7 @@ async function initTgaWasm(): Promise<void> {
     "estimate_tga_to_png_size"
   );
   setTgaSessionLimit = pickSessionLimit(module);
+  setTgaRiskMode = pickRiskMode(module);
 }
 
 function ensureTgaWasmInitialized(): Promise<void> {
@@ -522,6 +549,7 @@ async function initAvifWasm(): Promise<void> {
     "estimate_avif_to_jpg_size"
   );
   setAvifSessionLimit = pickSessionLimit(module);
+  setAvifRiskMode = pickRiskMode(module);
 }
 
 function ensureAvifWasmInitialized(): Promise<void> {
@@ -549,6 +577,7 @@ async function initAvifEncodeWasm(): Promise<void> {
     "estimate_jpg_to_avif_size"
   );
   setAvifEncodeSessionLimit = pickSessionLimit(module);
+  setAvifEncodeRiskMode = pickRiskMode(module);
 }
 
 function ensureAvifEncodeWasmInitialized(): Promise<void> {
@@ -573,6 +602,7 @@ async function initSvgWasm(): Promise<void> {
     "estimate_svg_to_jpg_size"
   );
   setSvgSessionLimit = pickSessionLimit(module);
+  setSvgRiskMode = pickRiskMode(module);
 }
 
 function ensureSvgWasmInitialized(): Promise<void> {
@@ -1116,6 +1146,54 @@ function applySessionInputLimit(route: RouteFlags, maxBytes: number): void {
   setPngSessionLimit?.(maxBytes);
 }
 
+function applyRiskMode(route: RouteFlags, enabled: boolean): void {
+  if (route.isJpg) {
+    setJpgRiskMode?.(enabled);
+    return;
+  }
+  if (route.isWebpToPng || route.isWebpToJpg) {
+    setWebpRiskMode?.(enabled);
+    return;
+  }
+  if (route.isGifToPng || route.isGifToJpg) {
+    setGifRiskMode?.(enabled);
+    return;
+  }
+  if (route.isBmpToPng || route.isBmpToJpg) {
+    setBmpRiskMode?.(enabled);
+    return;
+  }
+  if (route.isTiffToPng || route.isTiffToJpg) {
+    setTiffRiskMode?.(enabled);
+    return;
+  }
+  if (route.isIcoToPng || route.isPngToIco) {
+    setIcoRiskMode?.(enabled);
+    return;
+  }
+  if (route.isTgaToPng) {
+    setTgaRiskMode?.(enabled);
+    return;
+  }
+  if (route.isAvifToPng || route.isAvifToJpg) {
+    setAvifRiskMode?.(enabled);
+    return;
+  }
+  if (route.isAvifEncode) {
+    setAvifEncodeRiskMode?.(enabled);
+    return;
+  }
+  if (route.isSvgToPng || route.isSvgToJpg) {
+    setSvgRiskMode?.(enabled);
+    return;
+  }
+  if (route.isEncode) {
+    setEncodeRiskMode?.(enabled);
+    return;
+  }
+  setPngRiskMode?.(enabled);
+}
+
 async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   const knownModules = [
     "transmutador_jpg",
@@ -1182,6 +1260,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     req.effectiveMaxInputBytes != null && req.effectiveMaxInputBytes > 0
       ? req.effectiveMaxInputBytes
       : SOFT_LIMIT_BYTES;
+  applyRiskMode(route, req.riskModeEnabled === true);
   applySessionInputLimit(route, sessionLimit);
 
   if (req.enableResultCache && (req.cacheMaxEntries ?? 0) > 0) {
@@ -1265,6 +1344,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     const message = err instanceof Error ? err.message : String(err ?? "Unknown worker error");
     return { id: req.id, ok: false, error: message };
   } finally {
+    applyRiskMode(route, false);
     applySessionInputLimit(route, SOFT_LIMIT_BYTES);
   }
 }

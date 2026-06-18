@@ -21,7 +21,8 @@ export type LimitWarning =
   | "output_may_exceed_hard_limit"
   | "high_ram_peak"
   | "near_pixel_limit"
-  | "astro_tier_dimensions";
+  | "astro_tier_dimensions"
+  | "risk_mode_active";
 
 export type LimitBlockReason = "hard_file" | "pixels" | "consent" | null;
 
@@ -57,6 +58,7 @@ type ComputeLimitContextArgs = {
   oversizeConsented: boolean;
   estimatedOutputSize?: number | null;
   workerReady?: boolean;
+  riskModeEnabled?: boolean;
 };
 
 export function computeLimitContext({
@@ -66,28 +68,42 @@ export function computeLimitContext({
   oversizeConsented,
   estimatedOutputSize = null,
   workerReady = true,
+  riskModeEnabled = false,
 }: ComputeLimitContextArgs): LimitContext {
-  const hardLimitBytes = getHardLimitBytes(deviceMemoryGb);
+  const hardLimitBytes = getHardLimitBytes(deviceMemoryGb, riskModeEnabled);
   const zone = getLimitZone(fileSize, hardLimitBytes);
-  const sessionInputLimitBytes = effectiveSessionInputLimit(zone, hardLimitBytes);
+  const sessionInputLimitBytes = effectiveSessionInputLimit(
+    zone,
+    hardLimitBytes,
+    riskModeEnabled
+  );
   const pixelCount = pixelCountFromMeta(sourceMeta);
   const megapixels = pixelCount != null ? pixelCount / 1_000_000 : null;
   const exceedsPixelLimit =
     pixelCount != null && pixelCount > MAX_PIXELS;
   const isAstronomicalScale =
     pixelCount != null && pixelCount >= ASTRONOMICAL_PIXEL_THRESHOLD;
-  const needsInputConsent = needsOversizeConsent(zone, oversizeConsented);
+  const needsInputConsent = riskModeEnabled
+    ? false
+    : needsOversizeConsent(zone, oversizeConsented);
 
   const warnings: LimitWarning[] = [];
 
+  if (riskModeEnabled) {
+    warnings.push("risk_mode_active");
+  }
+
   if (
+    !riskModeEnabled &&
     pixelCount != null &&
     pixelCount <= MAX_PIXELS &&
     pixelCount >= MAX_PIXELS * NEAR_PIXEL_RATIO
   ) {
     warnings.push("near_pixel_limit");
   }
-  if (isAstronomicalScale && exceedsPixelLimit) {
+  if (riskModeEnabled && exceedsPixelLimit) {
+    warnings.push("astro_tier_dimensions");
+  } else if (isAstronomicalScale && exceedsPixelLimit) {
     warnings.push("astro_tier_dimensions");
   }
   if (
@@ -96,14 +112,14 @@ export function computeLimitContext({
   ) {
     warnings.push("output_may_exceed_hard_limit");
   }
-  if (zone === "elevated" && oversizeConsented) {
+  if (zone === "elevated" && (oversizeConsented || riskModeEnabled)) {
     warnings.push("high_ram_peak");
   }
 
   let blockReason: LimitBlockReason = null;
   if (zone === "hard") blockReason = "hard_file";
-  else if (exceedsPixelLimit) blockReason = "pixels";
-  else if (needsInputConsent) blockReason = "consent";
+  else if (!riskModeEnabled && exceedsPixelLimit) blockReason = "pixels";
+  else if (!riskModeEnabled && needsInputConsent) blockReason = "consent";
 
   const canTransmute =
     workerReady &&

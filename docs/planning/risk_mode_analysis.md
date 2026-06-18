@@ -1,7 +1,7 @@
 # Advanced / Risk mode — architecture analysis (pre-implementation)
 
 > **Date:** 2026-06-11  
-> **Status:** Analysis complete — **do not implement blindly**  
+> **Status:** **Implemented (v2.3.8, Settings S6)** — see `docs/releases/v2.3.8.md`  
 > **Prerequisites:** v2.3.6 on `dev` (SVG→JPEG, LimitUnlockHint UI)  
 > **Related:** `docs/LIMIT_PIPELINE.md`, `docs/planning/settings_panel_plan.md`, `docs/planning/astro_imagery_tier.md`, `docs/planning/adaptive_limits_proposal.md`
 
@@ -13,7 +13,7 @@ Camaleon uses **three independent safety layers** (bytes soft/hard, megapixels) 
 
 **Critical insight:** Risk mode is not a single toggle. It must coordinate **at least six interaction surfaces** that today assume limits are always on. Implementing it without this map causes “cabos sueltos” — e.g. forcing resize when Risk would allow full resolution, or keeping 12K blocked when Risk should unlock it.
 
-**v2.3.6 ships `LimitUnlockHint`** on all blockers with forward-looking copy. **Risk mode itself is S6+** (after Settings S5 offline toolkit), requiring SPEC amendment.
+**v2.3.6 ships `LimitUnlockHint`** on all blockers with forward-looking copy. **Risk mode shipped in v2.3.8 (Settings S6).** S5 offline remains deferred.
 
 ---
 
@@ -203,12 +203,20 @@ motor_transmutacion/transmutador_svg/src/svg_validate.rs  # output dimension byp
 
 ---
 
-## 7. v2.3.6 deliverables (this release)
+## 7. Deliverables
 
+### v2.3.6
 - ✅ **SVG → JPEG** tool (Tier 3.3.2)
 - ✅ **`LimitUnlockHint`** on pixel block, oversize consent, astro resize, hard limit error
 - ✅ This analysis document
-- ⏳ Risk mode implementation — **deferred to S6**
+
+### v2.3.8 (Settings S6 — Risk mode + hotfixes)
+- ✅ **Settings → Advanced / Risk** — acknowledge + enable toggle (`RiskModeProvider`)
+- ✅ **`computeLimitContext({ riskModeEnabled })`** — bypass pixel/consent blocks; raised hard cap 500/250 MB
+- ✅ **Wasm `set_risk_mode`** on all transmutation crates; worker + prepare sync
+- ✅ **`AstroResizePanel`** — 12K visible; preset pixel gate bypass when Risk on
+- ✅ **`LimitUnlockHint`** hidden when Risk active; workspace banner when active
+- ⏳ **Settings S5** offline toolkit — deferred
 
 ---
 

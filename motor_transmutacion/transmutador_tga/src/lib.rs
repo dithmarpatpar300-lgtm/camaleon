@@ -203,3 +203,8 @@ pub fn set_session_input_limit(max_bytes: u32) {
 pub fn reset_session_input_limit() {
     core_utils::reset_session_max_input_bytes();
 }
+
+#[wasm_bindgen]
+pub fn set_risk_mode(enabled: bool) {
+    core_utils::set_risk_mode(enabled);
+}

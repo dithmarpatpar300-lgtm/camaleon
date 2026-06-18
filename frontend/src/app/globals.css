@@ -1124,6 +1124,14 @@ dialog.whats-new-drawer:not([open]) {
 }
 
 /*
+ * Overlay scrollbar drag must bypass global `scroll-behavior: smooth` on html.
+ * See: SimpleBar #261, OverlayScrollbars #515, MDN scrollTo behavior: instant.
+ */
+html.camaleon-scroll-instant {
+  scroll-behavior: auto !important;
+}
+
+/*
  * Reduced-motion fallback for desktop: keep the native scrollbar but
  * reserve its gutter so the layout never shifts when it appears.
  * scrollbar-width:none is never set in this case (class not added by script).

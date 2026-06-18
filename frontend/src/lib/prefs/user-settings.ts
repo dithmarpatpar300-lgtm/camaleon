@@ -32,6 +32,12 @@ export type NoticesPrefs = {
   prepareProgressStyle?: PrepareProgressStylePref;
 };
 
+export type RiskModePrefs = {
+  enabled: boolean;
+  /** ISO timestamp when user last enabled Risk mode. */
+  acknowledgedAt?: string;
+};
+
 export type UserSettings = {
   /** When false, skip auto changelog modal on version bump; What's New remains available. */
   showChangelogOnUpdate: boolean;
@@ -41,6 +47,8 @@ export type UserSettings = {
   performance?: PerformancePrefs;
   /** Notice rail and prepare UI prefs (S4). */
   notices?: NoticesPrefs;
+  /** Advanced / Risk mode (S6) — bypass Camaleon safety limits. */
+  riskMode?: RiskModePrefs;
 };
 
 const DEFAULTS: UserSettings = {
@@ -68,6 +76,16 @@ export function readUserSettings(): UserSettings {
     transmutation: merged.transmutation,
     performance: merged.performance,
     notices: merged.notices,
+    riskMode:
+      merged.riskMode && typeof merged.riskMode.enabled === "boolean"
+        ? {
+            enabled: merged.riskMode.enabled,
+            acknowledgedAt:
+              typeof merged.riskMode.acknowledgedAt === "string"
+                ? merged.riskMode.acknowledgedAt
+                : undefined,
+          }
+        : { enabled: false },
   };
 }
 

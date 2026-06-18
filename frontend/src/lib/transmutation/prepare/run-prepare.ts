@@ -20,6 +20,7 @@ import {
   pixelCountFromMeta,
 } from "@/lib/transmutation/limit-context";
 import { warmupTransmutatorModule } from "@/lib/transmutation/prepare/warmup-wasm";
+import { syncWasmRiskMode } from "@/lib/wasm/risk-mode-sync";
 import type {
   PreparedFileContext,
   PrepareOptions,
@@ -94,6 +95,7 @@ export async function prepareFileForTool(
   // ── Phase: engine (async Wasm module load) ───────────────────────────
   emit(onProgress, "engine", 0);
   await warmupTransmutatorModule(tool.module);
+  await syncWasmRiskMode(tool.module, options.riskModeEnabled === true);
   emit(onProgress, "engine", 1);
 
   // ── Phase: analyze ───────────────────────────────────────────────────
@@ -190,12 +192,17 @@ export async function prepareFileForTool(
 
   const pixelCount = pixelCountFromMeta(sourceMeta);
   const exceedsPixelLimit = pixelCount != null && pixelCount > MAX_PIXELS;
+  const riskMode = options?.riskModeEnabled === true;
 
-  if (needsSemanticAlpha(tool) && !exceedsPixelLimit) {
+  if (needsSemanticAlpha(tool) && (!exceedsPixelLimit || riskMode)) {
     try {
+      if (riskMode) {
+        await syncWasmRiskMode(tool.module, true);
+      }
       alphaAssessment = await assessSemanticAlpha(tool, bytes, {
         pageIndex: 0,
         sessionInputLimitBytes: sessionLimit ?? undefined,
+        riskModeEnabled: riskMode,
       });
       if (sourceMeta && alphaAssessment) {
         sourceMeta = {

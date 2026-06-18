@@ -13,7 +13,26 @@
 | **Bytes (hard)** | `HARD_LIMIT_DESKTOP_BYTES` / `HARD_LIMIT_MOBILE_BYTES` | 150 MB / 100 MB (≤4 GB RAM) | `validate_input_with_limit`; UI hard block |
 | **Megapixels** | `MAX_PIXELS` | 40,000,000 (40 MP) | `probe_dimensions` in `validate_input`; `LimitContext` |
 
-**Rule:** Never raise `MAX_PIXELS` to “fix” large science files. Use **client-side downscale** (canvas) first.
+**Rule:** Never raise `MAX_PIXELS` to “fix” large science files. Use **client-side downscale** (canvas) first — unless **Risk mode** is enabled (Settings S6).
+
+---
+
+## Risk mode (Settings S6, v2.3.8)
+
+When **Risk mode** is on (`RiskModeProvider` → `computeLimitContext({ riskModeEnabled: true })` + Wasm `set_risk_mode(true)`):
+
+| Limit | Normal | Risk ON |
+|-------|--------|---------|
+| 40 MP pixels | Block + astro downscale | Bypass (TS + Wasm) |
+| Elevated byte consent | Required | Auto-consent |
+| Hard byte cap | 150 / 100 MB | **500 / 250 MB** |
+| 12K astro preset | Gated by RAM + 40 MP | Allowed (browser may still fail) |
+| SVG output scale > 40 MP | Block | Allow |
+| SVG external href security | Block | **Never bypass** |
+
+Session ceiling when Risk on: `effectiveSessionInputLimit` returns full hard limit (not 50 MB soft cap).
+
+See `docs/planning/risk_mode_analysis.md` for the full surface map.
 
 ---
 

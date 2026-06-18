@@ -45,6 +45,7 @@ type UseFileMetricsArgs = {
   /** Prepare-time semantic alpha (E0.5 estimate hint). */
   alphaAssessment?: AlphaAssessment | null;
   resizeMaxEdge?: number;
+  riskModeEnabled?: boolean;
   holdEstimate?: boolean;
 };
 
@@ -80,6 +81,7 @@ export function useFileMetrics({
   inputBytes,
   resizeMaxEdge,
   holdEstimate = false,
+  riskModeEnabled = false,
 }: UseFileMetricsArgs): FileMetrics {
   const { t } = useI18n();
   const { estimate } = useTransmutationWorker();
@@ -93,6 +95,10 @@ export function useFileMetrics({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manualEstimateRef = useRef(false);
   const prevFingerprintRef = useRef<string | null>(null);
+  const prevRiskModeRef = useRef(riskModeEnabled);
+  const estimatedSizeRef = useRef<number | null>(null);
+  const cachedFingerprintRef = useRef<string | null>(null);
+  const fingerprintRef = useRef<string | null>(null);
 
   const uploadSize = file?.size ?? 0;
   const limitFileSize = effectiveFileSize ?? uploadSize;
@@ -104,15 +110,17 @@ export function useFileMetrics({
         fileSize: limitFileSize,
         sourceMeta,
         deviceMemoryGb,
-        oversizeConsented,
+        oversizeConsented: oversizeConsented || riskModeEnabled,
         estimatedOutputSize: estimatedSize,
         workerReady: ready,
+        riskModeEnabled,
       }),
     [
       limitFileSize,
       sourceMeta,
       deviceMemoryGb,
       oversizeConsented,
+      riskModeEnabled,
       estimatedSize,
       ready,
     ]
@@ -135,6 +143,10 @@ export function useFileMetrics({
 
   const cacheWarm =
     fingerprint !== null && cachedFingerprint === fingerprint;
+
+  estimatedSizeRef.current = estimatedSize;
+  cachedFingerprintRef.current = cachedFingerprint;
+  fingerprintRef.current = fingerprint;
 
   const fileIdentity = useMemo(
     () => (file ? buildFileIdentity(file) : null),
@@ -159,7 +171,8 @@ export function useFileMetrics({
       cacheMaxOutputBytes: profile.cacheMaxOutputBytes,
       cacheMaxEntries: profile.cacheMaxEntries,
       effectiveMaxInputBytes: limitContext.sessionInputLimitBytes,
-      userConsentedOversize: oversizeConsented,
+      userConsentedOversize: oversizeConsented || riskModeEnabled,
+      riskModeEnabled,
       alphaHint,
     };
   }, [
@@ -171,6 +184,7 @@ export function useFileMetrics({
     profile.cacheMaxEntries,
     limitContext.sessionInputLimitBytes,
     oversizeConsented,
+    riskModeEnabled,
     limitFileSize,
     alphaAssessment,
   ]);
@@ -193,6 +207,7 @@ export function useFileMetrics({
     async (opts?: { manual?: boolean }) => {
       if (!file || !ready || !transmuteMeta) return;
       if (!limitContext.canEstimate) {
+        setEstimateError(null);
         if (limitContext.blockReason === "consent") {
           setEstimateError(t("panel.metrics.consentRequired"));
         } else if (limitContext.blockReason === "pixels") {
@@ -280,6 +295,22 @@ export function useFileMetrics({
     void runEstimateRef.current({ manual: true });
   }, []);
 
+  // Re-sync estimates when Risk mode toggles (session ceiling + consent gates change).
+  useEffect(() => {
+    if (prevRiskModeRef.current === riskModeEnabled) return;
+    prevRiskModeRef.current = riskModeEnabled;
+    setEstimateError(null);
+    setEstimatedSize(null);
+    setCachedFingerprint(null);
+    estimateIdRef.current++;
+    if (!file || !ready) return;
+
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      void runEstimateRef.current({ manual: true });
+    }, 50);
+  }, [riskModeEnabled, file, ready]);
+
   // Auto-estimate debounce — only when profile allows; never cancels manual runs via fingerprint churn.
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -310,6 +341,13 @@ export function useFileMetrics({
 
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
+      // Tab refocus: keep existing estimate when options/fingerprint unchanged.
+      if (
+        estimatedSizeRef.current != null &&
+        cachedFingerprintRef.current === fingerprintRef.current
+      ) {
+        return;
+      }
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
         void runEstimateRef.current({ manual: false });
@@ -342,7 +380,7 @@ export function useFileMetrics({
     prevFingerprintRef.current = fingerprint;
 
     if (prev === null || prev === fingerprint) return;
-    if (estimatedSize === null && !oversizeConsented) return;
+    if (estimatedSize === null && !oversizeConsented && !riskModeEnabled) return;
 
     setEstimatedSize(null);
     setEstimateError(null);
@@ -367,6 +405,7 @@ export function useFileMetrics({
     holdEstimate,
     estimatedSize,
     oversizeConsented,
+    riskModeEnabled,
   ]);
 
   const setFinalSize = useCallback(

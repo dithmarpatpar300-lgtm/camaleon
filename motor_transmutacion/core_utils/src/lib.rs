@@ -73,13 +73,38 @@ const BMP_SIGNATURE: &[u8] = &[0x42, 0x4D];
 /// Maximum bytes to scan when searching for JPEG SOF markers.
 const JPEG_SCAN_LIMIT: usize = 64 * 1024;
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 static SESSION_MAX_INPUT_BYTES: AtomicUsize = AtomicUsize::new(MAX_INPUT_BYTES);
+static RISK_MODE_ENABLED: AtomicBool = AtomicBool::new(false);
+
+/// Raised hard byte ceiling when Risk mode is active (desktop).
+pub const RISK_MAX_INPUT_BYTES_DESKTOP: usize = 500 * 1024 * 1024;
+
+/// Raised hard byte ceiling when Risk mode is active (mobile / ≤4 GB RAM).
+pub const RISK_MAX_INPUT_BYTES_MOBILE: usize = 250 * 1024 * 1024;
+
+/// Opt-in: user accepts bypassing Camaleon pixel and standard byte rails (not browser limits).
+pub fn set_risk_mode(enabled: bool) {
+    RISK_MODE_ENABLED.store(enabled, Ordering::Relaxed);
+}
+
+pub fn risk_mode_enabled() -> bool {
+    RISK_MODE_ENABLED.load(Ordering::Relaxed)
+}
+
+pub fn absolute_max_input_bytes() -> usize {
+    if risk_mode_enabled() {
+        RISK_MAX_INPUT_BYTES_DESKTOP
+    } else {
+        ABSOLUTE_MAX_INPUT_BYTES
+    }
+}
 
 /// Override per Wasm instance for elevated user-consented sessions.
 pub fn set_session_max_input_bytes(max: usize) {
-    let clamped = max.clamp(1, ABSOLUTE_MAX_INPUT_BYTES);
+    let ceiling = absolute_max_input_bytes();
+    let clamped = max.clamp(1, ceiling);
     SESSION_MAX_INPUT_BYTES.store(clamped, Ordering::Relaxed);
 }
 
@@ -169,7 +194,7 @@ pub fn validate_input_with_limit(bytes: &[u8], max_bytes: usize) -> Result<(), S
 
         let pc = pixel_count(width, height)?;
 
-        if pc > MAX_PIXELS {
+        if !risk_mode_enabled() && pc > MAX_PIXELS {
             return Err(
                 TransmutationError::DimensionsTooLarge {
                     width,
@@ -1030,11 +1055,27 @@ mod tests {
     #[test]
     fn validate_input_respects_session_limit() {
         reset_session_max_input_bytes();
+        set_risk_mode(false);
         let over_soft = vec![0u8; MAX_INPUT_BYTES + 1];
         assert!(validate_input(&over_soft).is_err());
 
         set_session_max_input_bytes(ABSOLUTE_MAX_INPUT_BYTES);
         assert!(validate_input(&over_soft).is_ok());
+        reset_session_max_input_bytes();
+    }
+
+    #[test]
+    fn risk_mode_bypasses_pixel_limit() {
+        set_risk_mode(false);
+        reset_session_max_input_bytes();
+        let huge = make_minimal_png(9000, 9000);
+        assert!(validate_input(&huge).is_err());
+
+        set_risk_mode(true);
+        set_session_max_input_bytes(RISK_MAX_INPUT_BYTES_DESKTOP);
+        assert!(validate_input(&huge).is_ok());
+
+        set_risk_mode(false);
         reset_session_max_input_bytes();
     }
 }

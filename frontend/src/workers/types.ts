@@ -58,6 +58,7 @@ export type WorkerRequestMeta = {
   effectiveMaxInputBytes?: number;
   userConsentedOversize?: boolean;
   alphaHint?: WorkerAlphaHint | null;
+  riskModeEnabled?: boolean;
 };
 
 export type WorkerRequest = {
@@ -78,6 +79,7 @@ export type WorkerRequest = {
   effectiveMaxInputBytes?: number;
   userConsentedOversize?: boolean;
   alphaHint?: WorkerAlphaHint | null;
+  riskModeEnabled?: boolean;
 };
 
 export type WorkerResponseSuccess = {

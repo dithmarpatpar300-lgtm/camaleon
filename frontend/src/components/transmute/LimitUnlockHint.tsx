@@ -2,6 +2,7 @@
 
 import { useSettings } from "@/providers/SettingsProvider";
 import { useI18n } from "@/providers/I18nProvider";
+import { useRiskMode } from "@/providers/RiskModeProvider";
 import { cn } from "@/lib/utils";
 
 type LimitUnlockHintProps = {
@@ -11,6 +12,9 @@ type LimitUnlockHintProps = {
 export function LimitUnlockHint({ variant = "error" }: LimitUnlockHintProps) {
   const { t } = useI18n();
   const { openSettings } = useSettings();
+  const { riskModeEnabled } = useRiskMode();
+
+  if (riskModeEnabled) return null;
 
   return (
     <div

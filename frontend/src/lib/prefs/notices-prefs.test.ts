@@ -9,6 +9,7 @@ import {
 } from "./notices-prefs";
 import { USER_SETTINGS_STORAGE_KEY } from "./user-settings";
 import type { Notice } from "@/lib/notices/types";
+import { NOTICE_PRIORITY } from "@/lib/notices/types";
 
 const store: Record<string, string> = {};
 
@@ -70,9 +71,23 @@ describe("notices prefs", () => {
     expect(raw.notices.railDensity).toBe("minimal");
   });
 
-  it("filters info notices in minimal density", () => {
+  it("filters info, status, and low-priority warns in minimal density", () => {
     const filtered = filterNoticesForDensity(sampleNotices, "minimal");
-    expect(filtered.map((n) => n.id)).toEqual(["warn-one", "status-one"]);
+    expect(filtered.map((n) => n.id)).toEqual([]);
+  });
+
+  it("keeps fidelity warns in minimal density", () => {
+    const fidelityWarn: Notice = {
+      id: "fidelity-bmp",
+      severity: "warn",
+      messageKey: "notices.fidelity.bmpPngGrowth",
+      priority: NOTICE_PRIORITY.warnFidelity,
+    };
+    const filtered = filterNoticesForDensity(
+      [...sampleNotices, fidelityWarn],
+      "minimal"
+    );
+    expect(filtered.map((n) => n.id)).toEqual(["fidelity-bmp"]);
   });
 
   it("keeps all severities in normal density", () => {

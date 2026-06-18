@@ -26,6 +26,7 @@ export type StagedNoticeContext = {
   estimating: boolean;
   estimateElapsedMs: number;
   estimateError: string | null;
+  canEstimate: boolean;
   needsInputConsent: boolean;
   canClientResize: boolean;
   dimensionBlocked: boolean;
@@ -49,7 +50,7 @@ export function computeStagedNotices(ctx: StagedNoticeContext): Notice[] {
   const estimateNotices = computeEstimateNotices({
     estimating: ctx.estimating,
     estimateElapsedMs: ctx.estimateElapsedMs,
-    estimateError: ctx.estimateError,
+    estimateError: ctx.canEstimate ? ctx.estimateError : null,
     estimateCost: toolProfile.estimateCost,
   });
 

@@ -215,6 +215,7 @@ declare module "*/transmutador_avif_encode/transmutador_avif_encode.js" {
   ): number;
   export function set_session_input_limit(max_bytes: number): void;
   export function reset_session_input_limit(): void;
+  export function set_risk_mode(enabled: boolean): void;
   export default function init(): Promise<void>;
 }
 
@@ -285,6 +286,7 @@ declare module "*/transmutador_avif/transmutador_avif.js" {
   ): number;
   export function set_session_input_limit(max_bytes: number): void;
   export function reset_session_input_limit(): void;
+  export function set_risk_mode(enabled: boolean): void;
   export default function init(): Promise<void>;
 }
 
@@ -354,5 +356,6 @@ declare module "*/transmutador_svg/transmutador_svg.js" {
   export function assess_svg_meaningful_alpha(input_bytes: Uint8Array): boolean;
   export function set_session_input_limit(max_bytes: number): void;
   export function reset_session_input_limit(): void;
+  export function set_risk_mode(enabled: boolean): void;
   export default function init(): Promise<void>;
 }

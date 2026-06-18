@@ -41,8 +41,10 @@ export function isWithinPixelLimit(width: number, height: number): boolean {
 export function presetExceedsPixelLimit(
   srcWidth: number,
   srcHeight: number,
-  maxEdge: number
+  maxEdge: number,
+  riskModeEnabled = false
 ): boolean {
+  if (riskModeEnabled) return false;
   const { pixelCount } = computeTargetDimensions(srcWidth, srcHeight, maxEdge);
   return pixelCount > MAX_PIXELS;
 }
@@ -79,6 +81,10 @@ export function getMaxEdgeForDevice(deviceMemoryGb?: number): number {
   return DEFAULT_MAX_EDGE;
 }
 
-export function allowsExtendedMaxEdge(deviceMemoryGb?: number): boolean {
+export function allowsExtendedMaxEdge(
+  deviceMemoryGb?: number,
+  riskModeEnabled = false
+): boolean {
+  if (riskModeEnabled) return true;
   return deviceMemoryGb === undefined || deviceMemoryGb > 4;
 }

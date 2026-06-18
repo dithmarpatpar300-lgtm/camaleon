@@ -49,4 +49,6 @@ export function releasePreparedContext(ctx: PreparedFileContext | null): void {
 export type PrepareOptions = {
   /** Raised Wasm session limit for elevated-zone prepare probes. */
   sessionInputLimitBytes?: number;
+  /** When true, sync Wasm risk flag and skip pixel guards in prepare. */
+  riskModeEnabled?: boolean;
 };

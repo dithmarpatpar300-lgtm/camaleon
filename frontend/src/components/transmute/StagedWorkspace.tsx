@@ -35,6 +35,10 @@ import { computeStagedNotices } from "@/lib/notices/compute-staged-notices";
 import { computeCostTier } from "@/lib/notices/compute-performance-notices";
 import type { ToolNoticeContext } from "@/lib/notices/tool-notice-profiles";
 import { useI18n } from "@/providers/I18nProvider";
+import { useRiskMode } from "@/providers/RiskModeProvider";
+import { RiskModeBanner } from "./RiskModeBanner";
+import { RiskDeactivatedNotice } from "./RiskDeactivatedNotice";
+import { HardFileBlockPanel } from "./HardFileBlockPanel";
 
 type StagedWorkspaceProps = {
   tool: ToolDefinition;
@@ -77,6 +81,7 @@ type StagedWorkspaceProps = {
   onOversizeConsent: () => void;
   onTransmutar: () => void;
   onReset: () => void;
+  showRiskDeactivatedNotice?: boolean;
 };
 
 export function StagedWorkspace({
@@ -114,8 +119,10 @@ export function StagedWorkspace({
   onOversizeConsent,
   onTransmutar,
   onReset,
+  showRiskDeactivatedNotice = false,
 }: StagedWorkspaceProps) {
   const { t } = useI18n();
+  const { riskModeEnabled } = useRiskMode();
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
   const isAvifTool = tool.id === "avif-to-png" || tool.id === "avif-to-jpg";
   const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
@@ -125,16 +132,19 @@ export function StagedWorkspace({
   const pageIndex = options.pageIndex ?? 0;
   const entryIndex = options.entryIndex ?? 0;
   const dimensionBlocked = limitContext.blockReason === "pixels";
+  const hardFileBlocked = limitContext.blockReason === "hard_file";
+  const limitBlocked = dimensionBlocked || hardFileBlocked;
   const canTransmute = limitContext.canTransmute;
   /**
-   * Block transmute while a stale estimate is being refreshed (options changed).
-   * Skip on first estimate (no prior delta) so users can transmute immediately if they want.
+   * Block transmute while a stale estimate is being refreshed (options changed),
+   * or when the last estimate failed while limits still allow trying again.
    */
   const estimateSyncing =
     metrics.estimating &&
     !metrics.cacheWarm &&
     metrics.estimateDelta != null;
-  const transmuteReady = canTransmute && !estimateSyncing;
+  const transmuteReady =
+    canTransmute && !estimateSyncing && !metrics.estimateError;
   const estimateElapsedMs = useEstimateElapsed(metrics.estimating);
 
   const noticeContext: ToolNoticeContext = useMemo(
@@ -166,7 +176,8 @@ export function StagedWorkspace({
         estimateError: metrics.estimateError,
         needsInputConsent: limitContext.needsInputConsent,
         canClientResize,
-        dimensionBlocked,
+        dimensionBlocked: limitBlocked,
+        canEstimate: limitContext.canEstimate,
         noticeContext,
         svgMeta,
         phase: noticePhase,
@@ -182,7 +193,7 @@ export function StagedWorkspace({
       metrics.estimateError,
       estimateElapsedMs,
       canClientResize,
-      dimensionBlocked,
+      limitBlocked,
       noticeContext,
       svgMeta,
       noticePhase,
@@ -202,10 +213,14 @@ export function StagedWorkspace({
     [tool.id, sourceMeta, options, limitContext.zone, profile, noticeContext]
   );
 
-  const avifSessionLimit = sessionLimitForBytes(fileSize, deviceMemoryGb);
+  const avifSessionLimit = sessionLimitForBytes(fileSize, deviceMemoryGb, riskModeEnabled);
 
   return (
     <div className="p-5 sm:p-6">
+      {riskModeEnabled && <RiskModeBanner />}
+      {!riskModeEnabled && showRiskDeactivatedNotice && limitBlocked && (
+        <RiskDeactivatedNotice />
+      )}
       <div className="mb-5 flex items-center justify-between gap-3 border-b border-border/60 pb-4">
         <div className="min-w-0 flex-1">
           <DisplayFilename
@@ -229,6 +244,15 @@ export function StagedWorkspace({
         </Button>
       </div>
 
+      {hardFileBlocked && !astroResizeMode && (
+        <HardFileBlockPanel
+          fileSize={fileSize}
+          hardLimitBytes={limitContext.hardLimitBytes}
+          canResize={canClientResize}
+          onStartResize={canClientResize ? onStartResize : undefined}
+        />
+      )}
+
       {dimensionBlocked && !astroResizeMode && (
         <DimensionsBlockPanel
           sourceMeta={sourceMeta}
@@ -241,18 +265,19 @@ export function StagedWorkspace({
         />
       )}
 
-      {dimensionBlocked && astroResizeMode && sourceMeta && (
+      {(dimensionBlocked || hardFileBlocked) && astroResizeMode && sourceMeta && (
         <AstroResizePanel
           sourceMeta={sourceMeta}
           fileSize={fileSize}
           deviceMemoryGb={deviceMemoryGb}
+          riskModeEnabled={riskModeEnabled}
           applying={resizing}
           onApply={onApplyResize}
           onCancel={onCancelResize}
         />
       )}
 
-      {!dimensionBlocked && limitContext.needsInputConsent && (
+      {!limitBlocked && limitContext.needsInputConsent && (
         <OversizeConsentPanel
           fileSize={fileSize}
           sourceMeta={sourceMeta}
@@ -260,7 +285,7 @@ export function StagedWorkspace({
         />
       )}
 
-      {!dimensionBlocked && isGifTool && gifSession?.is_animated && (
+      {!limitBlocked && isGifTool && gifSession?.is_animated && (
         <GifFrameScrubber
           session={gifSession}
           frameIndex={frameIndex}
@@ -270,7 +295,7 @@ export function StagedWorkspace({
         />
       )}
 
-      {!dimensionBlocked &&
+      {!limitBlocked &&
         isAvifTool &&
         avifMeta &&
         avifMeta.frameCount > 1 &&
@@ -286,7 +311,7 @@ export function StagedWorkspace({
           />
         )}
 
-      {!dimensionBlocked &&
+      {!limitBlocked &&
         isTiffTool &&
         tiffMeta &&
         tiffMeta.pageCount > 1 &&
@@ -301,7 +326,7 @@ export function StagedWorkspace({
           />
         )}
 
-      {!dimensionBlocked &&
+      {!limitBlocked &&
         isIcoTool &&
         icoMeta &&
         icoMeta.entryCount > 1 &&
@@ -316,7 +341,7 @@ export function StagedWorkspace({
           />
         )}
 
-      {!dimensionBlocked && hasAlpha && backgroundSpec && (
+      {!limitBlocked && hasAlpha && backgroundSpec && (
         <div className="mb-4">
           <TransparencyNotice
             background={currentBackground}
@@ -340,9 +365,9 @@ export function StagedWorkspace({
         </div>
       )}
 
-      {!dimensionBlocked && <NoticeRail notices={stagedNotices} />}
+      {!limitBlocked && <NoticeRail notices={stagedNotices} />}
 
-      {!dimensionBlocked && (
+      {!limitBlocked && (
         <div className={hasOptions ? "mb-5" : "mb-5 border-t border-border pt-4"}>
           <MetricsPanel
             originalSize={metrics.originalSize}
@@ -360,15 +385,22 @@ export function StagedWorkspace({
         </div>
       )}
 
-      {!dimensionBlocked && (
+      {!limitBlocked && (
         <Button onClick={onTransmutar} disabled={!transmuteReady} className="w-full">
           {!ready
             ? t("panel.initializing")
-            : limitContext.needsInputConsent
-              ? t("panel.oversize.blockedButton")
-              : estimateSyncing
-                ? t("panel.transmuteSyncing")
-                : t("panel.transmuteButton")}
+            : !canTransmute
+              ? limitContext.blockReason === "hard_file" ||
+                limitContext.blockReason === "pixels"
+                ? t("panel.transmuteBlockedLimits")
+                : limitContext.needsInputConsent
+                  ? t("panel.oversize.blockedButton")
+                  : t("panel.transmuteButton")
+              : metrics.estimateError
+                ? t("panel.transmuteBlockedEstimate")
+                : estimateSyncing
+                  ? t("panel.transmuteSyncing")
+                  : t("panel.transmuteButton")}
         </Button>
       )}
     </div>

@@ -54,7 +54,10 @@ export function computeLimitNotices(ctx: LimitNoticeContext): Notice[] {
     });
   }
 
-  if (limitContext.warnings.includes("high_ram_peak")) {
+  if (
+    limitContext.warnings.includes("high_ram_peak") &&
+    !limitContext.warnings.includes("risk_mode_active")
+  ) {
     notices.push({
       id: "limit-high-ram",
       severity: "warn",
@@ -67,7 +70,8 @@ export function computeLimitNotices(ctx: LimitNoticeContext): Notice[] {
     dimensionBlocked &&
     limitContext.isAstronomicalScale &&
     canClientResize &&
-    limitContext.warnings.includes("astro_tier_dimensions")
+    limitContext.warnings.includes("astro_tier_dimensions") &&
+    !limitContext.warnings.includes("risk_mode_active")
   ) {
     notices.push({
       id: "limit-astro-tier",

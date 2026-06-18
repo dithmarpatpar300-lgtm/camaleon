@@ -6,9 +6,16 @@ import { syncOverlayScrollClass } from "@/lib/prefs";
 import { useTheme } from "@/providers/ThemeProvider";
 import { subscribeScrollLock } from "@/lib/scroll-lock";
 
+const TRACK_PAD_V = 8;
+const THUMB_RIGHT = 5;
+const MIN_THUMB_H = 40;
+
 /**
  * Scrollbar Camaleón — floating overlay scrollbar for desktop.
  * Hidden while a modal holds the scroll lock (Command Palette, shortcuts, etc.).
+ *
+ * Thumb position is painted imperatively (transform) — not via React state —
+ * to keep drag aligned with native scrollbar responsiveness.
  */
 export function OverlayScrollbar() {
   const [eligible, setEligible] = useState(false);
@@ -53,10 +60,7 @@ export function OverlayScrollbar() {
   const thumbOpacity = visibility === "active" ? 1 : visibility === "idle" ? 0.75 : 0;
   const trackOpacity = visibility === "active" ? 1 : 0;
 
-  // Position (top/height) is painted via ref — no CSS transition on position.
   const appearTransition = "opacity 250ms ease, width 200ms ease, background-color 200ms ease";
-
-  const THUMB_RIGHT = 5;
 
   return (
     <div
@@ -78,8 +82,8 @@ export function OverlayScrollbar() {
       <div
         style={{
           position: "absolute",
-          top: 8,
-          bottom: 8,
+          top: TRACK_PAD_V,
+          bottom: TRACK_PAD_V,
           right: THUMB_RIGHT,
           width: thumbW,
           borderRadius: 9999,
@@ -96,9 +100,9 @@ export function OverlayScrollbar() {
         onPointerDown={handlers.onThumbPointerDown}
         style={{
           position: "absolute",
+          top: 0,
           right: THUMB_RIGHT,
-          top: state.thumbTop,
-          height: state.thumbHeight,
+          height: MIN_THUMB_H,
           width: thumbW,
           borderRadius: 9999,
           backgroundColor: thumbColor,
@@ -106,7 +110,7 @@ export function OverlayScrollbar() {
           transition: appearTransition,
           cursor: "default",
           touchAction: "none",
-          willChange: "top, height",
+          willChange: "transform, height",
         }}
       />
     </div>

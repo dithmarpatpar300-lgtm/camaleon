@@ -168,7 +168,7 @@ const en: Dictionary = {
     notices: {
       section: "Notices & prepare",
       densityLabel: "Notice detail",
-      densityHint: "Minimal hides informational notices; warnings and errors always show.",
+      densityHint: "Minimal hides informational and routine performance notices; errors and important fidelity warnings still show.",
       densityNormal: "Normal",
       densityMinimal: "Minimal",
       progressLabel: "Prepare progress",
@@ -177,6 +177,19 @@ const en: Dictionary = {
       progressBar: "Bar",
       resetAction: "Reset to defaults",
       resetDone: "Notice and prepare preferences restored.",
+    },
+    risk: {
+      section: "Advanced / Risk",
+      intro:
+        "Risk mode disables Camaleon's pixel, file-size, and consent limits so you can process very large files at full resolution. Browser and hardware limits still apply.",
+      warningTitle: "Before you enable",
+      warningOom: "Very large images may exhaust browser memory and crash this tab.",
+      warningTab: "The tab may freeze or close without saving — work is not recoverable.",
+      warningHardware: "Use only on high-end PCs, laptops, or phones with enough RAM.",
+      acknowledge: "I understand the risks and accept full responsibility for enabling Risk mode.",
+      enableLabel: "Enable Risk mode",
+      enableHint: "Requires the checkbox above. You can disable this anytime.",
+      activeFootnote: "Risk mode is active — Camaleon limits are disabled for this browser.",
     },
     updates: {
       section: "Updates",
@@ -261,6 +274,44 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v238: {
+        title: "Risk mode & hotfixes",
+        summary:
+          "Advanced / Risk mode (S6) plus limit pipeline fixes, smarter estimates, and a smoother overlay scrollbar.",
+        technical:
+          "S6 RiskModeProvider + set_risk_mode Wasm; applyRiskMode before session limit; HardFileBlockPanel; instant scroll drag; minimal notice filter; tab refocus estimate skip. App v2.3.8.",
+        highlights: {
+          riskMode: {
+            title: "Advanced / Risk mode",
+            body: "Opt in via Settings to process very large files at full resolution — browser limits still apply.",
+          },
+          riskPolish: {
+            title: "Limit pipeline polish",
+            body: "Risk toggle restores blockers correctly; estimates and transmute stay in sync; no stale session-limit errors.",
+          },
+          scrollbar: {
+            title: "Overlay scrollbar fix",
+            body: "Thumb drag bypasses smooth-scroll CSS for native responsiveness on desktop.",
+          },
+        },
+      },
+      v237: {
+        title: "Risk mode",
+        summary:
+          "Advanced users can opt in to remove Camaleon's pixel and file-size limits — browser limits still apply.",
+        technical:
+          "Settings S6: RiskModeProvider, set_risk_mode Wasm export, computeLimitContext bypass, 500/250 MB hard cap, 12K astro unlock. App v2.3.7 — 21 tools.",
+        highlights: {
+          riskMode: {
+            title: "Advanced / Risk mode",
+            body: "Enable in Settings after acknowledging OOM and tab-crash risks. Disables Camaleon limits across all tools.",
+          },
+          riskLimits: {
+            title: "Full-resolution workflows",
+            body: "Process Hubble-scale PNGs, large SVG exports, and elevated files without forced resize or consent — when your hardware allows.",
+          },
+        },
+      },
       v236: {
         title: "SVG → JPEG",
         summary:
@@ -720,6 +771,8 @@ const en: Dictionary = {
     cancel: "Cancel",
     transmuteButton: "Transmute",
     transmuteSyncing: "Updating estimate…",
+    transmuteBlockedLimits: "Resolve limits above to transmute",
+    transmuteBlockedEstimate: "Fix estimate error to transmute",
     initializing: "Initializing...",
     processing: "Transmuting {fileName}...",
     processingFallback: "Transmuting...",
@@ -762,13 +815,30 @@ const en: Dictionary = {
     },
     limitsUnlock: {
       title: "Need to remove Camaleon's limits?",
-      intro: "Advanced users on high-end hardware can enable Risk mode in Settings (coming soon). Until then, use the resize or scale options above.",
+      intro: "Advanced users on high-end hardware can enable Risk mode in Settings. Until then, use the resize or scale options above.",
       step1: "Open Settings (gear icon in the header)",
       step2: "Scroll to Advanced / Risk",
       step3: "Read the warnings, confirm you understand the risks, and enable Risk mode",
       disclaimer:
         "Risk mode removes Camaleon's safety limits only — your browser and device can still run out of memory, freeze, or close this tab.",
       openSettings: "Open Settings",
+    },
+    riskMode: {
+      bannerTitle: "Risk mode active",
+      bannerBody:
+        "Camaleon's safety limits are disabled. Large conversions may freeze or crash this tab — browser limits still apply.",
+    },
+    riskDeactivated: {
+      title: "Risk mode turned off",
+      body: "Camaleon's safety limits are active again. This file exceeds normal limits — use resize or scale options below, or re-enable Risk mode in Settings.",
+    },
+    hardFileBlock: {
+      title: "File too large for standard mode",
+      body: "This file ({size}) exceeds the {limit} limit now that Risk mode is off.",
+      resizeHint:
+        "You can downscale in your browser to continue — resolution is reduced, but tone and color are preserved.",
+      resizeCta: "Resize to continue",
+      action: "Reduce file size in a desktop editor, or re-enable Risk mode in Settings for full-resolution processing.",
     },
     astroResize: {
       title: "Downscale to continue",
@@ -1242,6 +1312,8 @@ const en: Dictionary = {
         "Large-file mode — peak memory use will be higher than usual. Close other heavy tabs if the browser feels slow.",
       astroTier:
         "Very large dimensions — use the resize presets above to downscale before conversion.",
+      riskModeActive:
+        "Risk mode is on — pixel and file-size limits are disabled. Monitor memory and keep this tab open.",
     },
     fidelity: {
       bmpPngGrowth:

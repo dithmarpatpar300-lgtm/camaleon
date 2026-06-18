@@ -153,6 +153,7 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
             effectiveMaxInputBytes: meta?.effectiveMaxInputBytes,
             userConsentedOversize: meta?.userConsentedOversize,
             alphaHint: meta?.alphaHint,
+            riskModeEnabled: meta?.riskModeEnabled,
           },
           [transferBytes]
         );

@@ -1,4 +1,5 @@
 import type { Notice } from "@/lib/notices/types";
+import { NOTICE_PRIORITY } from "@/lib/notices/types";
 import type { NoticesPrefs, PrepareProgressStylePref } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
 
@@ -70,5 +71,21 @@ export function filterNoticesForDensity(
   density: NoticeRailDensity = getEffectiveNoticesPrefs().railDensity
 ): Notice[] {
   if (density !== "minimal") return notices;
-  return notices.filter((notice) => notice.severity !== "info");
+
+  const minimalHiddenIds = new Set([
+    "limit-risk-mode",
+    "limit-high-ram",
+    "limit-near-pixels",
+    "performance-latency",
+  ]);
+
+  return notices.filter((notice) => {
+    if (notice.severity === "error") return true;
+    if (minimalHiddenIds.has(notice.id)) return false;
+    if (notice.severity === "info" || notice.severity === "status") return false;
+    if (notice.severity === "warn") {
+      return notice.priority >= NOTICE_PRIORITY.warnFidelity;
+    }
+    return false;
+  });
 }

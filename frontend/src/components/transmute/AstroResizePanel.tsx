@@ -24,14 +24,15 @@ type AstroResizePanelProps = {
   sourceMeta: SourceImageMeta;
   fileSize: number;
   deviceMemoryGb?: number;
+  riskModeEnabled?: boolean;
   onApply: (maxEdge: number) => void;
   onCancel: () => void;
   applying?: boolean;
 };
 
-function buildPresetList(deviceMemoryGb?: number) {
+function buildPresetList(deviceMemoryGb?: number, riskModeEnabled = false) {
   const list = [...RESIZE_PRESETS];
-  if (allowsExtendedMaxEdge(deviceMemoryGb)) {
+  if (allowsExtendedMaxEdge(deviceMemoryGb, riskModeEnabled)) {
     list.push(EXTENDED_PRESET);
   }
   return list;
@@ -41,14 +42,15 @@ export function AstroResizePanel({
   sourceMeta,
   fileSize,
   deviceMemoryGb,
+  riskModeEnabled = false,
   onApply,
   onCancel,
   applying = false,
 }: AstroResizePanelProps) {
   const { t } = useI18n();
   const presets = useMemo(
-    () => buildPresetList(deviceMemoryGb),
-    [deviceMemoryGb]
+    () => buildPresetList(deviceMemoryGb, riskModeEnabled),
+    [deviceMemoryGb, riskModeEnabled]
   );
 
   const [selectedEdge, setSelectedEdge] = useState(() =>
@@ -65,7 +67,7 @@ export function AstroResizePanel({
     [sourceMeta.width, sourceMeta.height, selectedEdge]
   );
 
-  const exceedsPixelLimit = target.pixelCount > MAX_PIXELS;
+  const exceedsPixelLimit = riskModeEnabled ? false : target.pixelCount > MAX_PIXELS;
   const maxMp = formatMegapixels(MAX_PIXELS);
 
   const peakRam = formatPeakRam(
@@ -73,6 +75,7 @@ export function AstroResizePanel({
   );
 
   const needsExtendedConsent =
+    !riskModeEnabled &&
     selectedEdge === EXTENDED_PRESET.maxEdge &&
     !extendedConsented &&
     !exceedsPixelLimit;
@@ -89,7 +92,8 @@ export function AstroResizePanel({
           const overLimit = presetExceedsPixelLimit(
             sourceMeta.width,
             sourceMeta.height,
-            preset.maxEdge
+            preset.maxEdge,
+            riskModeEnabled
           );
           const isExtended = preset.maxEdge === EXTENDED_PRESET.maxEdge;
           return (

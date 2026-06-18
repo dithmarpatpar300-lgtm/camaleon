@@ -168,7 +168,7 @@ const es: Dictionary = {
     notices: {
       section: "Avisos y preparacion",
       densityLabel: "Detalle de avisos",
-      densityHint: "Minimal oculta avisos informativos; advertencias y errores siempre se muestran.",
+      densityHint: "Minimal oculta avisos informativos y de rendimiento rutinario; errores y advertencias de fidelidad importantes siguen visibles.",
       densityNormal: "Normal",
       densityMinimal: "Minimal",
       progressLabel: "Progreso de preparacion",
@@ -177,6 +177,19 @@ const es: Dictionary = {
       progressBar: "Barra",
       resetAction: "Restablecer valores",
       resetDone: "Preferencias de avisos y preparacion restablecidas.",
+    },
+    risk: {
+      section: "Advanced / Risk",
+      intro:
+        "El modo Risk desactiva los limites de pixeles, tamano de archivo y consentimiento de Camaleon para procesar archivos muy grandes a resolucion completa. Los limites del navegador y del hardware siguen aplicando.",
+      warningTitle: "Antes de activar",
+      warningOom: "Imagenes muy grandes pueden agotar la memoria del navegador y cerrar esta pestaña.",
+      warningTab: "La pestaña puede congelarse o cerrarse sin guardar — el trabajo no es recuperable.",
+      warningHardware: "Usalo solo en PCs, portatiles o telefonos potentes con RAM suficiente.",
+      acknowledge: "Entiendo los riesgos y acepto la responsabilidad total de activar el modo Risk.",
+      enableLabel: "Activar modo Risk",
+      enableHint: "Requiere la casilla de arriba. Puedes desactivarlo en cualquier momento.",
+      activeFootnote: "Modo Risk activo — los limites de Camaleon estan desactivados en este navegador.",
     },
     updates: {
       section: "Actualizaciones",
@@ -261,6 +274,44 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v238: {
+        title: "Risk mode y hotfixes",
+        summary:
+          "Modo Advanced / Risk (S6) mas correcciones del pipeline de limites, estimaciones mas inteligentes y scrollbar overlay mas fluido.",
+        technical:
+          "S6 RiskModeProvider + set_risk_mode Wasm; applyRiskMode antes del limite de sesion; HardFileBlockPanel; drag scroll instantaneo; filtro minimal reforzado; skip estimacion al volver a pestaña. App v2.3.8.",
+        highlights: {
+          riskMode: {
+            title: "Advanced / Risk mode",
+            body: "Activalo en Ajustes para procesar archivos muy grandes a resolucion completa — los limites del navegador siguen aplicando.",
+          },
+          riskPolish: {
+            title: "Pulido del pipeline de limites",
+            body: "Al desactivar Risk vuelven los bloqueos; estimacion y transmutacion sincronizados; sin errores obsoletos de limite.",
+          },
+          scrollbar: {
+            title: "Fix scrollbar overlay",
+            body: "Arrastrar el thumb evita scroll suave CSS — respuesta nativa en escritorio.",
+          },
+        },
+      },
+      v237: {
+        title: "Modo Risk",
+        summary:
+          "Usuarios avanzados pueden activar el modo Risk para quitar limites de pixeles y tamano de Camaleon — los limites del navegador siguen aplicando.",
+        technical:
+          "Settings S6: RiskModeProvider, export set_risk_mode Wasm, bypass computeLimitContext, tope 500/250 MB, desbloqueo 12K astro. App v2.3.7 — 21 herramientas.",
+        highlights: {
+          riskMode: {
+            title: "Advanced / Risk mode",
+            body: "Activalo en Ajustes tras confirmar riesgos de OOM y cierre de pestaña. Desactiva limites de Camaleon en todas las herramientas.",
+          },
+          riskLimits: {
+            title: "Flujos a resolucion completa",
+            body: "Procesa PNG tipo Hubble, SVG grandes y archivos elevados sin redimensionado forzado ni consentimiento — si tu hardware lo permite.",
+          },
+        },
+      },
       v236: {
         title: "SVG → JPEG",
         summary:
@@ -720,6 +771,8 @@ const es: Dictionary = {
     cancel: "Cancelar",
     transmuteButton: "Transmutar",
     transmuteSyncing: "Actualizando estimación…",
+    transmuteBlockedLimits: "Resuelve los limites arriba para transmutar",
+    transmuteBlockedEstimate: "Corrige el error de estimacion para transmutar",
     initializing: "Inicializando...",
     processing: "Transmutando {fileName}...",
     processingFallback: "Transmutando...",
@@ -762,13 +815,30 @@ const es: Dictionary = {
     },
     limitsUnlock: {
       title: "Necesitas quitar los limites de Camaleon?",
-      intro: "Usuarios avanzados con hardware potente podran activar el modo Risk en Ajustes (proximamente). Por ahora, usa las opciones de redimensionado o escala de arriba.",
+      intro: "Usuarios avanzados con hardware potente pueden activar el modo Risk en Ajustes. Por ahora, usa las opciones de redimensionado o escala de arriba.",
       step1: "Abre Ajustes (icono de engranaje en la cabecera)",
       step2: "Desplazate hasta Advanced / Risk",
       step3: "Lee las advertencias, confirma que entiendes los riesgos y activa el modo Risk",
       disclaimer:
         "El modo Risk solo quita los limites de Camaleon — tu navegador y dispositivo aun pueden quedarse sin memoria, congelarse o cerrar esta pestaña.",
       openSettings: "Abrir Ajustes",
+    },
+    riskMode: {
+      bannerTitle: "Modo Risk activo",
+      bannerBody:
+        "Los limites de seguridad de Camaleon estan desactivados. Conversiones grandes pueden congelar o cerrar esta pestaña — los limites del navegador siguen aplicando.",
+    },
+    riskDeactivated: {
+      title: "Modo Risk desactivado",
+      body: "Los limites de Camaleon vuelven a estar activos. Este archivo supera los limites normales — usa redimensionado o escala abajo, o reactiva Risk mode en Ajustes.",
+    },
+    hardFileBlock: {
+      title: "Archivo demasiado grande para modo estandar",
+      body: "Este archivo ({size}) supera el limite de {limit} ahora que el modo Risk esta desactivado.",
+      resizeHint:
+        "Puedes reducir en el navegador para continuar — se pierde resolucion, pero se conservan tono y color.",
+      resizeCta: "Redimensionar para continuar",
+      action: "Reduce el tamano en un editor de escritorio, o reactiva Risk mode en Ajustes para procesar a resolucion completa.",
     },
     astroResize: {
       title: "Reducir para continuar",
@@ -1228,6 +1298,8 @@ const es: Dictionary = {
         "Modo archivo grande — el pico de memoria sera mayor de lo habitual. Cierra otras pestanas pesadas si el navegador va lento.",
       astroTier:
         "Dimensiones muy grandes — usa los presets de redimension arriba antes de convertir.",
+      riskModeActive:
+        "Modo Risk activo — limites de pixeles y tamano desactivados. Vigila la memoria y mantén esta pestaña abierta.",
     },
     fidelity: {
       bmpPngGrowth:
