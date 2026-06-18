@@ -19,7 +19,7 @@ Tier 3 is Camaleon's **first major app release line (v2.0.x)** after fifteen ras
 | **3.1** | AVIF decode | AVIF → PNG, AVIF → JPEG | `transmutador_avif` | **v2.1.1** | **3.1.0–3.1.2 ✅ shipped** |
 | **3.2** | AVIF encode | PNG → AVIF, JPEG → AVIF | **`transmutador_avif_encode`** (+ decode in `transmutador_avif`) | **v2.2.0** | **3.2.0–3.2.2 ✅ shipped on `dev`** |
 | **3.3** | SVG rasterize | SVG → PNG, SVG → JPEG | `transmutador_svg` | **v2.3.5–2.3.6** | **✅ shipped** — see `tier3_3_svg_analysis.md` |
-| **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | `transmutador_heic` (TBD) | v2.4.x | **Analysis ✅** — spike-gated; see `tier3_4_heic_analysis.md` |
+| **3.4** | HEIC decode | HEIC → JPEG (→ PNG optional) | `transmutador_heic` | v2.4.x | **Spike ✅** (~542 KB Wasm) — 3.4.1 after license review · `tier3_4_heic_spike_results.md` |
 | **3.5** | PWA / offline shell | App + tools work without network after first visit | Service Worker + web manifest (`@serwist/next`) | v2.x | **Last Tier 3 deliverable** — after 3.4.x |
 
 **Normative:** Tier 3 remains **image transmutation only** — no PDF, no optimization sliders (Tier 4a), no crop/rotate (Tier 4b). See §12.5–12.7 SPEC. Phase **3.5** is delivery/UX infrastructure (not a new transmutator crate) but is **in scope** as the Tier 3 capstone.
@@ -580,7 +580,7 @@ Full format science, parameter model, security, spike gates, and phase checklist
 
 Full format science, HEVC decode logic, parameter model, backend candidates, spike gates, and phase checklist: **`docs/planning/tier3_4_heic_analysis.md`**.
 
-**Status:** **Analysis ✅** — implementation blocked on **3.4.0 spike** (Chief Architect go/no-go).
+**Status:** **Spike ✅** (3.4.0, ~542 KB Wasm) — **3.4.1 HEIC→JPEG** after `heic` crate license review.
 
 **One-line doctrine:** HEIC is **HEIF + HEVC still images** — same container family as AVIF but **H.265 decode**; Camaleon **decodes to raster** and reuses PNG/JPEG encoders (JPEG first). Primary spike candidate: pure-Rust **`heic`** crate (re-evaluates SPEC "no pure-Rust decoder" note).
 

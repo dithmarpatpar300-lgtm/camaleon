@@ -1,7 +1,7 @@
 # Tier 3 Phase 3.4 — HEIC/HEIF Format Science & Transmutation Plan
 
 > **Date:** 2026-06-11  
-> **Status:** Analysis complete — **implementation blocked on 3.4.0 spike**  
+> **Status:** Spike **✅ complete** (3.4.0) — **3.4.1 blocked on license review** for `heic` crate (AGPL/commercial)  
 > **Prerequisites:** v2.3.8 on `main` — **21 tools**, AVIF suite, SVG→PNG/JPEG (3.3 ✅), Notice Rail (v2.3.0), Settings S1–S4 + **S6 Risk mode** (v2.3.8)  
 > **Implementation plan:** `docs/planning/tier3_4_heic_implementation_plan.md` *(create after spike go/no-go)*  
 > **Target versions:** v2.4.x (spike + HEIC→JPEG) · v2.4.x+ (HEIC→PNG optional)  
@@ -470,12 +470,12 @@ set_risk_mode / risk_mode_enabled  // S6 — mirror all Tier 3 crates
 
 ### 3.4.0 — HEIC decode spike
 
-- [ ] Crate `transmutador_heic` skeleton + `wasm-pack` release build
-- [ ] Measure `.wasm` size; document vs NFR-7
-- [ ] Fixture matrix §7.5
-- [ ] `inspect_heic_meta` without full decode (or document cost)
-- [ ] `tier3_4_heic_spike_results.md`
-- [ ] Chief Architect go/no-go
+- [x] Crate `transmutador_heic` skeleton + `wasm-pack` release build
+- [x] Measure `.wasm` size; document vs NFR-7 (**~542 KB**)
+- [x] Fixture matrix §7.5
+- [x] `inspect_heic_meta` without full decode (via `ImageInfo::from_bytes`)
+- [x] `tier3_4_heic_spike_results.md`
+- [x] Chief Architect go/no-go — **GO (technical)** · **license review pending**
 
 ### 3.4.1 — HEIC → JPEG
 
