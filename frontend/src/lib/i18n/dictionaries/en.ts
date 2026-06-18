@@ -819,7 +819,8 @@ const en: Dictionary = {
       tabsAria: "Tool families",
       densityAria: "List density",
       jumpLinks: {
-        modern: "AVIF",
+        avif: "AVIF",
+        svg: "SVG",
         "jpeg-png": "JPEG",
         webp: "WebP",
         "gif-bmp": "GIF",
@@ -1480,7 +1481,8 @@ const en: Dictionary = {
     categorySoon: "Coming soon",
     closeHint: "Esc to close",
     groups: {
-      modern: "Modern formats",
+      avif: "AVIF",
+      svg: "SVG",
       "jpeg-png": "JPEG & PNG",
       webp: "WebP",
       "gif-bmp": "GIF & BMP",

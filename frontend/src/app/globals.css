@@ -13,6 +13,10 @@
   --color-warning: #F59E0B;
   --color-error: #F43F5E;
   --color-info: #38BDF8;
+  --header-height: 3.5rem;
+  --layout-sticky-gap: 0.625rem;
+  --layout-edge-inline: max(0.75rem, env(safe-area-inset-right, 0px));
+  --overlay-scrollbar-gutter: 1.25rem;
 }
 
 /* Dark theme (default) */
@@ -491,6 +495,10 @@ dialog.whats-new-drawer {
 }
 
 /* Tool browser toolbar — primary navigation deck (above list content) */
+.tool-browser-sticky {
+  top: calc(var(--header-height) + var(--layout-sticky-gap));
+}
+
 .tool-browser-toolbar {
   border: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow:
@@ -827,6 +835,83 @@ dialog.whats-new-drawer {
 
 .connectivity-indicator {
   padding: 0 0.25rem;
+}
+
+/* Offline status notice — fixed pill below header, aligned with scrollbar gutter */
+.offline-status-notice {
+  top: calc(var(--header-height) + var(--layout-sticky-gap));
+  right: calc(var(--layout-edge-inline) + var(--overlay-scrollbar-gutter));
+  max-width: min(18.5rem, calc(100vw - var(--layout-edge-inline) - var(--overlay-scrollbar-gutter) - 1rem));
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
+  background-color: color-mix(in srgb, var(--color-bg-surface) 96%, transparent);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: blur(12px);
+}
+
+.offline-status-notice--forced {
+  border-color: color-mix(in srgb, var(--color-error) 28%, var(--color-border));
+}
+
+.offline-status-notice--server-down {
+  border-color: color-mix(in srgb, var(--color-warning) 32%, var(--color-border));
+}
+
+.offline-status-notice__inner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.625rem;
+  align-items: start;
+  padding: 0.625rem 0.75rem;
+}
+
+.offline-status-notice__dot {
+  display: flex;
+  height: 1.3125rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.offline-status-notice__body {
+  min-width: 0;
+}
+
+.offline-status-notice__message {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.offline-status-notice__action {
+  margin-top: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  text-align: left;
+  transition: color 160ms ease;
+}
+
+.offline-status-notice__action:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
+@media (max-width: 639px) {
+  .offline-status-notice {
+    right: var(--layout-edge-inline);
+    max-width: min(18.5rem, calc(100vw - var(--layout-edge-inline) * 2));
+  }
+}
+
+.light .offline-status-notice {
+  border-color: color-mix(in srgb, var(--color-border) 90%, transparent);
+  background-color: color-mix(in srgb, var(--color-bg-surface) 94%, transparent);
+  box-shadow:
+    0 8px 24px rgba(15, 20, 18, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
 }
 
 .utility-cluster-icon-btn {

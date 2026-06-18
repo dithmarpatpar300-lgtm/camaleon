@@ -16,6 +16,19 @@ import { ToolRow } from "./ToolRow";
 const STORAGE_TAB_KEY = "camaleon.tools.tab.v1";
 const STORAGE_DENSITY_KEY = "camaleon.tools.density.v1";
 
+/** Pre–v3.0.2 localStorage / hash alias */
+const LEGACY_GROUP_ALIASES: Record<string, ToolGroupKey> = {
+  modern: "avif",
+};
+
+function normalizeTabKey(raw: string): ActiveTab | null {
+  if (raw === "all") return "all";
+  const resolved = LEGACY_GROUP_ALIASES[raw] ?? raw;
+  return TOOL_GROUP_ORDER.includes(resolved as ToolGroupKey)
+    ? (resolved as ToolGroupKey)
+    : null;
+}
+
 type ActiveTab = "all" | ToolGroupKey;
 type Density = "compact" | "detailed";
 
@@ -23,8 +36,7 @@ function readStoredTab(): ActiveTab | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_TAB_KEY);
     if (!raw) return null;
-    if (raw === "all") return "all";
-    return TOOL_GROUP_ORDER.includes(raw as ToolGroupKey) ? (raw as ToolGroupKey) : null;
+    return normalizeTabKey(raw);
   } catch {
     return null;
   }
@@ -41,8 +53,8 @@ function readStoredDensity(): Density | null {
 
 function parseHashTab(hash: string): ActiveTab | null {
   if (!hash.startsWith("#tool-group-")) return null;
-  const key = hash.slice("#tool-group-".length) as ToolGroupKey;
-  return TOOL_GROUP_ORDER.includes(key) ? key : null;
+  const key = hash.slice("#tool-group-".length);
+  return normalizeTabKey(key);
 }
 
 function ToolListing({
@@ -138,8 +150,8 @@ export function ToolBrowser() {
     const panelTop = panel.getBoundingClientRect().top;
     const gap = panelTop - toolbarBottom;
 
-    if (gap < 12) {
-      window.scrollBy({ top: gap - 12, behavior: "smooth" });
+    if (gap < 16) {
+      window.scrollBy({ top: gap - 16, behavior: "smooth" });
     }
   }, []);
 
@@ -194,7 +206,7 @@ export function ToolBrowser() {
     <section
       key={section.key}
       id={toolGroupAnchorId(section.key)}
-      className="scroll-mt-36"
+      className="scroll-mt-[calc(var(--header-height)+var(--layout-sticky-gap)+7.5rem)]"
     >
       {showDivider && (
         <SectionDivider
@@ -226,7 +238,7 @@ export function ToolBrowser() {
       {/* Unified sticky toolbar: title + pills travel together */}
       <div
         ref={toolbarRef}
-        className="sticky top-14 z-40 -mx-4 px-4 sm:-mx-6 sm:px-6"
+        className="tool-browser-sticky sticky z-40 -mx-4 px-4 sm:-mx-6 sm:px-6"
       >
         <div className="tool-browser-toolbar surface-subnav rounded-xl px-4 py-3 sm:px-5">
           <h2

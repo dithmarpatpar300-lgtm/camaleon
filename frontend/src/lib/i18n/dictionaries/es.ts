@@ -819,7 +819,8 @@ const es: Dictionary = {
       tabsAria: "Familias de herramientas",
       densityAria: "Densidad de la lista",
       jumpLinks: {
-        modern: "AVIF",
+        avif: "AVIF",
+        svg: "SVG",
         "jpeg-png": "JPEG",
         webp: "WebP",
         "gif-bmp": "GIF",
@@ -1466,7 +1467,8 @@ const es: Dictionary = {
     categorySoon: "Proximamente",
     closeHint: "Esc para cerrar",
     groups: {
-      modern: "Formatos modernos",
+      avif: "AVIF",
+      svg: "SVG",
       "jpeg-png": "JPEG y PNG",
       webp: "WebP",
       "gif-bmp": "GIF y BMP",

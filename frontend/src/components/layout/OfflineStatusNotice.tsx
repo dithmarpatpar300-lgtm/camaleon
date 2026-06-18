@@ -40,25 +40,26 @@ export function OfflineStatusNotice() {
       aria-live="polite"
       className={cn(
         "offline-status-notice pointer-events-auto fixed z-[60]",
-        "top-[3.75rem] right-4 max-w-[min(20rem,calc(100vw-2rem))]",
-        "flex items-start gap-2.5 rounded-xl border px-3.5 py-2.5",
-        "border-border/80 bg-bg-surface/95 shadow-lg backdrop-blur-md",
-        kind === "simulated" && "border-error/25",
-        kind === "serverDown" && "border-amber-500/30"
+        kind === "simulated" && "offline-status-notice--forced",
+        kind === "serverDown" && "offline-status-notice--server-down"
       )}
     >
-      <ConnectivityDot state={dotState} size="sm" pulse={false} subtle />
-      <div className="min-w-0 flex-1">
-        <p className="text-xs leading-relaxed text-text-secondary">{t(messageKey)}</p>
-        {kind === "simulated" && (
-          <button
-            type="button"
-            onClick={() => setForceOffline(false)}
-            className="mt-1.5 text-[11px] font-medium text-accent hover:underline"
-          >
-            {t("offline.noticeExitOfflineMode")}
-          </button>
-        )}
+      <div className="offline-status-notice__inner">
+        <span className="offline-status-notice__dot" aria-hidden="true">
+          <ConnectivityDot state={dotState} size="xs" pulse={false} subtle />
+        </span>
+        <div className="offline-status-notice__body">
+          <p className="offline-status-notice__message">{t(messageKey)}</p>
+          {kind === "simulated" && (
+            <button
+              type="button"
+              onClick={() => setForceOffline(false)}
+              className="offline-status-notice__action"
+            >
+              {t("offline.noticeExitOfflineMode")}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

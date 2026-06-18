@@ -18,12 +18,13 @@ export type ToolStatus = "active" | "soon";
 
 /** Discovery grouping for palette and landing (Pre-Tier 3 UX-2/3). */
 export type ToolGroupKey =
+  | "avif"
+  | "svg"
   | "jpeg-png"
   | "webp"
   | "gif-bmp"
   | "archival"
-  | "icons"
-  | "modern";
+  | "icons";
 
 export type RgbColor = { r: number; g: number; b: number };
 

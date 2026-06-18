@@ -1,7 +1,8 @@
 import type { ToolDefinition, ToolGroupKey } from "./types";
 
 export const TOOL_GROUP_ORDER: readonly ToolGroupKey[] = [
-  "modern",
+  "avif",
+  "svg",
   "jpeg-png",
   "webp",
   "gif-bmp",
