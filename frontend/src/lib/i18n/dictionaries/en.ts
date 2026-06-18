@@ -349,6 +349,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v350: {
+        title: "Universal transmutator",
+        summary:
+          "Drop any supported image on the home page, pick your output format, and jump straight into the right tool with your file ready.",
+        technical:
+          "universal-matrix.ts registry graph; file-handoff in-memory ?handoff=; UniversalTransmutator home section; TransmutationPanel auto-prepare. App v3.5.0 — Tier 3.5.",
+        highlights: {
+          universalEntry: {
+            title: "One front door",
+            body: "Drop PNG, JPEG, WebP, AVIF, SVG, and more — see only the outputs Camaleon actually ships.",
+          },
+          outputPicker: {
+            title: "Pick your format",
+            body: "Minimal output list with lossy/lossless badges — same tools as the full browser, zero guesswork.",
+          },
+          fileHandoff: {
+            title: "Seamless handoff",
+            body: "Your file stays in the browser and opens already loading on the chosen /transmute route.",
+          },
+        },
+      },
       v301: {
         title: "Offline mode polish",
         summary:
@@ -812,6 +833,22 @@ const en: Dictionary = {
       text: "100% local. Your files never leave your device.",
       learnMore: "Privacy policy",
     },
+    universal: {
+      title: "Universal transmutator",
+      subtitle: "Drop any supported image — pick your output format. We route you to the right tool.",
+      dropLabel: "Drop your image here",
+      dragLabel: "Release to choose output",
+      browseHint: "or click to browse",
+      dropAria: "Drop a supported image file or click to browse",
+      outputAria: "Choose output format",
+      pickOutput: "Choose output · {count} options",
+      changeFile: "Change file",
+      redirecting: "Opening transmutator…",
+      oneFileOnly: "One file at a time — using the first file.",
+      unsupported: "“{name}” is not a format Camaleon supports yet.",
+      tryAgain: "Try another file",
+      formatsHint: "Supported: {formats}",
+    },
     tools: {
       available: "Available transmutations",
       comingSoon: "Coming soon",
@@ -883,6 +920,7 @@ const en: Dictionary = {
   },
 
   panel: {
+    handoffExpired: "That file session expired — drop your file again on the home page or here.",
     stagedFileSize: "{size}",
     changeFile: "Change",
     svgIntrinsic: "Intrinsic vector size: {width} × {height}",

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import type { Metadata } from "next";
@@ -36,7 +37,9 @@ export default async function TransmuteToolPage({ params }: Props) {
   return (
     <div className="mx-auto w-full min-w-0 max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
       <ToolPageHeader tool={tool} />
-      <TransmutationPanel tool={tool} />
+      <Suspense fallback={null}>
+        <TransmutationPanel tool={tool} />
+      </Suspense>
     </div>
   );
 }

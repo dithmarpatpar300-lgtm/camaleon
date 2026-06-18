@@ -6,7 +6,7 @@ export function Hero() {
   const { t } = useI18n();
 
   return (
-    <section className="pb-12 pt-20 text-center">
+    <section className="pb-8 pt-20 text-center">
       <h1 className="mb-4 text-4xl font-bold tracking-tight text-text-primary sm:text-5xl">
         {t("landing.hero.title")}
       </h1>

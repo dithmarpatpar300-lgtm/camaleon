@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { EncodeSource, OutputExtension, TransmutationOptions } from "@/workers/types";
 import { fileMatchesExtensions } from "@/lib/tools/extensions";
@@ -53,6 +54,7 @@ import {
 import { getEffectiveTransmutationDefaults } from "@/lib/prefs/transmutation-defaults";
 import { StagedWorkspace } from "./StagedWorkspace";
 import { LimitUnlockHint } from "./LimitUnlockHint";
+import { consumeFileHandoff } from "@/lib/transmutation/file-handoff";
 import { useRiskMode } from "@/providers/RiskModeProvider";
 
 type PanelStatus = "idle" | "preparing" | "staged" | "processing" | "success" | "error";
@@ -146,6 +148,10 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   const { transmutate, ready } = useTransmutationWorker();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const handoffHandledRef = useRef<string | null>(null);
   const stagedByteSize =
     staged?.effectiveSize ?? staged?.file.size ?? pendingFile?.file.size ?? 0;
   const profile = useAdaptiveResourceProfile(stagedByteSize);
@@ -365,7 +371,23 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       const raw = extractWasmError(err, t("panel.prepareFailed"));
       setErrorMessage(localizeError(raw, t));
     }
-  }, [tool, t, hardLimit]);
+  }, [tool, t, hardLimit, riskModeEnabled]);
+
+  useEffect(() => {
+    const handoffId = searchParams.get("handoff");
+    if (!handoffId || handoffHandledRef.current === handoffId) return;
+    handoffHandledRef.current = handoffId;
+
+    const handedFile = consumeFileHandoff(handoffId);
+    router.replace(pathname, { scroll: false });
+
+    if (!handedFile) {
+      toast({ message: t("panel.handoffExpired"), variant: "info" });
+      return;
+    }
+
+    void handleFileSelect(handedFile);
+  }, [searchParams, pathname, router, handleFileSelect, t, toast]);
 
   const handleStartResize = useCallback(() => {
     setAstroResizeMode(true);

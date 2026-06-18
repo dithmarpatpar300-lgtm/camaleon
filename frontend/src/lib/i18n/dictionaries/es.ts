@@ -349,6 +349,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v350: {
+        title: "Transmutador universal",
+        summary:
+          "Suelta cualquier imagen compatible en inicio, elige formato de salida y salta a la herramienta correcta con el archivo listo.",
+        technical:
+          "Grafo registry universal-matrix.ts; file-handoff ?handoff= en memoria; sección UniversalTransmutator; auto-prepare en TransmutationPanel. App v3.5.0 — Tier 3.5.",
+        highlights: {
+          universalEntry: {
+            title: "Una sola puerta",
+            body: "Suelta PNG, JPEG, WebP, AVIF, SVG y más — solo salidas que Camaleon realmente ofrece.",
+          },
+          outputPicker: {
+            title: "Elige tu formato",
+            body: "Lista minimal con badges lossy/lossless — mismas herramientas que el navegador completo.",
+          },
+          fileHandoff: {
+            title: "Handoff fluido",
+            body: "Tu archivo sigue en el navegador y abre ya cargándose en la ruta /transmute elegida.",
+          },
+        },
+      },
       v301: {
         title: "Pulido modo sin conexión",
         summary:
@@ -812,6 +833,22 @@ const es: Dictionary = {
       text: "100% local. Tus archivos nunca salen de tu dispositivo.",
       learnMore: "Política de privacidad",
     },
+    universal: {
+      title: "Transmutador universal",
+      subtitle: "Suelta cualquier imagen compatible — elige el formato de salida. Te llevamos a la herramienta correcta.",
+      dropLabel: "Suelta tu imagen aquí",
+      dragLabel: "Suelta para elegir salida",
+      browseHint: "o haz clic para buscar",
+      dropAria: "Suelta un archivo compatible o haz clic para buscar",
+      outputAria: "Elegir formato de salida",
+      pickOutput: "Elige salida · {count} opciones",
+      changeFile: "Cambiar archivo",
+      redirecting: "Abriendo transmutador…",
+      oneFileOnly: "Un archivo a la vez — usando el primero.",
+      unsupported: "«{name}» aún no es un formato que Camaleon admita.",
+      tryAgain: "Probar otro archivo",
+      formatsHint: "Compatibles: {formats}",
+    },
     tools: {
       available: "Transmutaciones disponibles",
       comingSoon: "Proximamente",
@@ -883,6 +920,7 @@ const es: Dictionary = {
   },
 
   panel: {
+    handoffExpired: "Esa sesión de archivo expiró — suelta el archivo de nuevo en inicio o aquí.",
     stagedFileSize: "{size}",
     changeFile: "Cambiar",
     svgIntrinsic: "Tamano vectorial intrinseco: {width} × {height}",
