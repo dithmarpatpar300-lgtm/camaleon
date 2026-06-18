@@ -349,6 +349,48 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v323: {
+        title: "Batch multi-archivo — Fase 3.6.0 completa",
+        summary:
+          "La primera parte de conversión multi-archivo está lista — suelta varias imágenes en rutas compatibles, ajusta una vez y convierte con UX batch pulida.",
+        technical:
+          "Exit gate Tier 3.6.0: 14 slugs raster; FilePrepareGate inicial en primer drop; prepare inline después; preparedOptions + hints; Convert again encode-only; Download again desde caché; fix commitItems sync. App v3.2.3.",
+        highlights: {
+          phaseComplete: {
+            title: "Multi-archivo en rutas de herramienta",
+            body: "Arrastra varios archivos en JPG→PNG y otras 13 herramientas raster. Opciones compartidas, selección por fila, una descarga por archivo — en tu navegador, de uno en uno.",
+          },
+          batchUx: {
+            title: "UX batch pulida",
+            body: "La primera subida muestra la pantalla de prepare; después la lista sigue visible. Cambia compresión y Volver a convertir sin releer. Descargar de nuevo si la caché coincide.",
+          },
+          syncFix: {
+            title: "Fix botón Transmutar",
+            body: "Las filas en Listo coinciden con lo que usa Transmutar — sin toast “selecciona un archivo listo” cuando el botón ya muestra un conteo.",
+          },
+        },
+      },
+      v322: {
+        title: "Pulido UX batch — prepare inline y re-codificar sin releer",
+        summary:
+          "El batch ya no ocupa toda la pantalla tras el primer prepare. Cambia la compresión y vuelve a convertir sin releer tus imágenes.",
+        technical:
+          "Panel batch: FilePrepareGate inicial en primer drop; prepare inline en lista después; snapshot preparedOptions + hints; Convert again encode-only en rutas raster; bytes/prepared post-Done hasta Cancelar. App v3.2.2.",
+        highlights: {
+          inlinePrepare: {
+            title: "Prepare tras el primer drop",
+            body: "La primera subida usa la pantalla de prepare como archivo único. Después, Preparando… en la lista — opciones y filas visibles.",
+          },
+          sliderNoReprepare: {
+            title: "Slider = solo re-codificar",
+            body: "En rutas raster batch, mover compresión o calidad no relee archivos. Los hints muestran ajuste validado vs actual.",
+          },
+          convertAgain: {
+            title: "Convert again más inteligente",
+            body: "Tras Hecho: Descargar de nuevo si la caché coincide; si no, Volver a convertir re-codifica en sitio — sin pantalla de carga.",
+          },
+        },
+      },
       v321: {
         title: "Batch multi-archivo + fix JPEG de cámara",
         summary:
@@ -1002,8 +1044,28 @@ const es: Dictionary = {
       fileListAria: "Lista de archivos del batch",
       missingPrepared: "Se perdieron los datos del archivo antes de transmutar — quítalo y vuelve a añadirlo.",
       convertAgain: "Volver a convertir",
+      convertAgainCount: "Volver a convertir ({count})",
+      downloadAgain: "Descargar de nuevo",
+      downloadAgainCount: "Descargar de nuevo ({count})",
+      allDoneSelectHint: "Selecciona uno o más archivos arriba para descargar o convertir de nuevo.",
+      allDoneReencodeHint:
+        "Los archivos seleccionados se volverán a codificar con los ajustes de arriba — sin volver a leer.",
+      allDoneOptionsChangedHint:
+        "La última corrida usó {option} {lastRun}; el ajuste actual es {current}. Volver a convertir para re-codificar.",
+      optionsValidatedHint:
+        "Archivos validados en {option} {prepared}. Cambia el slider para ajustar la salida — sin volver a leer.",
+      optionsChangedHint:
+        "Validados en {option} {prepared}; ajuste actual {current}. Transmuta para aplicar.",
+      optionCompression: "compresión",
+      optionQuality: "calidad",
+      optionSettings: "ajustes",
       allDoneHint:
-        "Todos los archivos convertidos. Ajusta las opciones arriba y vuelve a convertir, o cancela para empezar un batch nuevo.",
+        "Los archivos seleccionados se prepararán de nuevo con las opciones de arriba. Los no seleccionados siguen en Hecho.",
+      allDoneCacheHint:
+        "Mismos ajustes que la última corrida para los seleccionados — descarga instantánea desde caché cuando esté disponible.",
+      cachedDownloadSummary: "Descargados {count} archivo(s) desde caché — sin re-codificar.",
+      cacheRedownloadMiss:
+        "Caché expirada o no disponible — cambia un ajuste o usa Volver a convertir para reprocesar.",
       transmuteAnother: "Transmutar más",
       cancelBatch: "Cancelar batch",
       aggregateWarning: "Tamaño total ~{size} — los archivos se procesan de uno en uno.",

@@ -349,6 +349,48 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v323: {
+        title: "Multi-file batch — Phase 3.6.0 complete",
+        summary:
+          "The first slice of multi-file conversion is done — drop several images on supported routes, tune settings once, and convert with polished batch UX.",
+        technical:
+          "Tier 3.6.0 exit gate: 14 raster slugs; initial FilePrepareGate on first drop; inline prepare after; preparedOptions + hints; encode-only Convert again; cache Download again; commitItems sync fix. App v3.2.3.",
+        highlights: {
+          phaseComplete: {
+            title: "Multi-file on tool routes",
+            body: "Drop multiple files on JPG→PNG and 13 other raster tools. Shared options, select rows, one download per file — all in your browser, one at a time.",
+          },
+          batchUx: {
+            title: "Batch UX polish",
+            body: "First upload shows the prepare screen; after that the list stays visible. Change compression and Convert again without re-reading files. Download again when cache matches.",
+          },
+          syncFix: {
+            title: "Transmute button fix",
+            body: "Rows marked Ready now match what Transmute uses — no more “select a ready file” toast when the button already shows a count.",
+          },
+        },
+      },
+      v322: {
+        title: "Batch UX polish — inline prepare & encode-only rerun",
+        summary:
+          "Batch no longer hijacks the screen after the first prepare. Change compression and convert again without re-reading your images.",
+        technical:
+          "Batch panel: initial FilePrepareGate on first drop; inline list prepare after; preparedOptions snapshot + staleness hints; Convert again encode-only on raster routes; bytes/prepared kept post-Done until Cancel. App v3.2.2.",
+        highlights: {
+          inlinePrepare: {
+            title: "Prepare after first drop",
+            body: "First upload uses the prepare screen like single-file. Later operations show Preparing… in the batch list — options and rows stay visible.",
+          },
+          sliderNoReprepare: {
+            title: "Slider changes = re-encode only",
+            body: "On raster batch routes, moving compression or quality does not re-read files. Hints show validated vs current settings.",
+          },
+          convertAgain: {
+            title: "Smarter Convert again",
+            body: "After Done: Download again when cache matches; otherwise Convert again re-encodes in place — no spinner screen.",
+          },
+        },
+      },
       v321: {
         title: "Multi-file batch + camera JPEG fix",
         summary:
@@ -1002,8 +1044,28 @@ const en: Dictionary = {
       fileListAria: "Batch file list",
       missingPrepared: "File data was lost before transmute — remove and re-add this file.",
       convertAgain: "Convert again",
+      convertAgainCount: "Convert again ({count})",
+      downloadAgain: "Download again",
+      downloadAgainCount: "Download again ({count})",
+      allDoneSelectHint: "Select one or more files above to download or convert again.",
+      allDoneReencodeHint:
+        "Selected files will be re-encoded with the settings above — no re-read needed.",
+      allDoneOptionsChangedHint:
+        "Last run used {option} {lastRun}; current setting is {current}. Convert again to re-encode.",
+      optionsValidatedHint:
+        "Files validated at {option} {prepared}. Change the slider to adjust output — no re-read needed.",
+      optionsChangedHint:
+        "Validated at {option} {prepared}; current setting is {current}. Transmute to apply.",
+      optionCompression: "compression",
+      optionQuality: "quality",
+      optionSettings: "settings",
       allDoneHint:
-        "All files converted. Adjust options above and convert again, or cancel to start a new batch.",
+        "Selected files will be re-prepared with the options above. Unselected files stay Done.",
+      allDoneCacheHint:
+        "Same settings as your last run for the selected files — instant download from cache when available.",
+      cachedDownloadSummary: "Downloaded {count} cached file(s) — no re-encoding needed.",
+      cacheRedownloadMiss:
+        "Cache expired or unavailable — change a setting or wait, then use Convert again to re-process.",
       transmuteAnother: "Transmute more",
       cancelBatch: "Cancel batch",
       aggregateWarning: "Total size ~{size} — files process one at a time.",

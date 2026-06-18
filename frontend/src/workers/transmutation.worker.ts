@@ -1331,6 +1331,26 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       result.byteOffset + outputSize
     ) as ArrayBuffer;
 
+    if (
+      isTransmute &&
+      req.enableResultCache &&
+      req.fingerprint &&
+      (req.cacheMaxOutputBytes ?? 0) > 0 &&
+      (req.cacheMaxEntries ?? 0) > 0
+    ) {
+      resultCache.set(
+        {
+          fingerprint: req.fingerprint,
+          bytes: output,
+          outputSize,
+          mime,
+          extension,
+          createdAt: Date.now(),
+        },
+        req.cacheMaxOutputBytes ?? 0
+      );
+    }
+
     return {
       id: req.id,
       ok: true,

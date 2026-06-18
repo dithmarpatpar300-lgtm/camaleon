@@ -3,6 +3,7 @@
 import type { ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
 import type { BatchItem } from "@/lib/batch/batch-types";
+import type { BatchPrepareProgress } from "@/lib/batch/batch-prepare-queue";
 import { Button } from "@/components/ui/Button";
 import { PanelScrollFade } from "@/components/ui/PanelScrollFade";
 import { OptionsControls } from "./OptionsControls";
@@ -24,10 +25,20 @@ type BatchWorkspaceProps = {
   onReset: () => void;
   running: boolean;
   runProgress: { current: number; total: number; fileName: string } | null;
+  prepareProgress: BatchPrepareProgress | null;
   aggregateWarningBytes: number | null;
   transmutableSelectedCount: number;
   readyCount: number;
   allDone: boolean;
+  cacheRedownloadAvailable: boolean;
+  selectedDoneCount: number;
+  isPreparing: boolean;
+  optionsStale: boolean;
+  preparedOptionsReady: boolean;
+  optionLabelKey: string;
+  preparedOptionValue: string;
+  currentOptionValue: string;
+  lastRunOptionValue: string | undefined;
 };
 
 export function BatchWorkspace({
@@ -44,16 +55,65 @@ export function BatchWorkspace({
   onReset,
   running,
   runProgress,
+  prepareProgress,
   aggregateWarningBytes,
   transmutableSelectedCount,
   readyCount,
   allDone,
+  cacheRedownloadAvailable,
+  selectedDoneCount,
+  isPreparing,
+  optionsStale,
+  preparedOptionsReady,
+  optionLabelKey,
+  preparedOptionValue,
+  currentOptionValue,
+  lastRunOptionValue,
 }: BatchWorkspaceProps) {
   const { t } = useI18n();
   const selectedCount = items.filter((i) => i.selected).length;
+  const optionLabel = t(optionLabelKey);
 
   const panelOptionSpecs =
     tool.optionSpecs?.filter((spec) => spec.key !== "background") ?? [];
+
+  const phaseHint = (() => {
+    if (allDone) {
+      if (selectedDoneCount === 0) {
+        return t("panel.batch.allDoneSelectHint");
+      }
+      if (cacheRedownloadAvailable) {
+        return t("panel.batch.allDoneCacheHint");
+      }
+      if (optionsStale && lastRunOptionValue != null) {
+        return t("panel.batch.allDoneOptionsChangedHint", {
+          option: optionLabel,
+          lastRun: lastRunOptionValue,
+          current: currentOptionValue,
+        });
+      }
+      return t("panel.batch.allDoneReencodeHint");
+    }
+
+    if (isPreparing) return null;
+
+    if (optionsStale && preparedOptionsReady) {
+      return t("panel.batch.optionsChangedHint", {
+        option: optionLabel,
+        prepared: preparedOptionValue,
+        current: currentOptionValue,
+      });
+    }
+
+    if (preparedOptionsReady && !optionsStale) {
+      return t("panel.batch.optionsValidatedHint", {
+        option: optionLabel,
+        prepared: preparedOptionValue,
+      });
+    }
+
+    return null;
+  })();
 
   return (
     <div className="transmute-shell space-y-4 p-5 sm:p-6">
@@ -83,9 +143,9 @@ export function BatchWorkspace({
         </p>
       )}
 
-      {allDone && (
+      {phaseHint && (
         <p className="rounded-lg border border-accent/25 bg-accent-subtle/20 px-3 py-2 text-xs text-text-secondary">
-          {t("panel.batch.allDoneHint")}
+          {phaseHint}
         </p>
       )}
 
@@ -111,7 +171,17 @@ export function BatchWorkspace({
         ))}
       </PanelScrollFade>
 
-      {running && runProgress && (
+      {prepareProgress && prepareProgress.total > 0 && (
+        <div className="rounded-lg border border-accent/20 bg-accent-subtle/30 px-3 py-2 text-xs text-text-secondary">
+          {t("panel.batch.preparing", {
+            current: prepareProgress.current,
+            total: prepareProgress.total,
+          })}
+          {prepareProgress.fileName ? ` · ${prepareProgress.fileName}` : ""}
+        </div>
+      )}
+
+      {runProgress && !isPreparing && (
         <div className="rounded-lg border border-accent/20 bg-accent-subtle/30 px-3 py-2 text-xs text-text-secondary">
           {t("panel.batch.processing", {
             current: runProgress.current,
@@ -123,8 +193,14 @@ export function BatchWorkspace({
 
       <div className="flex flex-wrap gap-2 pt-2">
         {allDone ? (
-          <Button className="flex-1 sm:flex-none" disabled={running} onClick={onConvertAgain}>
-            {t("panel.batch.convertAgain")}
+          <Button
+            className="flex-1 sm:flex-none"
+            disabled={running || selectedDoneCount === 0}
+            onClick={onConvertAgain}
+          >
+            {cacheRedownloadAvailable
+              ? t("panel.batch.downloadAgainCount", { count: selectedDoneCount })
+              : t("panel.batch.convertAgainCount", { count: selectedDoneCount })}
           </Button>
         ) : (
           <>

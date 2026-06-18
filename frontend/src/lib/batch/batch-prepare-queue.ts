@@ -33,10 +33,11 @@ export async function runBatchPrepareQueue(
   isCancelled: () => boolean,
   validateContext?: BatchPrepareValidateContext
 ): Promise<void> {
-  const total = items.length;
-  for (let i = 0; i < items.length; i++) {
+  const toPrepare = items.filter((item) => item.status === "queued");
+  const total = toPrepare.length;
+  for (let i = 0; i < toPrepare.length; i++) {
     if (isCancelled()) break;
-    const item = items[i];
+    const item = toPrepare[i];
     onProgress({ current: i + 1, total, fileName: item.file.name });
     onPatch(item.id, { status: "preparing", errorMessage: null });
 

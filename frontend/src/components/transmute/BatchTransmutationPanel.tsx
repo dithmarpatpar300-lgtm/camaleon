@@ -8,7 +8,6 @@ import { useI18n } from "@/providers/I18nProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { useRiskMode } from "@/providers/RiskModeProvider";
 import { buildDefaultOptions } from "@/lib/transmutation/build-default-options";
-import { releasePreparedContext } from "@/lib/transmutation/prepare/types";
 import { computeLimitContext } from "@/lib/transmutation/limit-context";
 import { sumFileBytes, shouldWarnAggregateBytes } from "@/lib/batch/batch-limits";
 import {
@@ -26,8 +25,19 @@ import {
   resolveToolEncodeSource,
 } from "@/lib/batch/build-batch-transmute-meta";
 import { downloadBatchResult } from "@/lib/batch/batch-download";
+import {
+  canBatchCacheRedownload,
+  type BatchLastRunSnapshot,
+} from "@/lib/batch/batch-last-run";
+import {
+  isBatchEncodeOnlyTool,
+  formatPrimaryBatchOptionValue,
+  primaryBatchOptionLabelKey,
+} from "@/lib/batch/batch-option-scope";
+import { batchOptionsStale } from "@/lib/batch/batch-prepared-options";
+import { minimalBatchPreparedContext } from "@/lib/batch/minimal-batch-prepared";
 import { computeResourceProfile } from "@/lib/device/resource-profile";
-import { localizeError } from "@/lib/i18n/errors";
+import { buildFileIdentity } from "@/lib/transmutation/fingerprint";
 import { extractWasmError } from "@/lib/wasm/extract-error";
 import { releaseFramePreviewSessions } from "@/lib/imaging/frame-preview-cache";
 import { FilePrepareGate } from "./FilePrepareGate";
@@ -62,20 +72,31 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       : undefined;
 
   const [items, setItems] = useState<BatchItem[]>(() => batchItemsFromFiles(files));
-  const [phase, setPhase] = useState<BatchPhase>("loading");
+  const [phase, setPhase] = useState<BatchPhase>("staged");
   const [options, setOptions] = useState<TransmutationOptions>(() =>
     buildDefaultOptions(tool.optionSpecs, tool)
   );
+  const [preparedOptions, setPreparedOptions] = useState<TransmutationOptions | null>(null);
   const [oversizeConsented, setOversizeConsented] = useState(false);
   const [prepareProgress, setPrepareProgress] = useState({ current: 0, total: files.length, fileName: "" });
   const [runProgress, setRunProgress] = useState<{ current: number; total: number; fileName: string } | null>(null);
   const [lastRunSummary, setLastRunSummary] = useState<{ done: number; total: number } | null>(null);
+  const [lastRunSnapshot, setLastRunSnapshot] = useState<BatchLastRunSnapshot | null>(null);
 
   const cancelRef = useRef(false);
   const prepareRunIdRef = useRef(0);
   const bytesByIdRef = useRef(new Map<string, ArrayBuffer>());
   const itemsRef = useRef(items);
   itemsRef.current = items;
+
+  /** True until the first prepare queue (initial file drop) finishes. */
+  const [initialPrepareComplete, setInitialPrepareComplete] = useState(false);
+
+  const commitItems = useCallback((updater: (prev: BatchItem[]) => BatchItem[]) => {
+    const next = updater(itemsRef.current);
+    itemsRef.current = next;
+    setItems(next);
+  }, []);
 
   const aggregateBytes = useMemo(() => sumFileBytes(files), [files]);
   const showAggregateWarning = shouldWarnAggregateBytes(aggregateBytes, deviceMemoryGb);
@@ -93,14 +114,22 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     return item ?? null;
   }, [items]);
 
-  const applyPatch = useCallback((runId: number, id: string, patch: BatchItemPatch) => {
-    if (runId !== prepareRunIdRef.current) return;
-    if (patch.bytes) bytesByIdRef.current.set(id, patch.bytes);
-    setItems((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
-  }, []);
+  const applyPatch = useCallback(
+    (runId: number, id: string, patch: BatchItemPatch) => {
+      if (runId !== prepareRunIdRef.current) return;
+      if (patch.bytes) bytesByIdRef.current.set(id, patch.bytes);
+      commitItems((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+    },
+    [commitItems]
+  );
 
   const startPrepareQueue = useCallback(
-    (seed: BatchItem[], runId: number) => {
+    (
+      seed: BatchItem[],
+      runId: number,
+      validateOptions: TransmutationOptions,
+      mode: "initial" | "inline"
+    ) => {
       cancelRef.current = false;
       void runBatchPrepareQueue(
         seed,
@@ -110,14 +139,18 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         setPrepareProgress,
         (id, patch) => applyPatch(runId, id, patch),
         () => cancelRef.current || runId !== prepareRunIdRef.current,
-        { options, estimate }
+        { options: validateOptions, estimate }
       ).then(() => {
         if (!cancelRef.current && runId === prepareRunIdRef.current) {
-          setPhase("staged");
+          setPreparedOptions({ ...validateOptions });
+          if (mode === "initial") {
+            setInitialPrepareComplete(true);
+            setPhase("staged");
+          }
         }
       });
     },
-    [tool, riskModeEnabled, deviceMemoryGb, applyPatch, options, estimate]
+    [tool, riskModeEnabled, deviceMemoryGb, applyPatch, estimate]
   );
 
   useEffect(() => {
@@ -125,11 +158,16 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
 
     const runId = ++prepareRunIdRef.current;
     const seed = batchItemsFromFiles(files);
+    const initialOptions = buildDefaultOptions(tool.optionSpecs, tool);
     bytesByIdRef.current.clear();
-    setItems(seed);
+    commitItems(() => seed);
+    setOptions(initialOptions);
+    setPreparedOptions(null);
+    setInitialPrepareComplete(false);
     setPhase("loading");
     setLastRunSummary(null);
-    startPrepareQueue(seed, runId);
+    setLastRunSnapshot(null);
+    startPrepareQueue(seed, runId, initialOptions, "initial");
 
     return () => {
       cancelRef.current = true;
@@ -147,13 +185,13 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
   }, []);
 
   const handleToggleItem = useCallback((id: string) => {
-    setItems((prev) =>
+    commitItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, selected: !item.selected } : item))
     );
-  }, []);
+  }, [commitItems]);
 
   const handleSelectAll = useCallback(() => {
-    setItems((prev) =>
+    commitItems((prev) =>
       prev.map((item) =>
         item.status === "ready" ||
         item.status === "needs_consent" ||
@@ -163,22 +201,22 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
           : item
       )
     );
-  }, []);
+  }, [commitItems]);
 
   const handleSelectNone = useCallback(() => {
-    setItems((prev) => prev.map((item) => ({ ...item, selected: false })));
-  }, []);
+    commitItems((prev) => prev.map((item) => ({ ...item, selected: false })));
+  }, [commitItems]);
 
   const handleBatchOversizeConsent = useCallback(() => {
     setOversizeConsented(true);
-    setItems((prev) =>
+    commitItems((prev) =>
       prev.map((item) =>
         item.status === "needs_consent"
           ? { ...item, status: "ready" as const, blockReason: null }
           : item
       )
     );
-  }, []);
+  }, [commitItems]);
 
   const buildQueue = useCallback(
     (selectedOnly: boolean) => {
@@ -190,12 +228,24 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     [oversizeConsented, riskModeEnabled]
   );
 
-  const resolveItemBytes = useCallback((item: BatchItem): ArrayBuffer | null => {
-    if (item.bytes && item.bytes.byteLength > 0) return item.bytes;
-    const cached = bytesByIdRef.current.get(item.id);
-    if (cached && cached.byteLength > 0) return cached;
-    return null;
-  }, []);
+  const resolveItemBytesAsync = useCallback(
+    async (item: BatchItem): Promise<ArrayBuffer | null> => {
+      if (item.bytes && item.bytes.byteLength > 0) return item.bytes;
+      const cached = bytesByIdRef.current.get(item.id);
+      if (cached && cached.byteLength > 0) return cached;
+      try {
+        const buf = await item.file.arrayBuffer();
+        if (buf.byteLength > 0) {
+          bytesByIdRef.current.set(item.id, buf);
+          return buf;
+        }
+      } catch {
+        // fall through
+      }
+      return null;
+    },
+    []
+  );
 
   const runTransmute = useCallback(
     async (selectedOnly: boolean) => {
@@ -222,15 +272,16 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       const usedNames = new Set<string>();
       let completed = 0;
       let skipped = 0;
+      const completedIdentities: string[] = [];
 
       for (let i = 0; i < queue.length; i++) {
         const live = itemsRef.current.find((row) => row.id === queue[i].id) ?? queue[i];
-        const inputBytes = resolveItemBytes(live);
-        const prepared = live.prepared;
+        const prepared = live.prepared ?? minimalBatchPreparedContext(live.sourceMeta);
+        const inputBytes = await resolveItemBytesAsync(live);
 
         if (!inputBytes || !prepared) {
           skipped++;
-          setItems((prev) =>
+          commitItems((prev) =>
             prev.map((row) =>
               row.id === live.id
                 ? {
@@ -246,7 +297,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         }
 
         setRunProgress({ current: i + 1, total: queue.length, fileName: live.file.name });
-        setItems((prev) =>
+        commitItems((prev) =>
           prev.map((row) =>
             row.id === live.id ? { ...row, status: "processing", errorMessage: null } : row
           )
@@ -263,7 +314,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
 
         if (!limitContext.canTransmute) {
           skipped++;
-          setItems((prev) =>
+          commitItems((prev) =>
             prev.map((row) =>
               row.id === live.id
                 ? {
@@ -313,17 +364,14 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
               usedNames
             );
             completed++;
-            releasePreparedContext(prepared);
-            bytesByIdRef.current.delete(live.id);
-            setItems((prev) =>
+            completedIdentities.push(buildFileIdentity(live.file));
+            commitItems((prev) =>
               prev.map((row) =>
                 row.id === live.id
                   ? {
                       ...row,
                       status: "done",
                       selected: false,
-                      prepared: null,
-                      bytes: null,
                       errorMessage: null,
                     }
                   : row
@@ -331,7 +379,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
             );
           } else {
             const errMsg = !response.ok ? response.error : "transmute_failed";
-            setItems((prev) =>
+            commitItems((prev) =>
               prev.map((row) =>
                 row.id === live.id
                   ? {
@@ -346,7 +394,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
           }
         } catch (err) {
           const raw = extractWasmError(err, t("panel.unexpectedError"));
-          setItems((prev) =>
+          commitItems((prev) =>
             prev.map((row) =>
               row.id === live.id
                 ? { ...row, status: "error", errorMessage: raw, selected: true }
@@ -358,6 +406,13 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
 
       setRunProgress(null);
       setLastRunSummary({ done: completed, total: queue.length });
+
+      if (completed > 0) {
+        setLastRunSnapshot({
+          options: { ...options },
+          fileIdentities: completedIdentities,
+        });
+      }
 
       if (completed === 0) {
         setPhase("staged");
@@ -381,7 +436,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       ready,
       needsElevatedConsent,
       buildQueue,
-      resolveItemBytes,
+      resolveItemBytesAsync,
       toast,
       t,
       deviceMemoryGb,
@@ -392,11 +447,14 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       effectiveOutputExtension,
       encodeSource,
       transmutate,
+      commitItems,
     ]
   );
 
   const handlePanelReset = useCallback(() => {
     cancelRef.current = true;
+    setLastRunSnapshot(null);
+    setPreparedOptions(null);
     for (const item of itemsRef.current) {
       releaseBatchItemPrepared(item);
     }
@@ -404,31 +462,198 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     onReset();
   }, [onReset]);
 
+  const runCachedRedownload = useCallback(async () => {
+    if (!ready) {
+      toast({ message: t("panel.engineInit"), variant: "info" });
+      return;
+    }
+
+    const queue = itemsRef.current.filter(
+      (item) => item.status === "done" && item.selected
+    );
+    if (queue.length === 0) {
+      toast({ message: t("panel.batch.selectAtLeastOne"), variant: "info" });
+      return;
+    }
+
+    setPhase("running");
+    setRunProgress(null);
+    releaseFramePreviewSessions();
+
+    const usedNames = new Set<string>();
+    let completed = 0;
+    let cacheHits = 0;
+
+    for (let i = 0; i < queue.length; i++) {
+      const item = queue[i];
+      setRunProgress({ current: i + 1, total: queue.length, fileName: item.file.name });
+
+      let inputBytes: ArrayBuffer;
+      try {
+        inputBytes = await item.file.arrayBuffer();
+      } catch {
+        continue;
+      }
+
+      const prepared = minimalBatchPreparedContext(item.sourceMeta);
+      const limitContext = computeLimitContext({
+        fileSize: item.file.size,
+        sourceMeta: item.sourceMeta,
+        deviceMemoryGb,
+        oversizeConsented: oversizeConsented || riskModeEnabled,
+        riskModeEnabled,
+        workerReady: ready,
+      });
+
+      if (!limitContext.canTransmute) continue;
+
+      const fileProfile = computeResourceProfile(item.file.size, {
+        deviceMemory: deviceMemoryGb,
+      });
+      const meta = buildBatchTransmuteMeta(
+        item.file,
+        prepared,
+        tool,
+        options,
+        effectiveOutputExtension,
+        encodeSource,
+        fileProfile,
+        limitContext,
+        oversizeConsented,
+        riskModeEnabled
+      );
+
+      try {
+        const response = await transmutate(
+          tool.module,
+          inputBytes,
+          options,
+          meta,
+          effectiveOutputExtension,
+          encodeSource
+        );
+
+        if (response.ok && response.bytes) {
+          if (response.cacheHit) cacheHits++;
+          downloadBatchResult(
+            response.bytes,
+            item.file.name,
+            response.mime!,
+            response.extension!,
+            usedNames
+          );
+          completed++;
+        }
+      } catch {
+        // Row stays done; user can change options and full re-convert.
+      }
+    }
+
+    setRunProgress(null);
+    setPhase("staged");
+
+    if (completed === 0) {
+      toast({ message: t("panel.batch.cacheRedownloadMiss"), variant: "info" });
+      return;
+    }
+
+    toast({
+      message:
+        cacheHits === completed
+          ? t("panel.batch.cachedDownloadSummary", { count: completed })
+          : t("panel.batch.doneSummary", { done: completed, total: queue.length }),
+      variant: "success",
+    });
+  }, [
+    ready,
+    toast,
+    t,
+    deviceMemoryGb,
+    oversizeConsented,
+    riskModeEnabled,
+    tool,
+    options,
+    effectiveOutputExtension,
+    encodeSource,
+    transmutate,
+  ]);
+
   const handleConvertAgain = useCallback(() => {
     if (!ready) {
       toast({ message: t("panel.engineInit"), variant: "info" });
       return;
     }
+
+    const selectedDone = itemsRef.current.filter(
+      (item) => item.status === "done" && item.selected
+    );
+    if (selectedDone.length === 0) {
+      toast({ message: t("panel.batch.selectAtLeastOne"), variant: "info" });
+      return;
+    }
+
+    const selectedIdentities = selectedDone.map((item) => buildFileIdentity(item.file));
+    if (
+      canBatchCacheRedownload(lastRunSnapshot, options, selectedIdentities)
+    ) {
+      void runCachedRedownload();
+      return;
+    }
+
+    if (isBatchEncodeOnlyTool(tool)) {
+      setLastRunSummary(null);
+      commitItems((prev) =>
+        prev.map((item) => {
+          if (item.status === "done" && item.selected) {
+            return {
+              ...item,
+              status: "ready" as const,
+              prepared: item.prepared ?? minimalBatchPreparedContext(item.sourceMeta),
+              errorMessage: null,
+              blockReason: null,
+            };
+          }
+          return item;
+        })
+      );
+      void runTransmute(true);
+      return;
+    }
+
     const runId = ++prepareRunIdRef.current;
-    for (const item of itemsRef.current) {
+    for (const item of selectedDone) {
       releaseBatchItemPrepared(item);
     }
-    bytesByIdRef.current.clear();
     setLastRunSummary(null);
-    setPhase("loading");
-    const reset = itemsRef.current.map((item) => ({
-      ...item,
-      status: "queued" as const,
-      prepared: null,
-      bytes: null,
-      sourceMeta: null,
-      errorMessage: null,
-      blockReason: null,
-      selected: true,
-    }));
-    setItems(reset);
-    startPrepareQueue(reset, runId);
-  }, [ready, startPrepareQueue, toast, t]);
+    const reset = itemsRef.current.map((item) => {
+      if (item.status === "done" && item.selected) {
+        bytesByIdRef.current.delete(item.id);
+        return {
+          ...item,
+          status: "queued" as const,
+          prepared: null,
+          bytes: null,
+          sourceMeta: null,
+          errorMessage: null,
+          blockReason: null,
+        };
+      }
+      return item;
+    });
+    commitItems(() => reset);
+    startPrepareQueue(reset, runId, options, "inline");
+  }, [
+    ready,
+    startPrepareQueue,
+    runCachedRedownload,
+    runTransmute,
+    options,
+    lastRunSnapshot,
+    tool,
+    toast,
+    t,
+    commitItems,
+  ]);
 
   const transmutableSelectedCount = useMemo(
     () =>
@@ -451,17 +676,68 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     [items]
   );
 
-  if (phase === "loading" || !ready) {
+  const selectedDoneCount = useMemo(
+    () => items.filter((item) => item.status === "done" && item.selected).length,
+    [items]
+  );
+
+  const selectedDoneIdentities = useMemo(
+    () =>
+      items
+        .filter((item) => item.status === "done" && item.selected)
+        .map((item) => buildFileIdentity(item.file)),
+    [items]
+  );
+
+  const cacheRedownloadAvailable = useMemo(
+    () =>
+      selectedDoneCount > 0 &&
+      canBatchCacheRedownload(lastRunSnapshot, options, selectedDoneIdentities),
+    [selectedDoneCount, lastRunSnapshot, options, selectedDoneIdentities]
+  );
+
+  const isPreparing = useMemo(
+    () => items.some((item) => item.status === "queued" || item.status === "preparing"),
+    [items]
+  );
+
+  const optionsStale = useMemo(
+    () => batchOptionsStale(preparedOptions, options),
+    [preparedOptions, options]
+  );
+
+  const optionLabelKey = primaryBatchOptionLabelKey(tool);
+  const preparedOptionValue = preparedOptions
+    ? formatPrimaryBatchOptionValue(preparedOptions)
+    : "";
+  const currentOptionValue = formatPrimaryBatchOptionValue(options);
+  const lastRunOptionValue = lastRunSnapshot
+    ? formatPrimaryBatchOptionValue(lastRunSnapshot.options)
+    : undefined;
+
+  const workspaceBusy = phase === "running" || isPreparing;
+
+  if (!ready) {
+    return (
+      <div className="transmute-shell min-h-[22rem] p-5 sm:p-6">
+        <p className="text-sm text-text-muted">{t("panel.engineInit")}</p>
+      </div>
+    );
+  }
+
+  if (!initialPrepareComplete) {
+    const progressPct =
+      prepareProgress.total > 0 ? prepareProgress.current / prepareProgress.total : 0;
     return (
       <div className="transmute-shell min-h-[22rem] p-5 sm:p-6">
         <FilePrepareGate
           fileName={prepareProgress.fileName || files[0]?.name || ""}
           fileSize={files[0]?.size ?? 0}
-          progress={prepareProgress.total > 0 ? prepareProgress.current / prepareProgress.total : 0}
+          progress={progressPct}
           phase="reading"
           detailLabel={t("panel.batch.preparing", {
             current: prepareProgress.current || 1,
-            total: prepareProgress.total,
+            total: prepareProgress.total || files.length,
           })}
         />
       </div>
@@ -506,12 +782,22 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         onTransmuteAllReady={() => void runTransmute(false)}
         onConvertAgain={handleConvertAgain}
         onReset={handlePanelReset}
-        running={phase === "running"}
+        running={workspaceBusy}
         runProgress={runProgress}
+        prepareProgress={initialPrepareComplete && isPreparing ? prepareProgress : null}
         aggregateWarningBytes={showAggregateWarning ? aggregateBytes : null}
         transmutableSelectedCount={transmutableSelectedCount}
         readyCount={readyCount}
         allDone={allDone}
+        cacheRedownloadAvailable={cacheRedownloadAvailable}
+        selectedDoneCount={selectedDoneCount}
+        isPreparing={isPreparing}
+        optionsStale={optionsStale}
+        preparedOptionsReady={preparedOptions != null}
+        optionLabelKey={optionLabelKey}
+        preparedOptionValue={preparedOptionValue}
+        currentOptionValue={currentOptionValue}
+        lastRunOptionValue={lastRunOptionValue}
       />
 
       <p className="text-center text-xs text-text-muted">
