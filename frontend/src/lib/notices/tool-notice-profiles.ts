@@ -73,6 +73,11 @@ const TOOL_PROFILES: Record<string, ToolNoticeProfile> = {
     transmuteCost: "expensive",
     costFactors: ["compression", "outputScale"],
   },
+  "svg-to-jpg": {
+    estimateCost: "expensive",
+    transmuteCost: "expensive",
+    costFactors: ["quality", "outputScale"],
+  },
 };
 
 function withAnimatedGifOverride(

@@ -333,6 +333,25 @@ declare module "*/transmutador_svg/transmutador_svg.js" {
     out_h: number,
     compression: number
   ): number;
+  export function transmutar_svg_a_jpg_with_options(
+    input_bytes: Uint8Array,
+    out_w: number,
+    out_h: number,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number
+  ): Uint8Array;
+  export function estimate_svg_to_jpg_size(
+    input_bytes: Uint8Array,
+    out_w: number,
+    out_h: number,
+    quality: number,
+    bg_r: number,
+    bg_g: number,
+    bg_b: number
+  ): number;
+  export function assess_svg_meaningful_alpha(input_bytes: Uint8Array): boolean;
   export function set_session_input_limit(max_bytes: number): void;
   export function reset_session_input_limit(): void;
   export default function init(): Promise<void>;

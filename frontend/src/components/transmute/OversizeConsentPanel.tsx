@@ -12,6 +12,7 @@ import { isNearPixelLimit } from "@/lib/notices/pixel-limit";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/providers/I18nProvider";
+import { LimitUnlockHint } from "./LimitUnlockHint";
 
 type OversizeConsentPanelProps = {
   fileSize: number;
@@ -62,6 +63,7 @@ export function OversizeConsentPanel({
       >
         {t("panel.oversize.consent")}
       </Button>
+      <LimitUnlockHint variant="warning" />
     </div>
   );
 }

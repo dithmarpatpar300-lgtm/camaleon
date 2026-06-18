@@ -144,6 +144,36 @@ pub fn estimate_svg_to_jpg_inner(
     Ok(transmutar_svg_a_jpg_inner(input, out_w, out_h, quality, bg_r, bg_g, bg_b)?.len() as u32)
 }
 
+const ALPHA_PROBE_MAX_EDGE: u32 = 512;
+
+fn probe_dimensions(intrinsic_w: f32, intrinsic_h: f32, max_edge: u32) -> (u32, u32) {
+    let w = intrinsic_w.max(1.0);
+    let h = intrinsic_h.max(1.0);
+    let longest = w.max(h);
+    let scale = (max_edge as f32 / longest).min(1.0);
+    let out_w = (w * scale).round().max(1.0) as u32;
+    let out_h = (h * scale).round().max(1.0) as u32;
+    (out_w, out_h)
+}
+
+/// Cheap raster probe at capped resolution — for JPEG background UI (prepare).
+pub fn assess_svg_meaningful_alpha_inner(input: &[u8]) -> Result<bool, String> {
+    validate_svg_input(input)?;
+    let meta = inspect_svg_meta_inner(input)?;
+    let (w, h) = probe_dimensions(
+        meta.intrinsic_width,
+        meta.intrinsic_height,
+        ALPHA_PROBE_MAX_EDGE,
+    );
+    validate_output_dimensions(w, h)?;
+    let rgba = render_svg_to_rgba(input, w, h)?;
+    let img = DynamicImage::ImageRgba8(
+        image::RgbaImage::from_raw(w, h, rgba)
+            .ok_or_else(|| "Invalid raster buffer after SVG probe render".to_string())?,
+    );
+    Ok(dynamic_image_has_meaningful_alpha(&img))
+}
+
 #[wasm_bindgen]
 pub fn inspect_svg_meta(input_bytes: &[u8]) -> Result<SvgMetaJs, String> {
     inspect_svg_meta_inner(input_bytes).map(SvgMetaJs::from)
@@ -193,6 +223,11 @@ pub fn estimate_svg_to_jpg_size(
     bg_b: u8,
 ) -> Result<u32, String> {
     estimate_svg_to_jpg_inner(input_bytes, out_w, out_h, quality, bg_r, bg_g, bg_b)
+}
+
+#[wasm_bindgen]
+pub fn assess_svg_meaningful_alpha(input_bytes: &[u8]) -> Result<bool, String> {
+    assess_svg_meaningful_alpha_inner(input_bytes)
 }
 
 #[wasm_bindgen]

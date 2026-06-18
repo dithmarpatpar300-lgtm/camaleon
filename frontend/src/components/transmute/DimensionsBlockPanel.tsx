@@ -8,6 +8,7 @@ import {
 } from "@/lib/transmutation/limit-context";
 import { Button } from "@/components/ui/Button";
 import { useI18n } from "@/providers/I18nProvider";
+import { LimitUnlockHint } from "./LimitUnlockHint";
 
 type DimensionsBlockPanelProps = {
   sourceMeta: SourceImageMeta | null;
@@ -68,6 +69,7 @@ export function DimensionsBlockPanel({
           {t(blockActionKey)}
         </p>
       )}
+      <LimitUnlockHint variant="error" />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import type { GifSessionHandle } from "@/lib/gif/gif-wasm-client";
 import { AvifFrameScrubber } from "./AvifFrameScrubber";
 import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
 import type { SvgMeta } from "@/lib/svg/svg-wasm-client";
+import { isSvgTool } from "@/lib/svg/svg-prepare";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
 import { IcoEntryScrubber } from "./IcoEntryScrubber";
 import { TiffPageScrubber } from "./TiffPageScrubber";
@@ -119,7 +120,7 @@ export function StagedWorkspace({
   const isAvifTool = tool.id === "avif-to-png" || tool.id === "avif-to-jpg";
   const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
   const isIcoTool = tool.id === "ico-to-png";
-  const isSvgTool = tool.id === "svg-to-png";
+  const isSvgToolRoute = isSvgTool(tool.id);
   const frameIndex = options.frameIndex ?? 0;
   const pageIndex = options.pageIndex ?? 0;
   const entryIndex = options.entryIndex ?? 0;
@@ -213,7 +214,7 @@ export function StagedWorkspace({
           />
           <p className="text-xs text-text-muted">{formatBytes(fileSize)}</p>
           <SourceImageMetaLine meta={sourceMeta} />
-          {isSvgTool && svgMeta && (
+          {isSvgToolRoute && svgMeta && (
             <p className="text-xs text-text-muted">
               {t("panel.svgIntrinsic", {
                 width: Math.round(svgMeta.intrinsicWidth),
@@ -235,7 +236,7 @@ export function StagedWorkspace({
           canResize={canClientResize}
           onStartResize={canClientResize ? onStartResize : undefined}
           blockActionKey={
-            isSvgTool ? "panel.dimensionsBlock.svgScaleHint" : undefined
+            isSvgToolRoute ? "panel.dimensionsBlock.svgScaleHint" : undefined
           }
         />
       )}
@@ -328,7 +329,7 @@ export function StagedWorkspace({
         </div>
       )}
 
-      {(!dimensionBlocked || isSvgTool) && hasOptions && (
+      {(!dimensionBlocked || isSvgToolRoute) && hasOptions && (
         <div className="mb-5 border-t border-border pt-4">
           <OptionsControls
             toolId={tool.id}

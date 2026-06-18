@@ -18,6 +18,7 @@ import { formatPeakRam, estimatePeakRamBytes } from "@/lib/transmutation/estimat
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/I18nProvider";
+import { LimitUnlockHint } from "./LimitUnlockHint";
 
 type AstroResizePanelProps = {
   sourceMeta: SourceImageMeta;
@@ -168,6 +169,8 @@ export function AstroResizePanel({
           {t("panel.cancel")}
         </Button>
       </div>
+
+      <LimitUnlockHint variant="info" />
     </div>
   );
 }

@@ -6,7 +6,9 @@ export function computeSvgHonestyNotices(args: {
   toolId: string;
   svgMeta: SvgMeta | null | undefined;
 }): Notice[] {
-  if (args.toolId !== "svg-to-png" || !args.svgMeta) return [];
+  const isSvgRaster =
+    args.toolId === "svg-to-png" || args.toolId === "svg-to-jpg";
+  if (!isSvgRaster || !args.svgMeta) return [];
 
   const notices: Notice[] = [
     {
@@ -17,6 +19,16 @@ export function computeSvgHonestyNotices(args: {
       phase: "staged",
     },
   ];
+
+  if (args.toolId === "svg-to-jpg") {
+    notices.push({
+      id: "svg-jpg-lossy",
+      severity: "info",
+      messageKey: "notices.fidelity.svgJpegLossy",
+      priority: NOTICE_PRIORITY.info,
+      phase: "staged",
+    });
+  }
 
   if (args.svgMeta.hasText) {
     notices.push({

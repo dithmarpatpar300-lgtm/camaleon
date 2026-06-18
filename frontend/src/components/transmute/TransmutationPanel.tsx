@@ -45,9 +45,14 @@ import { Dropzone } from "./Dropzone";
 import { PageDropOverlay } from "./PageDropOverlay";
 import { FilePrepareGate } from "./FilePrepareGate";
 import { buildDefaultOptions } from "@/lib/transmutation/build-default-options";
-import { svgOptionsWithDimensions, svgSourceMetaForScale } from "@/lib/svg/svg-prepare";
+import {
+  isSvgTool,
+  svgOptionsWithDimensions,
+  svgSourceMetaForScale,
+} from "@/lib/svg/svg-prepare";
 import { getEffectiveTransmutationDefaults } from "@/lib/prefs/transmutation-defaults";
 import { StagedWorkspace } from "./StagedWorkspace";
+import { LimitUnlockHint } from "./LimitUnlockHint";
 
 type PanelStatus = "idle" | "preparing" | "staged" | "processing" | "success" | "error";
 
@@ -88,6 +93,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     buildDefaultOptions(tool.optionSpecs, tool)
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hardLimitBlocked, setHardLimitBlocked] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [hasAlpha, setHasAlpha] = useState(false);
@@ -162,7 +168,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   const handleOptionsChange = useCallback(
     (next: TransmutationOptions) => {
-      if (tool.id === "svg-to-png" && prepared?.svgMeta) {
+      if (isSvgTool(tool.id) && prepared?.svgMeta) {
         const withDims = svgOptionsWithDimensions(next, prepared.svgMeta);
         if (
           next.outputScale != null &&
@@ -251,6 +257,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
     if (file.size > hardLimit) {
       setStatus("error");
+      setHardLimitBlocked(true);
       setErrorMessage(
         t("panel.hardLimit.body", { limit: formatHardLimitLabel(hardLimit) })
       );
@@ -266,6 +273,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setOversizeConsented(false);
     setAstroResizeMode(false);
     setResizing(false);
+    setHardLimitBlocked(false);
     setErrorMessage(null);
 
     let bytes: ArrayBuffer;
@@ -324,7 +332,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         pageIndex: 0,
         entryIndex: ctx.icoMeta?.defaultEntryIndex ?? 0,
       };
-      if (ctx.svgMeta && tool.id === "svg-to-png") {
+      if (ctx.svgMeta && isSvgTool(tool.id)) {
         setOptions(svgOptionsWithDimensions(baseOptions, ctx.svgMeta));
       } else {
         setOptions(baseOptions);
@@ -540,6 +548,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setResult(null);
     setStatus("idle");
     setErrorMessage(null);
+    setHardLimitBlocked(false);
     setHasAlpha(false);
     setPreviewUrl(null);
     setCrossfading(false);
@@ -790,8 +799,11 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
       {status === "error" && errorMessage && (
         <div role="alert" className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
-          <p className="font-semibold">{t("panel.errorTitle")}</p>
+          <p className="font-semibold">
+            {hardLimitBlocked ? t("panel.hardLimit.title") : t("panel.errorTitle")}
+          </p>
           <p className="mt-1">{errorMessage}</p>
+          {hardLimitBlocked && <LimitUnlockHint variant="error" />}
           <div className="mt-3 flex gap-2">
             {staged && (
               <Button variant="subtle" size="sm" onClick={() => void handleAdjustAndRetry()}>

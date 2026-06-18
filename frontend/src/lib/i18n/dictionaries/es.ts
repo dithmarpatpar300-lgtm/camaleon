@@ -85,6 +85,10 @@ const es: Dictionary = {
         title: "SVG a PNG — Camaleon",
         description: "Rasteriza SVG a PNG en tu navegador. Elige el tamano de salida — local y privado.",
       },
+      "svg-to-jpg": {
+        title: "SVG a JPG — Camaleon",
+        description: "Rasteriza SVG a JPEG en tu navegador. Comprimido para web — local y privado.",
+      },
     },
   },
 
@@ -225,8 +229,8 @@ const es: Dictionary = {
           body: "No se sube nada. Tus imágenes nunca salen de esta pestaña.",
         },
         tools: {
-          title: "20 herramientas de conversión",
-          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, AVIF (codificar + decodificar) y SVG → PNG — rutas con y sin pérdida donde importa.",
+          title: "21 herramientas de conversion",
+          body: "PNG, JPEG, WebP, GIF, BMP, TIFF, ICO, TGA, AVIF (codificar + decodificar) y SVG → PNG/JPEG — rutas con y sin perdida donde importa.",
         },
         limits: {
           title: "Límites honestos",
@@ -257,6 +261,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v236: {
+        title: "SVG → JPEG",
+        summary:
+          "Rasteriza SVG vectorial a JPEG en local — presets de tamano, control de calidad y aplanado de alpha cuando haga falta.",
+        technical:
+          "Tier 3.3.2: transmutar_svg_a_jpg_with_options, sonda assess_svg_meaningful_alpha, rutas JPG en worker, LimitUnlockHint en bloqueos. App v2.3.6 — 21 herramientas.",
+        highlights: {
+          svgToJpg: {
+            title: "Nuevo: SVG → JPEG",
+            body: "Exporta ilustraciones y logos como JPEG comprimido al tamano en pixeles que elijas — renderizado en tu navegador.",
+          },
+          limitsUnlockHint: {
+            title: "Guia para desbloquear limites",
+            body: "Los bloqueos de pixeles, tamano de archivo y redimensionado explican como funcionara el modo Advanced / Risk en Ajustes (proximamente).",
+          },
+        },
+      },
       v235: {
         title: "SVG → PNG",
         summary:
@@ -739,6 +760,16 @@ const es: Dictionary = {
       resizeCta: "Redimensionar para continuar",
       svgScaleHint: "Reduce el preset de escala de salida — las dimensiones raster deben respetar el limite de pixeles del navegador.",
     },
+    limitsUnlock: {
+      title: "Necesitas quitar los limites de Camaleon?",
+      intro: "Usuarios avanzados con hardware potente podran activar el modo Risk en Ajustes (proximamente). Por ahora, usa las opciones de redimensionado o escala de arriba.",
+      step1: "Abre Ajustes (icono de engranaje en la cabecera)",
+      step2: "Desplazate hasta Advanced / Risk",
+      step3: "Lee las advertencias, confirma que entiendes los riesgos y activa el modo Risk",
+      disclaimer:
+        "El modo Risk solo quita los limites de Camaleon — tu navegador y dispositivo aun pueden quedarse sin memoria, congelarse o cerrar esta pestaña.",
+      openSettings: "Abrir Ajustes",
+    },
     astroResize: {
       title: "Reducir para continuar",
       body: "Elige una longitud maxima del lado. La imagen se redimensiona localmente en tu navegador antes de convertir.",
@@ -1096,6 +1127,37 @@ const es: Dictionary = {
         },
       },
     },
+    "svg-to-jpg": {
+      actionTitle: "Rasterizar para Web",
+      description: "SVG vectorial → JPEG al tamano de salida que elijas. Comprimido para web — renderizado localmente con resvg.",
+      fidelityHint:
+        "Vector → raster → JPEG con perdida — irreversible. La transparencia se aplana al fondo elegido. Texto sin fuentes embebidas puede sustituir glifos.",
+      options: {
+        outputScale: {
+          label: "Tamano de salida",
+          hint: "Los presets en % escalan el viewBox intrinseco; los presets en px ajustan el lado mas largo. Se mantiene la proporcion.",
+          presets: {
+            p100: "100%",
+            p200: "200%",
+            px512: "512 px",
+            px1024: "1024 px",
+            px2048: "2048 px",
+          },
+        },
+        quality: {
+          label: "Calidad JPEG",
+          hint: "Mayor calidad = archivo mas grande. La perdida de calidad siempre es irreversible.",
+          lowerLabel: "Mas liviano",
+          upperLabel: "Mas fiel",
+          presets: { web: "Web", balanced: "Balanceado", high: "Alto" },
+        },
+        background: {
+          label: "Color de fondo",
+          hint: "Las areas transparentes se aplana sobre este color antes de codificar JPEG.",
+          swatches: { white: "Blanco", black: "Negro", gray: "Gris" },
+        },
+      },
+    },
     "tiff-to-jpg": {
       actionTitle: "Comprimir para Web",
       description: "Convierte TIFF a JPEG — archivos mucho mas pequenos para compartir escaneos y masters en linea.",
@@ -1176,6 +1238,8 @@ const es: Dictionary = {
         "Este SVG contiene texto — los glifos pueden diferir de tu app de diseno si no hay fuentes embebidas.",
       svgRendererSubset:
         "Filtros y funciones SVG avanzadas pueden renderizarse distinto que en Illustrator o Inkscape.",
+      svgJpegLossy:
+        "JPEG tiene perdida — el detalle vectorial y la transparencia se pierden permanentemente tras la rasterizacion.",
     },
     estimate: {
       cheapSlow: "Calculando…",

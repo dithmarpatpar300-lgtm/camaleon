@@ -1,7 +1,7 @@
 # Tier 3.3 — SVG Implementation Plan
 
 > **Date:** 2026-06-11  
-> **Status:** **3.3.0 spike GO** — see `tier3_3_svg_spike_results.md`; proceed to 3.3.1 after font subset commit  
+> **Status:** **3.3.2 SVG→JPEG shipped (v2.3.6)** — see `docs/releases/v2.3.6.md`; Risk mode analysis: `risk_mode_analysis.md`  
 > **Prerequisites:** v2.3.4 on `main` (Settings S1–S4, Notice Rail, 19 tools, AVIF suite)  
 > **Science & format analysis:** `docs/planning/tier3_3_svg_analysis.md` (updated 2026-06-11)  
 > **Target app versions:** **v2.3.5** (spike + SVG→PNG) · **v2.3.6** (SVG→JPEG)  

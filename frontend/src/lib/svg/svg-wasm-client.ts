@@ -37,6 +37,7 @@ type SvgWasmModule = {
   ) => number;
   set_session_input_limit?: (maxBytes: number) => void;
   reset_session_input_limit?: () => void;
+  assess_svg_meaningful_alpha: (input: Uint8Array) => boolean;
 };
 
 let initPromise: Promise<SvgWasmModule> | null = null;

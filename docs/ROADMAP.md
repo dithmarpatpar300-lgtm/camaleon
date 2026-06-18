@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v2.3.5** (`dev`) · **v2.3.4** (`main`) | Settings S1–S4 + Notice Rail + **SVG→PNG** — **20 tools** on `dev` |
+| **Frontend (app)** | **v2.3.6** (`dev`) · **v2.3.4** (`main`) | Settings S1–S4 + Notice Rail + **SVG→PNG/JPEG** — **21 tools** on `dev` |
 | **Engine (Rust workspace)** | v1.6.0 | Twelve Wasm crates incl. **`transmutador_svg`** (+ AVIF decode/encode) |
-| **SPEC** | v2.3.5-svg | §6.12 `transmutador_svg`; §7.12 Notice Rail; §7.13 Settings S1–S4 |
+| **SPEC** | v2.3.6-svg | §6.12 `transmutador_svg`; §7.12 Notice Rail; §7.13 Settings S1–S4 |
 
-**v2.3.5** (`dev`): **SVG → PNG** — `transmutador_svg`, output scale presets, prepare probe. Release: `docs/releases/v2.3.5.md`. Next: **SVG→JPEG (3.3.2)** · **Settings S5** offline toolkit.
+**v2.3.6** (`dev`): **SVG → JPEG** (3.3.2) + `LimitUnlockHint` on blockers + `risk_mode_analysis.md`. Release: `docs/releases/v2.3.6.md`. Next: **Settings S5** offline · **Settings S6 Risk mode**.
+
+**v2.3.5** (`dev`): **SVG → PNG** — `transmutador_svg`, output scale presets. Release: `docs/releases/v2.3.5.md`.
 
 **v2.3.4** (`main`): **Settings S4** — notice rail density + prepare progress style. Releases: `docs/releases/v2.3.1.md`–`v2.3.4.md`.
 

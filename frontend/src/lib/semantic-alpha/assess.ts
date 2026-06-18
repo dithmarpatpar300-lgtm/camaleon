@@ -1,6 +1,7 @@
 import { ensureAvifWasm } from "@/lib/avif/avif-wasm-client";
 import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
+import { ensureSvgWasm } from "@/lib/svg/svg-wasm-client";
 import { ensureTiffWasm } from "@/lib/tiff/tiff-wasm-client";
 import { importWasmGlue } from "@/lib/wasm/load-glue";
 import { sessionLimitForBytes } from "@/lib/transmutation/limits";
@@ -102,6 +103,20 @@ export async function assessSemanticAlpha(
       return wrapAlphaAssessment(
         (wasm as unknown as AssessWasmModule).assess_alpha(input)
       );
+    }
+    case "SVG": {
+      const wasm = await ensureSvgWasm();
+      applyLimit(wasm as unknown as AssessWasmModule, limit);
+      const meaningful = (
+        wasm as unknown as AssessWasmModule & {
+          assess_svg_meaningful_alpha: (input: Uint8Array) => boolean;
+        }
+      ).assess_svg_meaningful_alpha(input);
+      return {
+        hasAlphaChannel: meaningful,
+        hasMeaningfulAlpha: meaningful,
+        confidence: meaningful ? "sampled" : "none",
+      };
     }
     default:
       return {
