@@ -349,24 +349,24 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
-      v350: {
+      v311: {
         title: "Universal transmutator",
         summary:
           "Drop any supported image on the home page, pick your output format, and jump straight into the right tool with your file ready.",
         technical:
-          "universal-matrix.ts registry graph; file-handoff in-memory ?handoff=; UniversalTransmutator home section; TransmutationPanel auto-prepare. App v3.5.0 — Tier 3.5.",
+          "universal-matrix.ts; file-handoff ArrayBuffer staging; Strict Mode–safe TransmutationPanel consume; UniversalTransmutator visual polish. App v3.1.1 — Tier 3.5 phase.",
         highlights: {
           universalEntry: {
             title: "One front door",
             body: "Drop PNG, JPEG, WebP, AVIF, SVG, and more — see only the outputs Camaleon actually ships.",
           },
-          outputPicker: {
-            title: "Pick your format",
-            body: "Minimal output list with lossy/lossless badges — same tools as the full browser, zero guesswork.",
+          handoffFix: {
+            title: "Handoff that works",
+            body: "Files staged on the home page arrive prepared on the tool route — no empty dropzone after redirect.",
           },
-          fileHandoff: {
-            title: "Seamless handoff",
-            body: "Your file stays in the browser and opens already loading on the chosen /transmute route.",
+          universalPolish: {
+            title: "Refined entry card",
+            body: "Fast-path badge, gradient surface, and a more prominent drop zone on the home page.",
           },
         },
       },
@@ -836,6 +836,7 @@ const en: Dictionary = {
     universal: {
       title: "Universal transmutator",
       subtitle: "Drop any supported image — pick your output format. We route you to the right tool.",
+      badge: "Fast path",
       dropLabel: "Drop your image here",
       dragLabel: "Release to choose output",
       browseHint: "or click to browse",
@@ -844,6 +845,7 @@ const en: Dictionary = {
       pickOutput: "Choose output · {count} options",
       changeFile: "Change file",
       redirecting: "Opening transmutator…",
+      handoffFailed: "Could not prepare your file for handoff. Try again.",
       oneFileOnly: "One file at a time — using the first file.",
       unsupported: "“{name}” is not a format Camaleon supports yet.",
       tryAgain: "Try another file",

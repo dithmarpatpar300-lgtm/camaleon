@@ -1,6 +1,7 @@
-# Tier 3.5 — Universal Transmutator (v3.5.x)
+# Tier 3.5 — Universal Transmutator (planning phases 3.5.x)
 
-> **Status:** **v3.5.0 shipped on `dev`** · **Target:** merge to `main` at tag `v3.5.0`  
+> **Status:** **Tier 3.5.0 on `dev`** (app **v3.1.1**) · **Target:** merge to `main` at tag `v3.1.1`  
+> **Note:** **3.5.x** = documentation/planning phase only; app semver follows 3.1.0, 3.1.1, …  
 > **Prerequisite:** Tier 3 complete (v3.0.1) — 21 active tools, 12 Wasm crates  
 > **Inspired by:** Convertify “Universal Converter” — format-agnostic entry, route to existing tools  
 > **Doctrine:** No new Wasm crate for MVP — **orchestration only** over `tool-registry.ts`
@@ -160,8 +161,10 @@ New module: `frontend/src/lib/transmutation/file-handoff.ts`
 
 ```typescript
 // In-memory, tab-scoped, single-use tokens
-stageFileHandoff(file: File): string   // returns uuid
-consumeFileHandoff(id: string): File | null  // delete after read
+stageFileHandoffFromFile(file: File): Promise<string>  // reads ArrayBuffer before navigate
+markPendingHandoffNavigation(id: string)               // survives Strict Mode remount
+consumeFileHandoff(id: string): FileHandoffPayload | null
+handoffPayloadToFile(payload): File
 ```
 
 - URL: `/transmute/png-to-jpg?handoff=<uuid>`
@@ -203,20 +206,20 @@ IndexedDB handoff for **new tab** / refresh survival — only if product demands
 | `components/transmute/TransmutationPanel.tsx` | consume handoff on mount |
 | `app/page.tsx` | insert `<UniversalTransmutator />` after Hero |
 | `lib/i18n/dictionaries/en.ts`, `es.ts` | `landing.universal.*` |
-| `docs/releases/v3.5.0.md` | release notes |
-| `lib/releases/entries/v3.5.0.ts` | What's New |
+| `docs/releases/v3.1.1.md` | release notes |
+| `lib/releases/entries/v3.1.1.ts` | What's New |
 
 **Reuse:** `Dropzone` styling tokens, `ToolRow`/`ToolCard` visual language, `fileMatchesExtensions`, `getActiveTools`.
 
 ---
 
-## 7. Version plan (3.5.x)
+## 7. Version plan (Tier 3.5 phases vs app semver)
 
-| Version | Deliverable | Exit gate |
-|---------|-------------|-----------|
-| **v3.5.0** | Matrix lib + handoff + home `UniversalTransmutator` + redirect | Drop PNG → pick JPG → lands on `png-to-jpg` with file preparing |
-| **v3.5.1** | i18n polish, `#universal` anchor, Command Palette entry, unsupported-format UX | EN/ES complete; palette finds universal |
-| **v3.5.2** | Optional: “smart default” highlight, last-used output pref (localStorage), handoff metrics-free telemetry hook | UX refinement |
+| Phase | App tag | Deliverable | Exit gate |
+|-------|---------|-------------|-----------|
+| **3.5.0** | **v3.1.1** | Matrix lib + handoff + home `UniversalTransmutator` + redirect | Drop PNG → pick JPG → lands on `png-to-jpg` with file preparing |
+| **3.5.1** | v3.1.1 (TBD) | i18n polish, `#universal` anchor, Command Palette entry, unsupported-format UX | EN/ES complete; palette finds universal |
+| **3.5.2** | v3.1.2 (TBD) | Optional: “smart default” highlight, last-used output pref (localStorage), handoff metrics-free telemetry hook | UX refinement |
 
 **SPEC / ROADMAP:** Add Tier 3.5 row — “Universal entry orchestration” (not a new Tier 4).
 
@@ -270,7 +273,7 @@ Camaleon retains advantage: **more outbound routes per input** once user is in t
 4. `UniversalTransmutator` UI (idle → staged → picker)
 5. Wire `page.tsx` + i18n
 6. QA matrix §8 on `preview:cf`
-7. Release v3.5.0 + What's New
+7. Release v3.1.1 (Tier 3.5.0) + What's New
 
 ---
 

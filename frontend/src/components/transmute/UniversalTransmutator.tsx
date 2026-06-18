@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/providers/I18nProvider";
 import { useToast } from "@/providers/ToastProvider";
 import { formatBytes } from "@/lib/format/bytes";
-import { stageFileHandoff } from "@/lib/transmutation/file-handoff";
+import {
+  markPendingHandoffNavigation,
+  stageFileHandoffFromFile,
+} from "@/lib/transmutation/file-handoff";
 import type { ToolDefinition } from "@/lib/tools/types";
 import {
   buildAcceptAttribute,
@@ -57,12 +60,18 @@ export function UniversalTransmutator() {
   }, []);
 
   const redirectWithTool = useCallback(
-    (targetFile: File, tool: ToolDefinition) => {
+    async (targetFile: File, tool: ToolDefinition) => {
       setPhase("redirecting");
-      const id = stageFileHandoff(targetFile);
-      router.push(`/transmute/${tool.slug}?handoff=${encodeURIComponent(id)}`);
+      try {
+        const id = await stageFileHandoffFromFile(targetFile);
+        markPendingHandoffNavigation(id);
+        router.push(`/transmute/${tool.slug}?handoff=${encodeURIComponent(id)}`);
+      } catch {
+        setPhase("pick");
+        toast({ message: t("landing.universal.handoffFailed"), variant: "info" });
+      }
     },
-    [router]
+    [router, t, toast]
   );
 
   const stageFile = useCallback(
@@ -78,7 +87,7 @@ export function UniversalTransmutator() {
 
       setFile(next);
       if (tools.length === 1) {
-        redirectWithTool(next, tools[0]);
+        void redirectWithTool(next, tools[0]);
         return;
       }
       setPhase("pick");
@@ -150,7 +159,7 @@ export function UniversalTransmutator() {
   const onOutputSelect = useCallback(
     (tool: ToolDefinition) => {
       if (!file) return;
-      redirectWithTool(file, tool);
+      void redirectWithTool(file, tool);
     },
     [file, redirectWithTool]
   );
@@ -160,18 +169,19 @@ export function UniversalTransmutator() {
   return (
     <section
       id="universal-transmutator"
-      className="scroll-mt-28 pb-10"
+      className="scroll-mt-28 pb-12 pt-2"
       aria-labelledby="universal-transmutator-heading"
     >
       <div className="universal-transmutator">
         <header className="universal-transmutator__header">
+          <span className="universal-transmutator__badge">{t("landing.universal.badge")}</span>
           <h2
             id="universal-transmutator-heading"
-            className="text-sm font-semibold tracking-tight text-text-primary"
+            className="text-lg font-semibold tracking-tight text-text-primary sm:text-xl"
           >
             {t("landing.universal.title")}
           </h2>
-          <p className="mt-1 text-xs leading-relaxed text-text-muted">
+          <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-text-muted">
             {t("landing.universal.subtitle")}
           </p>
         </header>
@@ -219,14 +229,14 @@ export function UniversalTransmutator() {
               }
             }}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-accent/20 bg-accent-subtle/30">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-accent/25 bg-accent-subtle/40 shadow-[0_8px_24px_rgba(34,197,94,0.12)]">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.5}
-                className="h-5 w-5 text-accent"
+                className="h-6 w-6 text-accent"
                 aria-hidden="true"
               >
                 <path
@@ -236,7 +246,7 @@ export function UniversalTransmutator() {
                 />
               </svg>
             </div>
-            <p className="text-sm font-medium text-text-primary">
+            <p className="text-base font-medium text-text-primary">
               {dragging ? t("landing.universal.dragLabel") : t("landing.universal.dropLabel")}
             </p>
             <p className="text-xs text-text-muted">{t("landing.universal.browseHint")}</p>

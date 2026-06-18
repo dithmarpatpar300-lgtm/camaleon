@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { EncodeSource, OutputExtension, TransmutationOptions } from "@/workers/types";
 import { fileMatchesExtensions } from "@/lib/tools/extensions";
@@ -54,7 +54,11 @@ import {
 import { getEffectiveTransmutationDefaults } from "@/lib/prefs/transmutation-defaults";
 import { StagedWorkspace } from "./StagedWorkspace";
 import { LimitUnlockHint } from "./LimitUnlockHint";
-import { consumeFileHandoff } from "@/lib/transmutation/file-handoff";
+import {
+  consumeFileHandoff,
+  handoffPayloadToFile,
+  resolveHandoffId,
+} from "@/lib/transmutation/file-handoff";
 import { useRiskMode } from "@/providers/RiskModeProvider";
 
 type PanelStatus = "idle" | "preparing" | "staged" | "processing" | "success" | "error";
@@ -130,7 +134,6 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   useEffect(() => {
     return () => {
-      prepareIdRef.current += 1;
       releasePreparedContext(preparedRef.current);
       preparedRef.current = null;
       releaseFramePreviewSessions();
@@ -148,10 +151,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
 
   const { transmutate, ready } = useTransmutationWorker();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const handoffHandledRef = useRef<string | null>(null);
+  const handleFileSelectRef = useRef<(file: File) => Promise<void>>(async () => {});
   const stagedByteSize =
     staged?.effectiveSize ?? staged?.file.size ?? pendingFile?.file.size ?? 0;
   const profile = useAdaptiveResourceProfile(stagedByteSize);
@@ -373,21 +375,41 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     }
   }, [tool, t, hardLimit, riskModeEnabled]);
 
+  handleFileSelectRef.current = handleFileSelect;
+
+  const prevToolSlugRef = useRef(tool.slug);
   useEffect(() => {
-    const handoffId = searchParams.get("handoff");
-    if (!handoffId || handoffHandledRef.current === handoffId) return;
-    handoffHandledRef.current = handoffId;
-
-    const handedFile = consumeFileHandoff(handoffId);
-    router.replace(pathname, { scroll: false });
-
-    if (!handedFile) {
-      toast({ message: t("panel.handoffExpired"), variant: "info" });
-      return;
+    if (prevToolSlugRef.current !== tool.slug) {
+      prepareIdRef.current += 1;
+      prevToolSlugRef.current = tool.slug;
     }
+  }, [tool.slug]);
 
-    void handleFileSelect(handedFile);
-  }, [searchParams, pathname, router, handleFileSelect, t, toast]);
+  useEffect(() => {
+    const queryHandoff = new URLSearchParams(window.location.search).get("handoff");
+    const handoffId = resolveHandoffId(queryHandoff);
+    if (!handoffId) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+
+      const payload = consumeFileHandoff(handoffId);
+      if (queryHandoff) {
+        router.replace(pathname, { scroll: false });
+      }
+      if (!payload) {
+        toast({ message: t("panel.handoffExpired"), variant: "info" });
+        return;
+      }
+      void handleFileSelectRef.current(handoffPayloadToFile(payload));
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [tool.slug, pathname, router, t, toast]);
 
   const handleStartResize = useCallback(() => {
     setAstroResizeMode(true);

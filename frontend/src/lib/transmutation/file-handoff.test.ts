@@ -3,12 +3,13 @@ import {
   clearFileHandoffsForTests,
   consumeFileHandoff,
   FILE_HANDOFF_TTL_MS,
-  stageFileHandoff,
+  handoffPayloadToFile,
+  markPendingHandoffNavigation,
+  peekPendingHandoffNavigation,
+  resolveHandoffId,
+  stageFileHandoffFromFile,
+  stageFileHandoffPayload,
 } from "./file-handoff";
-
-function makeFile(name = "test.png"): File {
-  return new File([new Uint8Array([1, 2, 3])], name, { type: "image/png" });
-}
 
 describe("file-handoff", () => {
   afterEach(() => {
@@ -16,17 +17,30 @@ describe("file-handoff", () => {
     vi.useRealTimers();
   });
 
-  it("stages and consumes a file once", () => {
-    const file = makeFile();
-    const id = stageFileHandoff(file);
-    expect(consumeFileHandoff(id)?.name).toBe("test.png");
+  it("stages bytes from file and consumes once", async () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "test.png", { type: "image/png" });
+    const id = await stageFileHandoffFromFile(file);
+    const payload = consumeFileHandoff(id);
+    expect(payload?.fileName).toBe("test.png");
+    expect(payload?.bytes.byteLength).toBe(3);
+    expect(handoffPayloadToFile(payload!).name).toBe("test.png");
     expect(consumeFileHandoff(id)).toBeNull();
   });
 
   it("expires after TTL", () => {
     vi.useFakeTimers();
-    const id = stageFileHandoff(makeFile());
+    const id = stageFileHandoffPayload({
+      fileName: "a.png",
+      bytes: new ArrayBuffer(1),
+      lastModified: 0,
+    });
     vi.advanceTimersByTime(FILE_HANDOFF_TTL_MS + 1);
     expect(consumeFileHandoff(id)).toBeNull();
+  });
+
+  it("tracks pending navigation id", () => {
+    markPendingHandoffNavigation("abc");
+    expect(resolveHandoffId(null)).toBe("abc");
+    expect(peekPendingHandoffNavigation()).toBe("abc");
   });
 });
