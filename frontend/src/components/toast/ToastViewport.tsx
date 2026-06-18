@@ -12,8 +12,8 @@ import { cn } from "@/lib/utils";
 import {
   TOAST_MAX_VISIBLE,
   TOAST_VEIL_FADE_PX,
-  toastViewportMaxHeightPx,
 } from "@/lib/toast";
+import { computeToastViewportMaxHeight } from "@/lib/toast/viewport-height";
 
 const useSyncLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -26,6 +26,12 @@ type ToastViewportProps = {
 
 const EDGE_THRESHOLD = 2;
 
+function measureCardHeights(content: HTMLElement): number[] {
+  return Array.from(content.children).map(
+    (node) => (node as HTMLElement).getBoundingClientRect().height
+  );
+}
+
 /**
  * Bounded toast column anchored to the bottom of the stack.
  * Shows up to TOAST_MAX_VISIBLE full cards; additional queued toasts peek
@@ -36,6 +42,7 @@ export function ToastViewport({ children, itemCount, className }: ToastViewportP
   const contentRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const [hasOverflow, setHasOverflow] = useState(false);
+  const [maxHeightPx, setMaxHeightPx] = useState(0);
 
   const scrollToBottom = useCallback((el: HTMLDivElement) => {
     el.scrollTop = el.scrollHeight - el.clientHeight;
@@ -61,7 +68,15 @@ export function ToastViewport({ children, itemCount, className }: ToastViewportP
 
   const syncViewport = useCallback(() => {
     const viewport = viewportRef.current;
-    if (!viewport) return;
+    const content = contentRef.current;
+    if (!viewport || !content) return;
+
+    const heights = measureCardHeights(content);
+    const nextMaxHeight = computeToastViewportMaxHeight(heights, itemCount);
+    if (nextMaxHeight > 0) {
+      setMaxHeightPx(nextMaxHeight);
+    }
+
     if (itemCount > TOAST_MAX_VISIBLE) {
       scrollToBottom(viewport);
     } else {
@@ -112,8 +127,6 @@ export function ToastViewport({ children, itemCount, className }: ToastViewportP
     };
   }, [syncViewport]);
 
-  const maxHeightPx = toastViewportMaxHeightPx(itemCount);
-
   return (
     <div
       className={cn("toast-viewport-shell", className)}
@@ -123,7 +136,7 @@ export function ToastViewport({ children, itemCount, className }: ToastViewportP
       <div
         ref={viewportRef}
         className="toast-viewport"
-        style={{ maxHeight: `${maxHeightPx}px` }}
+        style={maxHeightPx > 0 ? { maxHeight: `${maxHeightPx}px` } : undefined}
         aria-live="polite"
         aria-relevant="additions removals"
       >

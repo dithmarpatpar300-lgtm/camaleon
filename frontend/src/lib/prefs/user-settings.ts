@@ -52,6 +52,13 @@ export type UpdatesPrefs = {
   autoDetectUpdates?: boolean;
 };
 
+export type BatchDefaultSelection = "all" | "none";
+
+export type BatchUniversalPrefs = {
+  /** Initial checkbox state when a batch workspace loads. Default all. */
+  defaultSelection?: BatchDefaultSelection;
+};
+
 export type UserSettings = {
   /** When false, skip auto changelog modal on version bump; What's New remains available. */
   showChangelogOnUpdate: boolean;
@@ -67,6 +74,8 @@ export type UserSettings = {
   offline?: OfflinePrefs;
   /** App update detection prefs. */
   updates?: UpdatesPrefs;
+  /** Batch & Universal transmutator prefs (S7). */
+  batchUniversal?: BatchUniversalPrefs;
 };
 
 const DEFAULTS: UserSettings = {
@@ -106,6 +115,7 @@ export function readUserSettings(): UserSettings {
         : { enabled: false },
     offline: merged.offline,
     updates: merged.updates,
+    batchUniversal: merged.batchUniversal,
   };
 }
 

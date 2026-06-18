@@ -17,6 +17,7 @@ import { NoticesSettingsSection } from "./NoticesSettingsSection";
 import { OfflineSettingsSection } from "./OfflineSettingsSection";
 import { RiskSettingsSection } from "./RiskSettingsSection";
 import { UpdatesSettingsSection } from "./UpdatesSettingsSection";
+import { BatchUniversalSettingsSection } from "./BatchUniversalSettingsSection";
 
 const EXIT_MS = 240;
 
@@ -80,6 +81,8 @@ function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => vo
             <PerformanceSettingsSection drawerOpen={open} />
 
             <NoticesSettingsSection drawerOpen={open} />
+
+            <BatchUniversalSettingsSection drawerOpen={open} />
 
             <OfflineSettingsSection drawerOpen={open} />
 

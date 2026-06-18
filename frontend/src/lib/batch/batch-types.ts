@@ -46,14 +46,17 @@ export function createBatchItemId(): string {
     : `batch-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
+import { getBatchDefaultSelection } from "@/lib/prefs/batch-universal-prefs";
+
 export function batchItemsFromFiles(files: File[]): BatchItem[] {
+  const selected = getBatchDefaultSelection() === "all";
   return files.map((file) => ({
     id: createBatchItemId(),
     file,
     bytes: null,
     prepared: null,
     sourceMeta: null,
-    selected: true,
+    selected,
     status: "queued" as const,
     blockReason: null,
     errorMessage: null,

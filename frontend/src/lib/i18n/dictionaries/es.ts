@@ -263,6 +263,16 @@ const es: Dictionary = {
       welcomeAction: "Mostrar de nuevo",
       welcomeResetDone: "El mensaje de bienvenida aparecera en tu proxima visita al inicio.",
     },
+    batchUniversal: {
+      section: "Batch y Universal",
+      selectionLabel: "Seleccionar archivos al cargar batch",
+      selectionHint:
+        "Al soltar varios archivos en una ruta batch, elige si cada fila empieza marcada o desmarcada.",
+      selectionAll: "Todos",
+      selectionNone: "Ninguno",
+      resetAction: "Restablecer valores",
+      resetDone: "Preferencias de Batch y Universal restauradas.",
+    },
   },
 
   offline: {
