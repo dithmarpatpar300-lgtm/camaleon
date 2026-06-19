@@ -1,7 +1,7 @@
 # Tier 3.6 — Multi-File Batch Transmutation (planning phases 3.6.x)
 
-> **Status:** **3.6.0 shipped** (app **v3.2.3** on `dev`) — 3.6.1+ not started  
-> **Note:** **3.6.x** = planning phase IDs; app semver: 3.6.0 → v3.2.0–v3.2.3, 3.6.1 → v3.2.x (TBD)  
+> **Status:** **3.6.0 shipped** (app **v3.2.3**) · **3.6.1 in progress** — Slice **A+B** shipped (v3.2.4); Slice **C** pending  
+> **Note:** **3.6.x** = planning phase IDs; app semver: 3.6.0 → v3.2.0–v3.2.3, 3.6.1 → v3.2.4+ (Slice C TBD)  
 > **Prerequisite:** Tier 3.5 Universal Transmutator shipped (app **v3.1.x**) — single-file handoff stable  
 > **Doctrine:** **Gradual rollout** — never ship full multi-file in one release; extend orchestration without breaking single-file paths  
 > **Related:** `tier3_5_universal_transmutator_plan.md`, `docs/LIMIT_PIPELINE.md`, `docs/planning/risk_mode_analysis.md`, `docs/SPEC.md`
@@ -423,7 +423,7 @@ When `items.length === 1`, render **existing** `StagedWorkspace` / flow — no b
 | Phase | App tag (TBD) | Deliverable | Exit gate |
 |-------|---------------|-------------|-----------|
 | **3.6.0** | **v3.2.3** ✅ | Multi-drop on **tool routes** only; batch workspace; shared options; select / Transmute / Transmute all; **sequential** transmute; **per-file download**; raster allowlist; batch UX polish + cache redownload | 5 PNG on png-to-jpg → select 3 → 3 downloads |
-| **3.6.1** | v3.2.x (TBD) | Universal multi-drop; **cohort partition** UI; batch handoff; remaining cohorts stay on home | 4 PNG + 1 SVG → pick PNG cohort → batch on png-to-jpg |
+| **3.6.1** | **v3.2.4** partial ✅ | **Slice A+B:** Universal homogeneous multi-drop; `buildCohorts`; batch handoff; mixed-format **hint toast** only. **Slice C:** cohort picker UI — pending | 5 PNG on home → batch on png-to-jpg; 4 PNG + 1 SVG → hint (not picker yet) |
 | **3.6.2** | v3.2.x (TBD) | ZIP export of batch results; begin GIF/TIFF/ICO **per-row** options | ZIP 5 files; TIFF batch with page picker per row |
 | **3.6.3** | v3.2.x (TBD) | SVG batch; aggregate RAM warnings; mobile batch caps; Risk copy polish | 5× large files sequential on mobile without tab kill |
 | **3.6.4+** | v3.2.x | Optional: drag-reorder, retry failed only, IndexedDB handoff | Product-led |
@@ -453,13 +453,34 @@ When `items.length === 1`, render **existing** `StagedWorkspace` / flow — no b
 
 ### 14.2 Phase 3.6.1
 
+**3.6.1 is split into implementation slices** (not separate tier phases):
+
+| Slice | Scope | Status | App version |
+|-------|--------|--------|-------------|
+| **A** | `buildCohorts`, `batch-handoff` (`?batch=`), `TransmutationPanel` batch consumer, `universal-matrix` cohort types | ✅ Shipped | **v3.2.4** |
+| **B** | Universal **homogeneous** multi-drop (same format → output picker → batch handoff); mixed-format **toast hint** (no picker) | ✅ Shipped | **v3.2.4** |
+| **C** | Universal **mixed-format cohort picker** (`UniversalCohortPicker`); remaining cohorts stay on home; session store | ⏳ Pending | TBD |
+
+Slice **C** completes phase **3.6.1**. Until then, 3.6.1 exit gate (§13) is **not** fully met.
+
+#### Slice A+B (shipped)
+
 | File | Action |
 |------|--------|
-| `lib/tools/universal-matrix.ts` | `buildCohorts(files)`, `commonToolsForCohort` |
-| `lib/tools/universal-matrix.test.ts` | Mixed-family fixtures |
-| `components/transmute/UniversalTransmutator.tsx` | Multi-drop + cohort picker |
-| `components/transmute/UniversalCohortPicker.tsx` | New |
-| `lib/transmutation/batch-handoff` integration | Wire universal → tool route |
+| `lib/tools/universal-matrix.ts` | `buildCohorts(files)`, `toolsForCohortOutput`, `intersectToolsForFiles` |
+| `lib/tools/universal-matrix.test.ts` | Cohort + batch filter fixtures |
+| `lib/batch/batch-handoff.ts` | Stage/consume multi-file handoff |
+| `lib/universal/universal-drop.ts` | `resolveUniversalDrop`, `batchOutputToolsForCohort` |
+| `components/transmute/UniversalTransmutator.tsx` | Multi-drop homogeneous + mixed hint |
+| `components/transmute/TransmutationPanel.tsx` | Consume `?batch=` |
+
+#### Slice C (pending)
+
+| File | Action |
+|------|--------|
+| `components/transmute/UniversalCohortPicker.tsx` | New — card per cohort |
+| `components/transmute/UniversalTransmutator.tsx` | Mixed drop → picker (not toast-only) |
+| `lib/universal/` or session store | Remaining cohorts on home after handoff |
 
 ### 14.3 Phase 3.6.2+
 
@@ -523,14 +544,15 @@ Tier 3.6 **supersedes** that behavior in controlled phases on batch-enabled tool
 
 | App version | Tier phase | Branch | Notes |
 |-------------|------------|--------|-------|
-| **v3.2.1** | 3.6.0 core | `dev` | 14 raster slugs; camera JPEG 512 KiB scan; batch decode validation |
-| **v3.2.4** | 3.6.1 A+B | `dev` | Universal homogeneous multi-drop; batch-handoff; buildCohorts; mixed-format hint |
-| **v3.2.3** | 3.6.0 **complete** | `dev` | Batch UX (initial gate, encode-only rerun, cache redownload, hints); `commitItems` sync fix |
+| **v3.2.8** | — | `dev` | S7 Priority A (batch select-all default); adaptive toasts; responsive toast cap (2 mobile / 3 desktop); Universal cohort file list UI |
 | **v3.2.7** | — | `dev` | App updates (3.2.5–3.2.6), toast system, floating notices, modal blur/toast veil hotfixes |
 | **v3.2.6** | — | `dev` | Settings auto-detect updates + Check now |
 | **v3.2.5** | — | `dev` | App update module, AppUpdateNotice pill, deep refresh |
+| **v3.2.4** | 3.6.1 **A+B** | `dev` | Universal homogeneous multi-drop; batch-handoff; buildCohorts; mixed-format hint |
+| **v3.2.3** | 3.6.0 **complete** | `dev` | Batch UX (initial gate, encode-only rerun, cache redownload, hints); `commitItems` sync fix |
+| **v3.2.1** | 3.6.0 core | `dev` | 14 raster slugs; camera JPEG 512 KiB scan; batch decode validation |
 
-**Next:** Tier **3.6.1** Slice C — Universal mixed-format cohort picker (see §14.2). **Then:** Settings **S7** Batch & Universal prefs (see `settings_panel_plan.md`).
+**Next:** Tier **3.6.1 Slice C** — Universal mixed-format cohort picker (completes §13 exit gate). **Then:** Settings **S7** remaining prefs (`mixedFormatPolicy`, multi-drop toggle). **Later:** **3.6.2** ZIP + GIF/TIFF per-row; **3.6.3** SVG batch.
 
 ---
 

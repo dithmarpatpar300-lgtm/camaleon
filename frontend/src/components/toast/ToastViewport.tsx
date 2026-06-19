@@ -10,10 +10,10 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 import {
-  TOAST_MAX_VISIBLE,
   TOAST_VEIL_FADE_PX,
   toastViewportMaxHeightPx,
 } from "@/lib/toast";
+import { useToastMaxVisible } from "@/lib/toast/use-toast-max-visible";
 
 const useSyncLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -32,6 +32,7 @@ const EDGE_THRESHOLD = 2;
  * through a top mask (PanelScrollFade-style — no overlay rectangle).
  */
 export function ToastViewport({ children, itemCount, className }: ToastViewportProps) {
+  const maxVisible = useToastMaxVisible();
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -41,38 +42,41 @@ export function ToastViewport({ children, itemCount, className }: ToastViewportP
     el.scrollTop = el.scrollHeight - el.clientHeight;
   }, []);
 
-  const applyMask = useCallback((viewport: HTMLDivElement, count: number) => {
-    const max = viewport.scrollHeight - viewport.clientHeight;
-    const clipped = max > EDGE_THRESHOLD;
-    const shouldPeek = count > TOAST_MAX_VISIBLE && clipped;
+  const applyMask = useCallback(
+    (viewport: HTMLDivElement, count: number, visibleCap: number) => {
+      const max = viewport.scrollHeight - viewport.clientHeight;
+      const clipped = max > EDGE_THRESHOLD;
+      const shouldPeek = count > visibleCap && clipped;
 
-    if (!shouldPeek) {
-      viewport.style.webkitMaskImage = "none";
-      viewport.style.maskImage = "none";
-      setHasOverflow(false);
-      return;
-    }
+      if (!shouldPeek) {
+        viewport.style.webkitMaskImage = "none";
+        viewport.style.maskImage = "none";
+        setHasOverflow(false);
+        return;
+      }
 
-    const mask = `linear-gradient(to bottom, transparent 0, #000 ${TOAST_VEIL_FADE_PX}px, #000 100%)`;
-    viewport.style.webkitMaskImage = mask;
-    viewport.style.maskImage = mask;
-    setHasOverflow(true);
-  }, []);
+      const mask = `linear-gradient(to bottom, transparent 0, #000 ${TOAST_VEIL_FADE_PX}px, #000 100%)`;
+      viewport.style.webkitMaskImage = mask;
+      viewport.style.maskImage = mask;
+      setHasOverflow(true);
+    },
+    []
+  );
 
   const syncViewport = useCallback(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
-    if (itemCount > TOAST_MAX_VISIBLE) {
+    if (itemCount > maxVisible) {
       scrollToBottom(viewport);
     } else {
       viewport.scrollTop = 0;
     }
-    applyMask(viewport, itemCount);
-  }, [applyMask, itemCount, scrollToBottom]);
+    applyMask(viewport, itemCount, maxVisible);
+  }, [applyMask, itemCount, maxVisible, scrollToBottom]);
 
   useSyncLayoutEffect(() => {
     syncViewport();
-  }, [syncViewport, itemCount, children]);
+  }, [syncViewport, itemCount, children, maxVisible]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -112,13 +116,13 @@ export function ToastViewport({ children, itemCount, className }: ToastViewportP
     };
   }, [syncViewport]);
 
-  const maxHeightPx = toastViewportMaxHeightPx(itemCount);
+  const maxHeightPx = toastViewportMaxHeightPx(itemCount, maxVisible);
 
   return (
     <div
       className={cn("toast-viewport-shell", className)}
       data-toast-overflow={hasOverflow ? "true" : "false"}
-      data-toast-queued={itemCount > TOAST_MAX_VISIBLE ? "true" : "false"}
+      data-toast-queued={itemCount > maxVisible ? "true" : "false"}
     >
       <div
         ref={viewportRef}

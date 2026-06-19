@@ -1075,10 +1075,13 @@ const en: Dictionary = {
         filesSummary: "{format} · {count} files",
         totalSize: "Total ~{size}",
         changeFiles: "Change files",
+        fileCountBadge: "{count} files",
+        filesListAria: "Selected files",
         pickOutput: "Choose batch output · {count} options",
         mixedFormats:
           "{count} format groups detected — drop files of the same format for batch, or wait for mixed-format support.",
-        noBatchRoute: "No batch transmutator supports this many files of this format yet.",
+        noBatchRoute:
+          "Multi-file batch for {format} isn't available yet — drop one file at a time, or use PNG, JPEG, WebP, or AVIF for batch.",
         unsupportedSkipped: "{count} unsupported file(s) skipped ({names}).",
         capped: "Only the first batch limit of files were kept.",
       },

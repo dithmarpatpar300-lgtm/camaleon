@@ -561,6 +561,137 @@ body {
   background-color: rgba(34, 197, 94, 0.07);
 }
 
+/* Universal batch cohort — file list panel */
+.universal-cohort-panel {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-bg-elevated) 72%, transparent) 0%,
+      color-mix(in srgb, var(--color-bg-surface) 88%, transparent) 100%
+    );
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.universal-cohort-panel__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+  padding: 0.75rem 0.875rem;
+}
+
+.universal-cohort-panel__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.universal-cohort-panel__format {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.universal-cohort-panel__count {
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.universal-cohort-panel__header-end {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.universal-cohort-panel__total {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+.universal-cohort-panel__change {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  transition: color 160ms ease;
+}
+
+.universal-cohort-panel__change:hover {
+  color: var(--color-text-primary);
+}
+
+.universal-cohort-panel__list {
+  padding: 0.625rem 0.75rem 0.75rem;
+}
+
+.universal-cohort-file-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  border-radius: 0.625rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 45%, transparent);
+  background: color-mix(in srgb, var(--color-bg-base) 42%, transparent);
+  padding: 0.4375rem 0.625rem;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.universal-cohort-file-row:hover {
+  border-color: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+}
+
+.universal-cohort-file-row__icon {
+  display: flex;
+  height: 1.625rem;
+  width: 1.625rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4375rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 22%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  color: var(--color-accent);
+}
+
+.universal-cohort-file-row__size {
+  max-width: 4.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.light .universal-cohort-panel {
+  box-shadow:
+    0 8px 20px rgba(34, 197, 94, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.light .universal-cohort-file-row {
+  background: color-mix(in srgb, var(--color-bg-surface) 92%, transparent);
+}
+
 /* Unified modal shell (UX-5 — SurfaceDialog) */
 dialog.surface-dialog {
   position: fixed;

@@ -27,6 +27,7 @@ import {
 } from "@/lib/tools/universal-matrix";
 import { cn } from "@/lib/utils";
 import { UniversalOutputPicker } from "./UniversalOutputPicker";
+import { UniversalCohortSummary } from "./UniversalCohortSummary";
 
 type Phase = "idle" | "pick" | "redirecting";
 
@@ -138,7 +139,12 @@ export function UniversalTransmutator() {
       const tools = batchOutputToolsForCohort(nextCohort);
       if (tools.length === 0) {
         reset();
-        toast({ message: t("landing.universal.batch.noBatchRoute"), variant: "info" });
+        toast({
+          message: t("landing.universal.batch.noBatchRoute", {
+            format: nextCohort.familyLabel,
+          }),
+          variant: "info",
+        });
         return;
       }
       if (tools.length === 1) {
@@ -374,56 +380,41 @@ export function UniversalTransmutator() {
 
         {cohort && phase !== "idle" && (
           <div className="mt-4 space-y-4">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border/70 bg-bg-elevated/40 px-3.5 py-2.5">
-              <div className="min-w-0 flex-1">
-                {isBatchDrop ? (
-                  <>
-                    <p className="text-sm font-medium text-text-primary">
-                      {t("landing.universal.batch.filesSummary", {
-                        format: inputFormat ?? "",
-                        count: cohort.files.length,
-                      })}
-                    </p>
-                    <p className="mt-0.5 text-xs text-text-muted">
-                      {t("landing.universal.batch.totalSize", { size: formatBytes(totalBytes) })}
-                    </p>
-                    <ul className="mt-2 max-h-24 space-y-0.5 overflow-y-auto text-xs text-text-muted">
-                      {cohort.files.map((f) => (
-                        <li key={`${f.name}-${f.lastModified}`} className="truncate font-mono">
-                          {f.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <>
-                    <p className="truncate text-sm font-medium text-text-primary">
-                      {cohort.files[0].name}
-                    </p>
-                    <p className="mt-0.5 text-xs text-text-muted">
-                      {inputFormat && (
-                        <span className="font-mono uppercase tracking-wide text-text-secondary">
-                          {inputFormat}
-                        </span>
-                      )}
-                      {inputFormat && " · "}
-                      {formatBytes(cohort.files[0].size)}
-                    </p>
-                  </>
+            {isBatchDrop ? (
+              <UniversalCohortSummary
+                formatLabel={inputFormat ?? ""}
+                files={cohort.files}
+                totalBytes={totalBytes}
+                onChangeFiles={reset}
+                changeDisabled={phase !== "pick"}
+              />
+            ) : (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-border/70 bg-bg-elevated/40 px-3.5 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-text-primary">
+                    {cohort.files[0].name}
+                  </p>
+                  <p className="mt-0.5 text-xs text-text-muted">
+                    {inputFormat && (
+                      <span className="font-mono uppercase tracking-wide text-text-secondary">
+                        {inputFormat}
+                      </span>
+                    )}
+                    {inputFormat && " · "}
+                    {formatBytes(cohort.files[0].size)}
+                  </p>
+                </div>
+                {phase === "pick" && (
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="shrink-0 text-xs font-medium text-text-muted transition-colors hover:text-text-primary"
+                  >
+                    {t("landing.universal.changeFile")}
+                  </button>
                 )}
               </div>
-              {phase === "pick" && (
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="shrink-0 text-xs font-medium text-text-muted transition-colors hover:text-text-primary"
-                >
-                  {isBatchDrop
-                    ? t("landing.universal.batch.changeFiles")
-                    : t("landing.universal.changeFile")}
-                </button>
-              )}
-            </div>
+            )}
 
             {phase === "pick" && (
               <>

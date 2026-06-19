@@ -1075,10 +1075,13 @@ const es: Dictionary = {
         filesSummary: "{format} · {count} archivos",
         totalSize: "Total ~{size}",
         changeFiles: "Cambiar archivos",
+        fileCountBadge: "{count} archivos",
+        filesListAria: "Archivos seleccionados",
         pickOutput: "Elige salida batch · {count} opciones",
         mixedFormats:
           "Se detectaron {count} grupos de formato — suelta archivos del mismo formato para batch; soporte mixto próximamente.",
-        noBatchRoute: "Ningún transmutador batch admite tantos archivos de este formato aún.",
+        noBatchRoute:
+          "El batch multi-archivo para {format} aún no está disponible — suelta un archivo a la vez, o usa PNG, JPEG, WebP o AVIF para batch.",
         unsupportedSkipped: "{count} archivo(s) no compatible(s) omitido(s) ({names}).",
         capped: "Solo se conservó el límite máximo de archivos del batch.",
       },
