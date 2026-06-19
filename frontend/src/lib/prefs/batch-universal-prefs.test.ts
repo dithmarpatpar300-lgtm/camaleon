@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getBatchDefaultSelection,
+  getEffectiveBatchUniversalPrefs,
   resetBatchUniversalPrefs,
   setBatchDefaultSelection,
 } from "./batch-universal-prefs";
@@ -31,20 +32,17 @@ describe("batch-universal-prefs", () => {
 
   it("defaults selection to all", () => {
     expect(getBatchDefaultSelection()).toBe("all");
+    expect(getEffectiveBatchUniversalPrefs().defaultSelection).toBe("all");
   });
 
   it("persists none selection", () => {
     setBatchDefaultSelection("none");
     expect(getBatchDefaultSelection()).toBe("none");
     const raw = localStorage.getItem(USER_SETTINGS_STORAGE_KEY);
-    expect(raw).toBeTruthy();
-    const parsed = JSON.parse(raw!) as {
-      batchUniversal?: { defaultSelection?: string };
-    };
-    expect(parsed.batchUniversal?.defaultSelection).toBe("none");
+    expect(raw).toContain('"defaultSelection":"none"');
   });
 
-  it("reset restores default", () => {
+  it("reset restores factory default", () => {
     setBatchDefaultSelection("none");
     resetBatchUniversalPrefs();
     expect(getBatchDefaultSelection()).toBe("all");

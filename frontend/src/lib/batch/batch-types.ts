@@ -1,6 +1,7 @@
 import type { LimitBlockReason } from "@/lib/transmutation/limit-context";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import type { PreparedFileContext } from "@/lib/transmutation/prepare/types";
+import { getBatchDefaultSelection } from "@/lib/prefs/batch-universal-prefs";
 
 export type BatchItemStatus =
   | "queued"
@@ -45,8 +46,6 @@ export function createBatchItemId(): string {
     ? crypto.randomUUID()
     : `batch-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
-
-import { getBatchDefaultSelection } from "@/lib/prefs/batch-universal-prefs";
 
 export function batchItemsFromFiles(files: File[]): BatchItem[] {
   const selected = getBatchDefaultSelection() === "all";

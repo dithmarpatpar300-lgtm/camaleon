@@ -266,12 +266,11 @@ const en: Dictionary = {
     batchUniversal: {
       section: "Batch & Universal",
       selectionLabel: "Select files on batch load",
-      selectionHint:
-        "When you drop multiple files on a batch tool route, choose whether every row starts checked or unchecked.",
+      selectionHint: "When you drop multiple files on a batch route, start with every row checked or none.",
       selectionAll: "All",
       selectionNone: "None",
-      resetAction: "Reset to defaults",
-      resetDone: "Batch & Universal preferences restored.",
+      resetAction: "Reset to factory",
+      resetDone: "Batch & Universal settings restored to defaults.",
     },
   },
 
@@ -376,6 +375,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v328: {
+        title: "Batch selection default & adaptive toasts",
+        summary:
+          "Choose whether batch rows start selected or cleared in Settings, and toasts now grow with longer messages without clipping.",
+        technical:
+          "batch-universal-prefs.ts (defaultSelection all|none); BatchUniversalSettingsSection S7 slice; batchItemsFromFiles reads pref; toast viewport uncapped for ≤3 items, line-clamp-3 on messages. App v3.2.8.",
+        highlights: {
+          batchSelectionDefault: {
+            title: "Batch select on load",
+            body: "Settings → Batch & Universal — start with all files checked or none when you drop a multi-file batch.",
+          },
+          adaptiveToasts: {
+            title: "Smarter toasts",
+            body: "Long messages wrap up to three lines without a cut-off bottom edge. Queue peek still kicks in from the fourth toast.",
+          },
+        },
+      },
       v327: {
         title: "Toast notifications & UI polish",
         summary:

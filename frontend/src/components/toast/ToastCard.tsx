@@ -59,7 +59,9 @@ export function ToastCard({ message, variant = "info", exiting = false, onDismis
             </svg>
           )}
         </span>
-        <span className="min-w-0 flex-1 line-clamp-3 leading-snug text-text-secondary">{message}</span>
+        <span className="toast-card__message min-w-0 flex-1 leading-snug text-text-secondary">
+          {message}
+        </span>
         {onDismiss && (
           <button
             type="button"

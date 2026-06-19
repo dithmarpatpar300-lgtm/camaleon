@@ -220,11 +220,11 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 - [x] `updates-prefs.ts` + `UpdatesSettingsSection`
 - [x] Auto-detect toggle + Check now + toasts (v3.2.7 toast system)
 
-### S7 — Batch & Universal (in progress)
+### S7 — Batch & Universal (planned)
 
-- [x] `batch-universal-prefs.ts` — `defaultSelection` (all | none)
-- [x] `BatchUniversalSettingsSection` + wire `batchItemsFromFiles`
-- [ ] `universalMultiDrop`, `mixedFormatPolicy`, aggregate warning toggles
+- [x] `batch-universal-prefs.ts` — **defaultSelection** (all | none) — v3.2.8
+- [x] `BatchUniversalSettingsSection` — select on load — v3.2.8
+- [ ] `universalMultiDrop`, `mixedFormatPolicy` — before Slice C
 
 ---
 

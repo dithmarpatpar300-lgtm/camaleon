@@ -1274,6 +1274,14 @@ dialog.whats-new-drawer {
   gap: var(--toast-gap);
 }
 
+.toast-card__message {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
 .toast-card--entering {
   animation: toastEnter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -1299,7 +1307,7 @@ dialog.whats-new-drawer {
   from {
     opacity: 1;
     transform: translateY(0);
-    max-height: 12rem;
+    max-height: 5rem;
   }
   to {
     opacity: 0;

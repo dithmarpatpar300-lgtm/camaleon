@@ -1,4 +1,4 @@
-import type { BatchUniversalPrefs, BatchDefaultSelection } from "./user-settings";
+import type { BatchDefaultSelection, BatchUniversalPrefs } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
 
 export type { BatchDefaultSelection } from "./user-settings";

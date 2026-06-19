@@ -265,13 +265,12 @@ const es: Dictionary = {
     },
     batchUniversal: {
       section: "Batch y Universal",
-      selectionLabel: "Seleccionar archivos al cargar batch",
-      selectionHint:
-        "Al soltar varios archivos en una ruta batch, elige si cada fila empieza marcada o desmarcada.",
-      selectionAll: "Todos",
-      selectionNone: "Ninguno",
-      resetAction: "Restablecer valores",
-      resetDone: "Preferencias de Batch y Universal restauradas.",
+      selectionLabel: "Seleccion al cargar batch",
+      selectionHint: "Al soltar varios archivos en una ruta batch, empieza con todas las filas marcadas o ninguna.",
+      selectionAll: "Todas",
+      selectionNone: "Ninguna",
+      resetAction: "Restablecer fabrica",
+      resetDone: "Ajustes de Batch y Universal restaurados.",
     },
   },
 
@@ -376,6 +375,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v328: {
+        title: "Seleccion batch y toasts adaptativos",
+        summary:
+          "Elige en Ajustes si las filas batch empiezan marcadas o vacias, y los toasts crecen con mensajes largos sin recortarse abajo.",
+        technical:
+          "batch-universal-prefs.ts (defaultSelection all|none); BatchUniversalSettingsSection S7; batchItemsFromFiles lee pref; viewport toast sin tope para ≤3 items, line-clamp-3 en mensajes. App v3.2.8.",
+        highlights: {
+          batchSelectionDefault: {
+            title: "Seleccion al cargar batch",
+            body: "Ajustes → Batch y Universal — empieza con todos los archivos marcados o ninguno al soltar un batch multi-archivo.",
+          },
+          adaptiveToasts: {
+            title: "Toasts mas inteligentes",
+            body: "Mensajes largos ocupan hasta tres lineas sin borde inferior cortado. El peek en cola sigue desde el cuarto toast.",
+          },
+        },
+      },
       v327: {
         title: "Toasts y pulido de UI",
         summary:

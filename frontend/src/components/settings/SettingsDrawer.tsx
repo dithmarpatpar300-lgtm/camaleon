@@ -82,13 +82,13 @@ function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => vo
 
             <NoticesSettingsSection drawerOpen={open} />
 
-            <BatchUniversalSettingsSection drawerOpen={open} />
-
             <OfflineSettingsSection drawerOpen={open} />
 
             <RiskSettingsSection drawerOpen={open} />
 
             <UpdatesSettingsSection drawerOpen={open} onRequestClose={onRequestClose} />
+
+            <BatchUniversalSettingsSection drawerOpen={open} />
 
             <p className="px-1 text-center font-mono text-[10px] tabular-nums text-text-muted/80">
               {t("settings.versionFootnote", { version: APP_VERSION })}
