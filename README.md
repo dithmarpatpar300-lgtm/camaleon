@@ -2,17 +2,18 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.2.8** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.2.9** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v3.2.8)
+## What works today (v3.2.9)
 
 | Capability | Status |
 |------------|--------|
-| **Twenty-one active tools** | Tiers 1–2 + AVIF + SVG — `/transmute/[slug]` per conversion |
+| **Twenty-five active tools** | Tiers 1–2 + AVIF + SVG + **optimize** (compress/resize) — `/transmute/[slug]` |
 | **Universal transmutator** | Home-page drop zone — pick output format, handoff to any tool (**v3.1.x**, Tier 3.5) |
-| **Multi-file batch** | Drop N images on **14 raster routes** — shared options, per-row select, sequential transmute (**v3.2.0–3.2.3**, Tier 3.6.0) |
+| **Mixed-format cohorts** | Drop mixed formats on home → per-group picker; remaining cohorts persist (**v3.2.9**, Tier 3.6.1 C) |
+| **Multi-file batch** | Drop N images on **19 batch routes** — shared options, ZIP or individual download (**v3.2.0–3.2.9**, Tier 3.6) |
 | **Universal homogeneous batch** | Drop N files of the **same format** on home → batch handoff to matching tool (**v3.2.4**, Tier 3.6.1 A+B) |
 | **JPG / JPEG ↔ PNG** | Lossless PNG compression (1–9); JPEG quality (1–100); alpha flatten |
 | **WebP suite** | WebP→PNG/JPG; PNG/JPEG→WebP (lossless WebP) |
@@ -27,7 +28,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Operational Notice Rail** | Adaptive context for all tools — slow-path, limits, fidelity (**v2.3.0**) |
 | **Adaptive limits** | Byte zones (50 MB soft / 150 MB hard), 40 MP pixel cap, oversize consent |
 | **Risk mode (S6)** | Settings opt-out for soft limits and consent prompts (**v2.3.8**) |
-| **Settings panel** | S1–S4 (defaults, performance, notices/prepare) · **S5** offline cache · **S6** risk · **S7** batch prefs (**v3.2.8**) |
+| **Settings panel** | S1–S4 (defaults, performance, notices/prepare) · **S5** offline cache · **S6** risk · **S7** batch & universal prefs (**v3.2.9**) |
 | **PWA / offline shell** | Serwist SW, installable app, opt-in Wasm toolkit download (**v3.0.0**) |
 | **Smart app updates** | Background version beacon, deep refresh on Live deploys (**v3.2.5–3.2.6**) |
 | **Toast notifications** | FIFO queue, responsive cap (3 desktop / 2 mobile), modal-safe stacking (**v3.2.7**) |
@@ -39,9 +40,9 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
-| **Tests** | 110 Vitest unit tests |
+| **Tests** | 121 Vitest unit tests |
 
-**Latest (v3.2.8):** Settings **S7 Priority A** — choose whether batch rows start all selected or none on load; **adaptive toasts** for long messages. See [docs/releases/v3.2.8.md](docs/releases/v3.2.8.md). **Next:** Universal mixed-format cohort picker (Tier 3.6.1 Slice C). [ROADMAP](docs/ROADMAP.md) · [Tier 3.6 plan](docs/planning/tier3_6_multi_file_plan.md).
+**Latest (v3.2.9):** Universal **mixed-format cohort picker**; batch **ZIP/individual** delivery in Settings; **GIF/TIFF/ICO** per-row batch; **compress & resize** tools (Tier 4a); smarter batch re-download and contextual cancel. See [docs/releases/v3.2.9.md](docs/releases/v3.2.9.md). **Next:** ToolBrowser lanes (Convert vs Optimize). [ROADMAP](docs/ROADMAP.md) · [Tier 3.6 plan](docs/planning/tier3_6_multi_file_plan.md).
 
 ## Core principles
 
@@ -118,7 +119,7 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v3.2.8)
+├── frontend/              # Next.js app (v3.2.9)
 ├── motor_transmutacion/   # Rust workspace (v1.6.0)
 │   ├── core_utils/
 │   ├── transmutador_jpg/         # JPEG → PNG
@@ -159,7 +160,7 @@ camaleon/
 | **Tier 3.6.1 — universal batch** | v3.2.4+ | 🔄 Slice A+B ✅ · **Slice C** (mixed cohorts) ⏳ |
 | **Tier 4a — optimization** | TBD | 📋 Compress, resize (metrics-first) |
 
-Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
+Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Architecture atlas: **[ARCHITECTURE.md](ARCHITECTURE.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 
 ## Contributing
 

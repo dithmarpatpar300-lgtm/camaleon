@@ -23,6 +23,8 @@ type BatchWorkspaceProps = {
   onTransmuteAllReady: () => void;
   onConvertAgain: () => void;
   onReset: () => void;
+  onItemOptionsChange: (id: string, next: TransmutationOptions) => void;
+  batchFromHandoff?: boolean;
   running: boolean;
   runProgress: { current: number; total: number; fileName: string } | null;
   prepareProgress: BatchPrepareProgress | null;
@@ -34,6 +36,7 @@ type BatchWorkspaceProps = {
   selectedDoneCount: number;
   isPreparing: boolean;
   optionsStale: boolean;
+  prepareCacheReady: boolean;
   preparedOptionsReady: boolean;
   optionLabelKey: string;
   preparedOptionValue: string;
@@ -53,6 +56,8 @@ export function BatchWorkspace({
   onTransmuteAllReady,
   onConvertAgain,
   onReset,
+  onItemOptionsChange,
+  batchFromHandoff = false,
   running,
   runProgress,
   prepareProgress,
@@ -64,6 +69,7 @@ export function BatchWorkspace({
   selectedDoneCount,
   isPreparing,
   optionsStale,
+  prepareCacheReady,
   preparedOptionsReady,
   optionLabelKey,
   preparedOptionValue,
@@ -167,7 +173,14 @@ export function BatchWorkspace({
         className="space-y-2 pr-0.5"
       >
         {items.map((item) => (
-          <BatchFileRow key={item.id} item={item} onToggle={onToggleItem} />
+          <BatchFileRow
+            key={item.id}
+            tool={tool}
+            item={item}
+            onToggle={onToggleItem}
+            onItemOptionsChange={onItemOptionsChange}
+            rowPickerDisabled={running}
+          />
         ))}
       </PanelScrollFade>
 
@@ -193,15 +206,17 @@ export function BatchWorkspace({
 
       <div className="flex flex-wrap gap-2 pt-2">
         {allDone ? (
-          <Button
-            className="flex-1 sm:flex-none"
-            disabled={running || selectedDoneCount === 0}
-            onClick={onConvertAgain}
-          >
-            {cacheRedownloadAvailable
-              ? t("panel.batch.downloadAgainCount", { count: selectedDoneCount })
-              : t("panel.batch.convertAgainCount", { count: selectedDoneCount })}
-          </Button>
+          <>
+            <Button
+              className="flex-1 sm:flex-none"
+              disabled={running || selectedDoneCount === 0}
+              onClick={onConvertAgain}
+            >
+              {cacheRedownloadAvailable
+                ? t("panel.batch.downloadAgainCount", { count: selectedDoneCount })
+                : t("panel.batch.convertAgainCount", { count: selectedDoneCount })}
+            </Button>
+          </>
         ) : (
           <>
             <Button
@@ -209,19 +224,25 @@ export function BatchWorkspace({
               disabled={running || transmutableSelectedCount === 0}
               onClick={onTransmuteSelected}
             >
-              {t("panel.batch.transmuteSelected", { count: transmutableSelectedCount })}
+              {prepareCacheReady
+                ? t("panel.batch.downloadSelected", { count: transmutableSelectedCount })
+                : t("panel.batch.transmuteSelected", { count: transmutableSelectedCount })}
             </Button>
             <Button
               variant="subtle"
               disabled={running || readyCount === 0}
               onClick={onTransmuteAllReady}
             >
-              {t("panel.batch.transmuteAll")}
+              {prepareCacheReady
+                ? t("panel.batch.downloadAll")
+                : t("panel.batch.transmuteAll")}
             </Button>
           </>
         )}
         <Button variant="ghost" disabled={running} onClick={onReset}>
-          {t("panel.batch.cancelBatch")}
+          {batchFromHandoff
+            ? t("panel.batch.backToHome")
+            : t("panel.batch.cancelBatch")}
         </Button>
       </div>
     </div>

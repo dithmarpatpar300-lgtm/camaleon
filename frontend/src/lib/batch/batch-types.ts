@@ -1,7 +1,15 @@
 import type { LimitBlockReason } from "@/lib/transmutation/limit-context";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import type { PreparedFileContext } from "@/lib/transmutation/prepare/types";
+import type { TransmutationOptions } from "@/workers/types";
 import { getBatchDefaultSelection } from "@/lib/prefs/batch-universal-prefs";
+import { defaultItemOptionsFromPrepared } from "./batch-per-row-options";
+
+export type BatchItemResult = {
+  bytes: ArrayBuffer;
+  mime: string;
+  extension: string;
+};
 
 export type BatchItemStatus =
   | "queued"
@@ -20,6 +28,10 @@ export type BatchItem = {
   prepared: PreparedFileContext | null;
   /** Denormalized for row UI — survives after prepared is released post-transmute. */
   sourceMeta: SourceImageMeta | null;
+  /** Per-row frame/page/entry overrides (GIF/TIFF/ICO batch). */
+  itemOptions: TransmutationOptions;
+  /** Cached output for ZIP export and re-download. */
+  result: BatchItemResult | null;
   selected: boolean;
   status: BatchItemStatus;
   blockReason: LimitBlockReason | null;
@@ -32,6 +44,8 @@ export type BatchItemPatch = Partial<
     | "bytes"
     | "prepared"
     | "sourceMeta"
+    | "itemOptions"
+    | "result"
     | "selected"
     | "status"
     | "blockReason"
@@ -55,6 +69,8 @@ export function batchItemsFromFiles(files: File[]): BatchItem[] {
     bytes: null,
     prepared: null,
     sourceMeta: null,
+    itemOptions: {},
+    result: null,
     selected,
     status: "queued" as const,
     blockReason: null,

@@ -15,6 +15,7 @@ export const WASM_CRATES = [
   "transmutador_avif",
   "transmutador_avif_encode",
   "transmutador_svg",
+  "transmutador_optimize",
 ] as const satisfies readonly WasmCrate[];
 
 export type WasmCrateName = (typeof WASM_CRATES)[number];

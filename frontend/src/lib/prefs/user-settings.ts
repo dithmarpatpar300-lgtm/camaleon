@@ -54,9 +54,20 @@ export type UpdatesPrefs = {
 
 export type BatchDefaultSelection = "all" | "none";
 
+export type MixedFormatPolicy = "hint" | "picker";
+
+/** How batch results are delivered after a successful run. */
+export type BatchDownloadMode = "individual" | "zip";
+
 export type BatchUniversalPrefs = {
   /** Initial checkbox state when a batch workspace loads. Default all. */
   defaultSelection?: BatchDefaultSelection;
+  /** Allow multi-file drops on the universal transmutator. Default true. */
+  universalMultiDrop?: boolean;
+  /** Mixed-format drops: hint toast only vs cohort picker. Default picker. */
+  mixedFormatPolicy?: MixedFormatPolicy;
+  /** Per-file downloads vs one ZIP archive. Default individual. */
+  batchDownloadMode?: BatchDownloadMode;
 };
 
 export type UserSettings = {

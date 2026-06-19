@@ -32,7 +32,11 @@ describe("batch-universal-prefs", () => {
 
   it("defaults selection to all", () => {
     expect(getBatchDefaultSelection()).toBe("all");
-    expect(getEffectiveBatchUniversalPrefs().defaultSelection).toBe("all");
+    const prefs = getEffectiveBatchUniversalPrefs();
+    expect(prefs.defaultSelection).toBe("all");
+    expect(prefs.universalMultiDrop).toBe(true);
+    expect(prefs.mixedFormatPolicy).toBe("picker");
+    expect(prefs.batchDownloadMode).toBe("individual");
   });
 
   it("persists none selection", () => {

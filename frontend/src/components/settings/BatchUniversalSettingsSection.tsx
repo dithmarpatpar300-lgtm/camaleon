@@ -7,12 +7,18 @@ import {
   getEffectiveBatchUniversalPrefs,
   resetBatchUniversalPrefs,
   setBatchDefaultSelection,
+  setBatchDownloadMode,
+  setMixedFormatPolicy,
+  setUniversalMultiDrop,
   type BatchDefaultSelection,
+  type BatchDownloadMode,
+  type MixedFormatPolicy,
 } from "@/lib/prefs/batch-universal-prefs";
 import { cn } from "@/lib/utils";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsRow } from "./SettingsRow";
 import { SettingsModeSegment } from "./SettingsModeSegment";
+import { SettingsSwitch } from "./SettingsSwitch";
 
 type Props = {
   drawerOpen: boolean;
@@ -21,29 +27,52 @@ type Props = {
 export function BatchUniversalSettingsSection({ drawerOpen }: Props) {
   const { t } = useI18n();
   const { toast } = useToast();
-  const [defaultSelection, setDefaultSelection] = useState<BatchDefaultSelection>(
-    () => getEffectiveBatchUniversalPrefs().defaultSelection
-  );
+  const [prefs, setPrefs] = useState(() => getEffectiveBatchUniversalPrefs());
 
   useEffect(() => {
     if (!drawerOpen) return;
-    setDefaultSelection(getEffectiveBatchUniversalPrefs().defaultSelection);
+    setPrefs(getEffectiveBatchUniversalPrefs());
   }, [drawerOpen]);
 
   const persistSelection = useCallback((next: BatchDefaultSelection) => {
     setBatchDefaultSelection(next);
-    setDefaultSelection(next);
+    setPrefs(getEffectiveBatchUniversalPrefs());
+  }, []);
+
+  const persistMultiDrop = useCallback((next: boolean) => {
+    setUniversalMultiDrop(next);
+    setPrefs(getEffectiveBatchUniversalPrefs());
+  }, []);
+
+  const persistMixedPolicy = useCallback((next: MixedFormatPolicy) => {
+    setMixedFormatPolicy(next);
+    setPrefs(getEffectiveBatchUniversalPrefs());
+  }, []);
+
+  const persistDownloadMode = useCallback((next: BatchDownloadMode) => {
+    setBatchDownloadMode(next);
+    setPrefs(getEffectiveBatchUniversalPrefs());
   }, []);
 
   const handleReset = useCallback(() => {
     resetBatchUniversalPrefs();
-    setDefaultSelection(getEffectiveBatchUniversalPrefs().defaultSelection);
+    setPrefs(getEffectiveBatchUniversalPrefs());
     toast({ message: t("settings.batchUniversal.resetDone"), variant: "success" });
   }, [t, toast]);
 
   const selectionOptions = [
     { value: "all" as const, label: t("settings.batchUniversal.selectionAll") },
     { value: "none" as const, label: t("settings.batchUniversal.selectionNone") },
+  ];
+
+  const mixedPolicyOptions = [
+    { value: "picker" as const, label: t("settings.batchUniversal.mixedPolicyPicker") },
+    { value: "hint" as const, label: t("settings.batchUniversal.mixedPolicyHintOnly") },
+  ];
+
+  const downloadModeOptions = [
+    { value: "individual" as const, label: t("settings.batchUniversal.downloadIndividual") },
+    { value: "zip" as const, label: t("settings.batchUniversal.downloadZip") },
   ];
 
   const actionButtonClass = cn(
@@ -57,16 +86,52 @@ export function BatchUniversalSettingsSection({ drawerOpen }: Props) {
       <SettingsRow
         label={t("settings.batchUniversal.selectionLabel")}
         description={t("settings.batchUniversal.selectionHint")}
-        bordered={false}
       >
         <SettingsModeSegment
-          value={defaultSelection}
+          value={prefs.defaultSelection}
           options={selectionOptions}
           onChange={persistSelection}
           ariaLabel={t("settings.batchUniversal.selectionLabel")}
         />
       </SettingsRow>
-      <div className="flex justify-end px-1 pt-1">
+
+      <SettingsRow
+        label={t("settings.batchUniversal.multiDropLabel")}
+        description={t("settings.batchUniversal.multiDropHint")}
+      >
+        <SettingsSwitch
+          checked={prefs.universalMultiDrop}
+          onChange={persistMultiDrop}
+          label={t("settings.batchUniversal.multiDropLabel")}
+        />
+      </SettingsRow>
+
+      <SettingsRow
+        label={t("settings.batchUniversal.mixedPolicyLabel")}
+        description={t("settings.batchUniversal.mixedPolicyHint")}
+      >
+        <SettingsModeSegment
+          value={prefs.mixedFormatPolicy}
+          options={mixedPolicyOptions}
+          onChange={persistMixedPolicy}
+          ariaLabel={t("settings.batchUniversal.mixedPolicyLabel")}
+        />
+      </SettingsRow>
+
+      <SettingsRow
+        label={t("settings.batchUniversal.downloadModeLabel")}
+        description={t("settings.batchUniversal.downloadModeHint")}
+        bordered={false}
+      >
+        <SettingsModeSegment
+          value={prefs.batchDownloadMode}
+          options={downloadModeOptions}
+          onChange={persistDownloadMode}
+          ariaLabel={t("settings.batchUniversal.downloadModeLabel")}
+        />
+      </SettingsRow>
+
+      <div className="flex justify-end px-4 py-3">
         <button type="button" onClick={handleReset} className={actionButtonClass}>
           {t("settings.batchUniversal.resetAction")}
         </button>

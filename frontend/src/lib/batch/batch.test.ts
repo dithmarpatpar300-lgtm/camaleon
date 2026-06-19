@@ -31,10 +31,12 @@ describe("partitionFilesForTool", () => {
 });
 
 describe("batch-tool-allowlist", () => {
-  it("includes png-to-jpg and excludes gif tools", () => {
+  it("includes png-to-jpg and gif-to-png (3.6.2)", () => {
     expect(isBatchEnabledTool("png-to-jpg")).toBe(true);
-    expect(isBatchEnabledTool("gif-to-png")).toBe(false);
+    expect(isBatchEnabledTool("gif-to-png")).toBe(true);
+    expect(isBatchEnabledTool("svg-to-png")).toBe(false);
     expect(listBatchEnabledSlugs()).toContain("png-to-jpg");
+    expect(listBatchEnabledSlugs()).toContain("tiff-to-png");
   });
 });
 

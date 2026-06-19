@@ -22,7 +22,7 @@ describe("universal-matrix", () => {
     const tools = getToolsForFileName("photo.png");
     const outputs = tools.map((t) => t.slug).sort();
     expect(outputs).toEqual(
-      ["png-to-avif", "png-to-ico", "png-to-jpg", "png-to-webp"].sort()
+      ["png-compress", "png-resize", "png-to-avif", "png-to-ico", "png-to-jpg", "png-to-webp"].sort()
     );
   });
 
@@ -45,8 +45,8 @@ describe("universal-matrix", () => {
     const sorted = sortToolsForOutputPicker(tools).map((t) => t.toFormat);
     const pngIdx = sorted.indexOf("PNG");
     const jpgIdx = sorted.indexOf("JPG");
-    expect(pngIdx).toBe(-1);
-    expect(jpgIdx).toBeGreaterThan(-1);
+    expect(pngIdx).toBeGreaterThan(-1);
+    expect(jpgIdx).toBeGreaterThan(pngIdx);
   });
 
   it("buildCohorts groups 4 PNG + 1 SVG into two cohorts", () => {
@@ -89,7 +89,7 @@ describe("universal-matrix", () => {
     const files = [new File([], "a.png"), new File([], "b.png")];
     const slugs = intersectToolsForFiles(files).map((t) => t.slug).sort();
     expect(slugs).toEqual(
-      ["png-to-avif", "png-to-ico", "png-to-jpg", "png-to-webp"].sort()
+      ["png-compress", "png-resize", "png-to-avif", "png-to-ico", "png-to-jpg", "png-to-webp"].sort()
     );
   });
 

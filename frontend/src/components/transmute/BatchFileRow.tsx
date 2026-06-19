@@ -1,24 +1,46 @@
 "use client";
 
 import type { BatchItem } from "@/lib/batch/batch-types";
+import {
+  resolveBatchRowPicker,
+  type BatchRowPickerConfig,
+} from "@/lib/batch/batch-per-row-options";
 import { formatBatchFileDetailsLine } from "@/lib/batch/format-batch-file-details";
+import type { ToolDefinition } from "@/lib/tools/types";
+import type { TransmutationOptions } from "@/workers/types";
 import { DisplayFilename } from "@/components/ui/DisplayFilename";
 import { useI18n } from "@/providers/I18nProvider";
 import { localizeError } from "@/lib/i18n/errors";
 import { cn } from "@/lib/utils";
+import { BatchRowIndexPicker } from "./BatchRowIndexPicker";
 
 type BatchFileRowProps = {
+  tool: ToolDefinition;
   item: BatchItem;
   onToggle: (id: string) => void;
+  onItemOptionsChange: (id: string, next: TransmutationOptions) => void;
+  rowPickerDisabled?: boolean;
 };
 
-export function BatchFileRow({ item, onToggle }: BatchFileRowProps) {
+export function BatchFileRow({
+  tool,
+  item,
+  onToggle,
+  onItemOptionsChange,
+  rowPickerDisabled = false,
+}: BatchFileRowProps) {
   const { t } = useI18n();
   const checkboxEnabled =
     item.status === "ready" ||
     item.status === "needs_consent" ||
     item.status === "done" ||
     item.status === "error";
+
+  const rowPicker: BatchRowPickerConfig | null = resolveBatchRowPicker(
+    tool.slug,
+    item.prepared,
+    item.sourceMeta
+  );
 
   const statusLabel = (() => {
     switch (item.status) {
@@ -77,6 +99,14 @@ export function BatchFileRow({ item, onToggle }: BatchFileRowProps) {
       <div className="min-w-0 flex-1">
         <DisplayFilename name={item.file.name} className="truncate font-medium text-text-primary" />
         <p className="mt-0.5 font-mono text-xs tabular-nums text-text-muted">{detailsLine}</p>
+        {rowPicker && (item.status === "ready" || item.status === "needs_consent") && (
+          <BatchRowIndexPicker
+            config={rowPicker}
+            itemOptions={item.itemOptions}
+            onChange={(next) => onItemOptionsChange(item.id, next)}
+            disabled={rowPickerDisabled}
+          />
+        )}
         <div className="mt-1.5 flex flex-col gap-1">
           <span
             className={cn(

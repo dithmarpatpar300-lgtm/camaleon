@@ -10,7 +10,8 @@ export type TransmutationModule =
   | "transmutador_tga"
   | "transmutador_avif"
   | "transmutador_avif_encode"
-  | "transmutador_svg";
+  | "transmutador_svg"
+  | "transmutador_optimize";
 
 export type OutputExtension = "png" | "jpg" | "webp" | "ico" | "avif";
 
@@ -35,6 +36,8 @@ export type TransmutationOptions = {
   speed?: number;
   /** SVG raster export scale preset (percent or max-edge px). */
   outputScale?: number;
+  /** Tier 4a resize — output scale as percent of source dimensions (10–100). */
+  resizePercent?: number;
   /** Computed SVG raster width (sent to Wasm). */
   outputWidth?: number;
   /** Computed SVG raster height (sent to Wasm). */

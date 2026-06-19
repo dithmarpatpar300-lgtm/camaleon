@@ -4,6 +4,11 @@ import type { TransmutationOptions } from "@/workers/types";
 import type { BatchDecodeEstimateFn } from "./batch-decode-validate";
 import { validateBatchItemDecode } from "./batch-decode-validate";
 import type { BatchItem, BatchItemPatch } from "./batch-types";
+import {
+  defaultItemOptionsFromPrepared,
+  isPerRowBatchTool,
+  mergeBatchItemOptions,
+} from "./batch-per-row-options";
 import { prepareBatchItem } from "./prepare-batch-item";
 
 export type BatchPrepareProgress = {
@@ -98,12 +103,20 @@ export async function runBatchPrepareQueue(
     }
 
     if (validateContext && result.bytes && result.prepared) {
+      const perRow = isPerRowBatchTool(tool.slug);
+      const itemOptions = perRow
+        ? defaultItemOptionsFromPrepared(result.prepared)
+        : undefined;
+      const validateOptions = mergeBatchItemOptions(
+        validateContext.options,
+        itemOptions ?? {}
+      );
       const decodeCheck = await validateBatchItemDecode({
         tool,
         file: item.file,
         bytes: result.bytes,
         prepared: result.prepared,
-        options: validateContext.options,
+        options: validateOptions,
         deviceMemoryGb,
         oversizeConsented: false,
         riskModeEnabled,
@@ -124,10 +137,12 @@ export async function runBatchPrepareQueue(
       }
     }
 
+    const perRow = isPerRowBatchTool(tool.slug);
     onPatch(item.id, {
       bytes: result.bytes,
       prepared: result.prepared,
       sourceMeta: result.prepared?.sourceMeta ?? null,
+      ...(perRow ? { itemOptions: defaultItemOptionsFromPrepared(result.prepared ?? null) } : {}),
       status: "ready",
       blockReason: null,
       errorMessage: null,

@@ -25,10 +25,14 @@ import {
   resolveToolEncodeSource,
 } from "@/lib/batch/build-batch-transmute-meta";
 import { downloadBatchResult } from "@/lib/batch/batch-download";
+import { mergeBatchItemOptions } from "@/lib/batch/batch-per-row-options";
+import { getBatchDownloadMode } from "@/lib/prefs/batch-universal-prefs";
+import { downloadBatchZip } from "@/lib/batch/batch-zip-export";
 import {
   canBatchCacheRedownload,
   type BatchLastRunSnapshot,
 } from "@/lib/batch/batch-last-run";
+import { batchItemsHaveStoredResults } from "@/lib/batch/batch-stored-delivery";
 import {
   isBatchEncodeOnlyTool,
   formatPrimaryBatchOptionValue,
@@ -48,6 +52,8 @@ type BatchTransmutationPanelProps = {
   tool: ToolDefinition;
   files: File[];
   onReset: () => void;
+  /** True when batch was staged from home universal handoff — cancel returns to `/`. */
+  batchFromHandoff?: boolean;
 };
 
 function isTransmutableStatus(
@@ -60,7 +66,12 @@ function isTransmutableStatus(
   return false;
 }
 
-export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmutationPanelProps) {
+export function BatchTransmutationPanel({
+  tool,
+  files,
+  onReset,
+  batchFromHandoff = false,
+}: BatchTransmutationPanelProps) {
   const { t } = useI18n();
   const { toast } = useToast();
   const { transmutate, estimate, ready } = useTransmutationWorker();
@@ -85,6 +96,8 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
 
   const cancelRef = useRef(false);
   const prepareRunIdRef = useRef(0);
+  /** Bumps to cancel in-flight transmute / redownload loops (navigation, reset, supersede). */
+  const activeRunIdRef = useRef(0);
   const bytesByIdRef = useRef(new Map<string, ArrayBuffer>());
   const itemsRef = useRef(items);
   itemsRef.current = items;
@@ -177,6 +190,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
 
   useEffect(() => {
     return () => {
+      activeRunIdRef.current += 1;
       for (const item of itemsRef.current) {
         releaseBatchItemPrepared(item);
       }
@@ -206,6 +220,53 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
   const handleSelectNone = useCallback(() => {
     commitItems((prev) => prev.map((item) => ({ ...item, selected: false })));
   }, [commitItems]);
+
+  const handleItemOptionsChange = useCallback(
+    (id: string, next: import("@/workers/types").TransmutationOptions) => {
+      commitItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                itemOptions: next,
+                result: item.status === "done" ? null : item.result,
+                status: item.status === "done" ? ("ready" as const) : item.status,
+              }
+            : item
+        )
+      );
+    },
+    [commitItems]
+  );
+
+  const deliverBatchOutputs = useCallback(
+    (
+      completedItems: BatchItem[],
+      usedNames: Set<string>
+    ): void => {
+      const mode = getBatchDownloadMode();
+      if (mode === "zip" && completedItems.length >= 2) {
+        downloadBatchZip(completedItems, `camaleon-${tool.slug}`);
+        toast({
+          message: t("panel.batch.zipDone", { count: completedItems.length }),
+          variant: "success",
+        });
+        return;
+      }
+
+      for (const item of completedItems) {
+        if (!item.result) continue;
+        downloadBatchResult(
+          item.result.bytes,
+          item.file.name,
+          item.result.mime,
+          item.result.extension,
+          usedNames
+        );
+      }
+    },
+    [t, toast, tool.slug]
+  );
 
   const handleBatchOversizeConsent = useCallback(() => {
     setOversizeConsented(true);
@@ -247,6 +308,36 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     []
   );
 
+  const runStoredResultDelivery = useCallback(
+    async (queue: BatchItem[]) => {
+      if (queue.length === 0) return;
+
+      const runId = ++activeRunIdRef.current;
+      setPhase("running");
+      setRunProgress({
+        current: queue.length,
+        total: queue.length,
+        fileName: queue[queue.length - 1]?.file.name ?? "",
+      });
+
+      await Promise.resolve();
+      if (activeRunIdRef.current !== runId) return;
+
+      const usedNames = new Set<string>();
+      deliverBatchOutputs(queue, usedNames);
+
+      if (activeRunIdRef.current !== runId) return;
+
+      setRunProgress(null);
+      setPhase("staged");
+      toast({
+        message: t("panel.batch.cachedDownloadSummary", { count: queue.length }),
+        variant: "success",
+      });
+    },
+    [deliverBatchOutputs, t, toast]
+  );
+
   const runTransmute = useCallback(
     async (selectedOnly: boolean) => {
       if (!ready) {
@@ -264,6 +355,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         return;
       }
 
+      const runId = ++activeRunIdRef.current;
       setPhase("running");
       setRunProgress(null);
       setLastRunSummary(null);
@@ -272,9 +364,13 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       const usedNames = new Set<string>();
       let completed = 0;
       let skipped = 0;
+      let cacheHits = 0;
       const completedIdentities: string[] = [];
+      const completedItems: BatchItem[] = [];
 
       for (let i = 0; i < queue.length; i++) {
+        if (activeRunIdRef.current !== runId) return;
+
         const live = itemsRef.current.find((row) => row.id === queue[i].id) ?? queue[i];
         const prepared = live.prepared ?? minimalBatchPreparedContext(live.sourceMeta);
         const inputBytes = await resolveItemBytesAsync(live);
@@ -336,7 +432,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
           live.file,
           prepared,
           tool,
-          options,
+          mergeBatchItemOptions(options, live.itemOptions),
           effectiveOutputExtension,
           encodeSource,
           fileProfile,
@@ -346,36 +442,36 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         );
 
         try {
+          const itemOptions = mergeBatchItemOptions(options, live.itemOptions);
           const response = await transmutate(
             tool.module,
             inputBytes,
-            options,
+            itemOptions,
             meta,
             effectiveOutputExtension,
             encodeSource
           );
 
+          if (activeRunIdRef.current !== runId) return;
+
           if (response.ok && response.bytes) {
-            downloadBatchResult(
-              response.bytes,
-              live.file.name,
-              response.mime!,
-              response.extension!,
-              usedNames
-            );
+            if (response.cacheHit) cacheHits++;
             completed++;
             completedIdentities.push(buildFileIdentity(live.file));
+            const doneItem: BatchItem = {
+              ...live,
+              status: "done",
+              selected: false,
+              errorMessage: null,
+              result: {
+                bytes: response.bytes!,
+                mime: response.mime!,
+                extension: response.extension!,
+              },
+            };
+            completedItems.push(doneItem);
             commitItems((prev) =>
-              prev.map((row) =>
-                row.id === live.id
-                  ? {
-                      ...row,
-                      status: "done",
-                      selected: false,
-                      errorMessage: null,
-                    }
-                  : row
-              )
+              prev.map((row) => (row.id === live.id ? doneItem : row))
             );
           } else {
             const errMsg = !response.ok ? response.error : "transmute_failed";
@@ -393,6 +489,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
             );
           }
         } catch (err) {
+          if (activeRunIdRef.current !== runId) return;
           const raw = extractWasmError(err, t("panel.unexpectedError"));
           commitItems((prev) =>
             prev.map((row) =>
@@ -404,10 +501,13 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         }
       }
 
+      if (activeRunIdRef.current !== runId) return;
+
       setRunProgress(null);
       setLastRunSummary({ done: completed, total: queue.length });
 
       if (completed > 0) {
+        deliverBatchOutputs(completedItems, usedNames);
         setLastRunSnapshot({
           options: { ...options },
           fileIdentities: completedIdentities,
@@ -427,8 +527,11 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       }
 
       setPhase("staged");
+      const allCached = cacheHits === completed;
       toast({
-        message: t("panel.batch.doneSummary", { done: completed, total: queue.length }),
+        message: allCached
+          ? t("panel.batch.cachedDownloadSummary", { count: completed })
+          : t("panel.batch.doneSummary", { done: completed, total: queue.length }),
         variant: "success",
       });
     },
@@ -437,6 +540,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       needsElevatedConsent,
       buildQueue,
       resolveItemBytesAsync,
+      deliverBatchOutputs,
       toast,
       t,
       deviceMemoryGb,
@@ -453,6 +557,9 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
 
   const handlePanelReset = useCallback(() => {
     cancelRef.current = true;
+    activeRunIdRef.current += 1;
+    setRunProgress(null);
+    setPhase("staged");
     setLastRunSnapshot(null);
     setPreparedOptions(null);
     for (const item of itemsRef.current) {
@@ -476,6 +583,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       return;
     }
 
+    const runId = ++activeRunIdRef.current;
     setPhase("running");
     setRunProgress(null);
     releaseFramePreviewSessions();
@@ -483,8 +591,11 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     const usedNames = new Set<string>();
     let completed = 0;
     let cacheHits = 0;
+    const completedItems: BatchItem[] = [];
 
     for (let i = 0; i < queue.length; i++) {
+      if (activeRunIdRef.current !== runId) return;
+
       const item = queue[i];
       setRunProgress({ current: i + 1, total: queue.length, fileName: item.file.name });
 
@@ -514,7 +625,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         item.file,
         prepared,
         tool,
-        options,
+        mergeBatchItemOptions(options, item.itemOptions),
         effectiveOutputExtension,
         encodeSource,
         fileProfile,
@@ -524,30 +635,38 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       );
 
       try {
+        const itemOptions = mergeBatchItemOptions(options, item.itemOptions);
         const response = await transmutate(
           tool.module,
           inputBytes,
-          options,
+          itemOptions,
           meta,
           effectiveOutputExtension,
           encodeSource
         );
 
+        if (activeRunIdRef.current !== runId) return;
+
         if (response.ok && response.bytes) {
           if (response.cacheHit) cacheHits++;
-          downloadBatchResult(
-            response.bytes,
-            item.file.name,
-            response.mime!,
-            response.extension!,
-            usedNames
-          );
+          const doneItem: BatchItem = {
+            ...item,
+            result: {
+              bytes: response.bytes,
+              mime: response.mime!,
+              extension: response.extension!,
+            },
+          };
+          completedItems.push(doneItem);
           completed++;
         }
       } catch {
+        if (activeRunIdRef.current !== runId) return;
         // Row stays done; user can change options and full re-convert.
       }
     }
+
+    if (activeRunIdRef.current !== runId) return;
 
     setRunProgress(null);
     setPhase("staged");
@@ -556,6 +675,8 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
       toast({ message: t("panel.batch.cacheRedownloadMiss"), variant: "info" });
       return;
     }
+
+    deliverBatchOutputs(completedItems, usedNames);
 
     toast({
       message:
@@ -576,6 +697,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     effectiveOutputExtension,
     encodeSource,
     transmutate,
+    deliverBatchOutputs,
   ]);
 
   const handleConvertAgain = useCallback(() => {
@@ -593,9 +715,11 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     }
 
     const selectedIdentities = selectedDone.map((item) => buildFileIdentity(item.file));
-    if (
-      canBatchCacheRedownload(lastRunSnapshot, options, selectedIdentities)
-    ) {
+    if (canBatchCacheRedownload(lastRunSnapshot, options, selectedIdentities)) {
+      if (batchItemsHaveStoredResults(selectedDone)) {
+        void runStoredResultDelivery(selectedDone);
+        return;
+      }
       void runCachedRedownload();
       return;
     }
@@ -646,6 +770,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     ready,
     startPrepareQueue,
     runCachedRedownload,
+    runStoredResultDelivery,
     runTransmute,
     options,
     lastRunSnapshot,
@@ -705,6 +830,8 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
     () => batchOptionsStale(preparedOptions, options),
     [preparedOptions, options]
   );
+
+  const prepareCacheReady = preparedOptions != null && !optionsStale;
 
   const optionLabelKey = primaryBatchOptionLabelKey(tool);
   const preparedOptionValue = preparedOptions
@@ -782,6 +909,8 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         onTransmuteAllReady={() => void runTransmute(false)}
         onConvertAgain={handleConvertAgain}
         onReset={handlePanelReset}
+        onItemOptionsChange={handleItemOptionsChange}
+        batchFromHandoff={batchFromHandoff}
         running={workspaceBusy}
         runProgress={runProgress}
         prepareProgress={initialPrepareComplete && isPreparing ? prepareProgress : null}
@@ -793,6 +922,7 @@ export function BatchTransmutationPanel({ tool, files, onReset }: BatchTransmuta
         selectedDoneCount={selectedDoneCount}
         isPreparing={isPreparing}
         optionsStale={optionsStale}
+        prepareCacheReady={prepareCacheReady}
         preparedOptionsReady={preparedOptions != null}
         optionLabelKey={optionLabelKey}
         preparedOptionValue={preparedOptionValue}

@@ -14,6 +14,11 @@ const BATCH_ENABLED_SLUGS = new Set([
   "avif-to-jpg",
   "tga-to-png",
   "png-to-ico",
+  "gif-to-png",
+  "gif-to-jpg",
+  "tiff-to-png",
+  "tiff-to-jpg",
+  "ico-to-png",
 ]);
 
 export function isBatchEnabledTool(slug: string): boolean {

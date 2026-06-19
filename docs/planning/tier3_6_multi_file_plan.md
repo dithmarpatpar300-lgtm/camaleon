@@ -1,6 +1,6 @@
 # Tier 3.6 — Multi-File Batch Transmutation (planning phases 3.6.x)
 
-> **Status:** **3.6.0 shipped** (app **v3.2.3**) · **3.6.1 in progress** — Slice **A+B** shipped (v3.2.4); Slice **C** pending · **v3.2.8 on `main`**
+> **Status:** **3.6.0 shipped** (app **v3.2.3**) · **3.6.1 complete** (v3.2.9 Slice C) · **3.6.2 shipped** (v3.2.9) · **v3.2.9 on `main`**
 > **Note:** **3.6.x** = planning phase IDs; app semver: 3.6.0 → v3.2.0–v3.2.3, 3.6.1 → v3.2.4+ (Slice C TBD)  
 > **Prerequisite:** Tier 3.5 Universal Transmutator shipped (app **v3.1.x**) — single-file handoff stable  
 > **Doctrine:** **Gradual rollout** — never ship full multi-file in one release; extend orchestration without breaking single-file paths  
@@ -423,7 +423,8 @@ When `items.length === 1`, render **existing** `StagedWorkspace` / flow — no b
 | Phase | App tag (TBD) | Deliverable | Exit gate |
 |-------|---------------|-------------|-----------|
 | **3.6.0** | **v3.2.3** ✅ | Multi-drop on **tool routes** only; batch workspace; shared options; select / Transmute / Transmute all; **sequential** transmute; **per-file download**; raster allowlist; batch UX polish + cache redownload | 5 PNG on png-to-jpg → select 3 → 3 downloads |
-| **3.6.1** | **v3.2.4** partial ✅ | **Slice A+B:** Universal homogeneous multi-drop; `buildCohorts`; batch handoff; mixed-format **hint toast** only. **Slice C:** cohort picker UI — pending | 5 PNG on home → batch on png-to-jpg; 4 PNG + 1 SVG → hint (not picker yet) |
+| **3.6.1** | **v3.2.9** ✅ | **Slice C:** cohort picker UI + session store. **Slices A+B:** v3.2.4 | Mixed drop → cohort cards → per-group handoff |
+| **3.6.2** | **v3.2.9** ✅ | ZIP export via Settings pref; GIF/TIFF/ICO per-row pickers | ZIP 5 files; TIFF batch with page picker per row |
 | **3.6.2** | v3.2.x (TBD) | ZIP export of batch results; begin GIF/TIFF/ICO **per-row** options | ZIP 5 files; TIFF batch with page picker per row |
 | **3.6.3** | v3.2.x (TBD) | SVG batch; aggregate RAM warnings; mobile batch caps; Risk copy polish | 5× large files sequential on mobile without tab kill |
 | **3.6.4+** | v3.2.x | Optional: drag-reorder, retry failed only, IndexedDB handoff | Product-led |
@@ -544,7 +545,8 @@ Tier 3.6 **supersedes** that behavior in controlled phases on batch-enabled tool
 
 | App version | Tier phase | Branch | Notes |
 |-------------|------------|--------|-------|
-| **v3.2.8** | — | `dev` | S7 Priority A (batch select-all default); adaptive toasts; responsive toast cap (2 mobile / 3 desktop); Universal cohort file list UI |
+| **v3.2.9** | 3.6.1 **C** + **3.6.2** + 4a | `main` | UniversalCohortPicker; cohort-session; batch ZIP pref; GIF/TIFF/ICO per-row; transmutador_optimize; batch re-download fixes; contextual cancel |
+| **v3.2.8** | — | `main` | S7 Priority A (batch select-all default); adaptive toasts; responsive toast cap (2 mobile / 3 desktop); Universal cohort file list UI |
 | **v3.2.7** | — | `dev` | App updates (3.2.5–3.2.6), toast system, floating notices, modal blur/toast veil hotfixes |
 | **v3.2.6** | — | `dev` | Settings auto-detect updates + Check now |
 | **v3.2.5** | — | `dev` | App update module, AppUpdateNotice pill, deep refresh |
@@ -552,7 +554,7 @@ Tier 3.6 **supersedes** that behavior in controlled phases on batch-enabled tool
 | **v3.2.3** | 3.6.0 **complete** | `dev` | Batch UX (initial gate, encode-only rerun, cache redownload, hints); `commitItems` sync fix |
 | **v3.2.1** | 3.6.0 core | `dev` | 14 raster slugs; camera JPEG 512 KiB scan; batch decode validation |
 
-**Next:** Tier **3.6.1 Slice C** — Universal mixed-format cohort picker (completes §13 exit gate). **Then:** Settings **S7** remaining prefs (`mixedFormatPolicy`, multi-drop toggle). **Later:** **3.6.2** ZIP + GIF/TIFF per-row; **3.6.3** SVG batch.
+**Next:** **3.6.3** SVG batch; aggregate RAM warnings; mobile caps. **UX-4a** ToolBrowser Convert vs Optimize lanes.
 
 ---
 

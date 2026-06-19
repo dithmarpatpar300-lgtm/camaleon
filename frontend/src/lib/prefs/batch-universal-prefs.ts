@@ -1,7 +1,12 @@
-import type { BatchDefaultSelection, BatchUniversalPrefs } from "./user-settings";
+import type {
+  BatchDefaultSelection,
+  BatchDownloadMode,
+  BatchUniversalPrefs,
+  MixedFormatPolicy,
+} from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
 
-export type { BatchDefaultSelection } from "./user-settings";
+export type { BatchDefaultSelection, BatchDownloadMode, MixedFormatPolicy } from "./user-settings";
 
 const listeners = new Set<() => void>();
 
@@ -22,6 +27,9 @@ export function getEffectiveBatchUniversalPrefs(): Required<BatchUniversalPrefs>
   const stored = readBatchUniversalPrefs();
   return {
     defaultSelection: stored.defaultSelection ?? "all",
+    universalMultiDrop: stored.universalMultiDrop ?? true,
+    mixedFormatPolicy: stored.mixedFormatPolicy ?? "picker",
+    batchDownloadMode: stored.batchDownloadMode ?? "individual",
   };
 }
 
@@ -38,6 +46,22 @@ export function writeBatchUniversalPrefs(partial: Partial<BatchUniversalPrefs>):
 
 export function setBatchDefaultSelection(value: BatchDefaultSelection): void {
   writeBatchUniversalPrefs({ defaultSelection: value });
+}
+
+export function setUniversalMultiDrop(value: boolean): void {
+  writeBatchUniversalPrefs({ universalMultiDrop: value });
+}
+
+export function setMixedFormatPolicy(value: MixedFormatPolicy): void {
+  writeBatchUniversalPrefs({ mixedFormatPolicy: value });
+}
+
+export function setBatchDownloadMode(value: BatchDownloadMode): void {
+  writeBatchUniversalPrefs({ batchDownloadMode: value });
+}
+
+export function getBatchDownloadMode(): BatchDownloadMode {
+  return getEffectiveBatchUniversalPrefs().batchDownloadMode;
 }
 
 export function resetBatchUniversalPrefs(): void {

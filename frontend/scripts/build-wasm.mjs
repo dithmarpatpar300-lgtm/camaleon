@@ -25,6 +25,7 @@ const crates = [
   "transmutador_avif",
   "transmutador_avif_encode",
   "transmutador_svg",
+  "transmutador_optimize",
 ];
 
 for (const crate of crates) {

@@ -118,6 +118,9 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   const [resizing, setResizing] = useState(false);
   const [showRiskDeactivatedNotice, setShowRiskDeactivatedNotice] = useState(false);
   const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
+  const [batchEntrySource, setBatchEntrySource] = useState<"handoff" | "inline" | null>(
+    null
+  );
 
   const deviceMemoryGb =
     typeof navigator !== "undefined"
@@ -387,19 +390,23 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     }
   }, [tool, t, hardLimit, riskModeEnabled]);
 
-  const enterBatchMode = useCallback((files: File[]) => {
-    prepareIdRef.current += 1;
-    releasePreparedContext(preparedRef.current);
-    preparedRef.current = null;
-    releaseFramePreviewSessions();
-    setPrepared(null);
-    setPendingFile(null);
-    setStaged(null);
-    setResult(null);
-    setStatus("idle");
-    setErrorMessage(null);
-    setBatchFiles(files);
-  }, []);
+  const enterBatchMode = useCallback(
+    (files: File[], source: "handoff" | "inline" = "inline") => {
+      prepareIdRef.current += 1;
+      releasePreparedContext(preparedRef.current);
+      preparedRef.current = null;
+      releaseFramePreviewSessions();
+      setPrepared(null);
+      setPendingFile(null);
+      setStaged(null);
+      setResult(null);
+      setStatus("idle");
+      setErrorMessage(null);
+      setBatchEntrySource(source);
+      setBatchFiles(files);
+    },
+    []
+  );
 
   const handleIncomingFiles = useCallback(
     (incoming: File[]) => {
@@ -476,6 +483,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       prepareIdRef.current += 1;
       prevToolSlugRef.current = tool.slug;
       setBatchFiles(null);
+      setBatchEntrySource(null);
     }
   }, [tool.slug]);
 
@@ -503,7 +511,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         }
 
         const files = batchHandoffPayloadToFiles(payload);
-        handleIncomingFilesRef.current(files);
+        enterBatchMode(files, "handoff");
       }, 0);
 
       return () => {
@@ -727,6 +735,12 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   }, [result, toast, t]);
 
   const handleReset = useCallback(() => {
+    if (batchEntrySource === "handoff" && batchFiles != null) {
+      prepareIdRef.current++;
+      router.replace("/");
+      return;
+    }
+
     prepareIdRef.current++;
     releasePreparedContext(prepared);
     releaseFramePreviewSessions();
@@ -746,7 +760,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setOptions(buildDefaultOptions(tool.optionSpecs, tool));
     metrics.resetMetrics();
     setBatchFiles(null);
-  }, [tool, metrics, prepared]);
+    setBatchEntrySource(null);
+  }, [tool, metrics, prepared, batchEntrySource, batchFiles, router]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true); }, []);
   const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(false); }, []);
@@ -844,6 +859,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
           tool={tool}
           files={batchFiles}
           onReset={handleReset}
+          batchFromHandoff={batchEntrySource === "handoff"}
         />
         <PageDropOverlay active={false} />
       </div>

@@ -89,6 +89,22 @@ const es: Dictionary = {
         title: "SVG a JPG — Camaleon",
         description: "Rasteriza SVG a JPEG en tu navegador. Comprimido para web — local y privado.",
       },
+      "png-compress": {
+        title: "Comprimir PNG — Camaleon",
+        description: "Re-codifica PNG con mayor compresión DEFLATE en tu navegador. Reduce tamaño con métricas.",
+      },
+      "jpg-compress": {
+        title: "Comprimir JPEG — Camaleon",
+        description: "Re-codifica JPEG con menor calidad en tu navegador. Compara el delta de tamaño.",
+      },
+      "png-resize": {
+        title: "Redimensionar PNG — Camaleon",
+        description: "Reduce PNG por porcentaje en tu navegador. Remuestreo Lanczos — local y privado.",
+      },
+      "jpg-resize": {
+        title: "Redimensionar JPEG — Camaleon",
+        description: "Reduce JPEG por porcentaje en tu navegador. Remuestreo Lanczos — local y privado.",
+      },
     },
   },
 
@@ -269,6 +285,16 @@ const es: Dictionary = {
       selectionHint: "Al soltar varios archivos en una ruta batch, empieza con todas las filas marcadas o ninguna.",
       selectionAll: "Todas",
       selectionNone: "Ninguna",
+      multiDropLabel: "Multi-archivo en Universal",
+      multiDropHint: "Permite soltar varios archivos en el transmutador de inicio. Si esta desactivado, solo se usa el primero.",
+      mixedPolicyLabel: "Formatos mixtos",
+      mixedPolicyHint: "Cuando un drop mezcla formatos: mostrar el selector de cohortes o solo un aviso informativo.",
+      mixedPolicyPicker: "Selector de cohortes",
+      mixedPolicyHintOnly: "Solo aviso",
+      downloadModeLabel: "Formato de descarga batch",
+      downloadModeHint: "Tras un batch: guardar cada archivo por separado o en un ZIP.",
+      downloadIndividual: "Archivos sueltos",
+      downloadZip: "Archivo ZIP",
       resetAction: "Restablecer fabrica",
       resetDone: "Ajustes de Batch y Universal restaurados.",
     },
@@ -375,6 +401,31 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v329: {
+        title: "Cohortes universales, batch pulido y optimización",
+        summary:
+          "Los drops de formatos mixtos muestran un selector de cohortes en inicio, el batch gana ajustes de descarga ZIP y re-descargas más inteligentes, y cuatro herramientas nuevas de comprimir/redimensionar en el navegador.",
+        technical:
+          "Tier 3.6.1 Slice C (UniversalCohortPicker, cohort-session); prefs S7 batch (multi-drop, política mixta, modo descarga); Tier 3.6.2 (batch-zip-export, pickers GIF/TIFF/ICO por fila); Tier 4a transmutador_optimize + 4 tools; entrega desde result almacenado + cancelación de runs; cancel batch contextual (handoff → inicio). App v3.2.9 · motor 1.6.0.",
+        highlights: {
+          universalCohorts: {
+            title: "Selector de cohortes mixtas",
+            body: "Suelta PNG + SVG en inicio — cada grupo de formato tiene su tarjeta. Elige salida por grupo; las cohortes restantes permanecen hasta el siguiente handoff.",
+          },
+          batchPolish: {
+            title: "Descargas batch más inteligentes",
+            body: "Elige archivos sueltos o ZIP en Ajustes. Re-descargar usa resultados en caché al instante si las opciones no cambiaron. Cancelar desde handoff de inicio vuelve a la página principal.",
+          },
+          optimizeTools: {
+            title: "Comprimir y redimensionar",
+            body: "Cuatro herramientas nuevas — comprimir PNG/JPEG y redimensionar — 100% en el navegador con el motor optimize. Misma privacidad, sin subida.",
+          },
+          settingsS7: {
+            title: "Ajustes Batch y Universal",
+            body: "Toggle multi-archivo, política de formatos mixtos (selector vs aviso) y formato de descarga batch — todo en Ajustes → Batch y Universal.",
+          },
+        },
+      },
       v328: {
         title: "Seleccion batch y toasts adaptativos",
         summary:
@@ -1078,8 +1129,13 @@ const es: Dictionary = {
         fileCountBadge: "{count} archivos",
         filesListAria: "Archivos seleccionados",
         pickOutput: "Elige salida batch · {count} opciones",
-        mixedFormats:
-          "Se detectaron {count} grupos de formato — suelta archivos del mismo formato para batch; soporte mixto próximamente.",
+        chooseOutput: "Elegir salida →",
+        mixedGroupsTitle: "{fileCount} archivos en {groupCount} grupos",
+        mixedGroupsHint:
+          "Cada grupo se convierte por separado. Elige uno para continuar — los demas permanecen aqui hasta que los proceses.",
+        dismissGroups: "Limpiar todo",
+        mixedFormatsHint:
+          "Se detectaron {count} grupos de formato — suelta archivos del mismo formato para batch, o activa el selector de cohortes en Ajustes.",
         noBatchRoute:
           "El batch multi-archivo para {format} aún no está disponible — suelta un archivo a la vez, o usa PNG, JPEG, WebP o AVIF para batch.",
         unsupportedSkipped: "{count} archivo(s) no compatible(s) omitido(s) ({names}).",
@@ -1165,7 +1221,9 @@ const es: Dictionary = {
       selectAll: "Seleccionar todo",
       selectNone: "Quitar selección",
       transmuteSelected: "Transmutar {count}",
+      downloadSelected: "Descargar {count}",
       transmuteAll: "Transmutar todos los listos",
+      downloadAll: "Descargar todos los listos",
       preparing: "Preparando {current} / {total}",
       processing: "{current} / {total} · {fileName}",
       rowReady: "Listo",
@@ -1211,8 +1269,15 @@ const es: Dictionary = {
         "Caché expirada o no disponible — cambia un ajuste o usa Volver a convertir para reprocesar.",
       transmuteAnother: "Transmutar más",
       cancelBatch: "Cancelar batch",
+      backToHome: "Volver al inicio",
       aggregateWarning: "Tamaño total ~{size} — los archivos se procesan de uno en uno.",
       elevatedBatchBody: "{count} archivo(s) necesitan confirmación de archivo grande antes de transmutar.",
+      rowFrame: "Fotograma",
+      rowPage: "Página",
+      rowEntry: "Tamaño de icono",
+      downloadZip: "Descargar ZIP",
+      zipNeedTwo: "Se necesitan al menos dos archivos convertidos para un ZIP.",
+      zipDone: "ZIP descargado ({count} archivos).",
     },
     stagedFileSize: "{size}",
     changeFile: "Cambiar",
@@ -1537,6 +1602,62 @@ const es: Dictionary = {
           lowerLabel: "Mas rapido",
           upperLabel: "Mas pequeno",
           presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+      },
+    },
+    "png-compress": {
+      actionTitle: "Comprimir PNG",
+      description: "Re-codifica mismo formato — ajusta DEFLATE y compara tamano antes de descargar.",
+      fidelityHint: "Reempaquetado sin perdida — los pixeles no cambian; solo la compresion del contenedor.",
+      options: {
+        compression: {
+          label: "Compresion PNG",
+          hint: "Mayor = archivo mas pequeno, encode mas lento.",
+          lowerLabel: "Mas rapido",
+          upperLabel: "Mas pequeno",
+          presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+      },
+    },
+    "jpg-compress": {
+      actionTitle: "Comprimir JPEG",
+      description: "Re-codifica mismo formato con menor calidad — reduccion de tamano con metricas.",
+      fidelityHint: "Con perdida — cada re-codificacion anade generacion de perdida.",
+      options: {
+        quality: {
+          label: "Calidad JPEG",
+          hint: "Menor calidad = archivo mas pequeno.",
+          lowerLabel: "Mas pequeno",
+          upperLabel: "Mas fiel",
+          presets: { web: "Web", balanced: "Balanceado", high: "Alto" },
+        },
+      },
+    },
+    "png-resize": {
+      actionTitle: "Redimensionar PNG",
+      description: "Reduce por porcentaje con Lanczos — salida PNG.",
+      fidelityHint: "El remuestreo preserva dimensiones proporcionales al reducir.",
+      options: {
+        resizePercent: {
+          label: "Escala de salida",
+          hint: "Porcentaje del ancho y alto de origen (proporcion bloqueada).",
+          lowerLabel: "Mas pequeno",
+          upperLabel: "Mas grande",
+          presets: { "25%": "25%", "50%": "50%", "75%": "75%" },
+        },
+      },
+    },
+    "jpg-resize": {
+      actionTitle: "Redimensionar JPEG",
+      description: "Reduce por porcentaje con Lanczos — salida JPEG.",
+      fidelityHint: "Remuestreo mas encode JPEG — salida con perdida.",
+      options: {
+        resizePercent: {
+          label: "Escala de salida",
+          hint: "Porcentaje del ancho y alto de origen (proporcion bloqueada).",
+          lowerLabel: "Mas pequeno",
+          upperLabel: "Mas grande",
+          presets: { "25%": "25%", "50%": "50%", "75%": "75%" },
         },
       },
     },

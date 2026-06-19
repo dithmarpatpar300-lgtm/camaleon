@@ -5,10 +5,11 @@
 > - **Chief Architect (Cursor)** owns this document.
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
+> - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.2.8  
-**Last updated:** 2026-06-18  
-**Status:** v3.2.8 on `main`/`dev` (Tier 3.6 batch + universal homogeneous multi-drop + S7 Priority A) · Engine v1.6.0 · 21 tools
+**Version:** 3.2.9  
+**Last updated:** 2026-06-19  
+**Status:** v3.2.9 on `main`/`dev` (Tier 3.6.1 complete · 3.6.2 batch ZIP/per-row · Tier 4a optimize · S7 batch prefs) · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -26,7 +27,7 @@ Camaleon is an **image platform** first. Expansion follows a fixed priority ladd
 |--------|------|------------|--------|
 | **A** | **Image transmutation** | Format-to-format raster conversion (decode → policy → encode) | ✅ **Shipped** — Tiers 1–2 + Semantic Alpha Engine (v1.11.0) |
 | **B** | **Modern image formats** | AVIF, SVG→raster | ✅ **Tier 3 complete (v3.0.1)** — AVIF + SVG + PWA offline shell |
-| **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | 📋 **Tier 4a** — planned after Tier 3 |
+| **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | ✅ **Tier 4a shipped (v3.2.9)** — `transmutador_optimize` + 4 tools |
 | **D** | **Image editing** | Crop, rotate, flip on raster (Wasm + canvas UI) | 📋 **Tier 4b** — planned after Tier 4a |
 | **E** | **Documents** | PDF merge/split, PDF→images — non-raster domain | 🚫 **Deferred** — far horizon; separate planning doc required |
 
@@ -34,7 +35,7 @@ Camaleon is an **image platform** first. Expansion follows a fixed priority ladd
 
 **Competitor mapping:** suites like [Convertify](https://herramientas-imagen.pages.dev/en/) bundle conversion + optimization + editing + documents in one landing. Camaleon **matches depth on image transmutation first**, then adds optimization and editing on the **same Rust/Wasm engine**, and treats **documents as a later product line** — not v2.0 scope.
 
-**Registry implication:** `ToolDefinition.category` today is `"image"` only. Future values `"optimize"` and `"edit"` are allowed in Tier 4. `"document"` requires a new SPEC section and ROADMAP phase before any implementation.
+**Registry implication:** `ToolDefinition.category` is `"image"` (convert) or `"optimize"` (Tier 4a). `"edit"` is reserved for Tier 4b. `"document"` requires a new SPEC section and ROADMAP phase before any implementation.
 
 ### 1.2 Architectural Principles
 
@@ -1422,6 +1423,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.2.9-tier-36-4a | 2026-06-19 | Chief Architect | §1.3 Ladder C shipped; Tier 3.6.1 Slice C + 3.6.2 batch ZIP/per-row; `transmutador_optimize`; S7 batch prefs; 25 tools | `docs/releases/v3.2.9.md` |
 | 3.0.1-offline-mode | 2026-06-11 | Chief Architect | §7.13 S5 Offline mode; connectivity UX; force-offline architecture | `docs/releases/v3.0.1.md` |
 | 3.0.0-pwa-s5 | 2026-06-11 | Chief Architect | §7.13 S5 offline toolkit; NFR-9 offline shell; Serwist PWA; app v3.0.0; Tier 3 complete | `docs/releases/v3.0.0.md` |
 | 2.3.8-risk-hotfix | 2026-06-11 | Chief Architect | §7.13 S6 polish; overlay scrollbar instant drag; limit pipeline hotfixes; app v2.3.8 | `docs/releases/v2.3.8.md` |
@@ -1590,16 +1592,20 @@ Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm b
 
 **Go/no-go criteria for each:** spike delivers working Wasm build + `.wasm` ≤ 4 MB (≤ 3 MB preferred per NFR-7) + `cargo test --workspace` passes.
 
-### 12.5 Tier 4a — Image Optimization (v2.x — After Tier 3)
+### 12.5 Tier 4a — Image Optimization (✅ v3.2.9)
 
 **Ladder C (§1.3).** Same raster domain; not format swap — re-encode or resample with metrics-first UX (estimate before apply).
 
-| Tool | Implementation notes |
-|------|---------------------|
-| **Compress** | Same-format re-encode (PNG compression 1–9, JPEG quality 1–100); size delta as primary metric |
-| **Resize** | `imageops::resize`; width/height + aspect-ratio lock; filter type (Nearest/Lanczos/Triangle) |
+| Tool | Slug | Crate | Status |
+|------|------|-------|--------|
+| **PNG compress** | `png-compress` | `transmutador_optimize` | ✅ v3.2.9 |
+| **JPEG compress** | `jpg-compress` | `transmutador_optimize` | ✅ v3.2.9 |
+| **PNG resize** | `png-resize` | `transmutador_optimize` | ✅ v3.2.9 |
+| **JPEG resize** | `jpg-resize` | `transmutador_optimize` | ✅ v3.2.9 |
 
-**Governance:** introduces `ToolDefinition.category: "optimize"`. ToolGrid / Command Palette grouping update required in same release.
+**Governance:** `ToolDefinition.category: "optimize"`. ToolBrowser lane split (Convert vs Optimize) deferred to UX-4a — tools ship under `/transmute/[slug]` with optimize copy.
+
+**Release:** `docs/releases/v3.2.9.md`
 
 ### 12.6 Tier 4b — Image Editing (v2.x — After Tier 4a)
 

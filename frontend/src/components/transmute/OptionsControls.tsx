@@ -69,7 +69,9 @@ function SliderControl({
   const valueLabel =
     spec.key === "iconSize"
       ? `${value}px`
-      : spec.key === "outputScale" &&
+      : spec.key === "resizePercent"
+        ? `${value}%`
+        : spec.key === "outputScale" &&
           allValues.outputWidth != null &&
           allValues.outputHeight != null
         ? `${allValues.outputWidth} × ${allValues.outputHeight}`

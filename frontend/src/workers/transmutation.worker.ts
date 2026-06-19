@@ -187,6 +187,13 @@ type EstimateSvgToJpgSizeFn = (
   bg_b: number
 ) => number;
 
+type RecompressPngFn = (input: Uint8Array, compression: number) => Uint8Array;
+type RecompressJpegFn = (input: Uint8Array, quality: number) => Uint8Array;
+type ResizePngFn = (input: Uint8Array, resize_percent: number) => Uint8Array;
+type ResizeJpegFn = (input: Uint8Array, resize_percent: number) => Uint8Array;
+type EstimatePngRecompressSizeFn = (input: Uint8Array, compression: number) => number;
+type EstimateJpegRecompressSizeFn = (input: Uint8Array, quality: number) => number;
+
 type SessionLimitFn = (maxBytes: number) => void;
 type RiskModeFn = (enabled: boolean) => void;
 
@@ -305,6 +312,15 @@ let estimateSvgToPngSize: EstimateSvgToPngSizeFn | null = null;
 let transmutarSvgToJpg: TransmutarSvgToJpgFn | null = null;
 let estimateSvgToJpgSize: EstimateSvgToJpgSizeFn | null = null;
 
+let setOptimizeSessionLimit: SessionLimitFn | null = null;
+let setOptimizeRiskMode: RiskModeFn | null = null;
+let recompressPng: RecompressPngFn | null = null;
+let recompressJpeg: RecompressJpegFn | null = null;
+let resizePng: ResizePngFn | null = null;
+let resizeJpeg: ResizeJpegFn | null = null;
+let estimatePngRecompressSize: EstimatePngRecompressSizeFn | null = null;
+let estimateJpegRecompressSize: EstimateJpegRecompressSizeFn | null = null;
+
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
 
@@ -322,6 +338,7 @@ let initTgaPromise: Promise<void> | null = null;
 let initAvifPromise: Promise<void> | null = null;
 let initAvifEncodePromise: Promise<void> | null = null;
 let initSvgPromise: Promise<void> | null = null;
+let initOptimizePromise: Promise<void> | null = null;
 
 async function initJpgWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_jpg");
@@ -529,6 +546,30 @@ function ensureTgaWasmInitialized(): Promise<void> {
   return initTgaPromise;
 }
 
+async function initOptimizeWasm(): Promise<void> {
+  const module = await importWasmGlue("transmutador_optimize");
+  await module.default();
+  recompressPng = wasmExport<RecompressPngFn>(module, "recompress_png");
+  recompressJpeg = wasmExport<RecompressJpegFn>(module, "recompress_jpeg");
+  resizePng = wasmExport<ResizePngFn>(module, "resize_png");
+  resizeJpeg = wasmExport<ResizeJpegFn>(module, "resize_jpeg");
+  estimatePngRecompressSize = wasmExport<EstimatePngRecompressSizeFn>(
+    module,
+    "estimate_png_recompress_size"
+  );
+  estimateJpegRecompressSize = wasmExport<EstimateJpegRecompressSizeFn>(
+    module,
+    "estimate_jpeg_recompress_size"
+  );
+  setOptimizeSessionLimit = pickSessionLimit(module);
+  setOptimizeRiskMode = pickRiskMode(module);
+}
+
+function ensureOptimizeWasmInitialized(): Promise<void> {
+  if (!initOptimizePromise) initOptimizePromise = initOptimizeWasm();
+  return initOptimizePromise;
+}
+
 async function initAvifWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_avif");
   await module.default();
@@ -676,6 +717,10 @@ type RouteFlags = {
   isSvgToPng: boolean;
   isSvgToJpg: boolean;
   isEncode: boolean;
+  isOptimize: boolean;
+  isOptimizePng: boolean;
+  isOptimizeJpg: boolean;
+  isOptimizeResize: boolean;
   encodeSource?: EncodeSource;
 };
 
@@ -713,6 +758,10 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     req.module === "transmutador_svg" && (req.outputExtension ?? "png") === "png";
   const isSvgToJpg =
     req.module === "transmutador_svg" && req.outputExtension === "jpg";
+  const isOptimize = req.module === "transmutador_optimize";
+  const isOptimizePng = isOptimize && (req.outputExtension ?? "png") === "png";
+  const isOptimizeJpg = isOptimize && req.outputExtension === "jpg";
+  const isOptimizeResize = isOptimize && req.options?.resizePercent != null;
   const encodeSource =
     isEncode || isAvifEncode ? req.encodeSource : undefined;
   return {
@@ -735,6 +784,10 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     isSvgToPng,
     isSvgToJpg,
     isEncode,
+    isOptimize,
+    isOptimizePng,
+    isOptimizeJpg,
+    isOptimizeResize,
     encodeSource,
   };
 }
@@ -745,6 +798,12 @@ function resolveMimeExtension(route: RouteFlags): { mime: string; extension: Out
   }
   if (route.isAvifEncode) {
     return { mime: "image/avif", extension: "avif" };
+  }
+  if (route.isOptimize && route.isOptimizeJpg) {
+    return { mime: "image/jpeg", extension: "jpg" };
+  }
+  if (route.isOptimize && route.isOptimizePng) {
+    return { mime: "image/png", extension: "png" };
   }
   if (
     route.isWebpToJpg ||
@@ -891,6 +950,25 @@ function runFullEncode(
     }
     if (!transmutarPngToAvifWithOptions) throw new Error("Wasm module not initialized");
     return transmutarPngToAvifWithOptions(input, quality, speed);
+  }
+  if (route.isOptimize) {
+    const resizePercent = opts?.resizePercent;
+    if (route.isOptimizeResize && resizePercent != null) {
+      if (route.isOptimizePng) {
+        if (!resizePng) throw new Error("Wasm module not initialized");
+        return resizePng(input, resizePercent);
+      }
+      if (!resizeJpeg) throw new Error("Wasm module not initialized");
+      return resizeJpeg(input, resizePercent);
+    }
+    if (route.isOptimizePng) {
+      const compression = opts?.compression ?? 6;
+      if (!recompressPng) throw new Error("Wasm module not initialized");
+      return recompressPng(input, compression);
+    }
+    const quality = opts?.quality ?? 85;
+    if (!recompressJpeg) throw new Error("Wasm module not initialized");
+    return recompressJpeg(input, quality);
   }
   if (route.isJpg) {
     if (opts?.compression != null && transmutarJpgWithCompression) {
@@ -1078,6 +1156,25 @@ function runSizeEstimate(
     if (!estimatePngToAvifSize) throw new Error("Wasm estimate export not initialized");
     return estimatePngToAvifSize(input, quality, speed);
   }
+  if (route.isOptimize) {
+    const resizePercent = opts?.resizePercent;
+    if (route.isOptimizeResize && resizePercent != null) {
+      if (route.isOptimizePng) {
+        if (!resizePng) throw new Error("Wasm estimate export not initialized");
+        return resizePng(input, resizePercent).byteLength;
+      }
+      if (!resizeJpeg) throw new Error("Wasm estimate export not initialized");
+      return resizeJpeg(input, resizePercent).byteLength;
+    }
+    if (route.isOptimizePng) {
+      const compression = opts?.compression ?? 6;
+      if (!estimatePngRecompressSize) throw new Error("Wasm estimate export not initialized");
+      return estimatePngRecompressSize(input, compression);
+    }
+    const quality = opts?.quality ?? 85;
+    if (!estimateJpegRecompressSize) throw new Error("Wasm estimate export not initialized");
+    return estimateJpegRecompressSize(input, quality);
+  }
   if (route.isJpg) {
     const compression = opts?.compression ?? 6;
     if (!estimateJpgToPngSize) throw new Error("Wasm estimate export not initialized");
@@ -1143,6 +1240,10 @@ function applySessionInputLimit(route: RouteFlags, maxBytes: number): void {
     setEncodeSessionLimit?.(maxBytes);
     return;
   }
+  if (route.isOptimize) {
+    setOptimizeSessionLimit?.(maxBytes);
+    return;
+  }
   setPngSessionLimit?.(maxBytes);
 }
 
@@ -1191,6 +1292,10 @@ function applyRiskMode(route: RouteFlags, enabled: boolean): void {
     setEncodeRiskMode?.(enabled);
     return;
   }
+  if (route.isOptimize) {
+    setOptimizeRiskMode?.(enabled);
+    return;
+  }
   setPngRiskMode?.(enabled);
 }
 
@@ -1208,6 +1313,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
     "transmutador_avif",
     "transmutador_avif_encode",
     "transmutador_svg",
+    "transmutador_optimize",
   ];
   if (!req.module || !knownModules.includes(req.module)) {
     return { id: req.id, ok: false, error: `Unknown module: ${req.module ?? "none"}` };
@@ -1243,6 +1349,8 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
       await ensureAvifEncodeWasmInitialized();
     } else if (route.isSvgToPng || route.isSvgToJpg) {
       await ensureSvgWasmInitialized();
+    } else if (route.isOptimize) {
+      await ensureOptimizeWasmInitialized();
     } else if (route.isEncode) {
       await ensureEncodeWasmInitialized();
     } else {
