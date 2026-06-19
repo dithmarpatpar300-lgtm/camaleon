@@ -11,19 +11,27 @@
 
 ---
 
-## Current Snapshot (2026-06-11)
+## Current Snapshot (2026-06-18)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.0.1** (`dev`) | PWA offline shell + **Offline mode** + Settings **S5** — **21 tools**, Tier 3 complete |
+| **Frontend (app)** | **v3.2.8** (`main` / `dev`) | **21 tools** · Universal transmutator · batch (3.6.0) · universal homogeneous batch (3.6.1 A+B) · PWA · app updates · toasts |
 | **Engine (Rust workspace)** | v1.6.0 | Twelve Wasm crates incl. **`transmutador_svg`** (+ AVIF decode/encode) |
-| **SPEC** | v3.0.1 | NFR-9 offline shell; §7.13 Settings S1–S5 + **S6 Risk** |
+| **SPEC** | v3.2.8 | NFR-9 offline shell; §7.13 Settings S1–S7 (S7 Priority A ✅) |
 
-**v3.0.1** (`dev`): **Offline mode polish** — cache-only toggle, connectivity UX, production QA. Release: `docs/releases/v3.0.1.md`.
+**v3.2.8** (`main`): **Settings S7 Priority A** — batch default selection (all/none on load); adaptive toast heights. Release: `docs/releases/v3.2.8.md`.
 
-**v3.0.0** (`dev`): **PWA / offline shell (Tier 3.4 capstone)** — Serwist SW, Settings S5, offline UX. Release: `docs/releases/v3.0.0.md`. **Tier 4 next** (image optimization).
+**v3.2.4–v3.2.7** (`main`): **Tier 3.6.1 Slice A+B** (universal homogeneous multi-drop, batch handoff) + app updates (v3.2.5–3.2.6) + toast/floating-notice stack (v3.2.7). Releases: `docs/releases/v3.2.4.md`–`v3.2.7.md`.
 
-**v2.3.8** (`main`): **Risk mode (S6)** + hotfixes. Release: `docs/releases/v2.3.8.md`.
+**v3.2.0–v3.2.3** (`main`): **Tier 3.6.0** — multi-file batch on 14 dedicated raster routes. Releases: `docs/releases/v3.2.0.md`–`v3.2.3.md`.
+
+**v3.1.x** (`main`): **Universal transmutator** (Tier 3.5) — home-page format picker + file handoff. Release: `docs/releases/v3.1.1.md`.
+
+**v3.0.0–v3.0.1** (`main`): **PWA / offline shell (Tier 3.4 capstone)** — Serwist SW, Settings S5, offline UX. Releases: `docs/releases/v3.0.0.md`, `v3.0.1.md`. **Tier 3 complete.**
+
+**Next:** **Tier 3.6.1 Slice C** — Universal mixed-format cohort picker (`docs/planning/tier3_6_multi_file_plan.md`). Then **Tier 4a** (image optimization).
+
+**v2.3.8**: **Risk mode (S6)** + hotfixes. Release: `docs/releases/v2.3.8.md`.
 
 **v2.3.7** (internal dev milestone): Risk mode core — superseded by **v2.3.8** release bundle.
 
@@ -287,7 +295,10 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Tier 2 Wave 2** | **v1.10.4** (`main`) | TIFF, ICO, TGA | ✅ **Shipped** — five new tools — `docs/planning/tier2_wave2_plan.md` |
 | **Semantic Alpha Engine** | **v1.11.0** (`main`) | Honest transparency across lossy tools | ✅ **Shipped** — `docs/releases/v1.11.0.md` |
 | **Tier 3** | **v3.0.1** | AVIF ✅, SVG ✅, **PWA offline (3.4)** ✅ | **Complete** — 21 tools, 12 Wasm crates, installable offline PWA — `docs/planning/tier3_plan.md` |
-| **Tier 4a** | v2.x | Compress, Resize | Image **optimization** — same raster domain |
+| **Tier 3.5** | **v3.1.x** | Universal transmutator + handoff | ✅ **Shipped** — `docs/planning/tier3_5_universal_transmutator_plan.md` |
+| **Tier 3.6.0** | **v3.2.0–v3.2.3** | Tool-route batch (14 raster slugs) | ✅ **Shipped** — `docs/planning/tier3_6_multi_file_plan.md` |
+| **Tier 3.6.1** | **v3.2.4+** | Universal homogeneous batch + mixed cohorts | 🔄 **Slice A+B ✅** · **Slice C ⏳** |
+| **Tier 4a** | TBD | Compress, Resize | Image **optimization** — same raster domain |
 | **Tier 4b** | v2.x | Crop, Rotate/Flip, favicon pack | Image **editing** |
 | **Tier 5** | TBD | PDF tools | **Deferred** — documents; separate planning required |
 
@@ -318,6 +329,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-18 | Chief Architect (Cursor) | **v3.2.0–v3.2.8 promoted to `main`:** Tier 3.6 batch + universal homogeneous multi-drop + app updates + toasts + S7 Priority A; README/SPEC/ROADMAP snapshot → v3.2.8 |
 | 2026-06-11 | Chief Architect (Cursor) | **v2.3.1–2.3.4 merged to `main`:** Settings panel S1–S4 (drawer, transmutation defaults, performance overrides, notices/prepare); app v2.3.4; SPEC v2.3.4-settings |
 | 2026-06-08 | Chief Architect (Cursor) | **Semantic Alpha Engine (v1.11 WIP on `dev`):** `core_utils::semantic_alpha`, Wasm assess exports, frontend prepare integration; TIFF opaque RGBA false-positive fixed; Phases 0/4/5 remain before `main` |
 | 2026-06-08 | Chief Architect (Cursor) | **v1.10.2–1.10.4 merged to `main`:** ICO↔PNG (`transmutador_ico`), TGA→PNG (`transmutador_tga`); 15 active tools; Wave 2 tool-complete |

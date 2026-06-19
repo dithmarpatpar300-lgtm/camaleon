@@ -1,6 +1,6 @@
 # Settings / Opciones Panel — System Plan
 
-> **Status:** **S5 shipped** v3.0.0 · **Offline mode** v3.0.1 · **Updates** v3.2.6 · **S4** v2.3.4 · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1  
+> **Status:** **S7 Priority A shipped** v3.2.8 · **S5** v3.0.0 · **Offline mode** v3.0.1 · **Updates** v3.2.6 · **S6 Risk** v2.3.8 · **S4** v2.3.4 · **S3** v2.3.3 · **S2** v2.3.2 · **S1** v2.3.1  
 > **Scope:** User-facing preferences (local-first, `localStorage` only)  
 > **Doctrine:** NFR-1 privacy — no server sync; document keys in `/privacy`  
 > **SPEC anchor:** §7.13 User Settings Panel
@@ -94,19 +94,19 @@ See **`docs/planning/tier3_4_pwa_offline_analysis.md` §6** for full product doc
 
 **Files:** `updates-prefs.ts`, `UpdatesSettingsSection.tsx`, `AppUpdateProvider.tsx`.
 
-### S7 — Batch & Universal (planned, pre–Slice C)
+### S7 — Batch & Universal (🔄 Priority A ✅ v3.2.8 · rest pre–Slice C)
 
-See analysis in Tier 3.6 planning — prefs to ship **before or with Slice C**:
+See analysis in Tier 3.6 planning:
 
-| Setting | Purpose | Default |
-|---------|---------|---------|
-| **Universal multi-drop** | Disable homogeneous multi-file on home | ON |
-| **Select all on batch load** | Initial checkbox state in batch workspace | all |
-| **Mixed format policy** | `hint` (Slice B) → `picker` (Slice C) | hint |
-| **Aggregate size warning** | Warn when total batch bytes exceed threshold | ON |
-| **Unsupported skipped toast** | Toast when files filtered on dedicated route | ON |
+| Setting | Purpose | Default | Status |
+|---------|---------|---------|--------|
+| **Select all on batch load** | Initial checkbox state in batch workspace | all | ✅ v3.2.8 |
+| **Universal multi-drop** | Disable homogeneous multi-file on home | ON | ⏳ Slice C prep |
+| **Mixed format policy** | `hint` (Slice B) → `picker` (Slice C) | hint | ⏳ Slice C |
+| **Aggregate size warning** | Warn when total batch bytes exceed threshold | ON | ⏳ |
+| **Unsupported skipped toast** | Toast when files filtered on dedicated route | ON | ⏳ |
 
-**Files (planned):** `batch-universal-prefs.ts`, `BatchUniversalSettingsSection.tsx`.
+**Files:** `batch-universal-prefs.ts`, `BatchUniversalSettingsSection.tsx` (Priority A shipped).
 
 ---
 
@@ -220,7 +220,7 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 - [x] `updates-prefs.ts` + `UpdatesSettingsSection`
 - [x] Auto-detect toggle + Check now + toasts (v3.2.7 toast system)
 
-### S7 — Batch & Universal (planned)
+### S7 — Batch & Universal (🔄 Priority A ✅ v3.2.8)
 
 - [x] `batch-universal-prefs.ts` — **defaultSelection** (all | none) — v3.2.8
 - [x] `BatchUniversalSettingsSection` — select on load — v3.2.8
@@ -241,4 +241,4 @@ Update `/privacy` legal copy when adding new keys (S1 adds `camaleon-user-settin
 
 ---
 
-*Last updated: 2026-06-11 — Updates v3.2.6 shipped; S7 Batch & Universal planned pre–Slice C.*
+*Last updated: 2026-06-18 — v3.2.8 on `main`; S7 Priority A (defaultSelection) shipped; Slice C prefs pending.*

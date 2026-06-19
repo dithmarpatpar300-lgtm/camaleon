@@ -2,27 +2,35 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v2.3.8** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.2.8** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v2.3.8)
+## What works today (v3.2.8)
 
 | Capability | Status |
 |------------|--------|
+| **Twenty-one active tools** | Tiers 1–2 + AVIF + SVG — `/transmute/[slug]` per conversion |
+| **Universal transmutator** | Home-page drop zone — pick output format, handoff to any tool (**v3.1.x**, Tier 3.5) |
+| **Multi-file batch** | Drop N images on **14 raster routes** — shared options, per-row select, sequential transmute (**v3.2.0–3.2.3**, Tier 3.6.0) |
+| **Universal homogeneous batch** | Drop N files of the **same format** on home → batch handoff to matching tool (**v3.2.4**, Tier 3.6.1 A+B) |
 | **JPG / JPEG ↔ PNG** | Lossless PNG compression (1–9); JPEG quality (1–100); alpha flatten |
 | **WebP suite** | WebP→PNG/JPG; PNG/JPEG→WebP (lossless WebP) |
 | **GIF suite** | GIF→PNG/JPG; frame scrubber; GIF89a compositing; animated preview |
 | **BMP suite** | BMP→PNG/JPG; semantic alpha; growth warnings via Notice Rail |
-| **Settings panel** | S1–**S4** (defaults, performance, notices/prepare) + **S6 Risk mode** (**v2.3.8**) |
-| **Operational Notice Rail** | Adaptive context for all 21 tools — slow-path, limits, fidelity (**v2.3.0**) |
 | **TIFF suite** | TIFF→PNG/JPG; multi-page picker; 16-bit normalization; palette/CMYK rejection |
 | **ICO suite** | ICO/CUR→PNG (multi-size picker); PNG→ICO (16/32/48/256, downscale only) |
 | **TGA suite** | TGA→PNG; raw/RLE; indexed + 32-bit alpha |
-| **AVIF suite** | AVIF→PNG/JPEG decode; PNG/JPEG→AVIF encode; animated frame scrubber; split encode Wasm (**Tier 3**) |
-| **SVG → PNG / JPEG** | Vector rasterize (resvg); output scale presets; alpha-aware PNG; JPEG quality + background (**v2.3.5–2.3.6**, Tier 3.3) |
-| **Twenty-one active tools** | Tiers 1–2 + AVIF + SVG — `/transmute/[slug]` per conversion |
-| **Adaptive limits** | Byte zones (50 MB soft / 150 MB hard), 40 MP pixel cap, oversize consent — **Risk mode** opt-out (**v2.3.8**) |
+| **AVIF suite** | AVIF→PNG/JPEG decode; PNG/JPEG→AVIF encode; animated frame scrubber |
+| **SVG → PNG / JPEG** | Vector rasterize (resvg); output scale presets; alpha-aware PNG |
+| **Semantic Alpha Engine** | Honest transparency detection across lossy → JPEG tools (**v1.11.0**) |
+| **Operational Notice Rail** | Adaptive context for all tools — slow-path, limits, fidelity (**v2.3.0**) |
+| **Adaptive limits** | Byte zones (50 MB soft / 150 MB hard), 40 MP pixel cap, oversize consent |
+| **Risk mode (S6)** | Settings opt-out for soft limits and consent prompts (**v2.3.8**) |
+| **Settings panel** | S1–S4 (defaults, performance, notices/prepare) · **S5** offline cache · **S6** risk · **S7** batch prefs (**v3.2.8**) |
+| **PWA / offline shell** | Serwist SW, installable app, opt-in Wasm toolkit download (**v3.0.0**) |
+| **Smart app updates** | Background version beacon, deep refresh on Live deploys (**v3.2.5–3.2.6**) |
+| **Toast notifications** | FIFO queue, responsive cap (3 desktop / 2 mobile), modal-safe stacking (**v3.2.7**) |
 | **Science imagery** | Client-side downscale (4K–12K presets) for images >40 MP before Wasm |
 | **Memory lifecycle** | Wasm worker recycled when leaving any transmute route (SPA-safe) |
 | **Staged transmutation flow** | Drop → prepare → adjust options → Transmutar → preview + delta → download |
@@ -31,8 +39,9 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
+| **Tests** | 110 Vitest unit tests |
 
-**Latest (v2.3.8):** **Risk mode** (Settings S6) + limit/estimate/notice hotfixes + smooth overlay scrollbar drag. See [docs/releases/v2.3.8.md](docs/releases/v2.3.8.md). **S5 offline** deferred. [ROADMAP](docs/ROADMAP.md).
+**Latest (v3.2.8):** Settings **S7 Priority A** — choose whether batch rows start all selected or none on load; **adaptive toasts** for long messages. See [docs/releases/v3.2.8.md](docs/releases/v3.2.8.md). **Next:** Universal mixed-format cohort picker (Tier 3.6.1 Slice C). [ROADMAP](docs/ROADMAP.md) · [Tier 3.6 plan](docs/planning/tier3_6_multi_file_plan.md).
 
 ## Core principles
 
@@ -46,9 +55,10 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | Layer | Stack |
 |-------|--------|
 | Frontend | Next.js 15 (App Router), TypeScript, Tailwind v4 |
-| Engine | Rust workspace (`image` crate, `wasm-bindgen`) |
+| Engine | Rust workspace (`image` crate, `wasm-bindgen`) — **12 Wasm crates** |
 | Bridge | `wasm-pack` → `frontend/public/wasm/` |
 | Concurrency | Web Workers |
+| Offline | Serwist Service Worker (`@serwist/next`) |
 
 ## Building Wasm
 
@@ -65,7 +75,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 cd frontend && npm run build:wasm
 ```
 
-Artifacts: `frontend/public/wasm/transmutador_{jpg,png,webp,encode,gif,bmp}/` (gitignored; rebuild after engine changes).
+Artifacts: `frontend/public/wasm/transmutador_*/` (gitignored; rebuild after engine changes).
 
 ## Development
 
@@ -91,7 +101,7 @@ cd motor_transmutacion && cargo test --workspace
 **Verify frontend:**
 
 ```bash
-cd frontend && npm run build
+cd frontend && npm test && npm run build
 ```
 
 ## Deploy to Cloudflare
@@ -108,20 +118,27 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v1.9.0)
-├── motor_transmutacion/   # Rust workspace (v1.4.2)
+├── frontend/              # Next.js app (v3.2.8)
+├── motor_transmutacion/   # Rust workspace (v1.6.0)
 │   ├── core_utils/
-│   ├── transmutador_jpg/    # JPEG → PNG
-│   ├── transmutador_png/    # PNG → JPEG
-│   ├── transmutador_webp/   # WebP → PNG / JPEG
-│   ├── transmutador_encode/ # PNG / JPEG → WebP
-│   ├── transmutador_gif/    # GIF → PNG / JPEG
-│   └── transmutador_bmp/    # BMP → PNG / JPEG
+│   ├── transmutador_jpg/         # JPEG → PNG
+│   ├── transmutador_png/         # PNG → JPEG
+│   ├── transmutador_webp/        # WebP → PNG / JPEG
+│   ├── transmutador_encode/      # PNG / JPEG → WebP
+│   ├── transmutador_gif/         # GIF → PNG / JPEG
+│   ├── transmutador_bmp/         # BMP → PNG / JPEG
+│   ├── transmutador_tiff/        # TIFF → PNG / JPEG
+│   ├── transmutador_ico/         # ICO ↔ PNG
+│   ├── transmutador_tga/         # TGA → PNG
+│   ├── transmutador_avif/        # AVIF → PNG / JPEG
+│   ├── transmutador_avif_encode/ # PNG / JPEG → AVIF
+│   └── transmutador_svg/         # SVG → PNG / JPEG
 ├── docs/
 │   ├── SPEC.md
 │   ├── ROADMAP.md
 │   ├── DEPLOY.md
-│   └── planning/            # Tier 2 + astro roadmaps
+│   ├── releases/                 # Per-version release notes (v3.2.x)
+│   └── planning/                 # Tier roadmaps & spike results
 ├── CONTRIBUTING.md
 └── scripts/
 ```
@@ -130,15 +147,19 @@ camaleon/
 
 | Phase | Version | Status |
 |-------|---------|--------|
-| **MVP** | v1.0.0 | ✅ |
+| **MVP** | v1.0.0 | ✅ JPEG ↔ PNG |
 | **Tier 1 WebP suite** | v1.7.6 | ✅ Six tools |
-| **Launch baseline** | v1.7.9 | ✅ Legal + deploy |
-| **Tier 2 Wave 1** | v1.8.3–v1.8.7 | ✅ GIF + BMP + limits polish |
-| **Astro downscale + memory** | **v1.9.0** | ✅ **Shipped on `main`** |
-| **Tier 2 Wave 2** | v1.10.4 (`main`) | ✅ Shipped — TIFF, ICO↔PNG, TGA→PNG (five new tools) |
-| **Semantic Alpha Engine** | v1.11.0 (`main`) | ✅ Shipped — honest transparency across lossy → JPEG tools |
+| **Tier 2 Wave 1** | v1.8.3–v1.9.0 | ✅ GIF, BMP, limits, astro downscale |
+| **Tier 2 Wave 2** | v1.10.4 | ✅ TIFF, ICO↔PNG, TGA→PNG |
+| **Semantic Alpha Engine** | v1.11.0 | ✅ Honest transparency |
+| **Visual Identity & UX shell** | v1.12.0 | ✅ ToolBrowser, Command Palette |
+| **Tier 3 — modern formats + PWA** | v3.0.1 | ✅ AVIF, SVG, offline shell (21 tools) |
+| **Tier 3.5 — Universal transmutator** | v3.1.x | ✅ Home-page format picker + handoff |
+| **Tier 3.6.0 — tool-route batch** | v3.2.0–v3.2.3 | ✅ 14 raster slugs, sequential batch |
+| **Tier 3.6.1 — universal batch** | v3.2.4+ | 🔄 Slice A+B ✅ · **Slice C** (mixed cohorts) ⏳ |
+| **Tier 4a — optimization** | TBD | 📋 Compress, resize (metrics-first) |
 
-Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Engine plan: **[docs/planning/semantic_alpha_engine_plan.md](docs/planning/semantic_alpha_engine_plan.md)**
+Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 
 ## Contributing
 

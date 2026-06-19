@@ -6,9 +6,9 @@
 > - **OpenCode** must read SPEC before every task and **update SPEC** at task completion to reflect any architectural or behavioral change introduced.
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 
-**Version:** 2.3.8  
-**Last updated:** 2026-06-11  
-**Status:** v2.3.8 on `dev`/`main` (Settings S6 Risk mode + hotfixes) · Engine v1.6.0 · 21 tools
+**Version:** 3.2.8  
+**Last updated:** 2026-06-18  
+**Status:** v3.2.8 on `main`/`dev` (Tier 3.6 batch + universal homogeneous multi-drop + S7 Priority A) · Engine v1.6.0 · 21 tools
 
 ---
 

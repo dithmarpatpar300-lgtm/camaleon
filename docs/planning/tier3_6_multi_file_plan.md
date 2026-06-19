@@ -1,6 +1,6 @@
 # Tier 3.6 — Multi-File Batch Transmutation (planning phases 3.6.x)
 
-> **Status:** **3.6.0 shipped** (app **v3.2.3**) · **3.6.1 in progress** — Slice **A+B** shipped (v3.2.4); Slice **C** pending  
+> **Status:** **3.6.0 shipped** (app **v3.2.3**) · **3.6.1 in progress** — Slice **A+B** shipped (v3.2.4); Slice **C** pending · **v3.2.8 on `main`**
 > **Note:** **3.6.x** = planning phase IDs; app semver: 3.6.0 → v3.2.0–v3.2.3, 3.6.1 → v3.2.4+ (Slice C TBD)  
 > **Prerequisite:** Tier 3.5 Universal Transmutator shipped (app **v3.1.x**) — single-file handoff stable  
 > **Doctrine:** **Gradual rollout** — never ship full multi-file in one release; extend orchestration without breaking single-file paths  
