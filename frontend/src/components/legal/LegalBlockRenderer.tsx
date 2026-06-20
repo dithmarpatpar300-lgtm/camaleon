@@ -1,4 +1,5 @@
 import type { LegalBlock } from "@/lib/legal/types";
+import { LegalTable } from "./LegalTable";
 
 type LegalBlockRendererProps = {
   block: LegalBlock;
@@ -35,30 +36,7 @@ export function LegalBlockRenderer({ block }: LegalBlockRendererProps) {
         </aside>
       );
     case "table":
-      return (
-        <div className="legal-table-wrap">
-          <table className="legal-table">
-            <thead>
-              <tr>
-                {block.headers.map((header) => (
-                  <th key={header} scope="col">
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {block.rows.map((row) => (
-                <tr key={row.join("|").slice(0, 80)}>
-                  {row.map((cell, cellIndex) => (
-                    <td key={`${cellIndex}-${cell.slice(0, 32)}`}>{cell}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
+      return <LegalTable headers={block.headers} rows={block.rows} />;
     default:
       return null;
   }

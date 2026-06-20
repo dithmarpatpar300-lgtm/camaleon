@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.3.4** · Engine **v1.6.0** · Branch **`main`** · **25 active tools** · **13 Wasm crates** · **147 Vitest tests**
+**Snapshot:** App **v3.5.0** · Engine **v1.6.0** · Branch **`main`** · **25 active tools** · **13 Wasm crates** · **179 Vitest tests**
 
 ---
 
@@ -157,7 +157,7 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
-| **Current** | **v3.3.4** | Settings+toast coexistence · client storage seed · lane SSR · mobile offline dock |
+| **Current** | **v3.5.0** | Offline reliability · origin reachability · brand offline · mobile notice stack |
 | **Prior** | **v3.3.3** | UX-4a lanes · 4a-pre mobile top notices · settings-focus uncached Wasm |
 | **Prior** | **v3.3.2** | Offline install promo on home · settings-focus → Offline & cache |
 | **Next** | TBD | **4a.1** metrics UX · **UX-4a** ToolBrowser Convert vs Optimize lanes |
@@ -633,19 +633,23 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 
 ## 18. PWA & offline shell
 
-**Tier 3.4 · Shipped v3.0.0**
+**Tier 3.4 · Shipped v3.0.0 · Hardened v3.5.0**
 
 | Piece | Path |
 |-------|------|
 | Serwist integration | `next.config.ts`, `app/sw.ts` → `public/sw.js` |
 | Precache routes | `lib/offline/precache-routes.ts` — shell + 21 tool routes + legal |
+| Shell reprecache | `reprecache-app-shell.ts`, `shell-reprecache-core.ts`, `ShellCacheBootstrap.tsx` |
+| Dual readiness | `shell-cache-status.ts` — shellReady + wasmReady |
+| Brand offline | SW cache-first for `/brand/*` before Serwist; `OFFLINE_SHELL_ASSET_PATHS` |
 | Wasm caching | `CacheFirst` for `/wasm/**` → `camaleon-wasm-v1` |
 | Offline fallback | Navigation → `/~offline` |
 | Full toolkit download | `precache-toolkit.ts` — opt-in ~10–17 MB (Settings S5) |
 | Force offline | SW message `SET_FORCE_OFFLINE` — cache-only mode |
+| Origin reachability | `origin-reachability.ts`, `GET /api/health`, hysteresis probes |
 | Provider | `OfflineProvider.tsx` |
 
-**Doctrine:** First online visit required; cached tools work without network. No background sync of file payloads.
+**Doctrine:** First online visit required; cached tools work without network. No background sync of file payloads. Real offline and force-offline must behave equivalently for shell assets (brand mark, static chunks).
 
 ---
 
@@ -657,17 +661,17 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 |-------|------|
 | `/version.json` | Dynamic version beacon (`no-store`) |
 | `AppUpdateProvider` | SW poll (5 min) + visibility/online hooks |
-| `apply-update.ts` | `skipWaiting` → `controllerchange` → cache purge → hard reload |
+| `apply-update.ts` | `skipWaiting` → `controllerchange` → **no precache purge (v3.5.0)** → hard reload |
 | `AppUpdateNotice.tsx` | Floating pill (Update now / Later 24 h) |
 | `updates-prefs.ts` | Auto-detect toggle |
 
-**Cache purge:** App shell only — Wasm cache preserved.
+**Cache policy (v3.5.0):** Serwist `cleanupOutdatedCaches` handles stale buckets; shell reprecache via session flag when needed. Wasm cache preserved.
 
 ---
 
 ## 20. Toast & floating notices
 
-**Shipped v3.2.7 · Refined v3.2.8 · Modal coexistence v3.3.4**
+**Shipped v3.2.7 · Refined v3.2.8 · Modal coexistence v3.3.4 · Mobile stack v3.5.0**
 
 | Piece | Role |
 |-------|------|
@@ -675,7 +679,8 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 | `ToastViewport` | Responsive cap: **3 desktop / 2 mobile**; peek mask from overflow |
 | `FloatingNoticesRoot` | Portal on `document.body`; **bottom stack portals into open dialog** (v3.3.4) |
 | Top-right host | `OfflineStatusNotice` (desktop); hidden when Settings open |
-| Bottom host | `AppUpdateNotice` + `ToastHost`; mobile offline **dock** (v3.3.4) |
+| Bottom host | `AppUpdateNotice` + `ToastHost`; mobile **unified dock** (v3.5.0) |
+| Mobile dock order | Toasts → offline status → install promo → app update (column-reverse) |
 | Layer control | `floating-notices-layer.ts` — demote popovers when modal open; portal for interactivity |
 | Hit test | `floating-notices-hit-test.ts` — scrim dismiss ignores toast clicks |
 
@@ -705,7 +710,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 | Piece | Role |
 |-------|------|
-| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.3.4) |
+| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.5.0) |
 | `lib/releases/entries/v*.ts` | Per-version highlights |
 | `ReleaseCommsProvider` | Mounts onboarding + modals |
 | `OnboardingPanel` | First-visit welcome |

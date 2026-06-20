@@ -14,8 +14,7 @@ type Props = {
 function resolveVisualState(
   online: boolean,
   forceOffline: boolean,
-  networkOnline: boolean,
-  serverReachable: boolean
+  networkOnline: boolean
 ): ConnectivityVisualState {
   if (online) return "online";
   if (forceOffline && networkOnline) return "simulated";
@@ -24,19 +23,15 @@ function resolveVisualState(
 
 function ConnectivityIndicatorInner({ variant = "full", className }: Props) {
   const { t } = useI18n();
-  const { online, networkOnline, forceOffline, serverReachable } = useOffline();
+  const { online, networkOnline, forceOffline } = useOffline();
 
-  const visual = resolveVisualState(online, forceOffline, networkOnline, serverReachable);
+  const visual = resolveVisualState(online, forceOffline, networkOnline);
   const labelKey =
     visual === "online"
       ? "connectivity.online"
       : visual === "simulated"
         ? "connectivity.offlineMode"
-        : !networkOnline
-          ? "connectivity.offline"
-          : !serverReachable
-            ? "connectivity.serverDown"
-            : "connectivity.offline";
+        : "connectivity.workingOffline";
 
   const title = t("connectivity.statusTitle", {
     mode: t(labelKey),

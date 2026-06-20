@@ -2,17 +2,19 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.4.0** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.5.0** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v3.3.4)
+## What works today (v3.5.0)
 
 | Capability | Status |
 |------------|--------|
 | **Twenty-five active tools** | Tiers 1–2 + AVIF + SVG + **optimize** (compress/resize, **functional v3.3.0**) — `/transmute/[slug]` |
 | **Tool browser lanes** | Convert vs Optimize (**v3.3.3**); lane persists on reload without flash (**v3.3.4**) |
 | **Settings + toasts** | Bottom toast actions work while Settings is open; factory prefs seeded on first visit (**v3.3.4**) |
+| **PWA / offline shell** | Serwist SW, dual shell+Wasm readiness, reprecache recovery (**v3.5.0**) |
+| **Connectivity UX** | Health probes + hysteresis — honest online/offline on localhost, tunnel, real network loss (**v3.5.0**) |
 | **Universal transmutator** | Home-page drop zone — pick output format, handoff to any tool (**v3.1.x**, Tier 3.5) |
 | **Mixed-format cohorts** | Drop mixed formats on home → per-group picker; remaining cohorts persist (**v3.2.9**, Tier 3.6.1 C) |
 | **Multi-file batch** | Drop N images on **19 batch routes** — shared options, ZIP or individual download (**v3.2.0–3.2.9**, Tier 3.6) |
@@ -31,20 +33,19 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Adaptive limits** | Byte zones (50 MB soft / 150 MB hard), 40 MP pixel cap, oversize consent |
 | **Risk mode (S6)** | Settings opt-out for soft limits and consent prompts; **unlock proceed UX (v3.3.1)** |
 | **Settings panel** | S1–S4 (defaults, performance, notices/prepare) · **S5** offline cache · **S6** risk · **S7** batch & universal prefs · **deep-link focus (v3.3.1)** |
-| **PWA / offline shell** | Serwist SW, installable app, opt-in Wasm toolkit download; **home offline promo (v3.3.2)** |
-| **Smart app updates** | Background version beacon, deep refresh on Live deploys (**v3.2.5–3.2.6**) |
-| **Toast notifications** | FIFO queue, responsive cap (3 desktop / 2 mobile), **Settings-safe in-dialog portal (v3.3.4)** |
+| **Smart app updates** | Background version beacon, deep refresh on Live deploys (**v3.2.5–3.2.6**; shell-safe **v3.5.0**) |
+| **Toast notifications** | FIFO queue, responsive cap (3 desktop / 2 mobile), **unified mobile dock (v3.5.0)** |
 | **Science imagery** | Client-side downscale (4K–12K presets) for images >40 MP before Wasm |
 | **Memory lifecycle** | Wasm worker recycled when leaving any transmute route (SPA-safe) |
 | **Staged transmutation flow** | Drop → prepare → adjust options → Transmutar → preview + delta → download |
 | **EN / ES** | Full UI i18n with persisted locale |
-| **Legal pages** | `/about`, `/contact`, `/privacy`, `/terms` — **v3.4.0 full refresh** + dedicated review notice |
+| **Legal pages** | `/about`, `/contact`, `/privacy`, `/terms` — **v3.4.0 refresh** + table UI (**v3.5.0**) |
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
-| **Tests** | 153 Vitest unit tests |
+| **Tests** | 179 Vitest unit tests |
 
-**Latest (v3.4.0):** **Legal pages refresh** — About/Contact/Privacy/Terms rewritten for v3.4; minimal UI; **LegalRefreshNotice** prompts Privacy/Terms review. See [docs/releases/v3.4.0.md](docs/releases/v3.4.0.md). **Prior (v3.3.4):** Settings + toasts — [docs/releases/v3.3.4.md](docs/releases/v3.3.4.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
+**Latest (v3.5.0):** **Offline reliability & connectivity hardening** — stable PWA baseline, origin reachability probes, brand mark survives real offline navigation, mobile notice stack. See [docs/releases/v3.5.0.md](docs/releases/v3.5.0.md). **Prior (v3.4.0):** Legal pages refresh — [docs/releases/v3.4.0.md](docs/releases/v3.4.0.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 
@@ -121,7 +122,7 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v3.3.4)
+├── frontend/              # Next.js app (v3.5.0)
 ├── motor_transmutacion/   # Rust workspace (v1.6.0)
 │   ├── core_utils/
 │   ├── transmutador_jpg/         # JPEG → PNG
@@ -140,7 +141,7 @@ camaleon/
 │   ├── SPEC.md
 │   ├── ROADMAP.md
 │   ├── DEPLOY.md
-│   ├── releases/                 # Per-version release notes (v3.2.x)
+│   ├── releases/                 # Per-version release notes
 │   └── planning/                 # Tier roadmaps & spike results
 ├── CONTRIBUTING.md
 └── scripts/
@@ -161,6 +162,7 @@ camaleon/
 | **Tier 3.6.0 — tool-route batch** | v3.2.0–v3.2.3 | ✅ 14 raster slugs, sequential batch |
 | **Tier 3.6.1 — universal batch** | v3.2.4+ | 🔄 Slice A+B ✅ · **Slice C** (mixed cohorts) ⏳ |
 | **Tier 4a — optimization** | **v3.3.0** | ✅ Compress, resize (`transmutador_optimize` activated) |
+| **Offline reliability** | **v3.5.0** | ✅ Dual readiness, reachability, brand offline |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Architecture atlas: **[ARCHITECTURE.md](ARCHITECTURE.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 

@@ -26,6 +26,7 @@ import {
 } from "@/lib/prefs";
 import { OFFLINE_BOOTSTRAP_SCRIPT } from "@/lib/offline/offline-bootstrap-script";
 import { ClientStorageSeed } from "@/components/layout/ClientStorageSeed";
+import { ShellCacheBootstrap } from "@/components/layout/ShellCacheBootstrap";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -79,6 +80,7 @@ export default async function RootLayout({
         <I18nProvider initialLocale={initialLocale}>
           <ThemeProvider initialTheme={initialTheme}>
             <ClientStorageSeed />
+            <ShellCacheBootstrap />
             <OverlayScrollbar />
             <ScrollLockRouteGuard />
             <OfflineProvider>

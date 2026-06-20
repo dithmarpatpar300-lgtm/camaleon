@@ -15,6 +15,10 @@ type CamaleonMarkProps = {
   frameClassName?: string;
 };
 
+/**
+ * Plain img (not next/image) so offline navigation always requests /brand/* directly.
+ * SW cache-first handler serves the mark in real offline — force-offline already did.
+ */
 export function CamaleonMark({ className, frameClassName = "h-8 w-8" }: CamaleonMarkProps) {
   return (
     <span
@@ -25,13 +29,16 @@ export function CamaleonMark({ className, frameClassName = "h-8 w-8" }: Camaleon
       )}
       aria-hidden
     >
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={CAMALEON_MARK_SRC}
         alt=""
         width={CAMALEON_MARK_SIZE}
         height={CAMALEON_MARK_SIZE}
         className="h-[94%] w-[94%] object-contain"
-        priority
+        decoding="async"
+        fetchPriority="high"
+        draggable={false}
       />
     </span>
   );

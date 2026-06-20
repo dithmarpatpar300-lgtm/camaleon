@@ -199,18 +199,36 @@ const en: Dictionary = {
       description:
         "Camaleon stores the app and conversion engines in your browser after an online visit. Transmutation itself always runs locally — offline mode only affects what can be fetched from the network.",
       modeOnline: "Online",
-      modeOffline: "Offline",
-      modeOfflineActive: "Offline mode",
+      modeOffline: "Working offline",
+      modeOfflineActive: "Offline mode (testing)",
       modeOnlineDetail: "Network available. Cached tools work; new engines download on demand.",
-      modeOfflineDetail: "No network detected. Only cached app shell and engines are available.",
+      modeOfflineDetail:
+        "Working offline — cached pages and conversion engines on this device. Reconnect when you need updates.",
       modeOfflineActiveDetail:
         "This tab uses only cached shell and engines — network fetches are blocked. Your Wi‑Fi may still be connected.",
       badgeSwActive: "Service worker",
       badgeSwPending: "SW pending",
       badgeNetworkUp: "Network up",
-      badgeNetworkDown: "Network down",
-      statusLabel: "Cached engines",
+      badgeNetworkDown: "Working offline",
+      statusLabel: "Wasm engines",
       enginesHint: "{pct}% of Wasm engines stored on this device.",
+      shellLabel: "App shell",
+      shellHint: "{cached}/{total} routes cached · {chunks} static chunks.",
+      shellReady: "Shell ready for offline reload.",
+      shellPartial: "Shell partially cached — restore while online.",
+      shellNeedChunks:
+        "Routes cached but JS bundles missing — tap Restore offline cache while online.",
+      shellMissing: "Shell not cached — restore while online.",
+      offlineReadyLabel: "Offline readiness",
+      offlineReadyHint: "Minimum of shell and engine coverage — both needed for reliable offline use.",
+      restoreCacheAction: "Restore offline cache",
+      restoreCacheProgress: "Restoring shell… {done}/{total}",
+      restoreCacheDone: "App shell restored. Download engines if needed.",
+      restoreCacheFailed: "Could not restore app shell. Stay online and try again.",
+      clearDoneShellRestored: "Offline cache cleared — app shell restored.",
+      clearDoneShellPending: "Cache cleared. Stay online and tap Restore offline cache.",
+      offlineModeBlockedShell: "App shell is not cached. Restore offline cache while online first.",
+      offlineModeBlockedWasm: "Wasm engines are not fully cached. Enable “Download all conversion tools” first.",
       statusOnline: "Online — service worker active.",
       statusOffline: "Offline — using cached app and engines.",
       swPending: "Service worker registering…",
@@ -220,9 +238,9 @@ const en: Dictionary = {
       cacheProgressLabel: "Engine cache coverage",
       fullToolkitLabel: "Download all conversion tools",
       fullToolkitHint:
-        "Opt in to cache every Wasm engine (~10–17 MB). All 21 tools work offline without visiting each one first.",
+        "Downloads Wasm engines only (~10–17 MB), not the app shell. Use Restore offline cache for HTML and JS routes.",
       precacheProgress: "Downloading engines… {done}/{total}",
-      precacheDone: "All conversion tools are cached for offline use.",
+      precacheDone: "All Wasm engines cached for offline conversion.",
       precacheFailed: "Could not download all engines. Try again while online.",
       needOnline: "Connect to the internet to download offline engines.",
       clearAction: "Clear offline cache",
@@ -231,7 +249,7 @@ const en: Dictionary = {
         "Mobile browsers may evict cached data under storage pressure. Desktop is recommended for full offline toolkit.",
       offlineModeTitle: "Offline mode",
       offlineModeHint:
-        "Work from cache only in this tab. Requires a prior online visit with the service worker active and cached tools (use “Download all conversion tools” above).",
+        "Work from cache only in this tab. Requires cached app shell and Wasm engines (use Restore offline cache and Download all conversion tools above).",
       offlineModeNote:
         "Same cache-only behaviour as true offline after deploy or npm run preview:cf. Tools not yet cached will fail until downloaded online. First visit and incognito always need network once.",
       offlineModeEnter: "Enable offline mode",
@@ -304,9 +322,11 @@ const en: Dictionary = {
     banner: "You are offline — cached tools still work on this device.",
     bannerForced: "Offline mode — using cache only in this tab.",
     noticeOffline: "No network connection. Cached conversion tools still work on this device.",
-    noticeOfflineMode: "Offline mode — cache only. Disable when you need fresh updates.",
+    noticeWorkingOffline:
+      "Working offline — cached pages and conversion tools on this device. Reconnect when you need updates.",
+    noticeOfflineMode: "Offline mode (testing) — cache only. Disable when you need fresh updates.",
     noticeServerDown:
-      "App server unreachable (localhost stopped or host offline). Cached Wasm still works if already loaded.",
+      "Working offline — cached pages and conversion tools on this device. Reconnect when you need updates.",
     noticeExitOfflineMode: "Disable offline mode",
     uncachedTool:
       "This tool is not cached yet. Connect to the internet once to download its engine.",
@@ -335,8 +355,9 @@ const en: Dictionary = {
   connectivity: {
     online: "Online",
     offline: "Offline",
-    offlineMode: "Offline mode",
-    serverDown: "Server unreachable",
+    workingOffline: "Working offline",
+    offlineMode: "Offline mode (testing)",
+    serverDown: "Working offline",
     statusTitle: "Connection: {mode}",
   },
 
@@ -409,6 +430,52 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v350: {
+        title: "Offline reliability & connectivity — v3.5.0",
+        summary:
+          "PWA offline is production-stable: honest shell + Wasm readiness, reliable app updates, and connectivity that works on localhost, tunnel, and real network loss — without false offline or a missing header logo.",
+        technical:
+          "Dual readiness shellReady+wasmReady. reprecacheAppShell + ShellCacheBootstrap. /api/health + origin-reachability hysteresis probes. SW cache-first brand/static before Serwist. CamaleonMark plain img. Mobile unified bottom notice stack. SPEC §7.15–§7.16. App v3.5.0 · engine 1.6.0.",
+        highlights: {
+          offlineStable: {
+            title: "Stable offline baseline",
+            body: "Clear cache, update the app, or reload without network — the shell and engines recover separately and Offline Mode waits until both are ready.",
+          },
+          connectivity: {
+            title: "Honest connectivity",
+            body: "Health probes with hysteresis — no false offline when the server is live on tunnel or localhost; real network loss still detected quickly.",
+          },
+          brandOffline: {
+            title: "Logo survives offline navigation",
+            body: "The Camaleon mark stays in the header when you move between routes with no network — same on mobile and desktop.",
+          },
+          mobileNotices: {
+            title: "Mobile notices stack cleanly",
+            body: "Offline banner, install promo, app update, and toasts share one bottom dock — no overlap on small screens.",
+          },
+        },
+      },
+      v341: {
+        title: "Offline persistence fix — v3.4.1",
+        summary:
+          "PWA offline is reliable again after clear cache, app update, or reload without network. Settings now shows app shell and Wasm engine readiness separately.",
+        technical:
+          "Dual readiness: shellReady + wasmReady. applyAppUpdate no longer purges active precache post-activate. reprecacheAppShell + ShellCacheBootstrap recovery. Force-offline serves /~offline before 503. SPEC §7.15. App v3.4.1 · engine 1.6.0.",
+        highlights: {
+          shellReadiness: {
+            title: "Honest offline readiness",
+            body: "Settings shows app shell routes and Wasm engines separately. Offline Mode is gated until both layers are cached.",
+          },
+          updatePurgeFix: {
+            title: "App update no longer wipes shell",
+            body: "Update now keeps the new service worker precache intact. Shell reprecache runs automatically after reload when needed.",
+          },
+          forceOffline: {
+            title: "Force-offline aligned with Serwist",
+            body: "Offline Mode tries cached pages and static chunks before returning 503 — fewer ChunkLoadErrors on reload.",
+          },
+        },
+      },
       v340: {
         title: "Legal pages refresh — v3.4",
         summary:
@@ -1223,6 +1290,10 @@ const en: Dictionary = {
     subnavLabel: "Legal pages",
     tocLabel: "On this page",
     tocHeading: "Contents",
+    tocSection: "{count} section",
+    tocSections: "{count} sections",
+    tableEntry: "{count} entry",
+    tableEntries: "{count} entries",
   },
 
   legalRefresh: {

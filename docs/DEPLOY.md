@@ -162,7 +162,7 @@ npm error The npm ci command can only install with an existing package-lock.json
 
 ---
 
-## PWA / Service Worker QA (v3.0.0+)
+## PWA / Service Worker QA (v3.0.0+ · hardened v3.5.0)
 
 After `npm run build:cf` or deploy to Cloudflare:
 
@@ -170,10 +170,15 @@ After `npm run build:cf` or deploy to Cloudflare:
 2. Confirm `frontend/public/pwa/icon-192.png`, `icon-512.png`, and `icon-512-maskable.png` are in deploy assets (regenerate via `node scripts/generate-brand-assets.mjs` from `frontend/`).
 3. In Chrome DevTools → **Application** → **Service Workers**: SW registered on production build only (disabled in `next dev`).
 4. **Full offline smoke (production-like):** `npm run preview:cf` → visit online → Settings S5 “Download all conversion tools” → stop preview server → reload any `/transmute/*` route → transmute + download.
-5. **NFR-1 regression:** while offline, DevTools Network shows **no upload** of file bytes.
-6. **Offline mode:** Settings → Offline & cache → **Enable offline mode** (with network up) → verify same-origin requests are cache-only; disable when done.
-7. **SW update:** deploy a new build → revisit site → “New version” banner appears → reload applies update (`skipWaiting: false` until user confirms).
-8. **Firefox Android (v3.1.2+):** after online visit + one reload → airplane mode → open `/` or `/transmute/*` in Firefox mobile. Must use **HTTPS** (production, tunnel, or `preview:cf` with `[t]` tunnel — not `http://LAN-IP`). **Expected:** cached Camaleon, not Firefox’s native offline page. Root cause: `navigationPreload` disabled in `sw.ts` ([Mozilla #1802711](https://bugzilla.mozilla.org/show_bug.cgi?id=1802711)).
+5. **Post-clear recovery (v3.5.0):** Settings → Clear offline cache (while online) → confirm shell routes repopulate (Settings shows shell stat) → S5 if needed → reload offline.
+6. **Post-update offline (v3.5.0):** Apply “Update now” while online → reload once → go offline → F5 on `/` and `/transmute/png-to-jpg` → both load from cache.
+7. **NFR-1 regression:** while offline, DevTools Network shows **no upload** of file bytes.
+8. **Offline mode:** Settings → Offline & cache → **Enable offline mode** (with shell + wasm ready) → verify navigation + F5; without shell → gate warns.
+9. **SW update:** deploy a new build → revisit site → “New version” banner appears → reload applies update (`skipWaiting: false` until user confirms).
+10. **Firefox Android (v3.1.2+):** after online visit + one reload → airplane mode → open `/` or `/transmute/*` in Firefox mobile. Must use **HTTPS** (production, tunnel, or `preview:cf` with `[t]` tunnel — not `http://LAN-IP`). **Expected:** cached Camaleon, not Firefox’s native offline page. Root cause: `navigationPreload` disabled in `sw.ts` ([Mozilla #1802711](https://bugzilla.mozilla.org/show_bug.cgi?id=1802711)).
+11. **Connectivity (v3.5.0):** `preview:cf` or tunnel with server running → green dot, no false “Working offline” toast. Stop server or cut network → offline within ~15–30s.
+12. **Brand mark offline (v3.5.0):** real offline (airplane mode) or force-offline → navigate `/` ↔ `/transmute/*` → header logo persists (mobile + desktop).
+13. **Mobile notice stack (v3.5.0):** narrow viewport → offline banner + install promo + toast visible together → stacked vertically, no overlap.
 
 **Note:** `npm run dev` does not register Serwist — full offline reload requires a production build (`preview:cf` or deploy).
 

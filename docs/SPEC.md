@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.4.0  
+**Version:** 3.5.0  
 **Last updated:** 2026-06-20  
-**Status:** v3.4.0 on `dev` (legal pages refresh · LegalRefreshNotice) · v3.3.4 on `main` · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Status:** v3.5.0 on `main` (offline reliability · connectivity hardening) · v3.4.0 legal refresh · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -1433,6 +1433,45 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Reference:** `docs/planning/legal_refresh_plan.md`
 
+### 7.15 Offline persistence (Implemented — v3.5.0)
+
+**Dual readiness:** Offline reliability requires two independent Cache Storage layers:
+
+| Layer | Bucket | Contents | Ready when |
+|-------|--------|----------|------------|
+| App shell | `serwist-precache-*` + `camaleon-shell-v1` | HTML routes, `_next/static` chunks, brand assets | `/`, `/~offline`, ≥90% tool routes, ≥1 static chunk |
+| Wasm engines | `camaleon-wasm-v1` | S5 full toolkit or lazy per-tool | All 13 crates cached |
+
+**offlineReady** = shellReady AND wasmReady. Settings S5 downloads **engines only** — not the app shell.
+
+**App update (v3.5.0):** `applyAppUpdate()` activates waiting SW and hard-reloads. **Does not** purge active precache post-activate (Serwist `cleanupOutdatedCaches` removes stale buckets on install). Optional bootstrap reprecache via `camaleon:shell-reprecache-pending` session flag.
+
+**Clear offline cache:** Deletes all buckets; when online, automatically runs `reprecacheAppShell()`. S5 must be re-run separately for Wasm.
+
+**Force offline (v3.5.0):** SW cache-only handler tries `/~offline` for navigation misses and pathname cache scan for assets before 503. Gated in Settings when shell is not ready.
+
+**Brand mark offline (v3.5.0):** SW registers cache-first handler for `/brand/*` and shell static assets **before** Serwist precache. `CamaleonMark` uses plain `<img src="/brand/camaleon-mark.png">`. Shell reprecache includes `OFFLINE_SHELL_ASSET_PATHS` and parses brand `src` from HTML.
+
+**Reference:** `docs/planning/offline_persistence_fix_plan.md` · `docs/releases/v3.5.0.md`
+
+### 7.16 Connectivity & origin reachability (Implemented — v3.5.0)
+
+**Effective online UX** = `navigator.onLine` AND origin reachable AND NOT force-offline simulation.
+
+| Piece | Path | Behavior |
+|-------|------|----------|
+| Health endpoint | `GET/HEAD /api/health` | `204` / `{ ok: true }`, `no-store` |
+| Probes | `origin-reachability.ts` | `/api/health`, `/version.json`, `/manifest.webmanifest` with `?camaleon-probe=` cache-bust |
+| SW bypass | `sw.ts` `originProbeNetworkOnly` | Probes use `NetworkOnly` — never cached |
+| Hysteresis | `evaluateOriginReachability()` | 2 consecutive failures → offline; 1 success → online; optimistic start |
+| Heartbeat | `server-reachability.ts` | 15s interval when tab visible; delayed boot probe |
+| Fetch bridge | `network-guard.ts` | Force-offline cache-only; **does not** infer server down from RSC/fetch failures |
+| UI copy | `OfflineStatusNotice` | "Working offline" (network/server down) vs "Offline mode (testing)" (force-offline) |
+
+**Mobile notices (v3.5.0):** Single bottom dock stacks toasts → offline status → install promo → app update; bottom-left promo host desktop-only.
+
+**Reference:** `docs/releases/v3.5.0.md` · DEPLOY PWA QA steps 11–13
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -1482,6 +1521,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.5.0-offline-connectivity | 2026-06-20 | Chief Architect | §7.15 brand offline + §7.16 origin reachability; mobile notice stack; v3.5.0 stable offline baseline | `docs/releases/v3.5.0.md` |
+| 3.4.1-offline-persistence | 2026-06-20 | Chief Architect | §7.15 dual shell+wasm readiness; apply-update purge fix; reprecache shell; force-offline fallback (merged in v3.5.0) | `docs/releases/v3.4.1.md` |
 | 3.4.0-legal-refresh | 2026-06-20 | Chief Architect | §7.14 Legal pages v3.4 refresh; block content model; LegalRefreshNotice; storage disclosure table; v3.4.0 | `docs/releases/v3.4.0.md` |
 | 3.3.4-settings-storage | 2026-06-20 | Chief Architect | Settings+toast in-dialog portal; lib/storage factory seed; lane SSR cookies; mobile offline dock; v3.3.4 | `docs/releases/v3.3.4.md` |
 | 3.3.3-ux4a-mobile | 2026-06-19 | Chief Architect | UX-4a lanes; 4a-pre mobile notices; UncachedToolNotice settings-focus; v3.3.3 | `docs/releases/v3.3.3.md` |

@@ -1,10 +1,12 @@
 import { matchAnyCache } from "./cache-match";
+import { tryOfflineCacheFallback } from "./offline-cache-fallback";
 import { readForceOffline } from "./force-offline";
 
 declare global {
   interface Window {
     __camaleonNativeFetch?: typeof fetch;
     __camaleonFetchGuardActive?: boolean;
+    __camaleonConnectivityFetchBridge?: typeof fetch;
   }
 }
 
@@ -32,64 +34,64 @@ async function guardedFetch(
   init?: RequestInit
 ): Promise<Response> {
   const request = new Request(input, init);
-  const nativeFetch = getNativeFetch();
 
   if (readForceOffline() && isSameOriginGet(request)) {
     const cached = await matchAnyCache(request);
     if (cached) return cached.clone();
+
+    const fallback = await tryOfflineCacheFallback(request);
+    if (fallback) return fallback.clone();
+
     window.dispatchEvent(new CustomEvent("camaleon:simulated-offline-miss"));
     throw new TypeError("Failed to fetch (simulated offline — not in cache)");
   }
 
-  try {
-    return await nativeFetch(input, init);
-  } catch (error) {
-    if (readForceOffline()) throw error;
-    window.dispatchEvent(
-      new CustomEvent("camaleon:server-unreachable", { detail: { url: request.url } })
-    );
-    throw error;
-  }
+  return getNativeFetch()(input, init);
 }
 
-/** Patch window.fetch to serve cache-only for same-origin GET when force offline is on. */
-export function setNetworkGuardEnabled(enabled: boolean): void {
-  if (typeof window === "undefined") return;
+/**
+ * Force-offline cache-only patch. Does not infer server status from app fetch failures
+ * (RSC/tunnel blips caused false offline — see origin-reachability hysteresis probes).
+ */
+export function installConnectivityFetchBridge(): () => void {
+  if (typeof window === "undefined") return () => undefined;
 
-  const nativeFetch = getNativeFetch();
-
-  if (enabled) {
-    if (!window.__camaleonFetchGuardActive) {
-      window.fetch = guardedFetch;
-      window.__camaleonFetchGuardActive = true;
-    }
-    return;
+  // Capture real fetch before patching — probes and passthrough must not recurse through the bridge.
+  if (!window.__camaleonNativeFetch) {
+    window.__camaleonNativeFetch = window.fetch.bind(window);
   }
 
-  if (window.__camaleonFetchGuardActive) {
-    window.fetch = nativeFetch;
+  const bridge = guardedFetch.bind(null) as typeof fetch;
+  window.__camaleonConnectivityFetchBridge = bridge;
+  window.fetch = bridge;
+  window.__camaleonFetchGuardActive = false;
+
+  return () => {
+    if (window.fetch === bridge) {
+      window.fetch = getNativeFetch();
+    }
+    window.__camaleonConnectivityFetchBridge = undefined;
+    window.__camaleonFetchGuardActive = false;
+  };
+}
+
+export function setNetworkGuardEnabled(_enabled: boolean): void {
+  if (typeof window === "undefined") return;
+  const bridge = window.__camaleonConnectivityFetchBridge;
+  if (bridge) {
+    window.fetch = bridge;
     window.__camaleonFetchGuardActive = false;
   }
 }
 
 export function isNetworkGuardActive(): boolean {
-  return Boolean(window.__camaleonFetchGuardActive);
+  return readForceOffline();
 }
 
-/** Probe origin without simulation guard (uses native fetch). */
-export async function probeOriginReachable(): Promise<boolean> {
-  if (typeof window === "undefined") return true;
-  if (!navigator.onLine) return false;
-
-  const nativeFetch = getNativeFetch();
-  try {
-    const response = await nativeFetch("/manifest.webmanifest", {
-      method: "GET",
-      cache: "no-store",
-      credentials: "same-origin",
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
+/** @deprecated Use evaluateOriginReachability from origin-reachability.ts */
+export async function probeOriginReachable(_timeoutMs?: number): Promise<boolean> {
+  const { evaluateOriginReachability } = await import("./origin-reachability");
+  return evaluateOriginReachability();
 }
+
+export { buildProbeUrl, isProbeRequest } from "./origin-reachability";

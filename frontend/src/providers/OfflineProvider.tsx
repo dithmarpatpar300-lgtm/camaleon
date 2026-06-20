@@ -21,7 +21,10 @@ import {
   applyForceOfflineNetworkPolicy,
 } from "@/lib/offline/force-offline";
 import { installServerReachabilityListeners } from "@/lib/offline/server-reachability";
+import { checkServerReachability } from "@/lib/offline/server-reachability";
+import { installConnectivityFetchBridge } from "@/lib/offline/network-guard";
 import { getServiceWorkerRegistration } from "@/lib/offline/sw-registration";
+import { usePathname } from "next/navigation";
 
 type OfflineContextValue = {
   /** Effective UX connectivity. */
@@ -37,6 +40,7 @@ type OfflineContextValue = {
 const OfflineContext = createContext<OfflineContextValue | null>(null);
 
 export function OfflineProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [networkOnline, setNetworkOnline] = useState(true);
   const [serverReachable, setServerReachable] = useState(true);
   const [forceOffline, setForceOfflineState] = useState(false);
@@ -45,6 +49,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setNetworkOnline(readBrowserOnline());
     setForceOfflineState(readForceOffline());
+    const unsubFetch = installConnectivityFetchBridge();
     const unsubNetwork = subscribeConnectivity(
       () => setNetworkOnline(true),
       () => setNetworkOnline(false)
@@ -54,6 +59,7 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
     });
     const unsubServer = installServerReachabilityListeners(setServerReachable);
     return () => {
+      unsubFetch();
       unsubNetwork();
       unsubForce();
       unsubServer();
@@ -88,6 +94,14 @@ export function OfflineProvider({ children }: { children: ReactNode }) {
       void applyForceOfflineNetworkPolicy(true);
     }
   }, [forceOffline, swRegistered]);
+
+  useEffect(() => {
+    if (forceOffline) return;
+    const timer = window.setTimeout(() => {
+      void checkServerReachability().then(setServerReachable);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [pathname, forceOffline]);
 
   const online = networkOnline && serverReachable && !forceOffline;
 

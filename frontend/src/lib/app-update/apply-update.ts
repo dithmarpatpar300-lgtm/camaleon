@@ -1,5 +1,5 @@
-import { purgeAppShellCaches } from "./cache-purge";
 import { hardReloadApp } from "./hard-reload";
+import { markShellReprecachePending } from "@/lib/offline/shell-reprecache-session";
 import {
   activateWaitingServiceWorker,
   applyWaitingServiceWorker,
@@ -9,7 +9,9 @@ import {
 export { waitForServiceWorkerControl };
 
 /**
- * Deep update: activate waiting SW, purge shell caches, hard-reload with cache-bust.
+ * Deep update: activate waiting SW, hard-reload with cache-bust.
+ * Serwist cleanupOutdatedCaches removes stale precache on new SW install —
+ * do not purge active shell caches post-activate (v3.4.1).
  */
 export async function applyAppUpdate(): Promise<void> {
   const activated = await applyWaitingServiceWorker();
@@ -18,6 +20,6 @@ export async function applyAppUpdate(): Promise<void> {
     await waitForServiceWorkerControl(2_000);
   }
 
-  await purgeAppShellCaches();
+  markShellReprecachePending();
   hardReloadApp();
 }

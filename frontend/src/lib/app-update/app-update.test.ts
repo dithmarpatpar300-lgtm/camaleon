@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { shouldPreserveCache, purgeAppShellCaches } from "./cache-purge";
 import { buildHardReloadUrl } from "./hard-reload";
 import { HARD_RELOAD_QUERY_PARAM, WASM_CACHE_NAME } from "./constants";
@@ -6,6 +6,24 @@ import {
   isRemoteVersionNewer,
   parseVersionBeaconPayload,
 } from "./version-beacon";
+
+vi.mock("./sw-activation", () => ({
+  applyWaitingServiceWorker: vi.fn(async () => true),
+  activateWaitingServiceWorker: vi.fn(),
+  waitForServiceWorkerControl: vi.fn(async () => {}),
+}));
+
+vi.mock("./hard-reload", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./hard-reload")>();
+  return {
+    ...actual,
+    hardReloadApp: vi.fn(),
+  };
+});
+
+vi.mock("@/lib/offline/shell-reprecache-session", () => ({
+  markShellReprecachePending: vi.fn(),
+}));
 
 describe("shouldPreserveCache", () => {
   it("preserves wasm runtime cache only", () => {
@@ -59,5 +77,23 @@ describe("purgeAppShellCaches", () => {
     expect(deleted).toEqual(["serwist-precache-v2"]);
 
     globalThis.caches = original;
+  });
+});
+
+describe("applyAppUpdate", () => {
+  it("marks shell reprecache pending and hard-reloads without purging caches", async () => {
+    const { applyAppUpdate } = await import("./apply-update");
+    const { markShellReprecachePending } = await import(
+      "@/lib/offline/shell-reprecache-session"
+    );
+    const { hardReloadApp } = await import("./hard-reload");
+
+    vi.mocked(markShellReprecachePending).mockClear();
+    vi.mocked(hardReloadApp).mockClear();
+
+    await applyAppUpdate();
+
+    expect(markShellReprecachePending).toHaveBeenCalled();
+    expect(hardReloadApp).toHaveBeenCalled();
   });
 });

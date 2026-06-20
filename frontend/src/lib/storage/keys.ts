@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
 /** sessionStorage keys — tab-scoped, not persisted across restarts. */
 export const SESSION_KEYS = {
   FORCE_OFFLINE: "camaleon:force-offline",
+  SHELL_REPRECACHE_PENDING: "camaleon:shell-reprecache-pending",
 } as const;
 
 /** Cookies mirrored from localStorage for SSR-first paint (theme, locale, tool browser). */
