@@ -4,6 +4,7 @@ import type { PreparedFileContext } from "@/lib/transmutation/prepare/types";
 import type { TransmutationOptions } from "@/workers/types";
 import { getBatchDefaultSelection } from "@/lib/prefs/batch-universal-prefs";
 import { defaultItemOptionsFromPrepared } from "./batch-per-row-options";
+import { getOriginalSizeForFile } from "./batch-handoff";
 
 export type BatchItemResult = {
   bytes: ArrayBuffer;
@@ -28,6 +29,8 @@ export type BatchItem = {
   prepared: PreparedFileContext | null;
   /** Denormalized for row UI — survives after prepared is released post-transmute. */
   sourceMeta: SourceImageMeta | null;
+  /** File size for UI display (handoff-preserved original from disk, never reconstructed). */
+  displaySize: number;
   /** Per-row frame/page/entry overrides (GIF/TIFF/ICO batch). */
   itemOptions: TransmutationOptions;
   /** Cached output for ZIP export and re-download. */
@@ -69,6 +72,7 @@ export function batchItemsFromFiles(files: File[]): BatchItem[] {
     bytes: null,
     prepared: null,
     sourceMeta: null,
+    displaySize: getOriginalSizeForFile(file) ?? file.size,
     itemOptions: {},
     result: null,
     selected,

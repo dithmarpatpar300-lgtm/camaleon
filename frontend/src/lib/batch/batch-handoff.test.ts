@@ -40,6 +40,7 @@ describe("batch-handoff", () => {
           fileName: "a.png",
           bytes: new ArrayBuffer(1),
           lastModified: 0,
+          originalSize: 1,
         },
       ],
     });

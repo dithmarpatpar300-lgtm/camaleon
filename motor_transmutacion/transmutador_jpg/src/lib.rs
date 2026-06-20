@@ -104,9 +104,13 @@ pub fn jpg_bytes_to_png_bytes(
 ) -> Result<Vec<u8>, String> {
     validate_compression(options.compression)?;
 
-    let img = ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
 
@@ -183,9 +187,13 @@ pub fn estimate_jpg_to_png_size(
     core_utils::validate_input(input_bytes)?;
     validate_compression(compression)?;
 
-    let img = ImageReader::new(Cursor::new(input_bytes))
+    let mut reader = ImageReader::new(Cursor::new(input_bytes))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
 

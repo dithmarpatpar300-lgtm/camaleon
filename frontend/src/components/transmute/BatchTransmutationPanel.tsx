@@ -62,7 +62,7 @@ function isTransmutableStatus(
   oversizeConsented: boolean,
   riskModeEnabled: boolean
 ): boolean {
-  if (item.status === "ready" || item.status === "error") return true;
+  if (item.status === "ready") return true;
   if (item.status === "needs_consent" && (oversizeConsented || riskModeEnabled)) return true;
   return false;
 }
@@ -91,7 +91,7 @@ export function BatchTransmutationPanel({
   const [preparedOptions, setPreparedOptions] = useState<TransmutationOptions | null>(null);
   const [oversizeConsented, setOversizeConsented] = useState(false);
   const [riskUnlockAwaitingConfirm, setRiskUnlockAwaitingConfirm] = useState(false);
-  const [prepareProgress, setPrepareProgress] = useState({ current: 0, total: files.length, fileName: "" });
+  const [prepareProgress, setPrepareProgress] = useState({ current: 0, total: files.length, fileName: "", fileSize: 0 });
   const [runProgress, setRunProgress] = useState<{ current: number; total: number; fileName: string } | null>(null);
   const [lastRunSummary, setLastRunSummary] = useState<{ done: number; total: number } | null>(null);
   const [lastRunSnapshot, setLastRunSnapshot] = useState<BatchLastRunSnapshot | null>(null);
@@ -212,8 +212,7 @@ export function BatchTransmutationPanel({
       prev.map((item) =>
         item.status === "ready" ||
         item.status === "needs_consent" ||
-        item.status === "done" ||
-        item.status === "error"
+        item.status === "done"
           ? { ...item, selected: true }
           : item
       )
@@ -558,7 +557,7 @@ export function BatchTransmutationPanel({
                       ...row,
                       status: "error",
                       errorMessage: errMsg,
-                      selected: true,
+                      selected: false,
                     }
                   : row
               )
@@ -570,7 +569,7 @@ export function BatchTransmutationPanel({
           commitItems((prev) =>
             prev.map((row) =>
               row.id === live.id
-                ? { ...row, status: "error", errorMessage: raw, selected: true }
+                ? { ...row, status: "error", errorMessage: raw, selected: false }
                 : row
             )
           );
@@ -940,7 +939,7 @@ export function BatchTransmutationPanel({
       <div className="transmute-shell min-h-[22rem] p-5 sm:p-6">
         <FilePrepareGate
           fileName={prepareProgress.fileName || files[0]?.name || ""}
-          fileSize={files[0]?.size ?? 0}
+          fileSize={(prepareProgress.fileSize || files[0]?.size) ?? 0}
           progress={progressPct}
           phase="reading"
           detailLabel={t("panel.batch.preparing", {

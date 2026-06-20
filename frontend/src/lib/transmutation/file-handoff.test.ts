@@ -33,6 +33,7 @@ describe("file-handoff", () => {
       fileName: "a.png",
       bytes: new ArrayBuffer(1),
       lastModified: 0,
+      originalSize: 1,
     });
     vi.advanceTimersByTime(FILE_HANDOFF_TTL_MS + 1);
     expect(consumeFileHandoff(id)).toBeNull();

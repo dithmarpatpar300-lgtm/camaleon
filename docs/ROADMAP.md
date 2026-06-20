@@ -11,15 +11,15 @@
 
 ---
 
-## Current Snapshot (2026-06-19)
+## Current Snapshot (2026-06-20)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.5.1** (`main`) | **25 tools** · **Batch Explorer drag fix** · Download format UX |
+| **Frontend (app)** | **v3.5.2** (`dev`) | **25 tools** · **Risk Mode decoder bypass** · Batch error/done state hardening |
 | **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** |
-| **SPEC** | v3.5.1 | §7.17 batch drop & download UX · §7.15–§7.16 offline baseline |
+| **SPEC** | v3.5.2 | §6.13 Risk Mode decoder · §7 batch state fixes · file size preservation |
 
-**v3.5.1** (`main`): **Batch drag-drop fix & download format UX** — multi-file Explorer drag on dedicated transmutator routes; batch workspace download tips + Settings `batch-download` row focus. Release: `docs/releases/v3.5.1.md`.
+**v3.5.2** (`dev`): **Risk Mode decoder fix & batch UX hardening** — Risk Mode now bypasses `image` crate 512 MB `max_alloc` across all 8 ImageReader-based transmutator crates; batch error items auto-deselect with disabled checkbox; "Download Again" button for done files in mixed state; file sizes preserved across Universal handoff via `originalSize`; per-file size display during batch prepare. Release: `docs/releases/v3.5.2.md`.
 
 **v3.5.0** (`main`): **Offline reliability & connectivity hardening** — dual shell+Wasm readiness, `/api/health` probes with hysteresis, cache-first brand assets, unified mobile notice stack, app-update shell-safe. Release: `docs/releases/v3.5.0.md`.
 
@@ -348,6 +348,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-20 | Chief Architect (Cursor) | **v3.5.2 on `dev`:** Risk Mode decoder no_limits fix (8 ImageReader crates); batch error auto-unselect + checkbox disabled; Download Again in mixed done state; file size preservation via handoff originalSize; prepare per-file size; SPEC/ROADMAP → v3.5.2 |
 | 2026-06-19 | Chief Architect (Cursor) | **v3.3.2 on `dev`:** Offline install promo on home; settings-focus → Offline & cache; docs → v3.3.2 |
 | 2026-06-19 | Chief Architect (Cursor) | **v3.3.1 on `dev`:** Risk unlock proceed UX; Settings deep-link focus; docs/SPEC/ROADMAP → v3.3.1 |
 | 2026-06-19 | Chief Architect (Cursor) | **v3.3.0 on `dev`:** Tier 4a.0 activation (warmup-wasm, types, JPEG meta); PWA brand icons; docs/SPEC/ROADMAP → v3.3.0 |

@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.5.1  
-**Last updated:** 2026-06-19  
-**Status:** v3.5.1 on `main` (batch drag-drop fix · download format UX) · v3.5.0 offline reliability · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Version:** 3.5.2
+**Last updated:** 2026-06-20
+**Status:** v3.5.2 on `dev` (Risk Mode decoder bypass · batch error/done state hardening) · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -1530,6 +1530,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.5.2-risk-batch-ux | 2026-06-20 | Chief Architect | §6.13/§12.5 Risk Mode decoder no_limits fix across 8 ImageReader crates; batch error/done state UX hardening; file size preservation via handoff originalSize + displaySize; prepare per-file size display. See §7.1 batch item handling, §7.13 S6 Risk Mode effectiveness. | `docs/releases/v3.5.2.md` |
 | 3.5.1-batch-drop-ux | 2026-06-19 | Chief Architect | §7.1 multi-file drop; §7.17 batch download UX; getDroppedFiles; settings-focus batch-download | `docs/releases/v3.5.1.md` |
 | 3.5.0-offline-connectivity | 2026-06-20 | Chief Architect | §7.15 brand offline + §7.16 origin reachability; mobile notice stack; v3.5.0 stable offline baseline | `docs/releases/v3.5.0.md` |
 | 3.4.1-offline-persistence | 2026-06-20 | Chief Architect | §7.15 dual shell+wasm readiness; apply-update purge fix; reprecache shell; force-offline fallback (merged in v3.5.0) | `docs/releases/v3.4.1.md` |

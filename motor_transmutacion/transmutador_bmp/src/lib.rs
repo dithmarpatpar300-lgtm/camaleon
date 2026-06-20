@@ -121,9 +121,13 @@ fn validate_quality(q: u8) -> Result<u8, String> {
 pub use core_utils::flatten_rgba::flatten_rgba_on_background;
 
 fn decode_bmp(input: &[u8]) -> Result<image::DynamicImage, String> {
-    ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt BMP data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt BMP data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    reader
         .decode()
         .map_err(|e| format!("Failed to decode BMP: {}", e))
 }

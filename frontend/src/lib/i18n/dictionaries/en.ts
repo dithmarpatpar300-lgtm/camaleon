@@ -430,6 +430,31 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v352: {
+        title: "Risk Mode decoder fix & batch UX — v3.5.2",
+        summary:
+          "Risk Mode now properly bypasses internal decoder memory limits so large files (200 MP, 50–80 MB) transmute without error. Batch workflow hardened: error items auto-unselect, a 'Download Again' button appears for already-converted files even in mixed state, and file sizes are always accurate during prepare and across Universal handoff.",
+        technical:
+          "All 8 ImageReader-based transmutator crates: reader.no_limits() when risk_mode_enabled() before .decode() — bypasses image crate 512 MB max_alloc. Batch: isTransmutableStatus excludes error; error items auto-unselect + checkbox disabled; handleSelectAll skips error; BatchWorkspace normal mode gains onConvertAgain button when selectedDoneCount > 0. FileHandoffPayload carries originalSize; WeakMap preserves it across reconstruction; BatchItem.displaySize used in BatchFileRow. BatchPrepareProgress includes fileSize for per-file display during prepare. App v3.5.2 · engine 1.6.0.",
+        highlights: {
+          riskModeDecoder: {
+            title: "Risk Mode respects decoder memory limits",
+            body: "Converting large images (200 MP, 50–80 MB photos) with Risk Mode enabled now works — the decoder no longer rejects files that fit within the raised 500 MB risk ceiling.",
+          },
+          batchErrorUx: {
+            title: "Smarter batch error handling",
+            body: "Files that fail to prepare or transmute are now auto-deselected and their checkboxes are disabled. Download counts now only reflect valid, actionable files.",
+          },
+          batchDoneRedownload: {
+            title: "Re-download done files in mixed state",
+            body: "When some files are done and others errored, selecting the finished files now shows a 'Download Again' button — no need to wait for all files to complete.",
+          },
+          prepareFileSize: {
+            title: "Correct file sizes during prepare",
+            body: "The batch prepare progress screen now shows the actual disk size of each file as it's being processed, not a fixed value.",
+          },
+        },
+      },
       v351: {
         title: "Batch drag-drop fix & download UX — v3.5.1",
         summary:

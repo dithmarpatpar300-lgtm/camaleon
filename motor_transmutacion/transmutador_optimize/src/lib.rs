@@ -20,9 +20,13 @@ pub const MAX_RESIZE_PERCENT: u8 = 100;
 
 fn decode_image(input: &[u8]) -> Result<DynamicImage, String> {
     core_utils::validate_input(input)?;
-    ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Could not read image format: {e}"))?
+        .map_err(|e| format!("Could not read image format: {e}"))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    reader
         .decode()
         .map_err(|e| format!("Could not decode image: {e}"))
 }
