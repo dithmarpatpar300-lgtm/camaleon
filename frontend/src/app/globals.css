@@ -1267,44 +1267,55 @@ html[data-tool-lane="convert"] .tool-lane-track {
 }
 
 [data-settings-focus-card][data-pulse="warning"].settings-section-focus-pulse,
-[data-settings-focus-card][data-pulse="warning"].settings-section-focus-static {
+[data-settings-focus-row][data-pulse="warning"].settings-section-focus-pulse,
+[data-settings-focus-card][data-pulse="warning"].settings-section-focus-static,
+[data-settings-focus-row][data-pulse="warning"].settings-section-focus-static {
   --settings-focus-ring: color-mix(in srgb, var(--color-warning) 48%, var(--color-border));
   --settings-focus-glow: color-mix(in srgb, var(--color-warning) 42%, transparent);
 }
 
 [data-settings-focus-card][data-pulse="accent"].settings-section-focus-pulse,
-[data-settings-focus-card][data-pulse="accent"].settings-section-focus-static {
+[data-settings-focus-row][data-pulse="accent"].settings-section-focus-pulse,
+[data-settings-focus-card][data-pulse="accent"].settings-section-focus-static,
+[data-settings-focus-row][data-pulse="accent"].settings-section-focus-static {
   --settings-focus-ring: color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
   --settings-focus-glow: color-mix(in srgb, var(--color-accent) 38%, transparent);
 }
 
 [data-settings-focus-card][data-pulse="muted"].settings-section-focus-pulse,
-[data-settings-focus-card][data-pulse="muted"].settings-section-focus-static {
+[data-settings-focus-row][data-pulse="muted"].settings-section-focus-pulse,
+[data-settings-focus-card][data-pulse="muted"].settings-section-focus-static,
+[data-settings-focus-row][data-pulse="muted"].settings-section-focus-static {
   --settings-focus-ring: color-mix(in srgb, var(--color-text-muted) 35%, var(--color-border));
   --settings-focus-glow: color-mix(in srgb, var(--color-text-muted) 22%, transparent);
 }
 
-[data-settings-focus-card].settings-section-focus-pulse {
+[data-settings-focus-card].settings-section-focus-pulse,
+[data-settings-focus-row].settings-section-focus-pulse {
   animation: settingsSectionFocusPulse 4.2s ease-in-out forwards;
 }
 
-[data-settings-focus-card].settings-section-focus-static {
+[data-settings-focus-card].settings-section-focus-static,
+[data-settings-focus-row].settings-section-focus-static {
   box-shadow: 0 0 0 2px var(--settings-focus-ring);
   transition: box-shadow 0.4s ease-out;
 }
 
-[data-settings-focus-card].settings-section-focus-static-out {
+[data-settings-focus-card].settings-section-focus-static-out,
+[data-settings-focus-row].settings-section-focus-static-out {
   box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-settings-focus-card].settings-section-focus-pulse {
+  [data-settings-focus-card].settings-section-focus-pulse,
+  [data-settings-focus-row].settings-section-focus-pulse {
     animation: none;
     box-shadow: 0 0 0 2px var(--settings-focus-ring);
     transition: box-shadow 0.4s ease-out;
   }
 
-  [data-settings-focus-card].settings-section-focus-pulse.settings-section-focus-static-out {
+  [data-settings-focus-card].settings-section-focus-pulse.settings-section-focus-static-out,
+  [data-settings-focus-row].settings-section-focus-pulse.settings-section-focus-static-out {
     box-shadow: none;
   }
 }

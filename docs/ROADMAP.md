@@ -11,13 +11,15 @@
 
 ---
 
-## Current Snapshot (2026-06-20)
+## Current Snapshot (2026-06-19)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.5.0** (`main`) | **25 tools** · **Stable offline baseline** · Origin reachability · Brand offline |
+| **Frontend (app)** | **v3.5.1** (`main`) | **25 tools** · **Batch Explorer drag fix** · Download format UX |
 | **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** |
-| **SPEC** | v3.5.0 | §7.15 offline persistence · §7.16 connectivity · NFR-9 offline shell |
+| **SPEC** | v3.5.1 | §7.17 batch drop & download UX · §7.15–§7.16 offline baseline |
+
+**v3.5.1** (`main`): **Batch drag-drop fix & download format UX** — multi-file Explorer drag on dedicated transmutator routes; batch workspace download tips + Settings `batch-download` row focus. Release: `docs/releases/v3.5.1.md`.
 
 **v3.5.0** (`main`): **Offline reliability & connectivity hardening** — dual shell+Wasm readiness, `/api/health` probes with hysteresis, cache-first brand assets, unified mobile notice stack, app-update shell-safe. Release: `docs/releases/v3.5.0.md`.
 

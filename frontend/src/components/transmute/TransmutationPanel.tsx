@@ -10,6 +10,7 @@ import { useFileMetrics } from "@/hooks/useFileMetrics";
 import { useAdaptiveResourceProfile } from "@/hooks/useAdaptiveResourceProfile";
 import { downloadResult } from "@/lib/transmutation/download";
 import { formatBytes } from "@/lib/format/bytes";
+import { getDroppedFiles } from "@/lib/files/dropped-files";
 import { prepareFileForTool } from "@/lib/transmutation/prepare/run-prepare";
 import {
   prepareSessionInputLimit,
@@ -833,14 +834,27 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setBatchEntrySource(null);
   }, [tool, metrics, prepared, batchEntrySource, batchFiles, router]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(true); }, []);
-  const handleDragLeave = useCallback((e: React.DragEvent) => { e.preventDefault(); setDragging(false); }, []);
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); setDragging(false);
-    if (status === "processing" || status === "preparing") return;
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) handleIncomingFiles(files);
-  }, [status, handleIncomingFiles]);
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(true);
+  }, []);
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+  }, []);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragging(false);
+      if (status === "processing" || status === "preparing") return;
+      const files = getDroppedFiles(e.dataTransfer);
+      if (files.length > 0) handleIncomingFiles(files);
+    },
+    [status, handleIncomingFiles]
+  );
 
   useEffect(() => {
     if (status !== "processing") return;

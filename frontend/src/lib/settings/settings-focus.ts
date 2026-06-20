@@ -6,6 +6,7 @@ export type SettingsFocusTarget =
   | "risk"
   | "offline"
   | "batch"
+  | "batch-download"
   | "performance"
   | "notices"
   | "updates"
@@ -14,12 +15,19 @@ export type SettingsFocusTarget =
 export type SettingsFocusConfig = {
   sectionId: string;
   pulse: SettingsFocusPulse;
+  /** When set, pulse this row inside the section instead of the whole card. */
+  rowId?: string;
 };
 
 export const SETTINGS_FOCUS: Record<SettingsFocusTarget, SettingsFocusConfig> = {
   risk: { sectionId: "settings-section-risk", pulse: "warning" },
   offline: { sectionId: "settings-section-offline", pulse: "accent" },
   batch: { sectionId: "settings-section-batch", pulse: "accent" },
+  "batch-download": {
+    sectionId: "settings-section-batch",
+    pulse: "accent",
+    rowId: "settings-row-batch-download",
+  },
   performance: { sectionId: "settings-section-performance", pulse: "accent" },
   notices: { sectionId: "settings-section-notices", pulse: "muted" },
   updates: { sectionId: "settings-section-updates", pulse: "accent" },
@@ -61,6 +69,17 @@ export function scrollSettingsSectionIntoView(
 
 function findFocusCard(section: HTMLElement): HTMLElement | null {
   return section.querySelector<HTMLElement>("[data-settings-focus-card]");
+}
+
+function findFocusHighlightTarget(
+  section: HTMLElement,
+  config: SettingsFocusConfig
+): HTMLElement | null {
+  if (config.rowId) {
+    const row = section.querySelector<HTMLElement>(`#${config.rowId}`);
+    if (row) return row;
+  }
+  return findFocusCard(section);
 }
 
 function cleanupFocusCard(card: HTMLElement): void {
@@ -118,13 +137,18 @@ export async function runSettingsFocusNavigation(
   const section = document.getElementById(config.sectionId);
   if (!section) return;
 
-  const card = findFocusCard(section);
+  const card = findFocusHighlightTarget(section, config);
   if (!card) return;
 
   const reducedMotion = prefersReducedMotion();
   const behavior: ScrollBehavior = reducedMotion ? "instant" : "smooth";
 
-  scrollSettingsSectionIntoView(scrollContainer, section, behavior);
+  const scrollTarget =
+    config.rowId != null
+      ? (section.querySelector<HTMLElement>(`#${config.rowId}`) ?? section)
+      : section;
+
+  scrollSettingsSectionIntoView(scrollContainer, scrollTarget, behavior);
 
   if (!reducedMotion && behavior === "smooth") {
     await wait(SMOOTH_SCROLL_SETTLE_MS);

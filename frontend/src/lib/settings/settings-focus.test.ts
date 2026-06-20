@@ -9,6 +9,7 @@ const TARGETS: SettingsFocusTarget[] = [
   "risk",
   "offline",
   "batch",
+  "batch-download",
   "performance",
   "notices",
   "updates",
@@ -26,9 +27,15 @@ describe("settings-focus", () => {
     expect(SETTINGS_FOCUS.batch.pulse).toBe("accent");
   });
 
-  it("assigns unique section ids for every target", () => {
-    const ids = TARGETS.map((t) => SETTINGS_FOCUS[t].sectionId);
-    expect(new Set(ids).size).toBe(ids.length);
+  it("maps batch-download to batch section with row id", () => {
+    expect(SETTINGS_FOCUS["batch-download"].sectionId).toBe("settings-section-batch");
+    expect(SETTINGS_FOCUS["batch-download"].rowId).toBe("settings-row-batch-download");
+  });
+
+  it("allows sub-targets to share a section id but use distinct row ids", () => {
+    expect(SETTINGS_FOCUS.batch.sectionId).toBe(SETTINGS_FOCUS["batch-download"].sectionId);
+    expect(SETTINGS_FOCUS["batch-download"].rowId).toBe("settings-row-batch-download");
+    expect(SETTINGS_FOCUS.batch.rowId).toBeUndefined();
   });
 
   it("creates focus requests with monotonic seq", () => {

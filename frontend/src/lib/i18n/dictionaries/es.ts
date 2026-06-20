@@ -431,6 +431,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v351: {
+        title: "Fix arrastre batch y UX de descarga — v3.5.1",
+        summary:
+          "Arrastrar varios archivos desde el escritorio a un transmutador dedicado (p. ej. PNG→JPEG) ahora carga todos en modo batch — igual que el selector de archivos y el Transmutador Universal. El workspace batch también sugiere el formato de descarga opuesto con enlace directo a Ajustes.",
+        technical:
+          "stopPropagation en drag/drop del dropzone de herramienta; PageDropOverlay pointer-events-none; usePageFileDrop omite .transmute-dropzone; getDroppedFiles() vía dataTransfer.items. Tip de descarga batch + openSettings({ focus: batch-download }) pulso en fila. useBatchDownloadMode pref reactiva. SPEC §7.17. App v3.5.1 · motor 1.6.0.",
+        highlights: {
+          toolRouteDrop: {
+            title: "Arrastre multiarchivo en rutas de herramienta",
+            body: "Arrastra varias imágenes desde el Explorador de Windows a PNG→JPEG (y otras rutas batch) — todos los archivos entran en modo batch en lugar de solo el primero.",
+          },
+          batchDownloadUx: {
+            title: "Pistas de descarga batch más claras",
+            body: "Con varios archivos, el workspace recomienda ZIP o descargas individuales y enlaza directo a la fila de formato de descarga en Ajustes.",
+          },
+        },
+      },
       v350: {
         title: "Fiabilidad offline y conectividad — v3.5.0",
         summary:
@@ -1440,8 +1457,10 @@ const es: Dictionary = {
       selectNone: "Quitar selección",
       transmuteSelected: "Transmutar {count}",
       downloadSelected: "Descargar {count}",
+      downloadSelectedZip: "Descargar ZIP ({count})",
       transmuteAll: "Transmutar todos los listos",
       downloadAll: "Descargar todos los listos",
+      downloadAllZip: "Descargar todo en ZIP",
       preparing: "Preparando {current} / {total}",
       processing: "{current} / {total} · {fileName}",
       rowReady: "Listo",
@@ -1466,15 +1485,30 @@ const es: Dictionary = {
       convertAgainCount: "Volver a convertir ({count})",
       downloadAgain: "Descargar de nuevo",
       downloadAgainCount: "Descargar de nuevo ({count})",
+      downloadAgainZip: "Descargar ZIP de nuevo ({count})",
       allDoneSelectHint: "Selecciona uno o más archivos arriba para descargar o convertir de nuevo.",
       allDoneReencodeHint:
-        "Los archivos seleccionados se volverán a codificar con los ajustes de arriba — sin volver a leer.",
+        "Los archivos seleccionados se volverán a codificar con los ajustes de arriba — cada uno se descarga por separado.",
+      allDoneReencodeHintZip:
+        "Los archivos seleccionados se volverán a codificar con los ajustes de arriba — luego se empaquetan en un ZIP.",
       allDoneOptionsChangedHint:
-        "La última corrida usó {option} {lastRun}; el ajuste actual es {current}. Volver a convertir para re-codificar.",
+        "La última corrida usó {option} {lastRun}; el ajuste actual es {current}. Volver a convertir para re-codificar — archivos por separado.",
+      allDoneOptionsChangedHintZip:
+        "La última corrida usó {option} {lastRun}; el ajuste actual es {current}. Volver a convertir para re-codificar y descargar en un ZIP.",
       optionsValidatedHint:
-        "Archivos validados en {option} {prepared}. Cambia el slider para ajustar la salida — sin volver a leer.",
+        "Archivos validados en {option} {prepared}. Cambia el slider para ajustar la salida — cada archivo se descarga por separado al listo.",
+      optionsValidatedHintZip:
+        "Archivos validados en {option} {prepared}. Cambia el slider para ajustar la salida — al descargar se empaquetan en un ZIP.",
       optionsChangedHint:
-        "Validados en {option} {prepared}; ajuste actual {current}. Transmuta para aplicar.",
+        "Validados en {option} {prepared}; ajuste actual {current}. Transmuta para aplicar — archivos por separado.",
+      optionsChangedHintZip:
+        "Validados en {option} {prepared}; ajuste actual {current}. Transmuta para re-codificar y descargar en un ZIP.",
+      downloadFormatSuggestZip:
+        "¿Prefieres una sola descarga? Usa archivo ZIP — los convertidos se empaquetan automáticamente tras cada corrida.",
+      downloadFormatSuggestIndividual:
+        "¿Prefieres archivos sueltos? Usa descargas individuales — cada convertido se guarda por separado.",
+      downloadFormatSwitchToZip: "Cambiar a ZIP en Ajustes",
+      downloadFormatSwitchToIndividual: "Cambiar a archivos sueltos en Ajustes",
       optionCompression: "compresión",
       optionQuality: "calidad",
       optionSettings: "ajustes",
@@ -1482,7 +1516,10 @@ const es: Dictionary = {
         "Los archivos seleccionados se prepararán de nuevo con las opciones de arriba. Los no seleccionados siguen en Hecho.",
       allDoneCacheHint:
         "Mismos ajustes que la última corrida para los seleccionados — descarga instantánea desde caché cuando esté disponible.",
+      allDoneCacheHintZip:
+        "Mismos ajustes que la última corrida — ZIP instantáneo desde resultados en caché (sin re-codificar).",
       cachedDownloadSummary: "Descargados {count} archivo(s) desde caché — sin re-codificar.",
+      cachedDownloadSummaryZip: "ZIP descargado con {count} archivo(s) en caché — sin re-codificar.",
       cacheRedownloadMiss:
         "Caché expirada o no disponible — cambia un ajuste o usa Volver a convertir para reprocesar.",
       transmuteAnother: "Transmutar más",

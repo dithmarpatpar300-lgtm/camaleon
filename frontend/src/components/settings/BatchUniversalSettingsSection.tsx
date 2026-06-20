@@ -119,6 +119,7 @@ export function BatchUniversalSettingsSection({ drawerOpen }: Props) {
       </SettingsRow>
 
       <SettingsRow
+        id="settings-row-batch-download"
         label={t("settings.batchUniversal.downloadModeLabel")}
         description={t("settings.batchUniversal.downloadModeHint")}
         bordered={false}

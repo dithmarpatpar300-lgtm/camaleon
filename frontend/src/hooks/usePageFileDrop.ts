@@ -1,5 +1,6 @@
 "use client";
 
+import { getDroppedFiles } from "@/lib/files/dropped-files";
 import { useEffect, useRef, useState } from "react";
 
 type UsePageFileDropOptions = {
@@ -59,9 +60,14 @@ export function usePageFileDrop({
       setActive(false);
       if (!enabledRef.current) return;
 
-      const fileList = e.dataTransfer?.files;
-      if (!fileList || fileList.length === 0) return;
-      onFilesRef.current(Array.from(fileList));
+      const target = e.target;
+      if (target instanceof Element && target.closest(".transmute-dropzone")) {
+        return;
+      }
+
+      const files = getDroppedFiles(e.dataTransfer);
+      if (files.length === 0) return;
+      onFilesRef.current(files);
     };
 
     window.addEventListener("dragenter", handleDragEnter);
