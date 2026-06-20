@@ -1,7 +1,7 @@
 # Tier 3.4 — PWA / Offline Implementation Plan
 
-> **Target:** v3.0.0 (PWA) + **v3.0.1** (Offline mode polish) · **Analysis:** `tier3_4_pwa_offline_analysis.md`  
-> **Status:** ✅ Shipped on `dev`
+> **Target:** v3.0.0 (PWA) + **v3.0.1** (Offline mode polish) + **v3.5.0** (reliability hardening) · **Analysis:** `tier3_4_pwa_offline_analysis.md`  
+> **Status:** ✅ Shipped on `main` (v3.5.0)
 
 ## Phase 3.4.0 — Serwist core
 
@@ -72,6 +72,20 @@
 | `frontend/src/lib/releases/manifest.ts` | Register v300 |
 | `docs/SPEC.md`, `docs/ROADMAP.md`, `docs/planning/tier3_plan.md` | Tier 3 complete |
 | `docs/DEPLOY.md` | PWA QA section |
+
+## Phase 3.5.0 — Offline reliability & connectivity (v3.5.0)
+
+| File | Action |
+|------|--------|
+| `frontend/src/lib/offline/shell-cache-status.ts` | Dual shell+Wasm readiness |
+| `frontend/src/lib/offline/reprecache-app-shell.ts` | Shell reprecache orchestration |
+| `frontend/src/lib/offline/origin-reachability.ts` | Health probes + hysteresis |
+| `frontend/src/app/api/health/route.ts` | Liveness endpoint |
+| `frontend/src/app/sw.ts` | Cache-first brand/static before Serwist; probe NetworkOnly |
+| `frontend/src/components/brand/CamaleonMark.tsx` | Plain img for offline brand |
+| `frontend/src/components/layout/FloatingNotices*.tsx` | Unified mobile notice stack |
+| `docs/releases/v3.5.0.md` | Release notes |
+| `docs/SPEC.md` §7.15–§7.16 | Normative offline + connectivity |
 
 ## Deprecation cleanup
 

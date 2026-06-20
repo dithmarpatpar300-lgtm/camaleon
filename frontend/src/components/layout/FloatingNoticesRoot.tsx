@@ -60,9 +60,11 @@ export function FloatingNoticesRoot() {
       <div ref={topHostRef} className="floating-notices-top-host">
         {!isMobile && <FloatingNotices variant="top" />}
       </div>
-      <div ref={bottomLeftHostRef} className="floating-notices-bottom-left-host">
-        <FloatingNotices variant="bottom-left" />
-      </div>
+      {!isMobile && (
+        <div ref={bottomLeftHostRef} className="floating-notices-bottom-left-host">
+          <FloatingNotices variant="bottom-left" />
+        </div>
+      )}
       {!modalPortalTarget && (
         <div ref={bottomHostRef} className={bottomHostClass}>
           {bottomNotices}

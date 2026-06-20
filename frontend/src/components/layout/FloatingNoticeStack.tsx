@@ -32,7 +32,7 @@ export function TopRightNoticeStack({ children }: StackProps) {
   );
 }
 
-/** Bottom-left on desktop; centered on narrow viewports — stacks upward from the edge. */
+/** Bottom-left on desktop — stacks upward from the edge. */
 export function BottomLeftNoticeStack({ children }: StackProps) {
   return (
     <div

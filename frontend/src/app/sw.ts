@@ -2,7 +2,20 @@
 
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, Serwist, type RuntimeCaching } from "serwist";
+import { CacheFirst, NetworkOnly, Serwist, type RuntimeCaching } from "serwist";
+import { getAllShellPrecacheUrls } from "../lib/offline/precache-routes";
+import { reprecacheShellRoutes } from "../lib/offline/shell-reprecache-core";
+import {
+  OFFLINE_FALLBACK_PATH,
+  SHELL_CACHE_NAME,
+  SW_MESSAGE_REPRECACHE_SHELL,
+  SERVER_PROBE_QUERY,
+} from "../lib/offline/constants";
+import {
+  decodeNextImageAssetPath,
+  isOfflineAssetPath,
+} from "../lib/offline/offline-asset-fallback";
+import { REPRECACHE_SHELL_ACK } from "../lib/offline/sw-sync-shell";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -29,6 +42,147 @@ async function matchAnyCacheInSw(request: Request): Promise<Response | undefined
   return undefined;
 }
 
+async function matchByPathnameInSw(pathname: string): Promise<Response | undefined> {
+  const names = await caches.keys();
+  for (const name of names) {
+    const cache = await caches.open(name);
+    const keys = await cache.keys();
+    for (const key of keys) {
+      if (new URL(key.url).pathname === pathname) {
+        const hit = await cache.match(key);
+        if (hit) return hit;
+      }
+    }
+  }
+  return undefined;
+}
+
+async function tryForceOfflineFallbackInSw(
+  request: Request
+): Promise<Response | undefined> {
+  const url = new URL(request.url);
+
+  if (request.destination === "document") {
+    for (const path of [OFFLINE_FALLBACK_PATH, "/"]) {
+      const hit = await matchByPathnameInSw(path);
+      if (hit) return hit;
+    }
+  }
+
+  if (
+    url.pathname.includes("/_next/static/") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".css") ||
+    isOfflineAssetPath(url.pathname)
+  ) {
+    const byPath = await matchByPathnameInSw(url.pathname);
+    if (byPath) return byPath;
+
+    const imageAsset = decodeNextImageAssetPath(url.pathname, url.search);
+    if (imageAsset) {
+      const assetHit = await matchByPathnameInSw(imageAsset);
+      if (assetHit) return assetHit;
+    }
+  }
+
+  return undefined;
+}
+
+function isShellStaticAssetPath(pathname: string): boolean {
+  return pathname.startsWith("/_next/static/") || isOfflineAssetPath(pathname);
+}
+
+/** Cache-first for brand/static assets — runs before Serwist precache (real offline logo fix). */
+async function serveOfflineShellAssetRequest(request: Request): Promise<Response> {
+  const cached = await matchAnyCacheInSw(request);
+  if (cached) return cached;
+
+  const fallback = await tryForceOfflineFallbackInSw(request);
+  if (fallback) return fallback;
+
+  if (forceOfflineSim) {
+    return new Response("Offline mode — resource not in cache", {
+      status: 503,
+      statusText: "Offline Mode",
+    });
+  }
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(SHELL_CACHE_NAME);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const lastChance = await tryForceOfflineFallbackInSw(request);
+    if (lastChance) return lastChance;
+    return Response.error();
+  }
+}
+
+async function reprecacheShellInSw(): Promise<void> {
+  await reprecacheShellRoutes(getAllShellPrecacheUrls(), SHELL_CACHE_NAME);
+}
+
+/** Origin liveness checks must hit the network — never serve cached health/version/manifest. */
+const originProbeNetworkOnly: RuntimeCaching = {
+  matcher({ url, request }) {
+    if (!url.searchParams.has(SERVER_PROBE_QUERY)) return false;
+    if (request.method !== "GET" && request.method !== "HEAD") return false;
+    return (
+      url.pathname === "/api/health" ||
+      url.pathname === "/version.json" ||
+      url.pathname === "/manifest.webmanifest"
+    );
+  },
+  handler: new NetworkOnly(),
+};
+
+const shellDocumentRuntimeCache: RuntimeCaching = {
+  matcher({ request }) {
+    return (
+      request.method === "GET" &&
+      (request.mode === "navigate" || request.destination === "document")
+    );
+  },
+  handler: {
+    handle: async ({ request }) => {
+      const url = new URL(request.url);
+      try {
+        const response = await fetch(request);
+        if (response.ok) {
+          const cache = await caches.open(SHELL_CACHE_NAME);
+          await cache.put(request, response.clone());
+        }
+        return response;
+      } catch {
+        const cached = await matchAnyCacheInSw(request);
+        if (cached) return cached;
+
+        const byPath = await matchByPathnameInSw(url.pathname);
+        if (byPath) return byPath;
+
+        for (const path of [OFFLINE_FALLBACK_PATH, "/"]) {
+          const hit = await matchByPathnameInSw(path);
+          if (hit) return hit;
+        }
+
+        return Response.error();
+      }
+    },
+  },
+};
+
+const shellStaticRuntimeCache: RuntimeCaching = {
+  matcher({ url, request }) {
+    return request.method === "GET" && isShellStaticAssetPath(url.pathname);
+  },
+  handler: {
+    handle: async ({ request }) => serveOfflineShellAssetRequest(request),
+  },
+};
+
 const wasmRuntimeCache: RuntimeCaching = {
   matcher({ url }) {
     return url.pathname.startsWith("/wasm/");
@@ -42,14 +196,18 @@ const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: false,
   clientsClaim: true,
-  // Off: precached HTML + offline fallback; Firefox Android returns preloadResponse
-  // type "error" instead of rejecting — breaks offline nav (Mozilla #1802711).
   navigationPreload: false,
-  runtimeCaching: [wasmRuntimeCache, ...defaultCache],
+  runtimeCaching: [
+    originProbeNetworkOnly,
+    shellDocumentRuntimeCache,
+    shellStaticRuntimeCache,
+    wasmRuntimeCache,
+    ...defaultCache,
+  ],
   fallbacks: {
     entries: [
       {
-        url: "/~offline",
+        url: OFFLINE_FALLBACK_PATH,
         matcher({ request }) {
           return request.destination === "document";
         },
@@ -69,7 +227,27 @@ self.addEventListener("message", (event) => {
   }
   if (data?.type === "SET_FORCE_OFFLINE") {
     forceOfflineSim = Boolean(data.enabled);
+    return;
   }
+  if (data?.type === SW_MESSAGE_REPRECACHE_SHELL) {
+    event.waitUntil(
+      reprecacheShellInSw().then(() => {
+        event.source?.postMessage({ type: REPRECACHE_SHELL_ACK });
+      })
+    );
+  }
+});
+
+/** Cache-first shell assets before Serwist precache — real offline must match force-offline logo path. */
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+  if (!isShellStaticAssetPath(url.pathname)) return;
+
+  event.respondWith(serveOfflineShellAssetRequest(request));
 });
 
 /** Cache-only fetch when simulated offline — registered before Serwist so we respond first. */
@@ -86,6 +264,10 @@ self.addEventListener("fetch", (event) => {
     (async () => {
       const cached = await matchAnyCacheInSw(request);
       if (cached) return cached;
+
+      const fallback = await tryForceOfflineFallbackInSw(request);
+      if (fallback) return fallback;
+
       return new Response("Offline mode — resource not in cache", {
         status: 503,
         statusText: "Offline Mode",

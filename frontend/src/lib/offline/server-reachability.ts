@@ -1,9 +1,12 @@
-import { probeOriginReachable } from "./network-guard";
+import { evaluateOriginReachability } from "./origin-reachability";
 import { readForceOffline } from "./force-offline";
+
+/** Heartbeat while tab visible — local server kill, tunnel drop, etc. */
+const PROBE_INTERVAL_MS = 15_000;
 
 export async function checkServerReachability(): Promise<boolean> {
   if (readForceOffline()) return true;
-  return probeOriginReachable();
+  return evaluateOriginReachability();
 }
 
 export function installServerReachabilityListeners(
@@ -13,26 +16,28 @@ export function installServerReachabilityListeners(
 
   const runProbe = () => {
     if (readForceOffline()) return;
-    void checkServerReachability().then(onChange);
-  };
-
-  const onUnreachable = () => {
-    if (!readForceOffline()) onChange(false);
+    void evaluateOriginReachability().then(onChange);
   };
 
   const onVisible = () => {
     if (document.visibilityState === "visible") runProbe();
   };
 
-  window.addEventListener("camaleon:server-unreachable", onUnreachable);
   window.addEventListener("online", runProbe);
   window.addEventListener("focus", runProbe);
   document.addEventListener("visibilitychange", onVisible);
 
-  void checkServerReachability().then(onChange);
+  const intervalId = window.setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    runProbe();
+  }, PROBE_INTERVAL_MS);
+
+  // Optimistic start — first probe runs after a short delay (SW + page settle).
+  const bootTimer = window.setTimeout(runProbe, 1_500);
 
   return () => {
-    window.removeEventListener("camaleon:server-unreachable", onUnreachable);
+    window.clearInterval(intervalId);
+    window.clearTimeout(bootTimer);
     window.removeEventListener("online", runProbe);
     window.removeEventListener("focus", runProbe);
     document.removeEventListener("visibilitychange", onVisible);

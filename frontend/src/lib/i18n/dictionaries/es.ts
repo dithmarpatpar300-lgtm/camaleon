@@ -199,18 +199,36 @@ const es: Dictionary = {
       description:
         "Camaleon guarda la app y los motores de conversion en tu navegador tras una visita en linea. La transmutacion siempre es local — el modo sin conexion solo afecta lo que se puede descargar de la red.",
       modeOnline: "En linea",
-      modeOffline: "Sin conexion",
-      modeOfflineActive: "Modo sin conexion",
+      modeOffline: "Trabajando sin conexion",
+      modeOfflineActive: "Modo sin conexion (prueba)",
       modeOnlineDetail: "Red disponible. Las herramientas en cache funcionan; los motores nuevos se descargan bajo demanda.",
-      modeOfflineDetail: "Sin red detectada. Solo estan disponibles la app y motores en cache.",
+      modeOfflineDetail:
+        "Trabajando sin conexion — paginas y motores en cache en este dispositivo. Reconecta cuando necesites actualizaciones.",
       modeOfflineActiveDetail:
         "Esta pestaña usa solo la app y motores en cache — las peticiones de red estan bloqueadas. Tu Wi‑Fi puede seguir conectado.",
       badgeSwActive: "Service worker",
       badgeSwPending: "SW pendiente",
       badgeNetworkUp: "Red activa",
-      badgeNetworkDown: "Sin red",
-      statusLabel: "Motores en cache",
+      badgeNetworkDown: "Sin conexion activa",
+      statusLabel: "Motores Wasm",
       enginesHint: "{pct}% de motores Wasm almacenados en este dispositivo.",
+      shellLabel: "App shell",
+      shellHint: "{cached}/{total} rutas en cache · {chunks} chunks estaticos.",
+      shellReady: "Shell listo para recarga offline.",
+      shellPartial: "Shell parcialmente en cache — restaura en linea.",
+      shellNeedChunks:
+        "Rutas en cache pero faltan bundles JS — pulsa Restaurar cache offline en linea.",
+      shellMissing: "Shell no cacheado — restaura en linea.",
+      offlineReadyLabel: "Preparacion offline",
+      offlineReadyHint: "Minimo de cobertura shell y motores — ambos necesarios para offline fiable.",
+      restoreCacheAction: "Restaurar cache offline",
+      restoreCacheProgress: "Restaurando shell… {done}/{total}",
+      restoreCacheDone: "App shell restaurado. Descarga motores si hace falta.",
+      restoreCacheFailed: "No se pudo restaurar el shell. Permanece en linea e intentalo de nuevo.",
+      clearDoneShellRestored: "Cache borrada — app shell restaurado.",
+      clearDoneShellPending: "Cache borrada. Permanece en linea y pulsa Restaurar cache offline.",
+      offlineModeBlockedShell: "App shell no cacheado. Restaura cache offline en linea primero.",
+      offlineModeBlockedWasm: "Motores Wasm incompletos. Activa Descargar todas las herramientas primero.",
       statusOnline: "En linea — service worker activo.",
       statusOffline: "Sin conexion — usando app y motores en cache.",
       swPending: "Registrando service worker…",
@@ -220,9 +238,9 @@ const es: Dictionary = {
       cacheProgressLabel: "Cobertura de motores en cache",
       fullToolkitLabel: "Descargar todas las herramientas",
       fullToolkitHint:
-        "Opta por guardar todos los motores Wasm (~10–17 MB). Las 21 herramientas funcionan sin conexion sin visitarlas antes.",
+        "Descarga solo motores Wasm (~10–17 MB), no el app shell. Usa Restaurar cache offline para rutas HTML y JS.",
       precacheProgress: "Descargando motores… {done}/{total}",
-      precacheDone: "Todas las herramientas estan en cache para uso sin conexion.",
+      precacheDone: "Todos los motores Wasm cacheados para conversion offline.",
       precacheFailed: "No se pudieron descargar todos los motores. Intentalo de nuevo en linea.",
       needOnline: "Conectate a internet para descargar los motores sin conexion.",
       clearAction: "Borrar cache sin conexion",
@@ -231,7 +249,7 @@ const es: Dictionary = {
         "Los navegadores moviles pueden eliminar datos en cache por falta de espacio. Se recomienda escritorio para el kit completo.",
       offlineModeTitle: "Modo sin conexion",
       offlineModeHint:
-        "Trabaja solo desde cache en esta pestaña. Requiere una visita previa en linea con service worker activo y herramientas en cache (usa “Descargar todas las herramientas” arriba).",
+        "Trabaja solo desde cache en esta pestaña. Requiere app shell y motores Wasm cacheados (usa Restaurar cache offline y Descargar todas las herramientas arriba).",
       offlineModeNote:
         "Mismo comportamiento cache-only que offline real tras deploy o npm run preview:cf. Herramientas aun no cacheadas fallaran hasta descargarlas en linea. Primera visita e incognito siempre necesitan red una vez.",
       offlineModeEnter: "Activar modo sin conexion",
@@ -304,9 +322,12 @@ const es: Dictionary = {
     banner: "Estás sin conexión — las herramientas en caché siguen funcionando en este dispositivo.",
     bannerForced: "Modo sin conexion — solo cache en esta pestaña.",
     noticeOffline: "Sin conexión de red. Las herramientas en caché siguen funcionando en este dispositivo.",
-    noticeOfflineMode: "Modo sin conexion — solo cache. Desactivalo cuando necesites actualizaciones.",
+    noticeWorkingOffline:
+      "Trabajando sin conexion — paginas y herramientas en cache en este dispositivo. Reconecta cuando necesites actualizaciones.",
+    noticeOfflineMode:
+      "Modo sin conexion (prueba) — solo cache. Desactivalo cuando necesites actualizaciones.",
     noticeServerDown:
-      "Servidor de la app inaccesible (localhost detenido u host offline). Wasm en caché sigue si ya estaba cargado.",
+      "Trabajando sin conexion — paginas y herramientas en cache en este dispositivo. Reconecta cuando necesites actualizaciones.",
     noticeExitOfflineMode: "Desactivar modo sin conexion",
     uncachedTool:
       "Esta herramienta aún no está en caché. Conéctate a internet una vez para descargar su motor.",
@@ -335,8 +356,9 @@ const es: Dictionary = {
   connectivity: {
     online: "En linea",
     offline: "Sin conexion",
-    offlineMode: "Modo sin conexion",
-    serverDown: "Servidor inaccesible",
+    workingOffline: "Trabajando sin conexion",
+    offlineMode: "Modo sin conexion (prueba)",
+    serverDown: "Trabajando sin conexion",
     statusTitle: "Conexion: {mode}",
   },
 
@@ -409,6 +431,52 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v350: {
+        title: "Fiabilidad offline y conectividad — v3.5.0",
+        summary:
+          "El modo offline PWA es estable en producción: preparación honesta shell + Wasm, actualizaciones fiables y conectividad que funciona en localhost, túnel y pérdida real de red — sin falsos offline ni logo ausente en el header.",
+        technical:
+          "Doble preparación shellReady+wasmReady. reprecacheAppShell + ShellCacheBootstrap. /api/health + sondas origin-reachability con histéresis. SW cache-first brand/static antes de Serwist. CamaleonMark img nativo. Stack unificado de avisos inferiores en móvil. SPEC §7.15–§7.16. App v3.5.0 · motor 1.6.0.",
+        highlights: {
+          offlineStable: {
+            title: "Base offline estable",
+            body: "Borrar cache, actualizar la app o recargar sin red — el shell y los motores se recuperan por separado y el modo sin conexión espera a que ambos estén listos.",
+          },
+          connectivity: {
+            title: "Conectividad honesta",
+            body: "Sondas de salud con histéresis — sin falso offline cuando el servidor está activo en túnel o localhost; la pérdida real de red se detecta igual de rápido.",
+          },
+          brandOffline: {
+            title: "Logo persiste navegando offline",
+            body: "La marca Camaleon permanece en el header al cambiar de ruta sin red — igual en móvil y escritorio.",
+          },
+          mobileNotices: {
+            title: "Avisos móviles apilados",
+            body: "Banner offline, promo de instalación, actualización y toasts comparten un dock inferior — sin solapamiento en pantallas pequeñas.",
+          },
+        },
+      },
+      v341: {
+        title: "Fix persistencia offline — v3.4.1",
+        summary:
+          "El modo offline PWA vuelve a ser fiable tras borrar cache, actualizar la app o recargar sin red. Ajustes muestra shell y motores Wasm por separado.",
+        technical:
+          "Doble preparacion: shellReady + wasmReady. applyAppUpdate ya no purga precache activo post-activate. reprecacheAppShell + ShellCacheBootstrap. Force-offline sirve /~offline antes de 503. SPEC §7.15. App v3.4.1 · engine 1.6.0.",
+        highlights: {
+          shellReadiness: {
+            title: "Preparacion offline honesta",
+            body: "Ajustes muestra rutas del app shell y motores Wasm por separado. Modo sin conexion bloqueado hasta que ambas capas esten en cache.",
+          },
+          updatePurgeFix: {
+            title: "Actualizar ya no borra el shell",
+            body: "Update now conserva el precache del nuevo service worker. Reprecache del shell automatico tras recarga cuando haga falta.",
+          },
+          forceOffline: {
+            title: "Force-offline alineado con Serwist",
+            body: "Modo sin conexion intenta paginas y chunks en cache antes del 503 — menos ChunkLoadError al recargar.",
+          },
+        },
+      },
       v340: {
         title: "Refresh de páginas legales — v3.4",
         summary:
@@ -1223,6 +1291,10 @@ const es: Dictionary = {
     subnavLabel: "Páginas legales",
     tocLabel: "En esta página",
     tocHeading: "Contenido",
+    tocSection: "{count} sección",
+    tocSections: "{count} secciones",
+    tableEntry: "{count} entrada",
+    tableEntries: "{count} entradas",
   },
 
   legalRefresh: {

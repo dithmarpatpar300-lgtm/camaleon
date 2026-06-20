@@ -5,16 +5,15 @@ import { useI18n } from "@/providers/I18nProvider";
 import { ConnectivityDot } from "@/components/connectivity/ConnectivityDot";
 import { cn } from "@/lib/utils";
 
-type NoticeKind = "offline" | "simulated" | "serverDown";
+type NoticeKind = "workingOffline" | "simulated";
 
 function resolveKind(
   networkOnline: boolean,
   forceOffline: boolean,
   serverReachable: boolean
 ): NoticeKind | null {
-  if (!networkOnline) return "offline";
   if (forceOffline) return "simulated";
-  if (!serverReachable) return "serverDown";
+  if (!networkOnline || !serverReachable) return "workingOffline";
   return null;
 }
 
@@ -26,13 +25,7 @@ export function OfflineStatusNotice({ layout = "default" }: { layout?: "default"
   if (!kind) return null;
 
   const messageKey =
-    kind === "simulated"
-      ? "offline.noticeOfflineMode"
-      : kind === "serverDown"
-        ? "offline.noticeServerDown"
-        : "offline.noticeOffline";
-
-  const dotState = kind === "simulated" || kind === "offline" ? "offline" : "offline";
+    kind === "simulated" ? "offline.noticeOfflineMode" : "offline.noticeWorkingOffline";
 
   return (
     <div
@@ -42,12 +35,12 @@ export function OfflineStatusNotice({ layout = "default" }: { layout?: "default"
         "offline-status-notice pointer-events-auto",
         layout === "dock" && "offline-status-notice--dock",
         kind === "simulated" && "offline-status-notice--forced",
-        kind === "serverDown" && "offline-status-notice--server-down"
+        kind === "workingOffline" && "offline-status-notice--server-down"
       )}
     >
       <div className="offline-status-notice__inner">
         <span className="offline-status-notice__dot" aria-hidden="true">
-          <ConnectivityDot state={dotState} size="xs" pulse={false} subtle />
+          <ConnectivityDot state="offline" size="xs" pulse={false} subtle />
         </span>
         <div className="offline-status-notice__body">
           <p className="offline-status-notice__message">{t(messageKey)}</p>

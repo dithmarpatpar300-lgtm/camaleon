@@ -8,9 +8,15 @@ import { formatBytes } from "@/lib/format/bytes";
 import {
   clearOfflineCaches,
   estimateWasmCacheBytes,
+  isWasmReady,
   listCachedWasmCrates,
 } from "@/lib/offline/cache-status";
 import { precacheFullToolkit } from "@/lib/offline/precache-toolkit";
+import { reprecacheAppShell } from "@/lib/offline/reprecache-app-shell";
+import {
+  getShellCacheStatus,
+  type ShellCacheStatus,
+} from "@/lib/offline/shell-cache-status";
 import {
   getEffectiveOfflinePrefs,
   markOfflinePrecacheComplete,
@@ -65,16 +71,20 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
   const [prefs, setPrefs] = useState(getEffectiveOfflinePrefs);
   const [cachedCrates, setCachedCrates] = useState<string[]>([]);
   const [cacheBytes, setCacheBytes] = useState<number | null>(null);
+  const [shellStatus, setShellStatus] = useState<ShellCacheStatus | null>(null);
   const [precaching, setPrecaching] = useState(false);
+  const [restoringShell, setRestoringShell] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   const refreshStatus = useCallback(async () => {
-    const [crates, bytes] = await Promise.all([
+    const [crates, bytes, shell] = await Promise.all([
       listCachedWasmCrates(),
       estimateWasmCacheBytes(),
+      getShellCacheStatus(),
     ]);
     setCachedCrates(crates);
     setCacheBytes(bytes);
+    setShellStatus(shell);
   }, []);
 
   useEffect(() => {
@@ -92,21 +102,47 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
   const modeTitle = useMemo(() => {
     if (visualState === "online") return t("settings.offline.modeOnline");
     if (visualState === "simulated") return t("settings.offline.modeOfflineActive");
-    if (!networkOnline) return t("settings.offline.modeOffline");
-    if (!serverReachable) return t("connectivity.serverDown");
     return t("settings.offline.modeOffline");
-  }, [visualState, networkOnline, serverReachable, t]);
+  }, [visualState, t]);
 
   const modeDetail = useMemo(() => {
     if (!swSupported) return t("settings.offline.swUnsupported");
     if (!swRegistered) return t("settings.offline.swPending");
     if (visualState === "online") return t("settings.offline.modeOnlineDetail");
     if (visualState === "simulated") return t("settings.offline.modeOfflineActiveDetail");
-    if (!serverReachable && networkOnline) return t("offline.noticeServerDown");
     return t("settings.offline.modeOfflineDetail");
-  }, [swSupported, swRegistered, visualState, networkOnline, serverReachable, t]);
+  }, [swSupported, swRegistered, visualState, t]);
 
   const enginePct = Math.round((cachedCrates.length / WASM_CRATES.length) * 100);
+  const shellPct =
+    shellStatus && shellStatus.toolRoutesTotal > 0
+      ? Math.round((shellStatus.toolRoutesCached / shellStatus.toolRoutesTotal) * 100)
+      : 0;
+
+  const shellLayerPct = shellStatus
+    ? shellStatus.shellReady
+      ? 100
+      : Math.round(
+          (shellPct * 0.6 +
+            (shellStatus.hasHome ? 10 : 0) +
+            (shellStatus.hasOfflineFallback ? 10 : 0) +
+            (shellStatus.staticChunkCount > 0 ? 20 : 0)) *
+            (100 / 100)
+        )
+    : 0;
+
+  const offlineReadyPct =
+    shellStatus?.shellReady && cachedCrates.length === WASM_CRATES.length
+      ? 100
+      : Math.min(enginePct, shellLayerPct);
+
+  const shellHint = shellStatus?.shellReady
+    ? t("settings.offline.shellReady")
+    : shellStatus && shellStatus.toolRoutesCached >= shellStatus.toolRoutesTotal && shellStatus.staticChunkCount === 0
+      ? t("settings.offline.shellNeedChunks")
+      : shellPct > 0
+        ? t("settings.offline.shellPartial")
+        : t("settings.offline.shellMissing");
 
   const runPrecache = useCallback(async () => {
     if (!online) {
@@ -146,18 +182,58 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
   );
 
   const handleClear = useCallback(async () => {
-    await clearOfflineCaches();
+    const { shellRestored } = await clearOfflineCaches({ reprecacheShell: online });
     resetOfflinePrefs();
     setPrefs(getEffectiveOfflinePrefs());
     await refreshStatus();
-    toast({ message: t("settings.offline.clearDone"), variant: "success" });
-  }, [refreshStatus, t, toast]);
+    toast({
+      message: shellRestored
+        ? t("settings.offline.clearDoneShellRestored")
+        : t("settings.offline.clearDoneShellPending"),
+      variant: shellRestored ? "success" : "info",
+    });
+  }, [online, refreshStatus, t, toast]);
 
-  const handleForceOffline = useCallback(() => {
+  const handleRestoreShell = useCallback(async () => {
+    if (!online) {
+      toast({ message: t("settings.offline.needOnline"), variant: "info" });
+      return;
+    }
+    setRestoringShell(true);
+    setProgress({ done: 0, total: 1 });
+    try {
+      const result = await reprecacheAppShell((p) => setProgress(p));
+      await refreshStatus();
+      toast({
+        message: result.ok
+          ? t("settings.offline.restoreCacheDone")
+          : t("settings.offline.restoreCacheFailed"),
+        variant: result.ok ? "success" : "info",
+      });
+    } finally {
+      setRestoringShell(false);
+      setProgress(null);
+    }
+  }, [online, refreshStatus, t, toast]);
+
+  const handleForceOffline = useCallback(async () => {
     if (!networkOnline) {
       toast({ message: t("settings.offline.alreadyOffline"), variant: "info" });
       return;
     }
+
+    if (!forceOffline) {
+      const [shell, wasmOk] = await Promise.all([getShellCacheStatus(), isWasmReady()]);
+      if (!shell.shellReady) {
+        toast({ message: t("settings.offline.offlineModeBlockedShell"), variant: "info" });
+        return;
+      }
+      if (!wasmOk) {
+        toast({ message: t("settings.offline.offlineModeBlockedWasm"), variant: "info" });
+        return;
+      }
+    }
+
     setForceOffline(!forceOffline);
     toast({
       message: forceOffline
@@ -202,10 +278,8 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
                     : t("settings.offline.badgeSwPending")}
                 </span>
                 <span className="inline-flex items-center rounded-full border border-border/70 bg-bg-elevated/40 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                  {networkOnline
-                    ? serverReachable
-                      ? t("settings.offline.badgeNetworkUp")
-                      : t("connectivity.serverDown")
+                  {online
+                    ? t("settings.offline.badgeNetworkUp")
                     : t("settings.offline.badgeNetworkDown")}
                 </span>
               </div>
@@ -218,15 +292,52 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <StatCard
+            label={t("settings.offline.shellLabel")}
+            value={
+              shellStatus
+                ? `${shellStatus.toolRoutesCached}/${shellStatus.toolRoutesTotal}`
+                : "—"
+            }
+            hint={
+              shellStatus
+                ? shellStatus.shellReady
+                  ? t("settings.offline.shellHint", {
+                      cached: String(shellStatus.toolRoutesCached),
+                      total: String(shellStatus.toolRoutesTotal),
+                      chunks: String(shellStatus.staticChunkCount),
+                    })
+                  : shellHint
+                : shellHint
+            }
+          />
+          <StatCard
             label={t("settings.offline.statusLabel")}
             value={`${cachedCrates.length}/${WASM_CRATES.length}`}
             hint={t("settings.offline.enginesHint", { pct: String(enginePct) })}
           />
-          <StatCard
-            label={t("settings.offline.storageLabel")}
-            value={cacheBytes != null ? formatBytes(cacheBytes) : "—"}
-            hint={t("settings.offline.storageHint")}
-          />
+        </div>
+
+        <StatCard
+          label={t("settings.offline.storageLabel")}
+          value={cacheBytes != null ? formatBytes(cacheBytes) : "—"}
+          hint={t("settings.offline.storageHint")}
+        />
+
+        {/* Offline readiness */}
+        <div>
+          <div className="mb-1.5 flex items-center justify-between text-[11px] text-text-muted">
+            <span>{t("settings.offline.offlineReadyLabel")}</span>
+            <span className="font-mono tabular-nums">{offlineReadyPct}%</span>
+          </div>
+          <p className="mb-2 text-[11px] leading-snug text-text-muted">
+            {t("settings.offline.offlineReadyHint")}
+          </p>
+          <div className="h-1.5 overflow-hidden rounded-full bg-bg-elevated">
+            <div
+              className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
+              style={{ width: `${offlineReadyPct}%` }}
+            />
+          </div>
         </div>
 
         {/* Engine progress bar */}
@@ -327,8 +438,24 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
           </p>
         </div>
 
-        {/* Clear cache */}
-        <div className="flex justify-end border-t border-border/60 pt-4">
+        {/* Restore shell + clear */}
+        <div className="flex flex-wrap justify-end gap-2 border-t border-border/60 pt-4">
+          <button
+            type="button"
+            onClick={() => void handleRestoreShell()}
+            disabled={restoringShell || precaching || !online || !swSupported}
+            className={cn(
+              actionButtonClass,
+              "border-accent/30 bg-accent-subtle text-accent hover:border-accent/50"
+            )}
+          >
+            {restoringShell && progress
+              ? t("settings.offline.restoreCacheProgress", {
+                  done: String(progress.done),
+                  total: String(progress.total),
+                })
+              : t("settings.offline.restoreCacheAction")}
+          </button>
           <button
             type="button"
             onClick={() => void handleClear()}

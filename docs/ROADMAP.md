@@ -15,9 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.3.4** (`main`) | **25 tools** · Settings+toast · Client storage seed · Lane SSR |
+| **Frontend (app)** | **v3.5.0** (`main`) | **25 tools** · **Stable offline baseline** · Origin reachability · Brand offline |
 | **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** |
-| **SPEC** | v3.3.4 | NFR-9 offline shell; §7.13 Settings S1–S7 + storage seed; modal toast portal |
+| **SPEC** | v3.5.0 | §7.15 offline persistence · §7.16 connectivity · NFR-9 offline shell |
+
+**v3.5.0** (`main`): **Offline reliability & connectivity hardening** — dual shell+Wasm readiness, `/api/health` probes with hysteresis, cache-first brand assets, unified mobile notice stack, app-update shell-safe. Release: `docs/releases/v3.5.0.md`.
+
+**v3.4.0** (`main`): **Legal pages refresh** — About/Contact/Privacy/Terms rewrite + `LegalRefreshNotice`. Release: `docs/releases/v3.4.0.md`.
 
 **v3.3.4** (`main`): **Settings + toast coexistence** (in-dialog portal); **`lib/storage`** factory seed; lane SSR cookies; mobile offline dock. Release: `docs/releases/v3.3.4.md`.
 
