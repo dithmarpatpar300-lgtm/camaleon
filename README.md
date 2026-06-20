@@ -2,15 +2,15 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.2.9** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.3.0** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v3.2.9)
+## What works today (v3.3.0)
 
 | Capability | Status |
 |------------|--------|
-| **Twenty-five active tools** | Tiers 1–2 + AVIF + SVG + **optimize** (compress/resize) — `/transmute/[slug]` |
+| **Twenty-five active tools** | Tiers 1–2 + AVIF + SVG + **optimize** (compress/resize, **functional v3.3.0**) — `/transmute/[slug]` |
 | **Universal transmutator** | Home-page drop zone — pick output format, handoff to any tool (**v3.1.x**, Tier 3.5) |
 | **Mixed-format cohorts** | Drop mixed formats on home → per-group picker; remaining cohorts persist (**v3.2.9**, Tier 3.6.1 C) |
 | **Multi-file batch** | Drop N images on **19 batch routes** — shared options, ZIP or individual download (**v3.2.0–3.2.9**, Tier 3.6) |
@@ -40,9 +40,9 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
-| **Tests** | 121 Vitest unit tests |
+| **Tests** | 124 Vitest unit tests |
 
-**Latest (v3.2.9):** Universal **mixed-format cohort picker**; batch **ZIP/individual** delivery in Settings; **GIF/TIFF/ICO** per-row batch; **compress & resize** tools (Tier 4a); smarter batch re-download and contextual cancel. See [docs/releases/v3.2.9.md](docs/releases/v3.2.9.md). **Next:** ToolBrowser lanes (Convert vs Optimize). [ROADMAP](docs/ROADMAP.md) · [Tier 3.6 plan](docs/planning/tier3_6_multi_file_plan.md).
+**Latest (v3.3.0):** **Tier 4a activation** — PNG/JPEG compress & resize run end-to-end; PWA install icons regenerated from Lamina 3C brand mark. See [docs/releases/v3.3.0.md](docs/releases/v3.3.0.md). **Next:** metrics-first optimize UX (4a.1) · ToolBrowser lanes (UX-4a). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 
@@ -56,7 +56,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | Layer | Stack |
 |-------|--------|
 | Frontend | Next.js 15 (App Router), TypeScript, Tailwind v4 |
-| Engine | Rust workspace (`image` crate, `wasm-bindgen`) — **12 Wasm crates** |
+| Engine | Rust workspace (`image` crate, `wasm-bindgen`) — **13 Wasm crates** |
 | Bridge | `wasm-pack` → `frontend/public/wasm/` |
 | Concurrency | Web Workers |
 | Offline | Serwist Service Worker (`@serwist/next`) |
@@ -119,7 +119,7 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v3.2.9)
+├── frontend/              # Next.js app (v3.3.0)
 ├── motor_transmutacion/   # Rust workspace (v1.6.0)
 │   ├── core_utils/
 │   ├── transmutador_jpg/         # JPEG → PNG
@@ -158,7 +158,7 @@ camaleon/
 | **Tier 3.5 — Universal transmutator** | v3.1.x | ✅ Home-page format picker + handoff |
 | **Tier 3.6.0 — tool-route batch** | v3.2.0–v3.2.3 | ✅ 14 raster slugs, sequential batch |
 | **Tier 3.6.1 — universal batch** | v3.2.4+ | 🔄 Slice A+B ✅ · **Slice C** (mixed cohorts) ⏳ |
-| **Tier 4a — optimization** | TBD | 📋 Compress, resize (metrics-first) |
+| **Tier 4a — optimization** | **v3.3.0** | ✅ Compress, resize (`transmutador_optimize` activated) |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Architecture atlas: **[ARCHITECTURE.md](ARCHITECTURE.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 

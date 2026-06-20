@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.2.9** (`main` / `dev`) | **25 tools** · Universal cohort picker · batch 3.6.x · optimize (4a) · PWA · app updates · toasts |
+| **Frontend (app)** | **v3.3.0** (`dev`) | **25 tools** · Tier 4a optimize **functional** · Universal/batch · PWA brand icons |
 | **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** |
-| **SPEC** | v3.2.9 | NFR-9 offline shell; §7.13 Settings S1–S7 (S7 core ✅) |
+| **SPEC** | v3.3.0 | NFR-9 offline shell; §7.13 Settings S1–S7; §6.13 optimize crate |
 
-**v3.2.9** (`main`): **Tier 3.6.1 Slice C** (mixed cohort picker) · **3.6.2** (ZIP delivery pref, GIF/TIFF/ICO per-row batch) · **Tier 4a** (compress/resize) · **S7** batch prefs · batch re-download polish. Release: `docs/releases/v3.2.9.md`.
+**v3.3.0** (`dev`): **Tier 4a.0 activation** — warmup-wasm + wasm-modules.d.ts + JPEG meta alias; PWA icons from `generate-brand-assets.mjs`. Release: `docs/releases/v3.3.0.md`.
+
+**v3.2.9** (`main`): **Tier 3.6.1 Slice C** (mixed cohort picker) · **3.6.2** (ZIP delivery pref, GIF/TIFF/ICO per-row batch) · **Tier 4a scaffold** (optimize routes visible; activation in v3.3.0) · **S7** batch prefs. Release: `docs/releases/v3.2.9.md`.
 
 **v3.2.8** (`main`): **Settings S7 Priority A** — batch default selection; adaptive toast heights. Release: `docs/releases/v3.2.8.md`.
 
@@ -31,7 +33,7 @@
 
 **v3.0.0–v3.0.1** (`main`): **PWA / offline shell (Tier 3.4 capstone)** — Serwist SW, Settings S5, offline UX. Releases: `docs/releases/v3.0.0.md`, `v3.0.1.md`. **Tier 3 complete.**
 
-**Next:** **ToolBrowser UX-4a** — Convert vs Optimize lanes (`category` grouping). **3.6.3** SVG batch + aggregate RAM caps. **Tier 4b** (image editing).
+**Next:** **4a.1** metrics-first optimize UX · **UX-4a** ToolBrowser Convert vs Optimize lanes · **3.6.3** SVG batch.
 
 **v2.3.8**: **Risk mode (S6)** + hotfixes. Release: `docs/releases/v2.3.8.md`.
 
@@ -301,7 +303,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 | **Tier 3.6.0** | **v3.2.0–v3.2.3** | Tool-route batch (14 raster slugs) | ✅ **Shipped** — `docs/planning/tier3_6_multi_file_plan.md` |
 | **Tier 3.6.1** | **v3.2.4–v3.2.9** | Universal batch + mixed cohorts | ✅ **Complete** (Slices A+B+C) |
 | **Tier 3.6.2** | **v3.2.9** | ZIP delivery pref; GIF/TIFF/ICO per-row batch | ✅ **Shipped** |
-| **Tier 4a** | **v3.2.9** | Compress, Resize | ✅ **Shipped** — `transmutador_optimize` |
+| **Tier 4a** | **v3.3.0** | Compress, Resize — **functional** | ✅ **Shipped (4a.0)** — `docs/planning/tier4_plan.md` |
 | **Tier 4b** | v2.x | Crop, Rotate/Flip, favicon pack | Image **editing** |
 | **Tier 5** | TBD | PDF tools | **Deferred** — documents; separate planning required |
 
@@ -332,7 +334,8 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
-| 2026-06-19 | Chief Architect (Cursor) | **v3.2.9 promoted to `main`:** Tier 3.6.1 Slice C, 3.6.2 batch ZIP/per-row, Tier 4a optimize, S7 batch prefs, batch UX fixes; README/SPEC/ROADMAP → v3.2.9 |
+| 2026-06-19 | Chief Architect (Cursor) | **v3.3.0 on `dev`:** Tier 4a.0 activation (warmup-wasm, types, JPEG meta); PWA brand icons; docs/SPEC/ROADMAP → v3.3.0 |
+| 2026-06-19 | Chief Architect (Cursor) | **v3.2.9 promoted to `main`:** Tier 3.6.1 Slice C, 3.6.2 batch ZIP/per-row, Tier 4a optimize scaffold, S7 batch prefs, batch UX fixes; README/SPEC/ROADMAP → v3.2.9 |
 | 2026-06-18 | Chief Architect (Cursor) | **v3.2.0–v3.2.8 promoted to `main`:** Tier 3.6 batch + universal homogeneous multi-drop + app updates + toasts + S7 Priority A; README/SPEC/ROADMAP snapshot → v3.2.8 |
 | 2026-06-11 | Chief Architect (Cursor) | **v2.3.1–2.3.4 merged to `main`:** Settings panel S1–S4 (drawer, transmutation defaults, performance overrides, notices/prepare); app v2.3.4; SPEC v2.3.4-settings |
 | 2026-06-08 | Chief Architect (Cursor) | **Semantic Alpha Engine (v1.11 WIP on `dev`):** `core_utils::semantic_alpha`, Wasm assess exports, frontend prepare integration; TIFF opaque RGBA false-positive fixed; Phases 0/4/5 remain before `main` |

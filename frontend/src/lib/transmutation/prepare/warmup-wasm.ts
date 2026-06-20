@@ -1,5 +1,22 @@
 import type { TransmutationModule } from "@/workers/types";
 import { ensureBmpWasm } from "@/lib/bmp/bmp-wasm-client";
+
+/** Every `TransmutationModule` that `getActiveTools()` may reference — keep in sync with the switch below. */
+export const WARMUP_SUPPORTED_MODULES = [
+  "transmutador_jpg",
+  "transmutador_png",
+  "transmutador_webp",
+  "transmutador_encode",
+  "transmutador_gif",
+  "transmutador_bmp",
+  "transmutador_tiff",
+  "transmutador_ico",
+  "transmutador_tga",
+  "transmutador_avif",
+  "transmutador_avif_encode",
+  "transmutador_svg",
+  "transmutador_optimize",
+] as const satisfies readonly TransmutationModule[];
 import { ensureGifWasm } from "@/lib/gif/gif-wasm-client";
 import { ensureIcoWasm } from "@/lib/ico/ico-wasm-client";
 import { ensureAvifWasm } from "@/lib/avif/avif-wasm-client";
@@ -39,6 +56,8 @@ export async function warmupTransmutatorModule(module: TransmutationModule): Pro
       return warmupCrate("transmutador_avif_encode");
     case "transmutador_svg":
       return ensureSvgWasm().then(() => undefined);
+    case "transmutador_optimize":
+      return warmupCrate("transmutador_optimize");
     default:
       throw new Error(`Unknown module: ${module}`);
   }

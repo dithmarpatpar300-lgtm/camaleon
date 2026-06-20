@@ -79,6 +79,7 @@ export async function resolveSourceImageMeta(
     case "PNG":
       return withSemanticAlpha(probePngSourceMeta(bytes), ctx.alphaAssessment);
     case "JPG":
+    case "JPEG":
       return probeJpegSourceMeta(bytes);
     case "WEBP":
       return withSemanticAlpha(probeWebpSourceMeta(bytes), ctx.alphaAssessment);

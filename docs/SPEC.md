@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.2.9  
+**Version:** 3.3.0  
 **Last updated:** 2026-06-19  
-**Status:** v3.2.9 on `main`/`dev` (Tier 3.6.1 complete · 3.6.2 batch ZIP/per-row · Tier 4a optimize · S7 batch prefs) · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Status:** v3.3.0 on `dev` (Tier 4a.0 **functional** · PWA brand icons) · v3.2.9 on `main` · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -27,7 +27,7 @@ Camaleon is an **image platform** first. Expansion follows a fixed priority ladd
 |--------|------|------------|--------|
 | **A** | **Image transmutation** | Format-to-format raster conversion (decode → policy → encode) | ✅ **Shipped** — Tiers 1–2 + Semantic Alpha Engine (v1.11.0) |
 | **B** | **Modern image formats** | AVIF, SVG→raster | ✅ **Tier 3 complete (v3.0.1)** — AVIF + SVG + PWA offline shell |
-| **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | ✅ **Tier 4a shipped (v3.2.9)** — `transmutador_optimize` + 4 tools |
+| **C** | **Image optimization** | Same-format re-encode: compress, resize (metrics-first) | ✅ **Tier 4a functional (v3.3.0)** — `transmutador_optimize` + 4 tools |
 | **D** | **Image editing** | Crop, rotate, flip on raster (Wasm + canvas UI) | 📋 **Tier 4b** — planned after Tier 4a |
 | **E** | **Documents** | PDF merge/split, PDF→images — non-raster domain | 🚫 **Deferred** — far horizon; separate planning doc required |
 
@@ -981,6 +981,37 @@ pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 
 ---
 
+### 6.13 `transmutador_optimize` (Implemented — Tier 4a, v3.2.9 scaffold · v3.3.0 functional)
+
+**Purpose:** Same-format PNG/JPEG optimization — re-encode (compress) and Lanczos downscale (resize). Ladder C (§1.3).
+
+**Status:** Rust crate + worker routes shipped v3.2.9; **end-to-end activation** v3.3.0 (prepare warmup, Wasm type declarations, JPEG `fromFormat` meta probe).
+
+**Dependencies:** `image` (png/jpeg encode/decode, `imageops` Lanczos3), `core_utils`, `wasm-bindgen`
+
+**Wasm exports:**
+
+| Export | Role |
+|--------|------|
+| `recompress_png(bytes, compression)` | PNG → PNG DEFLATE level 1–9 |
+| `recompress_jpeg(bytes, quality)` | JPEG → JPEG quality 1–100 |
+| `resize_png(bytes, resize_percent)` | Downscale + PNG encode (default compression 6) |
+| `resize_jpeg(bytes, resize_percent)` | Downscale + JPEG encode (default Q85) |
+| `estimate_png_recompress_size` / `estimate_jpeg_recompress_size` | Full encode path for byte estimate |
+| `set_session_input_limit` / `reset_session_input_limit` / `set_risk_mode` | Limit pipeline parity (§6.1) |
+
+**Frontend integration:**
+
+- `ToolDefinition.category: "optimize"` — slugs `png-compress`, `jpg-compress`, `png-resize`, `jpg-resize`
+- `warmupTransmutatorModule("transmutador_optimize")` — required before prepare (v3.3.0)
+- Worker: `ensureOptimizeWasmInitialized`; route flags `isOptimizePng`, `isOptimizeJpg`, `isOptimizeResize`
+- Options: `compression`, `quality`, `resizePercent` (10–100)
+- Batch: excluded from allowlist until Phase 4a.3
+
+**Release:** `docs/releases/v3.3.0.md` · Plan: `docs/planning/tier4_plan.md`
+
+---
+
 ## 7. Frontend Specifications
 
 ### 7.1 Dropzone (Implemented — Phase 3)
@@ -1423,7 +1454,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
-| 3.2.9-tier-36-4a | 2026-06-19 | Chief Architect | §1.3 Ladder C shipped; Tier 3.6.1 Slice C + 3.6.2 batch ZIP/per-row; `transmutador_optimize`; S7 batch prefs; 25 tools | `docs/releases/v3.2.9.md` |
+| 3.3.0-tier-4a0 | 2026-06-19 | Chief Architect | §6.13 `transmutador_optimize` functional; §12.5 activation; warmup-wasm + wasm-modules.d.ts; PWA brand icons; v3.3.0 | `docs/releases/v3.3.0.md` |
+| 3.2.9-tier-36-4a | 2026-06-19 | Chief Architect | §1.3 Ladder C scaffold; Tier 3.6.1 Slice C + 3.6.2 batch ZIP/per-row; `transmutador_optimize` crate + registry; S7 batch prefs; 25 tools | `docs/releases/v3.2.9.md` |
 | 3.0.1-offline-mode | 2026-06-11 | Chief Architect | §7.13 S5 Offline mode; connectivity UX; force-offline architecture | `docs/releases/v3.0.1.md` |
 | 3.0.0-pwa-s5 | 2026-06-11 | Chief Architect | §7.13 S5 offline toolkit; NFR-9 offline shell; Serwist PWA; app v3.0.0; Tier 3 complete | `docs/releases/v3.0.0.md` |
 | 2.3.8-risk-hotfix | 2026-06-11 | Chief Architect | §7.13 S6 polish; overlay scrollbar instant drag; limit pipeline hotfixes; app v2.3.8 | `docs/releases/v2.3.8.md` |
@@ -1592,20 +1624,22 @@ Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm b
 
 **Go/no-go criteria for each:** spike delivers working Wasm build + `.wasm` ≤ 4 MB (≤ 3 MB preferred per NFR-7) + `cargo test --workspace` passes.
 
-### 12.5 Tier 4a — Image Optimization (✅ v3.2.9)
+### 12.5 Tier 4a — Image Optimization (✅ v3.3.0 functional)
 
 **Ladder C (§1.3).** Same raster domain; not format swap — re-encode or resample with metrics-first UX (estimate before apply).
 
 | Tool | Slug | Crate | Status |
 |------|------|-------|--------|
-| **PNG compress** | `png-compress` | `transmutador_optimize` | ✅ v3.2.9 |
-| **JPEG compress** | `jpg-compress` | `transmutador_optimize` | ✅ v3.2.9 |
-| **PNG resize** | `png-resize` | `transmutador_optimize` | ✅ v3.2.9 |
-| **JPEG resize** | `jpg-resize` | `transmutador_optimize` | ✅ v3.2.9 |
+| **PNG compress** | `png-compress` | `transmutador_optimize` | ✅ v3.3.0 (scaffold v3.2.9) |
+| **JPEG compress** | `jpg-compress` | `transmutador_optimize` | ✅ v3.3.0 |
+| **PNG resize** | `png-resize` | `transmutador_optimize` | ✅ v3.3.0 |
+| **JPEG resize** | `jpg-resize` | `transmutador_optimize` | ✅ v3.3.0 |
 
-**Governance:** `ToolDefinition.category: "optimize"`. ToolBrowser lane split (Convert vs Optimize) deferred to UX-4a — tools ship under `/transmute/[slug]` with optimize copy.
+**Governance:** `ToolDefinition.category: "optimize"`. ToolBrowser lane split (Convert vs Optimize) deferred to UX-4a.
 
-**Release:** `docs/releases/v3.2.9.md`
+**Integration checklist (§12.8):** warmup-wasm ✅ v3.3.0 · wasm-modules.d.ts ✅ · worker lazy-load ✅ · build-wasm.mjs ✅ · estimate via worker ✅
+
+**Release:** `docs/releases/v3.3.0.md` · Plan: `docs/planning/tier4_plan.md`
 
 ### 12.6 Tier 4b — Image Editing (v2.x — After Tier 4a)
 

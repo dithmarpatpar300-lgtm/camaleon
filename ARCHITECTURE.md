@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.2.9** · Engine **v1.6.0** · Branch **`main`** · **25 active tools** · **13 Wasm crates** · **121 Vitest tests**
+**Snapshot:** App **v3.3.0** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **124 Vitest tests**
 
 ---
 
@@ -61,7 +61,7 @@ Camaleon is a **browser-local, privacy-first image transmutation platform**. All
 |--------|--------|--------|
 | **A** | Image transmutation (format → format) | ✅ Tiers 1–2 + Semantic Alpha |
 | **B** | Modern formats (AVIF, SVG→raster) + PWA | ✅ Tier 3 complete (v3.0.1) |
-| **C** | Image optimization (compress, resize) | 📋 Tier 4a — next major line |
+| **C** | Image optimization (compress, resize) | ✅ Tier 4a **functional (v3.3.0)** |
 | **D** | Image editing (crop, rotate) | 📋 Tier 4b |
 | **E** | Documents (PDF, etc.) | 🚫 Deferred |
 
@@ -156,9 +156,9 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.0 Batch | v3.2.0–v3.2.3 | Multi-file on 14 dedicated routes |
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
-| Tier 4a Optimize | v3.2.9 | compress + resize (`transmutador_optimize`) |
-| **Current** | **v3.2.9** | S7 core + batch re-download polish |
-| **Next** | TBD | **UX-4a** ToolBrowser Convert vs Optimize lanes |
+| Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
+| **Current** | **v3.3.0** | Tier 4a.0 activation · PWA brand icons · warmup regression tests |
+| **Next** | TBD | **4a.1** metrics UX · **UX-4a** ToolBrowser Convert vs Optimize lanes |
 
 ---
 
@@ -373,6 +373,7 @@ Global defaults from Settings S2 (`transmutation-defaults.ts`) seed session opti
 | `transmutador_avif` | cdylib | AVIF → PNG, JPEG (+ animated session) |
 | `transmutador_avif_encode` | cdylib | PNG, JPEG → AVIF (split crate for size) |
 | `transmutador_svg` | cdylib | SVG → PNG, JPEG (resvg/usvg) |
+| `transmutador_optimize` | cdylib | PNG/JPEG compress + resize (Tier 4a) |
 
 ### Shared Wasm exports (every transmutador)
 
@@ -685,7 +686,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 | Piece | Role |
 |-------|------|
-| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.2.9) |
+| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.3.0) |
 | `lib/releases/entries/v*.ts` | Per-version highlights |
 | `ReleaseCommsProvider` | Mounts onboarding + modals |
 | `OnboardingPanel` | First-visit welcome |
@@ -700,7 +701,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 ### Frontend (Vitest)
 
-**Config:** `frontend/vitest.config.ts` · **110 tests** in 24 files · Node environment · no component tests
+**Config:** `frontend/vitest.config.ts` · **124 tests** in 29 files · Node environment · no component tests
 
 | Area | Example files |
 |------|---------------|
@@ -798,4 +799,4 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 
 ---
 
-*Last updated: 2026-06-19 · App v3.2.9 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-19 · App v3.3.0 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*

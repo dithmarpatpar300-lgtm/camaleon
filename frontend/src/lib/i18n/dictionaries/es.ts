@@ -401,6 +401,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v330: {
+        title: "Optimización de imagen activa e iconos PWA corregidos",
+        summary:
+          "Las cuatro herramientas de comprimir y redimensionar ya funcionan de punta a punta en el navegador, y los iconos de instalación usan la marca Camaleon real a las dimensiones correctas.",
+        technical:
+          "Tier 4a.0: warmup-wasm transmutador_optimize; wasm-modules.d.ts; alias JPEG en source-image-meta; Vitest warmup/format-alias. PWA: generate-brand-assets → icon-192/512/maskable; manifest maskable separado. App v3.3.0 · motor 1.6.0.",
+        highlights: {
+          optimizeActivation: {
+            title: "Comprimir y redimensionar — ya funcionan",
+            body: "Las herramientas PNG/JPEG compress y resize completan el flujo prepare → estimate → transmute. Misma privacidad: todo en tu dispositivo.",
+          },
+          pwaIcons: {
+            title: "Iconos de instalación actualizados",
+            body: "Los iconos del manifiesto PWA se regeneran desde la marca Lamina 3C — dimensiones correctas, sin avisos en DevTools.",
+          },
+        },
+      },
       v329: {
         title: "Cohortes universales, batch pulido y optimización",
         summary:

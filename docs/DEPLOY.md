@@ -167,7 +167,7 @@ npm error The npm ci command can only install with an existing package-lock.json
 After `npm run build:cf` or deploy to Cloudflare:
 
 1. Confirm `frontend/public/sw.js` exists after build and is copied to `.open-next/assets/sw.js` (generated — do not commit).
-2. Confirm `frontend/public/pwa/icon-192.png` and `icon-512.png` are in deploy assets.
+2. Confirm `frontend/public/pwa/icon-192.png`, `icon-512.png`, and `icon-512-maskable.png` are in deploy assets (regenerate via `node scripts/generate-brand-assets.mjs` from `frontend/`).
 3. In Chrome DevTools → **Application** → **Service Workers**: SW registered on production build only (disabled in `next dev`).
 4. **Full offline smoke (production-like):** `npm run preview:cf` → visit online → Settings S5 “Download all conversion tools” → stop preview server → reload any `/transmute/*` route → transmute + download.
 5. **NFR-1 regression:** while offline, DevTools Network shows **no upload** of file bytes.

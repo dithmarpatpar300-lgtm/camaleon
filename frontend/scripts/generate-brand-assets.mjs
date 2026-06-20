@@ -46,6 +46,23 @@ async function extractFromReference() {
     .toBuffer();
 }
 
+/** PWA / install tile — brand background, mark scaled for `any` or maskable safe zone. */
+async function composePwaTile(mark256, tileSize, { maskable = false } = {}) {
+  const scale = maskable ? 0.52 : 0.78;
+  const markPx = Math.round(tileSize * scale);
+  const mark = await sharp(mark256)
+    .resize(markPx, markPx, { fit: "contain", background: transparent })
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: { width: tileSize, height: tileSize, channels: 4, background: brandBg },
+  })
+    .composite([{ input: mark, gravity: "center" }])
+    .png()
+    .toBuffer();
+}
+
 /** Trim soft alpha, square-fit, add even padding — preserves oval head curve. */
 async function centerMark(input, outputSize, paddingRatio = 0.1) {
   const trimmed = await sharp(input).trim({ threshold: 8 }).png().toBuffer();
@@ -101,7 +118,14 @@ async function run() {
     .png()
     .toFile(path.join(root, "src/app/apple-icon.png"));
 
-  console.log("brand assets generated from reference");
+  const pwaDir = path.join(root, "public/pwa");
+  await sharp(await composePwaTile(mark256, 192)).toFile(path.join(pwaDir, "icon-192.png"));
+  await sharp(await composePwaTile(mark256, 512)).toFile(path.join(pwaDir, "icon-512.png"));
+  await sharp(await composePwaTile(mark256, 512, { maskable: true })).toFile(
+    path.join(pwaDir, "icon-512-maskable.png")
+  );
+
+  console.log("brand assets generated (mark, favicon, apple, PWA icons)");
 }
 
 run().catch((err) => {

@@ -401,6 +401,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v330: {
+        title: "Image optimize tools live & PWA icons fixed",
+        summary:
+          "Four compress and resize tools now run end-to-end in the browser, and install icons match the real Camaleon brand at the correct pixel sizes.",
+        technical:
+          "Tier 4a.0: warmup-wasm transmutador_optimize; wasm-modules.d.ts; source-image-meta JPEG alias; warmup/format-alias Vitest. PWA: generate-brand-assets → icon-192/512/maskable; manifest maskable split. App v3.3.0 · engine 1.6.0.",
+        highlights: {
+          optimizeActivation: {
+            title: "Compress & resize — now functional",
+            body: "PNG/JPEG compress and resize tools complete the full prepare → estimate → transmute flow. Same privacy: everything stays on your device.",
+          },
+          pwaIcons: {
+            title: "Install icons refreshed",
+            body: "PWA manifest icons are regenerated from the Lamina 3C brand mark — correct dimensions, no more manifest warnings in DevTools.",
+          },
+        },
+      },
       v329: {
         title: "Universal cohorts, batch polish & image optimize",
         summary:
