@@ -17,6 +17,7 @@ import {
  */
 export function FloatingNoticesRoot() {
   const bottomHostRef = useRef<HTMLDivElement | null>(null);
+  const bottomLeftHostRef = useRef<HTMLDivElement | null>(null);
   const topHostRef = useRef<HTMLDivElement | null>(null);
 
   const promote = useCallback(() => {
@@ -35,6 +36,9 @@ export function FloatingNoticesRoot() {
     <ModalPortal>
       <div ref={topHostRef} className="floating-notices-top-host">
         <FloatingNotices variant="top" />
+      </div>
+      <div ref={bottomLeftHostRef} className="floating-notices-bottom-left-host">
+        <FloatingNotices variant="bottom-left" />
       </div>
       <div ref={bottomHostRef} className="floating-notices-bottom-host">
         <FloatingNotices variant="bottom" />

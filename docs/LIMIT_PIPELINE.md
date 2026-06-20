@@ -144,6 +144,7 @@ Before merging limit/alpha/prepare/AVIF changes:
 | LimitContext | `frontend/src/lib/transmutation/limit-context.ts` |
 | Risk unlock UX | `frontend/src/lib/transmutation/risk-unlock.ts`, `RiskUnlockProceedPanel.tsx` |
 | Settings focus | `frontend/src/lib/settings/settings-focus.ts` |
+| Offline home promo | `OfflineInstallPromoNotice.tsx`, `offline-promo-storage.ts` |
 | Prepare | `frontend/src/lib/transmutation/prepare/run-prepare.ts` |
 | Semantic alpha | `frontend/src/lib/semantic-alpha/assess.ts` |
 | Astro UI | `DimensionsBlockPanel`, `AstroResizePanel`, `downscale-image.ts` |

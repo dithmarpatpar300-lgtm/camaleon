@@ -18,12 +18,14 @@ export function readOfflinePrefs(): OfflinePrefs {
 
 export function getEffectiveOfflinePrefs(): Required<
   Pick<OfflinePrefs, "fullToolkitPrecache" | "dismissedMobileWarning">
-> & Pick<OfflinePrefs, "precacheCompletedAt"> {
+> &
+  Pick<OfflinePrefs, "precacheCompletedAt" | "installPromoSnoozedUntil"> {
   const stored = readOfflinePrefs();
   return {
     fullToolkitPrecache: stored.fullToolkitPrecache ?? false,
     dismissedMobileWarning: stored.dismissedMobileWarning ?? false,
     precacheCompletedAt: stored.precacheCompletedAt,
+    installPromoSnoozedUntil: stored.installPromoSnoozedUntil,
   };
 }
 

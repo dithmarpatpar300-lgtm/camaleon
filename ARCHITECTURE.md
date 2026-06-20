@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.3.1** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **134 Vitest tests**
+**Snapshot:** App **v3.3.2** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **137 Vitest tests**
 
 ---
 
@@ -157,8 +157,8 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
-| **Current** | **v3.3.1** | Risk unlock proceed UX · Settings deep-link focus |
-| **Prior** | **v3.3.0** | Tier 4a.0 activation · PWA brand icons · warmup regression tests |
+| **Current** | **v3.3.2** | Offline install promo on home · settings-focus → Offline & cache |
+| **Prior** | **v3.3.1** | Risk unlock proceed UX · Settings deep-link focus |
 | **Next** | TBD | **4a.1** metrics UX · **UX-4a** ToolBrowser Convert vs Optimize lanes |
 
 ---
@@ -520,6 +520,8 @@ When enabled: bypass 40 MP, auto-consent elevated bytes, hard cap → 500/250 MB
 
 **Settings focus (v3.3.1):** `openSettings({ focus: "risk" | … })` scrolls the drawer and pulses the target section; `LimitUnlockHint` uses `focus: "risk"`.
 
+**Offline promo (v3.3.2):** `OfflineInstallPromoNotice` on home (`bottom-left` desktop) — `openSettings({ focus: "offline" })`; 7-day snooze via `offline.installPromoSnoozedUntil`.
+
 ### Astro downscale
 
 Images > 40 MP (or astronomical threshold) → client-side canvas downscale (`AstroResizePanel`) before Wasm. Presets 4K–12K.
@@ -691,7 +693,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 | Piece | Role |
 |-------|------|
-| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.3.1) |
+| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.3.2) |
 | `lib/releases/entries/v*.ts` | Per-version highlights |
 | `ReleaseCommsProvider` | Mounts onboarding + modals |
 | `OnboardingPanel` | First-visit welcome |
@@ -706,7 +708,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 ### Frontend (Vitest)
 
-**Config:** `frontend/vitest.config.ts` · **134 tests** in 31 files · Node environment · no component tests
+**Config:** `frontend/vitest.config.ts` · **137 tests** in 32 files · Node environment · no component tests
 
 | Area | Example files |
 |------|---------------|
@@ -804,4 +806,4 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 
 ---
 
-*Last updated: 2026-06-19 · App v3.3.1 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-19 · App v3.3.2 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*

@@ -45,6 +45,8 @@ export type OfflinePrefs = {
   precacheCompletedAt?: string;
   /** User dismissed mobile storage warning for offline toolkit. */
   dismissedMobileWarning?: boolean;
+  /** ISO timestamp — hide home install promo until this time (Settings → Offline). */
+  installPromoSnoozedUntil?: string;
 };
 
 export type UpdatesPrefs = {

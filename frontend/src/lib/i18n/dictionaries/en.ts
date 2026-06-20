@@ -316,6 +316,13 @@ const en: Dictionary = {
     fallbackHome: "Back to home",
   },
 
+  offlinePromo: {
+    title: "Convert without a connection",
+    body: "Install Camaleon on this device, then open Settings → Offline & cache to download the conversion engines. Your files always stay on this device.",
+    install: "Set up offline",
+    later: "Remind me later",
+  },
+
   appUpdate: {
     message: "Version {version} is available",
     messageGeneric: "A new version of Camaleon is available",
@@ -401,6 +408,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v332: {
+        title: "Offline setup — discover it from home",
+        summary:
+          "A gentle home-page prompt explains how to install Camaleon and cache conversion engines for use without a connection.",
+        technical:
+          "OfflineInstallPromoNotice; useOfflineInstallPromo; offline-promo-storage (7-day snooze); FloatingNotices bottom-left host; openSettings({ focus: offline }). App v3.3.2 · engine 1.6.0.",
+        highlights: {
+          offlinePromo: {
+            title: "Convert without a connection",
+            body: "New home prompt: install Camaleon and download engines in Settings → Offline & cache. Dismissible — reminds you again in a week if you skip.",
+          },
+          settingsFocusOffline: {
+            title: "One tap to Offline settings",
+            body: "Tap Install on the prompt — Settings opens scrolled to Offline & cache with the same focus pulse used for Risk mode hints.",
+          },
+        },
+      },
       v331: {
         title: "Risk unlock flow & Settings deep-link",
         summary:

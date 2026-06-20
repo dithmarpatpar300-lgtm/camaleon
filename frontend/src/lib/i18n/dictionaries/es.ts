@@ -316,6 +316,13 @@ const es: Dictionary = {
     fallbackHome: "Volver al inicio",
   },
 
+  offlinePromo: {
+    title: "Convierte sin conexión",
+    body: "Instala Camaleon en tu dispositivo y abre Ajustes → Offline y caché para descargar los motores de conversión. Tus archivos nunca salen del navegador.",
+    install: "Instalar",
+    later: "Recordarme más tarde",
+  },
+
   appUpdate: {
     message: "La versión {version} está disponible",
     messageGeneric: "Hay una nueva versión de Camaleon disponible",
@@ -401,6 +408,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v332: {
+        title: "Modo offline — descúbrelo desde inicio",
+        summary:
+          "Un aviso discreto en la página principal explica cómo instalar Camaleon y guardar los motores para usar sin conexión.",
+        technical:
+          "OfflineInstallPromoNotice; useOfflineInstallPromo; offline-promo-storage (snooze 7 días); host FloatingNotices bottom-left; openSettings({ focus: offline }). App v3.3.2 · motor 1.6.0.",
+        highlights: {
+          offlinePromo: {
+            title: "Convierte sin conexión",
+            body: "Nuevo aviso en inicio: instala Camaleon y descarga motores en Ajustes → Offline y caché. Se puede cerrar — te recuerda en una semana si lo pospones.",
+          },
+          settingsFocusOffline: {
+            title: "Un toque a Ajustes Offline",
+            body: "Pulsa Instalar en el aviso — Ajustes se abre en Offline y caché con el mismo pulse de foco que los hints de Risk mode.",
+          },
+        },
+      },
       v331: {
         title: "Flujo Risk unlock y deep-link en Ajustes",
         summary:

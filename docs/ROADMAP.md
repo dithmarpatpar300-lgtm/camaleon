@@ -15,9 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.3.1** (`dev`) | **25 tools** · Tier 4a optimize **functional** · Risk unlock UX · Settings focus |
+| **Frontend (app)** | **v3.3.2** (`dev`) | **25 tools** · Tier 4a optimize **functional** · Offline home promo · Settings focus |
 | **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** |
-| **SPEC** | v3.3.1 | NFR-9 offline shell; §7.13 Settings S1–S7 + focus; §6.13 optimize crate |
+| **SPEC** | v3.3.2 | NFR-9 offline shell; §7.13 Settings S1–S7 + focus; §6.13 optimize crate |
+
+**v3.3.2** (`dev`): **Offline install promo** on home — `OfflineInstallPromoNotice`, settings-focus to Offline & cache, 7-day snooze. Release: `docs/releases/v3.3.2.md`.
 
 **v3.3.1** (`dev`): **Risk unlock proceed** — retain gate-blocked files, `RiskUnlockProceedPanel`, batch re-prepare; **Settings deep-link focus** from limit hints. Release: `docs/releases/v3.3.1.md`.
 
@@ -336,6 +338,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-19 | Chief Architect (Cursor) | **v3.3.2 on `dev`:** Offline install promo on home; settings-focus → Offline & cache; docs → v3.3.2 |
 | 2026-06-19 | Chief Architect (Cursor) | **v3.3.1 on `dev`:** Risk unlock proceed UX; Settings deep-link focus; docs/SPEC/ROADMAP → v3.3.1 |
 | 2026-06-19 | Chief Architect (Cursor) | **v3.3.0 on `dev`:** Tier 4a.0 activation (warmup-wasm, types, JPEG meta); PWA brand icons; docs/SPEC/ROADMAP → v3.3.0 |
 | 2026-06-19 | Chief Architect (Cursor) | **v3.2.9 promoted to `main`:** Tier 3.6.1 Slice C, 3.6.2 batch ZIP/per-row, Tier 4a optimize scaffold, S7 batch prefs, batch UX fixes; README/SPEC/ROADMAP → v3.2.9 |

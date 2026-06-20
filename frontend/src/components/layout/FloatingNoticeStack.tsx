@@ -31,3 +31,15 @@ export function TopRightNoticeStack({ children }: StackProps) {
     </div>
   );
 }
+
+/** Bottom-left on desktop; centered on narrow viewports — stacks upward from the edge. */
+export function BottomLeftNoticeStack({ children }: StackProps) {
+  return (
+    <div
+      className="floating-notice-stack floating-notice-stack--bottom-left"
+      aria-live="polite"
+    >
+      {children}
+    </div>
+  );
+}
