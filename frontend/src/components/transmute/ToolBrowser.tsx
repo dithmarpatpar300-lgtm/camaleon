@@ -11,17 +11,19 @@ import {
 import {
   TOOL_LANE_ORDER,
   filterToolsByLane,
-  readStoredLane,
-  writeStoredLane,
   type ToolLane,
 } from "@/lib/tools/tool-lanes";
+import {
+  migrateToolBrowserPrefs,
+  writeToolBrowserPrefs,
+  type ToolBrowserDensity,
+} from "@/lib/storage/tool-browser-prefs";
 import type { ToolDefinition, ToolGroupKey } from "@/lib/tools/types";
+import type { CSSProperties } from "react";
+import { HorizontalScrollFade } from "@/components/ui/HorizontalScrollFade";
 import { cn } from "@/lib/utils";
 import { ToolCard } from "./ToolCard";
 import { ToolRow } from "./ToolRow";
-
-const STORAGE_TAB_KEY = "camaleon.tools.tab.v1";
-const STORAGE_DENSITY_KEY = "camaleon.tools.density.v1";
 
 /** Pre–v3.0.2 localStorage / hash alias */
 const LEGACY_GROUP_ALIASES: Record<string, ToolGroupKey> = {
@@ -37,25 +39,11 @@ function normalizeTabKey(raw: string): ActiveTab | null {
 }
 
 type ActiveTab = "all" | ToolGroupKey;
-type Density = "compact" | "detailed";
+type Density = ToolBrowserDensity;
 
-function readStoredTab(): ActiveTab | null {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_TAB_KEY);
-    if (!raw) return null;
-    return normalizeTabKey(raw);
-  } catch {
-    return null;
-  }
-}
-
-function readStoredDensity(): Density | null {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_DENSITY_KEY);
-    return raw === "compact" || raw === "detailed" ? raw : null;
-  } catch {
-    return null;
-  }
+function normalizeInitialTab(raw: string): ActiveTab {
+  if (raw === "all") return "all";
+  return normalizeTabKey(raw) ?? "all";
 }
 
 function parseHashTab(hash: string): ActiveTab | null {
@@ -105,9 +93,19 @@ function ToolListing({
   );
 }
 
-export function ToolBrowser() {
+type ToolBrowserProps = {
+  initialLane?: ToolLane;
+  initialTab?: string;
+  initialDensity?: Density;
+};
+
+export function ToolBrowser({
+  initialLane = "convert",
+  initialTab = "all",
+  initialDensity = "compact",
+}: ToolBrowserProps) {
   const { t } = useI18n();
-  const [activeLane, setActiveLane] = useState<ToolLane>("convert");
+  const [activeLane, setActiveLane] = useState<ToolLane>(initialLane);
   const laneTools = useMemo(
     () => filterToolsByLane(getActiveTools(), activeLane),
     [activeLane]
@@ -115,50 +113,33 @@ export function ToolBrowser() {
   const sections = useMemo(() => groupToolsByKey(laneTools), [laneTools]);
   const soonTools = useMemo(() => getSoonTools(), []);
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>("all");
-  const [density, setDensity] = useState<Density>("compact");
-  const [hydrated, setHydrated] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() =>
+    normalizeInitialTab(initialTab)
+  );
+  const [density, setDensity] = useState<Density>(initialDensity);
+  const [laneTrackReady, setLaneTrackReady] = useState(false);
   const [animateRows, setAnimateRows] = useState(false);
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const skipPersistRef = useRef(true);
 
   useEffect(() => {
-    const storedTab = readStoredTab();
-    const storedDensity = readStoredDensity();
-    const storedLane = readStoredLane();
+    migrateToolBrowserPrefs();
     const hashTab = parseHashTab(window.location.hash);
-
-    if (storedLane) setActiveLane(storedLane);
     if (hashTab) setActiveTab(hashTab);
-    else if (storedTab) setActiveTab(storedTab);
-
-    if (storedDensity) setDensity(storedDensity);
-    setHydrated(true);
+    setLaneTrackReady(true);
+    skipPersistRef.current = false;
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
-    try {
-      window.localStorage.setItem(STORAGE_TAB_KEY, activeTab);
-    } catch {
-      /* ignore */
-    }
-  }, [activeTab, hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      window.localStorage.setItem(STORAGE_DENSITY_KEY, density);
-    } catch {
-      /* ignore */
-    }
-  }, [density, hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    writeStoredLane(activeLane);
-  }, [activeLane, hydrated]);
+    if (skipPersistRef.current) return;
+    writeToolBrowserPrefs({
+      lane: activeLane,
+      tab: activeTab,
+      density,
+    });
+  }, [activeLane, activeTab, density]);
 
   useEffect(() => {
     if (activeTab === "all") return;
@@ -236,7 +217,7 @@ export function ToolBrowser() {
     <section
       key={section.key}
       id={toolGroupAnchorId(section.key)}
-      className="scroll-mt-[calc(var(--header-height)+var(--layout-sticky-gap)+var(--layout-top-notice-height,0px)+7.5rem)]"
+      className="scroll-mt-[calc(var(--header-height)+var(--layout-sticky-gap)+var(--layout-top-notice-height,0px)+9.5rem)]"
     >
       {showDivider && (
         <SectionDivider
@@ -270,56 +251,55 @@ export function ToolBrowser() {
         ref={toolbarRef}
         className="tool-browser-sticky sticky z-40 -mx-4 px-4 sm:-mx-6 sm:px-6"
       >
-        <div className="tool-browser-toolbar surface-subnav rounded-xl px-4 py-3 sm:px-5">
-          <div
-            role="tablist"
-            aria-label={t("landing.tools.lanesAria")}
-            className="mb-3 flex gap-1 rounded-lg border border-border/60 bg-bg-surface p-0.5"
-          >
-            {TOOL_LANE_ORDER.map((lane) => (
-              <LaneButton
-                key={lane}
-                lane={lane}
-                active={activeLane === lane}
-                label={t(`landing.tools.lanes.${lane}`)}
-                onSelect={() => selectLane(lane)}
-              />
-            ))}
-          </div>
+        <div className="tool-browser-toolbar surface-subnav rounded-xl px-3 py-3 sm:px-5">
+          <ToolLaneSegment
+            activeLane={activeLane}
+            ready={laneTrackReady}
+            onSelect={selectLane}
+            convertLabel={t("landing.tools.lanes.convert")}
+            optimizeLabel={t("landing.tools.lanes.optimize")}
+            ariaLabel={t("landing.tools.lanesAria")}
+          />
 
           <h2
             id="transmute-tools-heading"
-            className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted"
+            className="mb-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted"
           >
             {t("landing.tools.available")}
           </h2>
 
-          <div className="flex items-center gap-3">
-            <div
-              ref={tabsScrollRef}
-              role="tablist"
-              aria-label={t("landing.tools.tabsAria")}
-              onKeyDown={handleTabKeyDown}
-              className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          <div className="flex items-center gap-2 sm:gap-3">
+            <HorizontalScrollFade
+              viewportRef={tabsScrollRef}
+              ariaLabel={t("landing.tools.tabsAria")}
+              className="min-w-0 flex-1"
+              fadePx={24}
             >
-              <TabButton
-                tabKey="all"
-                active={activeTab === "all"}
-                label={t("landing.tools.tabs.all")}
-                count={totalActive}
-                onSelect={() => selectTab("all")}
-              />
-              {sections.map((section) => (
+              <div
+                role="tablist"
+                aria-label={t("landing.tools.tabsAria")}
+                onKeyDown={handleTabKeyDown}
+                className="flex w-max min-w-full items-center gap-1 pr-1"
+              >
                 <TabButton
-                  key={section.key}
-                  tabKey={section.key}
-                  active={activeTab === section.key}
-                  label={t(`landing.tools.jumpLinks.${section.key}`)}
-                  count={section.tools.length}
-                  onSelect={() => selectTab(section.key)}
+                  tabKey="all"
+                  active={activeTab === "all"}
+                  label={t("landing.tools.tabs.all")}
+                  count={totalActive}
+                  onSelect={() => selectTab("all")}
                 />
-              ))}
-            </div>
+                {sections.map((section) => (
+                  <TabButton
+                    key={section.key}
+                    tabKey={section.key}
+                    active={activeTab === section.key}
+                    label={t(`landing.tools.jumpLinks.${section.key}`)}
+                    count={section.tools.length}
+                    onSelect={() => selectTab(section.key)}
+                  />
+                ))}
+              </div>
+            </HorizontalScrollFade>
 
             <DensityToggle density={density} onChange={setDensity} />
           </div>
@@ -419,34 +399,55 @@ function ToolbarMeta({
   );
 }
 
-function LaneButton({
-  lane,
-  active,
-  label,
+function ToolLaneSegment({
+  activeLane,
+  ready,
   onSelect,
+  convertLabel,
+  optimizeLabel,
+  ariaLabel,
 }: {
-  lane: ToolLane;
-  active: boolean;
-  label: string;
-  onSelect: () => void;
+  activeLane: ToolLane;
+  ready: boolean;
+  onSelect: (lane: ToolLane) => void;
+  convertLabel: string;
+  optimizeLabel: string;
+  ariaLabel: string;
 }) {
+  const activeIndex = activeLane === "optimize" ? 1 : 0;
+
   return (
-    <button
-      type="button"
-      role="tab"
-      id={`lane-${lane}`}
-      aria-selected={active}
-      onClick={onSelect}
+    <div
+      role="tablist"
+      aria-label={ariaLabel}
       className={cn(
-        "min-h-9 flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-bg-base",
-        active
-          ? "bg-accent-subtle/50 text-text-primary shadow-sm shadow-accent/10"
-          : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+        "tool-lane-track mb-3 text-xs font-semibold",
+        ready && "tool-lane-track--ready"
       )}
+      style={{ "--active-idx": activeIndex } as CSSProperties}
     >
-      {label}
-    </button>
+      <div aria-hidden="true" className="lang-pill-thumb tool-lane-thumb" />
+      {TOOL_LANE_ORDER.map((lane) => {
+        const isActive = activeLane === lane;
+        const label = lane === "convert" ? convertLabel : optimizeLabel;
+        return (
+          <button
+            key={lane}
+            type="button"
+            role="tab"
+            id={`lane-${lane}`}
+            aria-selected={isActive}
+            onClick={() => onSelect(lane)}
+            className={cn(
+              "tool-lane-btn",
+              isActive ? "text-text-primary" : "text-text-muted hover:text-text-secondary"
+            )}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

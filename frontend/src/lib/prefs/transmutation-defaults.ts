@@ -1,6 +1,7 @@
 import type { RgbColor, ToolDefinition, ToolOptionSpec } from "@/lib/tools/types";
 import type { TransmutationDefaults } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
+import { buildFactoryUserSettings } from "@/lib/storage/factory-defaults";
 
 /** Registry baselines — used when user has not set a global default. */
 export const REGISTRY_JPEG_QUALITY = 85;
@@ -49,7 +50,7 @@ export function writeTransmutationDefaults(
 }
 
 export function resetTransmutationDefaults(): void {
-  writeUserSettings({ transmutation: {} });
+  writeUserSettings({ transmutation: buildFactoryUserSettings().transmutation });
 }
 
 export function getEffectiveTransmutationDefaults(): Required<TransmutationDefaults> {

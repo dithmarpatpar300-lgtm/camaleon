@@ -409,6 +409,31 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v334: {
+        title: "Settings + toasts, storage seed & lane persistence",
+        summary:
+          "Settings and bottom toasts work together — toast actions stay clickable. Preferences seed to factory defaults on first visit; Convert/Optimize lane survives reload without flashing.",
+        technical:
+          "SurfaceDialog modal-floating-notices portal (dialog inert subtree). lib/storage: factory-defaults, seed-storage, tool-browser prefs in user-settings.tools. SSR cookies + bootstrap for lane. Mobile offline dock. data-scroll-behavior on html. App v3.3.4 · engine 1.6.0.",
+        highlights: {
+          settingsToastCoexist: {
+            title: "Settings and toasts together",
+            body: "Open Settings while an update or offline toast is visible — tap its buttons without closing the panel. Top offline notice stays behind the drawer.",
+          },
+          clientStorage: {
+            title: "Preferences written from day one",
+            body: "Clear storage and reload — every factory default is saved immediately under camaleon-user-settings-v1, not only after you change something.",
+          },
+          lanePersistence: {
+            title: "Lane choice sticks on reload",
+            body: "Pick Optimize and refresh — the segmented control shows Optimize from the first frame, with no brief flash back to Convert.",
+          },
+          mobileOfflineDock: {
+            title: "Mobile offline notice dock",
+            body: "On small screens the offline banner sits above bottom toasts, clear of the sticky tool browser toolbar.",
+          },
+        },
+      },
       v333: {
         title: "Tool lanes, mobile notices & Settings deep-links",
         summary:

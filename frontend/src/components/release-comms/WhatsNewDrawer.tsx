@@ -16,7 +16,7 @@ import { TechnicalDisclosure } from "./TechnicalDisclosure";
 const EXIT_MS = 240;
 
 const PANEL_SHELL_CLASS =
-  "surface-raised fixed right-0 flex h-full w-full max-w-md flex-col overflow-hidden max-sm:surface-sheet-mobile max-sm:rounded-none sm:rounded-l-2xl top-0 bottom-0 sm:top-4 sm:bottom-4 sm:right-4 sm:h-auto";
+  "surface-drawer-panel surface-raised fixed right-0 z-[1] flex h-full w-full max-w-md flex-col overflow-hidden max-sm:surface-sheet-mobile max-sm:rounded-none sm:rounded-l-2xl top-0 bottom-0 sm:top-4 sm:bottom-4 sm:right-4 sm:h-auto";
 
 type Props = {
   open: boolean;

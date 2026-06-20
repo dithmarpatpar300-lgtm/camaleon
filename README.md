@@ -2,15 +2,17 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.3.2** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.3.4** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v3.3.2)
+## What works today (v3.3.4)
 
 | Capability | Status |
 |------------|--------|
 | **Twenty-five active tools** | Tiers 1–2 + AVIF + SVG + **optimize** (compress/resize, **functional v3.3.0**) — `/transmute/[slug]` |
+| **Tool browser lanes** | Convert vs Optimize (**v3.3.3**); lane persists on reload without flash (**v3.3.4**) |
+| **Settings + toasts** | Bottom toast actions work while Settings is open; factory prefs seeded on first visit (**v3.3.4**) |
 | **Universal transmutator** | Home-page drop zone — pick output format, handoff to any tool (**v3.1.x**, Tier 3.5) |
 | **Mixed-format cohorts** | Drop mixed formats on home → per-group picker; remaining cohorts persist (**v3.2.9**, Tier 3.6.1 C) |
 | **Multi-file batch** | Drop N images on **19 batch routes** — shared options, ZIP or individual download (**v3.2.0–3.2.9**, Tier 3.6) |
@@ -31,7 +33,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Settings panel** | S1–S4 (defaults, performance, notices/prepare) · **S5** offline cache · **S6** risk · **S7** batch & universal prefs · **deep-link focus (v3.3.1)** |
 | **PWA / offline shell** | Serwist SW, installable app, opt-in Wasm toolkit download; **home offline promo (v3.3.2)** |
 | **Smart app updates** | Background version beacon, deep refresh on Live deploys (**v3.2.5–3.2.6**) |
-| **Toast notifications** | FIFO queue, responsive cap (3 desktop / 2 mobile), modal-safe stacking (**v3.2.7**) |
+| **Toast notifications** | FIFO queue, responsive cap (3 desktop / 2 mobile), **Settings-safe in-dialog portal (v3.3.4)** |
 | **Science imagery** | Client-side downscale (4K–12K presets) for images >40 MP before Wasm |
 | **Memory lifecycle** | Wasm worker recycled when leaving any transmute route (SPA-safe) |
 | **Staged transmutation flow** | Drop → prepare → adjust options → Transmutar → preview + delta → download |
@@ -40,9 +42,9 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
-| **Tests** | 137 Vitest unit tests |
+| **Tests** | 147 Vitest unit tests |
 
-**Latest (v3.3.2):** **Offline install promo** on home — discover offline setup; Install opens Settings → Offline & cache via settings-focus. See [docs/releases/v3.3.2.md](docs/releases/v3.3.2.md). **Prior (v3.3.1):** Risk unlock + Settings focus — [docs/releases/v3.3.1.md](docs/releases/v3.3.1.md). **Next:** metrics-first optimize UX (4a.1) · ToolBrowser lanes (UX-4a). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
+**Latest (v3.3.4):** **Settings + toasts coexistence** — interactive bottom toasts while Settings is open; **`lib/storage`** factory seed; lane SSR persistence; mobile offline dock. See [docs/releases/v3.3.4.md](docs/releases/v3.3.4.md). **Prior (v3.3.3):** Tool lanes + mobile notices — [docs/releases/v3.3.3.md](docs/releases/v3.3.3.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 
@@ -119,7 +121,7 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v3.3.2)
+├── frontend/              # Next.js app (v3.3.4)
 ├── motor_transmutacion/   # Rust workspace (v1.6.0)
 │   ├── core_utils/
 │   ├── transmutador_jpg/         # JPEG → PNG

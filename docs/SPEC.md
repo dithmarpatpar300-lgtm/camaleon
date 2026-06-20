@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.3.3  
-**Last updated:** 2026-06-19  
-**Status:** v3.3.3 on `dev` (UX-4a lanes · mobile notices) · v3.3.2 · v3.3.1 · v3.3.0 · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Version:** 3.3.4  
+**Last updated:** 2026-06-20  
+**Status:** v3.3.4 on `main` (Settings+toast coexistence · client storage seed · lane SSR) · v3.3.3 · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -1407,6 +1407,10 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Deep-link focus (v3.3.1):** `openSettings({ focus?: SettingsFocusTarget })` queues scroll + pulse on drawer open. Targets: `risk`, `offline`, `batch`, `performance`, `notices`, `updates`, `defaults`. Implemented in `settings-focus.ts`; consumed by `SettingsDrawer` after enter animation. **`OfflineInstallPromoNotice`** on home uses `focus: "offline"` (v3.3.2). **`UncachedToolNotice`** via `SettingsFocusLink` (v3.3.3).
 
+**Client storage (v3.3.4):** `frontend/src/lib/storage/` — canonical key registry (`keys.ts`), factory defaults (`factory-defaults.ts`), bootstrap seed (`seed-storage.ts` + `ClientStorageSeed`). All Settings sections (S1–S7) + tool browser prefs (`tools.lane`, `tools.tab`, `tools.density`) persist under **`camaleon-user-settings-v1`** with factory values written on first visit. Legacy keys (`camaleon.tools.lane.v1`, etc.) migrate once. Theme/locale/tool lane mirrored to cookies for SSR first paint.
+
+**Settings + floating notices (v3.3.4):** Native `<dialog showModal()>` makes outside content **inert**. Bottom toasts portal into `.surface-modal-notices-slot` inside the open dialog (`modal-floating-notices-portal.ts`, `FloatingNoticesRoot`). Top offline notice hidden while modal open. Drawer scrim uses `floating-notices-hit-test.ts` so toast clicks do not dismiss Settings.
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -1456,6 +1460,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.3.4-settings-storage | 2026-06-20 | Chief Architect | Settings+toast in-dialog portal; lib/storage factory seed; lane SSR cookies; mobile offline dock; v3.3.4 | `docs/releases/v3.3.4.md` |
 | 3.3.3-ux4a-mobile | 2026-06-19 | Chief Architect | UX-4a lanes; 4a-pre mobile notices; UncachedToolNotice settings-focus; v3.3.3 | `docs/releases/v3.3.3.md` |
 | 3.3.2-offline-promo | 2026-06-19 | Chief Architect | Home offline install promo; `openSettings({ focus: "offline" })`; 7-day snooze; v3.3.2 | `docs/releases/v3.3.2.md` |
 | 3.3.1-risk-unlock | 2026-06-19 | Chief Architect | §7.13 S6 Risk unlock proceed UX; Settings deep-link focus (`openSettings({ focus })`); `risk-unlock.ts`; v3.3.1 | `docs/releases/v3.3.1.md` |

@@ -1,9 +1,14 @@
 "use client";
 
-import { forwardRef, type KeyboardEventHandler, type ReactNode, type Ref, useLayoutEffect } from "react";
+import { forwardRef, type KeyboardEventHandler, type ReactNode, type Ref, useCallback, useLayoutEffect, useRef } from "react";
 import { useModalDialog } from "@/hooks/useModalDialog";
 import { useScrollLock } from "@/hooks/useScrollLock";
-import { demoteFloatingNoticesLayer } from "@/lib/layout/floating-notices-layer";
+import { holdFloatingNoticesForModal } from "@/lib/layout/floating-notices-layer";
+import { setModalFloatingNoticesTarget } from "@/lib/layout/modal-floating-notices-portal";
+import {
+  isNodeWithinFloatingNotices,
+  isPointOverFloatingNotices,
+} from "@/lib/layout/floating-notices-hit-test";
 import { mergeRefs } from "@/lib/merge-refs";
 import { cn } from "@/lib/utils";
 import { ModalPortal } from "./ModalPortal";
@@ -58,19 +63,67 @@ export const SurfaceDialog = forwardRef<HTMLDialogElement, SurfaceDialogProps>(
   ) {
     const { setDialogRef: syncDialogRef } = useModalDialog(manageOpen ? open : false);
     const isMounted = forceMount || (mounted ?? open);
+    const innerRef = useRef<HTMLDialogElement>(null);
+    const noticesSlotRef = useRef<HTMLDivElement>(null);
+    const suppressNativeLightDismiss = dismissOnBackdrop && kind === "drawer";
 
     useScrollLock(scrollLock && isMounted && open);
 
     useLayoutEffect(() => {
-      if (open) return;
-      demoteFloatingNoticesLayer();
+      if (!open) return;
+      return holdFloatingNoticesForModal();
     }, [open]);
+
+    useLayoutEffect(() => {
+      if (!open || !isMounted) {
+        setModalFloatingNoticesTarget(null);
+        return;
+      }
+
+      let cancelled = false;
+      const attach = () => {
+        if (!cancelled) {
+          setModalFloatingNoticesTarget(noticesSlotRef.current);
+        }
+      };
+
+      attach();
+      const frame = requestAnimationFrame(attach);
+
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(frame);
+        setModalFloatingNoticesTarget(null);
+      };
+    }, [open, isMounted]);
+
+    const handleKeyDown = useCallback<KeyboardEventHandler<HTMLDialogElement>>(
+      (e) => {
+        if (dismissOnBackdrop && e.key === "Escape") {
+          onClose();
+        }
+        onKeyDown?.(e);
+      },
+      [dismissOnBackdrop, onClose, onKeyDown]
+    );
+
+    useLayoutEffect(() => {
+      const dialog = innerRef.current;
+      if (!dialog || !open) return;
+      if (suppressNativeLightDismiss) {
+        dialog.setAttribute("closedby", "none");
+      } else {
+        dialog.removeAttribute("closedby");
+      }
+    }, [open, suppressNativeLightDismiss]);
 
     if (!isMounted) return null;
 
     const dialogRef = manageOpen
-      ? mergeRefs(ref, syncDialogRef)
-      : (ref as Ref<HTMLDialogElement>);
+      ? mergeRefs(ref, syncDialogRef, innerRef)
+      : mergeRefs(ref as Ref<HTMLDialogElement>, innerRef);
+
+    const isDrawer = kind === "drawer";
 
     return (
       <ModalPortal>
@@ -83,14 +136,33 @@ export const SurfaceDialog = forwardRef<HTMLDialogElement, SurfaceDialogProps>(
           aria-modal="true"
           onClose={onClose}
           onClick={
-            dismissOnBackdrop
+            dismissOnBackdrop && !isDrawer
               ? (e) => {
+                  if (isPointOverFloatingNotices(e.clientX, e.clientY)) return;
+                  if (isNodeWithinFloatingNotices(e.target)) return;
                   if (e.target === e.currentTarget) onClose();
                 }
               : undefined
           }
-          onKeyDown={onKeyDown}
+          onKeyDown={handleKeyDown}
         >
+          <div
+            ref={noticesSlotRef}
+            className="surface-modal-notices-slot"
+            data-floating-notices-modal-slot
+          />
+          {isDrawer && dismissOnBackdrop && (
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden="true"
+              className="surface-drawer-dismiss-scrim"
+              onClick={(e) => {
+                if (isPointOverFloatingNotices(e.clientX, e.clientY)) return;
+                onClose();
+              }}
+            />
+          )}
           {children}
         </dialog>
       </ModalPortal>

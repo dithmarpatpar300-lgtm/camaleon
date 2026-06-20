@@ -13,9 +13,11 @@ import { ToastHost } from "@/components/toast/ToastHost";
 
 type Props = {
   variant: "top" | "bottom" | "bottom-left";
+  /** Mobile: dock offline status above bottom toasts (avoids sticky toolbar collision). */
+  offlineDock?: boolean;
 };
 
-export function FloatingNotices({ variant }: Props) {
+export function FloatingNotices({ variant, offlineDock = false }: Props) {
   if (variant === "top") {
     return (
       <TopRightNoticeStack>
@@ -42,6 +44,11 @@ export function FloatingNotices({ variant }: Props) {
         <AppUpdateNotice />
       </NoticeStackItem>
       <ToastHost />
+      {offlineDock && (
+        <NoticeStackItem>
+          <OfflineStatusNotice layout="dock" />
+        </NoticeStackItem>
+      )}
     </BottomNoticeStack>
   );
 }

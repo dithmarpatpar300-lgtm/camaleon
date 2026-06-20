@@ -5,6 +5,7 @@ import {
 } from "@/lib/device/resource-profile";
 import type { PerformancePrefs } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
+import { buildFactoryUserSettings } from "@/lib/storage/factory-defaults";
 
 export type PerformanceTierMode = NonNullable<PerformancePrefs["tier"]>;
 export type PerformanceToggleMode = NonNullable<PerformancePrefs["resultCache"]>;
@@ -53,7 +54,7 @@ export function writePerformancePrefs(partial: Partial<PerformancePrefs>): Perfo
 }
 
 export function resetPerformancePrefs(): void {
-  writeUserSettings({ performance: {} });
+  writeUserSettings({ performance: buildFactoryUserSettings().performance });
   notifyPerformancePrefsListeners();
 }
 

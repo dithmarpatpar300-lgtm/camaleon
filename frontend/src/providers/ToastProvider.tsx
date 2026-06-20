@@ -15,7 +15,7 @@ import {
   type ToastInput,
   type ToastRecord,
 } from "@/lib/toast";
-import { bumpFloatingNoticesLayer, demoteFloatingNoticesLayer } from "@/lib/layout/floating-notices-layer";
+import { bumpFloatingNoticesLayer, releaseFloatingNoticesToastLayer, refreshFloatingNoticesLayer } from "@/lib/layout/floating-notices-layer";
 
 type ToastFn = (opts: ToastInput) => void;
 
@@ -56,7 +56,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setItems((prev) => {
       const next = prev.filter((item) => item.id !== id);
       if (next.length === 0) {
-        demoteFloatingNoticesLayer();
+        releaseFloatingNoticesToastLayer();
       }
       return next;
     });
@@ -92,6 +92,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
       setItems((prev) => [...prev, nextItem]);
       bumpFloatingNoticesLayer();
+      requestAnimationFrame(() => refreshFloatingNoticesLayer());
 
       const timer = setTimeout(() => {
         dismissToast(id);

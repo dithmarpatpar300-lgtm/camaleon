@@ -5,6 +5,7 @@ import type {
   MixedFormatPolicy,
 } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
+import { buildFactoryUserSettings } from "@/lib/storage/factory-defaults";
 
 export type { BatchDefaultSelection, BatchDownloadMode, MixedFormatPolicy } from "./user-settings";
 
@@ -65,6 +66,6 @@ export function getBatchDownloadMode(): BatchDownloadMode {
 }
 
 export function resetBatchUniversalPrefs(): void {
-  writeUserSettings({ batchUniversal: {} });
+  writeUserSettings({ batchUniversal: buildFactoryUserSettings().batchUniversal });
   notifyBatchUniversalPrefsListeners();
 }

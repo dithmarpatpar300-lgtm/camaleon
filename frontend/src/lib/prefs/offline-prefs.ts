@@ -1,5 +1,6 @@
 import type { OfflinePrefs } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
+import { buildFactoryUserSettings } from "@/lib/storage/factory-defaults";
 
 const listeners = new Set<() => void>();
 
@@ -37,7 +38,13 @@ export function writeOfflinePrefs(partial: Partial<OfflinePrefs>): OfflinePrefs 
 }
 
 export function resetOfflinePrefs(): void {
-  writeUserSettings({ offline: {} });
+  const factory = buildFactoryUserSettings().offline!;
+  writeUserSettings({
+    offline: {
+      fullToolkitPrecache: factory.fullToolkitPrecache,
+      dismissedMobileWarning: factory.dismissedMobileWarning,
+    },
+  });
   notifyOfflinePrefsListeners();
 }
 

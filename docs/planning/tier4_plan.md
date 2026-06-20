@@ -1,7 +1,7 @@
 # Tier 4 — Image Optimization & Editing
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v3.3.3 on `dev`** — Tier 4a.0 **✅ functional** · **UX-4a ✅** (v3.3.3) · **4a-pre ✅** mobile notices (v3.3.3) · **4a.1** metrics UX pending · **4b** editing planned  
+> **Status:** **v3.3.4 on `main`** — Tier 4a.0 **✅ functional** · **UX-4a ✅** (v3.3.3) · **4a-pre ✅** mobile notices (v3.3.3) · **4a-pre-b ✅** mobile offline dock + Settings+toast (v3.3.4) · **4a.1** metrics UX pending · **4b** editing planned  
 > **Prerequisite:** Tier 3 **complete** (v3.0.1) · Tier 3.5 Universal ✅ · Tier 3.6.0–3.6.2 ✅ (v3.2.9) · Settings S1–S7 core ✅  
 > **Doctrine:** Same pipeline as convert tools — decode → honest options → re-encode → StripAll → **estimate-first** (metrics are the product on Ladder C)  
 > **SPEC anchor:** §1.3 Ladders C & D · §5.1 mental model · §12.5 Tier 4a · §12.6 Tier 4b · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -194,6 +194,7 @@ set_risk_mode(enabled: bool)
 | Release | Scope |
 |---------|-------|
 | **v3.3.0** | 4a.0 activation only (recommended — focused hotfix milestone) |
+| **v3.3.4** | Settings+toast portal · client storage seed · lane SSR · mobile offline dock |
 | **v3.3.3** | 4a-pre mobile notices + UX-4a lanes + settings-focus (uncached Wasm) |
 | v3.3.4+ | 4a.1 metrics UX |
 
@@ -365,6 +366,7 @@ Input bytes → Decode → Edit op (crop/rotate on raster buffer) → Encode (pn
 ─────── v3.3.0 (4a.0 ✅) ───────
 v3.3.1  Risk unlock + settings-focus (risk)
 v3.3.2  Offline install promo + settings-focus (offline)
+v3.3.4  Settings+toast · storage seed · lane SSR · mobile offline dock ✅
 v3.3.3  4a-pre mobile notices + UX-4a lanes + settings-focus (uncached Wasm) ✅
 ─────── next ───────
 4a.1    Metrics-first UX polish

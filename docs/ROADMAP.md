@@ -11,15 +11,17 @@
 
 ---
 
-## Current Snapshot (2026-06-19)
+## Current Snapshot (2026-06-20)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.3.3** (`dev`) | **25 tools** · UX-4a lanes · Mobile offline notices · Settings focus |
+| **Frontend (app)** | **v3.3.4** (`main`) | **25 tools** · Settings+toast · Client storage seed · Lane SSR |
 | **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** |
-| **SPEC** | v3.3.3 | NFR-9 offline shell; §7.13 Settings S1–S7 + focus; §6.13 optimize crate |
+| **SPEC** | v3.3.4 | NFR-9 offline shell; §7.13 Settings S1–S7 + storage seed; modal toast portal |
 
-**v3.3.3** (`dev`): **UX-4a** Convert vs Optimize lanes; **4a-pre** mobile notice coexistence; **UncachedToolNotice** → settings-focus offline. Release: `docs/releases/v3.3.3.md`.
+**v3.3.4** (`main`): **Settings + toast coexistence** (in-dialog portal); **`lib/storage`** factory seed; lane SSR cookies; mobile offline dock. Release: `docs/releases/v3.3.4.md`.
+
+**v3.3.3** (`main`): **UX-4a** Convert vs Optimize lanes; **4a-pre** mobile notice coexistence; **UncachedToolNotice** → settings-focus offline. Release: `docs/releases/v3.3.3.md`.
 
 **v3.3.2** (`dev`): **Offline install promo** on home — `OfflineInstallPromoNotice`, settings-focus to Offline & cache, 7-day snooze. Release: `docs/releases/v3.3.2.md`.
 

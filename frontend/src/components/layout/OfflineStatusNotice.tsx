@@ -18,7 +18,7 @@ function resolveKind(
   return null;
 }
 
-export function OfflineStatusNotice() {
+export function OfflineStatusNotice({ layout = "default" }: { layout?: "default" | "dock" }) {
   const { t } = useI18n();
   const { networkOnline, forceOffline, serverReachable, setForceOffline } = useOffline();
 
@@ -40,6 +40,7 @@ export function OfflineStatusNotice() {
       aria-live="polite"
       className={cn(
         "offline-status-notice pointer-events-auto",
+        layout === "dock" && "offline-status-notice--dock",
         kind === "simulated" && "offline-status-notice--forced",
         kind === "serverDown" && "offline-status-notice--server-down"
       )}

@@ -12,6 +12,7 @@ import { SurfaceDialog } from "@/components/ui/SurfaceDialog";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { PanelScrollFade } from "@/components/ui/PanelScrollFade";
 import { cn } from "@/lib/utils";
+import { refreshFloatingNoticesLayer } from "@/lib/layout/floating-notices-layer";
 import { SettingsSection } from "./SettingsSection";
 import { SettingsRow } from "./SettingsRow";
 import { ThemeSegment } from "./ThemeSegment";
@@ -27,7 +28,7 @@ import { BatchUniversalSettingsSection } from "./BatchUniversalSettingsSection";
 const EXIT_MS = 240;
 
 const PANEL_SHELL_CLASS =
-  "surface-raised fixed right-0 flex h-full w-full max-w-md flex-col overflow-hidden max-sm:surface-sheet-mobile max-sm:rounded-none sm:rounded-l-2xl top-0 bottom-0 sm:top-4 sm:bottom-4 sm:right-4 sm:h-auto";
+  "surface-drawer-panel settings-drawer-panel surface-raised fixed right-0 z-[1] flex h-full w-full max-w-md flex-col overflow-hidden max-sm:surface-sheet-mobile max-sm:rounded-none sm:rounded-l-2xl top-0 bottom-0 sm:top-4 sm:bottom-4 sm:right-4 sm:h-auto";
 
 type Props = {
   open: boolean;
@@ -193,6 +194,8 @@ export function SettingsDrawer({ open, onClose }: Props) {
       if (node && open && !node.open) {
         setIsExiting(false);
         node.showModal();
+        refreshFloatingNoticesLayer();
+        requestAnimationFrame(() => refreshFloatingNoticesLayer());
       }
     },
     [open]
@@ -204,6 +207,8 @@ export function SettingsDrawer({ open, onClose }: Props) {
     if (open && !dialog.open) {
       setIsExiting(false);
       dialog.showModal();
+      refreshFloatingNoticesLayer();
+      requestAnimationFrame(() => refreshFloatingNoticesLayer());
     }
   }, [open]);
 

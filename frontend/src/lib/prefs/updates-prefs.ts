@@ -1,5 +1,6 @@
 import type { UpdatesPrefs } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
+import { buildFactoryUserSettings } from "@/lib/storage/factory-defaults";
 
 const listeners = new Set<() => void>();
 
@@ -39,6 +40,6 @@ export function setAutoDetectUpdates(value: boolean): void {
 }
 
 export function resetUpdatesPrefs(): void {
-  writeUserSettings({ updates: {} });
+  writeUserSettings({ updates: buildFactoryUserSettings().updates });
   notifyUpdatesPrefsListeners();
 }

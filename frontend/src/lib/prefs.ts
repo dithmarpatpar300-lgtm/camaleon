@@ -1,9 +1,12 @@
 import type { Theme } from "@/lib/types";
 import type { Locale } from "@/lib/i18n/types";
 import { DEFAULT_LOCALE } from "@/lib/i18n";
+import { COOKIE_NAMES, STORAGE_KEYS } from "@/lib/storage/keys";
+import { buildToolBrowserBootstrapBody } from "@/lib/storage/tool-browser-prefs";
+import { buildStorageSeedBody } from "@/lib/storage/seed-storage";
 
-export const THEME_STORAGE_KEY = "camaleon-theme";
-export const THEME_COOKIE_NAME = "camaleon-theme";
+export const THEME_STORAGE_KEY = STORAGE_KEYS.THEME;
+export const THEME_COOKIE_NAME = COOKIE_NAMES.THEME;
 export const OVERLAY_SCROLL_CLASS = "camaleon-overlay-scroll";
 
 /** Desktop fine-pointer without reduced motion — custom overlay scrollbar path. */
@@ -41,18 +44,27 @@ export const PREFERENCES_BOOTSTRAP_SCRIPT = `
 (function() {
   try {
     var root = document.documentElement;
+
+    ${buildStorageSeedBody()}
+
     var theme = localStorage.getItem('${THEME_STORAGE_KEY}');
     if (theme !== 'light' && theme !== 'dark') {
       theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      localStorage.setItem('${THEME_STORAGE_KEY}', theme);
     }
     root.classList.remove('dark', 'light');
     root.classList.add(theme);
     document.cookie = '${THEME_COOKIE_NAME}=' + theme + '; path=/; max-age=31536000; SameSite=Lax';
 
-    var locale = localStorage.getItem('camaleon-locale');
-    if (locale !== 'en' && locale !== 'es') locale = '${DEFAULT_LOCALE}';
+    var locale = localStorage.getItem('${STORAGE_KEYS.LOCALE}');
+    if (locale !== 'en' && locale !== 'es') {
+      locale = '${DEFAULT_LOCALE}';
+      localStorage.setItem('${STORAGE_KEYS.LOCALE}', locale);
+    }
     root.lang = locale;
-    document.cookie = 'camaleon-locale=' + locale + '; path=/; max-age=31536000; SameSite=Lax';
+    document.cookie = '${COOKIE_NAMES.LOCALE}=' + locale + '; path=/; max-age=31536000; SameSite=Lax';
+
+    ${buildToolBrowserBootstrapBody()}
 
     // Overlay scrollbar: only on fine-pointer desktop without reduced-motion preference.
     // The CSS rule that hides the native scrollbar is gated on this class.

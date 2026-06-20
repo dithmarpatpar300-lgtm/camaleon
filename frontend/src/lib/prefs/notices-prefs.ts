@@ -2,6 +2,7 @@ import type { Notice } from "@/lib/notices/types";
 import { NOTICE_PRIORITY } from "@/lib/notices/types";
 import type { NoticesPrefs, PrepareProgressStylePref } from "./user-settings";
 import { readUserSettings, writeUserSettings } from "./user-settings";
+import { buildFactoryUserSettings } from "@/lib/storage/factory-defaults";
 
 export type { PrepareProgressStylePref };
 
@@ -22,10 +23,10 @@ function notifyNoticesPrefsListeners(): void {
 
 function migrateLegacyPrepareStyle(): void {
   if (typeof localStorage === "undefined") return;
-  const stored = readUserSettings().notices?.prepareProgressStyle;
-  if (stored) return;
+
   const legacy = localStorage.getItem(LEGACY_PREPARE_KEY);
   if (legacy !== "bar") return;
+
   writeUserSettings({
     notices: { ...readUserSettings().notices, prepareProgressStyle: "bar" },
   });
@@ -56,7 +57,7 @@ export function resetNoticesPrefs(): void {
   if (typeof localStorage !== "undefined") {
     localStorage.removeItem(LEGACY_PREPARE_KEY);
   }
-  writeUserSettings({ notices: {} });
+  writeUserSettings({ notices: buildFactoryUserSettings().notices });
   notifyNoticesPrefsListeners();
 }
 

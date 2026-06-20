@@ -2,7 +2,18 @@
 
 import { useLayoutEffect, type RefObject } from "react";
 
-const TOP_NOTICE_GAP_PX = 8;
+/** Visual breathing room between fixed top notices and the sticky tool-browser toolbar. */
+const TOP_NOTICE_GAP_PX = 20;
+
+function headerAnchorBottomPx(): number {
+  const header = document.querySelector("header");
+  if (header) return header.getBoundingClientRect().bottom;
+  const rootStyle = getComputedStyle(document.documentElement);
+  const headerRem = parseFloat(rootStyle.getPropertyValue("--header-height")) || 3.5;
+  const gapRem = parseFloat(rootStyle.getPropertyValue("--layout-sticky-gap")) || 0.625;
+  const rootFont = parseFloat(rootStyle.fontSize) || 16;
+  return (headerRem + gapRem) * rootFont;
+}
 
 /**
  * Publishes `--layout-top-notice-height` so sticky subnav (ToolBrowser) sits below
@@ -27,9 +38,15 @@ export function useTopFloatingNoticeOffset(
         return node.offsetHeight > 0;
       });
 
-      const height = hasVisibleChild
-        ? stack.getBoundingClientRect().height + TOP_NOTICE_GAP_PX
-        : 0;
+      if (!hasVisibleChild) {
+        document.documentElement.style.setProperty("--layout-top-notice-height", "0px");
+        return;
+      }
+
+      const stackRect = stack.getBoundingClientRect();
+      const anchorBottom = headerAnchorBottomPx();
+      const occupiedBelowHeader = Math.max(0, stackRect.bottom - anchorBottom);
+      const height = occupiedBelowHeader + TOP_NOTICE_GAP_PX;
 
       document.documentElement.style.setProperty(
         "--layout-top-notice-height",
@@ -40,6 +57,9 @@ export function useTopFloatingNoticeOffset(
     const resizeObserver = new ResizeObserver(update);
     resizeObserver.observe(host);
 
+    const stack = host.querySelector(".floating-notice-stack--top-right");
+    if (stack) resizeObserver.observe(stack);
+
     const mutationObserver = new MutationObserver(update);
     mutationObserver.observe(host, {
       childList: true,
@@ -49,10 +69,14 @@ export function useTopFloatingNoticeOffset(
     });
 
     update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
 
     return () => {
       resizeObserver.disconnect();
       mutationObserver.disconnect();
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
       document.documentElement.style.setProperty("--layout-top-notice-height", "0px");
     };
   }, [hostRef]);

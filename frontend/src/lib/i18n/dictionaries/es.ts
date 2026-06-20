@@ -409,6 +409,31 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v334: {
+        title: "Ajustes + toasts, seed de storage y persistencia de carriles",
+        summary:
+          "Ajustes y toasts inferiores conviven — las acciones del toast siguen siendo clicables. Las preferencias se guardan con valores de fábrica en la primera visita; el carril Convertir/Optimizar no parpadea al recargar.",
+        technical:
+          "Portal modal-floating-notices en SurfaceDialog (subárbol inert del dialog). lib/storage: factory-defaults, seed-storage, prefs tools en user-settings.tools. Cookies SSR + bootstrap para carril. Dock offline móvil. data-scroll-behavior en html. App v3.3.4 · motor 1.6.0.",
+        highlights: {
+          settingsToastCoexist: {
+            title: "Ajustes y toasts a la vez",
+            body: "Abre Ajustes con un toast de actualización u offline visible — pulsa sus botones sin cerrar el panel. El aviso offline superior queda detrás del drawer.",
+          },
+          clientStorage: {
+            title: "Preferencias desde el primer día",
+            body: "Borra storage y recarga — cada valor de fábrica se guarda al instante en camaleon-user-settings-v1, no solo cuando cambias algo.",
+          },
+          lanePersistence: {
+            title: "El carril se mantiene al recargar",
+            body: "Elige Optimizar y refresca — el control muestra Optimizar desde el primer frame, sin flash breve a Convertir.",
+          },
+          mobileOfflineDock: {
+            title: "Dock offline en móvil",
+            body: "En pantallas pequeñas el banner offline va sobre los toasts inferiores, lejos de la barra sticky del navegador.",
+          },
+        },
+      },
       v333: {
         title: "Carriles de herramientas, avisos móvil y deep-links en Ajustes",
         summary:

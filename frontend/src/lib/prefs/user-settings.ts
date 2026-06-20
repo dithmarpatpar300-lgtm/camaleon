@@ -1,4 +1,5 @@
 import type { RgbColor } from "@/lib/tools/types";
+import { mergeUserSettingsWithFactory } from "@/lib/storage/factory-defaults";
 
 export const USER_SETTINGS_STORAGE_KEY = "camaleon-user-settings-v1";
 
@@ -72,6 +73,15 @@ export type BatchUniversalPrefs = {
   batchDownloadMode?: BatchDownloadMode;
 };
 
+export type ToolBrowserPrefs = {
+  /** Convert vs Optimize lane on the home tool browser. */
+  lane?: "convert" | "optimize";
+  /** Active format-family tab (`all` or group key). */
+  tab?: string;
+  /** Compact rows vs detailed cards. */
+  density?: "compact" | "detailed";
+};
+
 export type UserSettings = {
   /** When false, skip auto changelog modal on version bump; What's New remains available. */
   showChangelogOnUpdate: boolean;
@@ -89,9 +99,11 @@ export type UserSettings = {
   updates?: UpdatesPrefs;
   /** Batch & Universal transmutator prefs (S7). */
   batchUniversal?: BatchUniversalPrefs;
+  /** Home tool browser UI prefs (lane, tab, density). */
+  tools?: ToolBrowserPrefs;
 };
 
-const DEFAULTS: UserSettings = {
+const DEFAULTS: Pick<UserSettings, "showChangelogOnUpdate"> = {
   showChangelogOnUpdate: true,
 };
 
@@ -106,30 +118,12 @@ function parseStored(raw: string | null): Partial<UserSettings> {
 }
 
 export function readUserSettings(): UserSettings {
-  if (typeof localStorage === "undefined") return { ...DEFAULTS };
-  const merged = { ...DEFAULTS, ...parseStored(localStorage.getItem(USER_SETTINGS_STORAGE_KEY)) };
-  return {
-    showChangelogOnUpdate:
-      typeof merged.showChangelogOnUpdate === "boolean"
-        ? merged.showChangelogOnUpdate
-        : DEFAULTS.showChangelogOnUpdate,
-    transmutation: merged.transmutation,
-    performance: merged.performance,
-    notices: merged.notices,
-    riskMode:
-      merged.riskMode && typeof merged.riskMode.enabled === "boolean"
-        ? {
-            enabled: merged.riskMode.enabled,
-            acknowledgedAt:
-              typeof merged.riskMode.acknowledgedAt === "string"
-                ? merged.riskMode.acknowledgedAt
-                : undefined,
-          }
-        : { enabled: false },
-    offline: merged.offline,
-    updates: merged.updates,
-    batchUniversal: merged.batchUniversal,
-  };
+  if (typeof localStorage === "undefined") {
+    return mergeUserSettingsWithFactory(DEFAULTS);
+  }
+  return mergeUserSettingsWithFactory(
+    parseStored(localStorage.getItem(USER_SETTINGS_STORAGE_KEY))
+  );
 }
 
 export function writeUserSettings(partial: Partial<UserSettings>): UserSettings {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useRef } from "react";
+import { refreshFloatingNoticesLayer } from "@/lib/layout/floating-notices-layer";
 
 /**
  * Syncs a native `<dialog>` with a React `open` flag.
@@ -15,6 +16,7 @@ export function useModalDialog(open: boolean) {
       dialogRef.current = node;
       if (node && open && !node.open) {
         node.showModal();
+        refreshFloatingNoticesLayer();
       }
     },
     [open]
@@ -25,6 +27,7 @@ export function useModalDialog(open: boolean) {
     if (!dialog) return;
     if (open && !dialog.open) {
       dialog.showModal();
+      refreshFloatingNoticesLayer();
     } else if (!open && dialog.open) {
       dialog.close();
     }

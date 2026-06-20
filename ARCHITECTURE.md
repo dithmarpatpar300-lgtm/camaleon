@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.3.2** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **137 Vitest tests**
+**Snapshot:** App **v3.3.4** · Engine **v1.6.0** · Branch **`main`** · **25 active tools** · **13 Wasm crates** · **147 Vitest tests**
 
 ---
 
@@ -157,8 +157,9 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
-| **Current** | **v3.3.2** | Offline install promo on home · settings-focus → Offline & cache |
-| **Prior** | **v3.3.1** | Risk unlock proceed UX · Settings deep-link focus |
+| **Current** | **v3.3.4** | Settings+toast coexistence · client storage seed · lane SSR · mobile offline dock |
+| **Prior** | **v3.3.3** | UX-4a lanes · 4a-pre mobile top notices · settings-focus uncached Wasm |
+| **Prior** | **v3.3.2** | Offline install promo on home · settings-focus → Offline & cache |
 | **Next** | TBD | **4a.1** metrics UX · **UX-4a** ToolBrowser Convert vs Optimize lanes |
 
 ---
@@ -603,7 +604,14 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 
 ## 17. Settings & preferences
 
-**Storage key:** `camaleon-user-settings-v1` (localStorage only — NFR-1 privacy)
+**Storage:** `camaleon-user-settings-v1` (localStorage) — **factory-seeded on first visit** (v3.3.4)
+
+| Module | Path | Role |
+|--------|------|------|
+| Key registry | `lib/storage/keys.ts` | All localStorage + cookie names |
+| Factory defaults | `lib/storage/factory-defaults.ts` | Single source of default values |
+| Seed | `lib/storage/seed-storage.ts` | Bootstrap + `ClientStorageSeed` — idempotent merge |
+| Tool browser prefs | `lib/storage/tool-browser-prefs.ts` | `tools.lane/tab/density` + SSR cookies |
 
 | Section | File | Contents |
 |---------|------|----------|
@@ -614,11 +622,12 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 | S5 Offline | `offline-prefs.ts` | Full toolkit precache opt-in |
 | S6 Risk | `risk-mode.ts` | Risk mode + acknowledgment timestamp |
 | Updates | `updates-prefs.ts` | Auto-detect app updates |
-| S7 Batch | `batch-universal-prefs.ts` | Default selection all/none (Priority A ✅) |
+| S7 Batch | `batch-universal-prefs.ts` | Default selection all/none |
+| Tools UI | `user-settings.tools` | Lane, tab, density (ToolBrowser) |
 
 **UI:** `SettingsDrawer.tsx` + section components.
 
-**Also:** `lib/prefs.ts` — theme/locale cookies + SSR bootstrap (not under `lib/prefs/`).
+**Also:** `lib/prefs.ts` — theme/locale cookies + blocking bootstrap (includes storage seed).
 
 ---
 
@@ -658,16 +667,19 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 
 ## 20. Toast & floating notices
 
-**Shipped v3.2.7 · Refined v3.2.8**
+**Shipped v3.2.7 · Refined v3.2.8 · Modal coexistence v3.3.4**
 
 | Piece | Role |
 |-------|------|
 | `ToastProvider` | FIFO queue, 4 s auto-dismiss |
 | `ToastViewport` | Responsive cap: **3 desktop / 2 mobile**; peek mask from overflow |
-| `FloatingNoticesRoot` | Portal on `document.body` (z-index 100) |
-| Top-right host | `OfflineStatusNotice` |
-| Bottom host | `AppUpdateNotice` + `ToastHost` |
-| Layer promotion | `floating-notices-layer.ts` — popover manual when modal open (preserves backdrop blur) |
+| `FloatingNoticesRoot` | Portal on `document.body`; **bottom stack portals into open dialog** (v3.3.4) |
+| Top-right host | `OfflineStatusNotice` (desktop); hidden when Settings open |
+| Bottom host | `AppUpdateNotice` + `ToastHost`; mobile offline **dock** (v3.3.4) |
+| Layer control | `floating-notices-layer.ts` — demote popovers when modal open; portal for interactivity |
+| Hit test | `floating-notices-hit-test.ts` — scrim dismiss ignores toast clicks |
+
+**Modal rule (v3.3.4):** `showModal()` inert subtree — interactive toasts must be **children of `<dialog>`**, not promoted popovers on `body`.
 
 **Adaptive heights (v3.2.8):** No viewport height cap for visible toasts; `line-clamp: 3` on message text.
 
@@ -693,7 +705,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 | Piece | Role |
 |-------|------|
-| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.3.2) |
+| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.3.4) |
 | `lib/releases/entries/v*.ts` | Per-version highlights |
 | `ReleaseCommsProvider` | Mounts onboarding + modals |
 | `OnboardingPanel` | First-visit welcome |
@@ -708,7 +720,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 ### Frontend (Vitest)
 
-**Config:** `frontend/vitest.config.ts` · **137 tests** in 32 files · Node environment · no component tests
+**Config:** `frontend/vitest.config.ts` · **147 tests** in 36 files · Node environment · no component tests
 
 | Area | Example files |
 |------|---------------|
@@ -717,7 +729,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 | Prefs | `transmutation-defaults.test.ts`, `batch-universal-prefs.test.ts` |
 | Offline | `connectivity.test.ts`, `force-offline.test.ts` |
 | Limits | `limit-context.test.ts` |
-| Toast | `constants.test.ts` |
+| Layout / layer | `floating-notices-layer.test.ts`, `seed-storage.test.ts`, `tool-browser-prefs.test.ts` |
 | App update | `app-update.test.ts` |
 
 **Semantic alpha coverage:** `npm run test:semantic-alpha` → `verify-needs-semantic-alpha.mjs`
@@ -806,4 +818,4 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 
 ---
 
-*Last updated: 2026-06-19 · App v3.3.2 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-20 · App v3.3.4 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*
