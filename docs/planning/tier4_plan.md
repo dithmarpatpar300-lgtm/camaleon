@@ -1,7 +1,7 @@
 # Tier 4 — Image Optimization & Editing
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v3.3.4 on `main`** — Tier 4a.0 **✅ functional** · **UX-4a ✅** (v3.3.3) · **4a-pre ✅** mobile notices (v3.3.3) · **4a-pre-b ✅** mobile offline dock + Settings+toast (v3.3.4) · **4a.1** metrics UX pending · **4b** editing planned  
+> **Status:** **v3.4.0 on `dev`** (legal refresh) · **v3.3.4 on `main`** — Tier 4a.0 **✅ functional** · **UX-4a ✅** (v3.3.3) · **4a-pre ✅** mobile notices (v3.3.3) · **4a-pre-b ✅** mobile offline dock + Settings+toast (v3.3.4) · **4a.1** metrics UX pending · **4b** editing planned  
 > **Prerequisite:** Tier 3 **complete** (v3.0.1) · Tier 3.5 Universal ✅ · Tier 3.6.0–3.6.2 ✅ (v3.2.9) · Settings S1–S7 core ✅  
 > **Doctrine:** Same pipeline as convert tools — decode → honest options → re-encode → StripAll → **estimate-first** (metrics are the product on Ladder C)  
 > **SPEC anchor:** §1.3 Ladders C & D · §5.1 mental model · §12.5 Tier 4a · §12.6 Tier 4b · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  

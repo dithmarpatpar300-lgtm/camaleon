@@ -409,6 +409,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v340: {
+        title: "Legal pages refresh — v3.4",
+        summary:
+          "About, Contact, Privacy, and Terms are fully rewritten for Camaleon v3.4. A dedicated notice prompts you to review Privacy and Terms — this is separate from feature release notes.",
+        technical:
+          "lib/legal block content model (paragraph, list, callout, table). LegalSubnav + LegalToc. Minimal typographic layout. camaleon-legal-revision-ack storage. LegalRefreshNotice modal. SPEC §7.14. App v3.4.0 · engine 1.6.0.",
+        highlights: {
+          legalContent: {
+            title: "Legal content aligned to v3.4",
+            body: "25 tools, PWA/offline, unified storage, batch, optimize, and risk mode are documented in Privacy and Terms — not just About.",
+          },
+          legalNotice: {
+            title: "Dedicated legal notice",
+            body: "On first visit after update, a modal asks you to review Privacy and Terms. Acknowledgment is stored locally until the next legal revision.",
+          },
+          legalDesign: {
+            title: "Refined minimal layout",
+            body: "Legal pages use a clean typographic column — subnav, table of contents, callouts, and storage key tables — matching Settings and ToolBrowser.",
+          },
+        },
+      },
       v334: {
         title: "Settings + toasts, storage seed & lane persistence",
         summary:
@@ -1198,6 +1219,21 @@ const en: Dictionary = {
   legal: {
     backHome: "Back to home",
     lastUpdated: "Last updated: {date}",
+    revision: "Revision {revision}",
+    subnavLabel: "Legal pages",
+    tocLabel: "On this page",
+    tocHeading: "Contents",
+  },
+
+  legalRefresh: {
+    eyebrow: "Important — legal update",
+    title: "We updated our legal pages",
+    body: "About, Contact, Privacy, and Terms have been fully rewritten for Camaleon v3.4 — reflecting current tools, offline/PWA behavior, storage, batch, optimize, and risk mode.",
+    strong: "These documents are your legal reference. We strongly recommend reading Privacy and Terms before continuing.",
+    readPrivacy: "Read Privacy Policy",
+    readTerms: "Read Terms of Use",
+    acknowledge: "I understand — continue",
+    revisionNote: "Revision {revision}. You can review all legal pages anytime from the footer.",
   },
 
   landing: {

@@ -13,6 +13,12 @@ export const STORAGE_KEYS = {
   LAST_SEEN_RELEASE: "camaleon-last-seen-release",
   RELEASE_SNOOZE: "camaleon-release-snooze-until",
   APP_UPDATE_SNOOZE: "camaleon-app-update-snooze-until",
+  LEGAL_REVISION_ACK: "camaleon-legal-revision-ack",
+} as const;
+
+/** sessionStorage keys — tab-scoped, not persisted across restarts. */
+export const SESSION_KEYS = {
+  FORCE_OFFLINE: "camaleon:force-offline",
 } as const;
 
 /** Cookies mirrored from localStorage for SSR-first paint (theme, locale, tool browser). */

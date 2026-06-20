@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.3.4  
+**Version:** 3.4.0  
 **Last updated:** 2026-06-20  
-**Status:** v3.3.4 on `main` (Settings+toast coexistence · client storage seed · lane SSR) · v3.3.3 · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Status:** v3.4.0 on `dev` (legal pages refresh · LegalRefreshNotice) · v3.3.4 on `main` · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -1411,6 +1411,28 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Settings + floating notices (v3.3.4):** Native `<dialog showModal()>` makes outside content **inert**. Bottom toasts portal into `.surface-modal-notices-slot` inside the open dialog (`modal-floating-notices-portal.ts`, `FloatingNoticesRoot`). Top offline notice hidden while modal open. Drawer scrim uses `floating-notices-hit-test.ts` so toast clicks do not dismiss Settings.
 
+### 7.14 Legal Pages (Implemented — v3.4.0 refresh)
+
+**Purpose:** Bilingual About, Contact, Privacy, and Terms pages linked from the footer. Content lives in `frontend/src/lib/legal/content/{en,es}.ts`; rendered by `LegalDocument` inside `LegalPageShell`.
+
+**Revision tracking:** Each page carries `legalRevision` (e.g. `2026-06-v3.4`). User acknowledgment stored in `camaleon-legal-revision-ack` (`{ revision, acknowledgedAt }`). **`LegalRefreshNotice`** modal prompts review when revision changes — separate from What's New / release changelog.
+
+**Content model (v3.4.0):** Sections use stable `id` anchors, `blocks` array (`paragraph`, `list`, `callout`, `table`). Privacy includes a storage-key table synced with `frontend/src/lib/storage/keys.ts`.
+
+**Disclosure scope (Privacy):**
+
+| Mechanism | Keys / detail |
+|-----------|---------------|
+| Cookies (SSR) | `camaleon-locale`, `camaleon-theme`, `camaleon-tool-lane`, `camaleon-tool-tab`, `camaleon-tool-density` |
+| localStorage | `camaleon-user-settings-v1` (S1–S7 + tools), theme/locale mirrors, onboarding, release snooze, app-update snooze, legal revision ack |
+| sessionStorage | `camaleon:force-offline` (debug / QA offline mode) |
+| Cache Storage | Serwist PWA shell + Wasm engines (lazy or S5 full toolkit opt-in) |
+| Network beacon | `GET /version.json` when auto-detect updates enabled (version string only; no file data) |
+
+**UI:** Minimal typographic layout — `LegalSubnav` cross-links, `LegalToc` on Privacy/Terms; no card-stack hover sections. Aligns with Settings / ToolBrowser surface language.
+
+**Reference:** `docs/planning/legal_refresh_plan.md`
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -1460,6 +1482,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.4.0-legal-refresh | 2026-06-20 | Chief Architect | §7.14 Legal pages v3.4 refresh; block content model; LegalRefreshNotice; storage disclosure table; v3.4.0 | `docs/releases/v3.4.0.md` |
 | 3.3.4-settings-storage | 2026-06-20 | Chief Architect | Settings+toast in-dialog portal; lib/storage factory seed; lane SSR cookies; mobile offline dock; v3.3.4 | `docs/releases/v3.3.4.md` |
 | 3.3.3-ux4a-mobile | 2026-06-19 | Chief Architect | UX-4a lanes; 4a-pre mobile notices; UncachedToolNotice settings-focus; v3.3.3 | `docs/releases/v3.3.3.md` |
 | 3.3.2-offline-promo | 2026-06-19 | Chief Architect | Home offline install promo; `openSettings({ focus: "offline" })`; 7-day snooze; v3.3.2 | `docs/releases/v3.3.2.md` |

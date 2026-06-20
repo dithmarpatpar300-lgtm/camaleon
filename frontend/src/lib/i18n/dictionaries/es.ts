@@ -409,6 +409,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v340: {
+        title: "Refresh de páginas legales — v3.4",
+        summary:
+          "About, Contact, Privacy y Terms fueron reescritas por completo para Camaleon v3.4. Un aviso dedicado te pide revisar Privacy y Terms — separado de las notas de funciones.",
+        technical:
+          "lib/legal modelo de bloques (paragraph, list, callout, table). LegalSubnav + LegalToc. Layout tipográfico minimal. camaleon-legal-revision-ack. Modal LegalRefreshNotice. SPEC §7.14. App v3.4.0 · motor 1.6.0.",
+        highlights: {
+          legalContent: {
+            title: "Contenido legal alineado a v3.4",
+            body: "25 herramientas, PWA/offline, storage unificado, batch, optimize y modo riesgo están documentados en Privacy y Terms — no solo en About.",
+          },
+          legalNotice: {
+            title: "Aviso legal dedicado",
+            body: "En la primera visita tras la actualización, un modal pide revisar Privacy y Terms. La confirmación se guarda localmente hasta la próxima revisión legal.",
+          },
+          legalDesign: {
+            title: "Diseño minimal refinado",
+            body: "Las páginas legales usan una columna tipográfica limpia — subnav, índice, callouts y tablas de claves — coherente con Ajustes y ToolBrowser.",
+          },
+        },
+      },
       v334: {
         title: "Ajustes + toasts, seed de storage y persistencia de carriles",
         summary:
@@ -1198,6 +1219,21 @@ const es: Dictionary = {
   legal: {
     backHome: "Volver al inicio",
     lastUpdated: "Última actualización: {date}",
+    revision: "Revisión {revision}",
+    subnavLabel: "Páginas legales",
+    tocLabel: "En esta página",
+    tocHeading: "Contenido",
+  },
+
+  legalRefresh: {
+    eyebrow: "Importante — actualización legal",
+    title: "Actualizamos nuestras páginas legales",
+    body: "About, Contact, Privacy y Terms fueron reescritas por completo para Camaleon v3.4 — reflejando herramientas actuales, comportamiento offline/PWA, almacenamiento, batch, optimize y modo riesgo.",
+    strong: "Estos documentos son tu referencia legal. Te recomendamos encarecidamente leer Privacy y Terms antes de continuar.",
+    readPrivacy: "Leer Política de Privacidad",
+    readTerms: "Leer Términos de Uso",
+    acknowledge: "Entiendo — continuar",
+    revisionNote: "Revisión {revision}. Puedes revisar todas las páginas legales en cualquier momento desde el footer.",
   },
 
   landing: {

@@ -6,9 +6,8 @@ type LegalPageShellProps = {
 
 export function LegalPageShell({ children }: LegalPageShellProps) {
   return (
-    <div className="legal-page relative overflow-hidden px-6 py-10 sm:py-14">
-      <div className="legal-page-glow" aria-hidden="true" />
-      <div className="relative mx-auto max-w-2xl">{children}</div>
+    <div className="legal-page px-4 py-8 sm:px-6 sm:py-12">
+      <div className="legal-page-inner">{children}</div>
     </div>
   );
 }
