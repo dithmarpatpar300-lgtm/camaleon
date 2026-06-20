@@ -11,7 +11,7 @@ export function PageDropOverlay({ active }: PageDropOverlayProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg-base/80 backdrop-blur-sm"
+      className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-bg-base/80 backdrop-blur-sm"
       aria-hidden="false"
     >
       <div className="flex h-[60vh] w-[80vw] items-center justify-center rounded-3xl border-2 border-dashed border-accent bg-accent-subtle">

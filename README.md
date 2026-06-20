@@ -2,11 +2,11 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.5.0** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.5.1** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v3.5.0)
+## What works today (v3.5.1)
 
 | Capability | Status |
 |------------|--------|
@@ -17,7 +17,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Connectivity UX** | Health probes + hysteresis — honest online/offline on localhost, tunnel, real network loss (**v3.5.0**) |
 | **Universal transmutator** | Home-page drop zone — pick output format, handoff to any tool (**v3.1.x**, Tier 3.5) |
 | **Mixed-format cohorts** | Drop mixed formats on home → per-group picker; remaining cohorts persist (**v3.2.9**, Tier 3.6.1 C) |
-| **Multi-file batch** | Drop N images on **19 batch routes** — shared options, ZIP or individual download (**v3.2.0–3.2.9**, Tier 3.6) |
+| **Multi-file batch** | Drop N images on **19 batch routes** — shared options, ZIP or individual download; **Explorer multi-drag fixed (v3.5.1)** (**v3.2.0–3.2.9**, Tier 3.6) |
 | **Universal homogeneous batch** | Drop N files of the **same format** on home → batch handoff to matching tool (**v3.2.4**, Tier 3.6.1 A+B) |
 | **JPG / JPEG ↔ PNG** | Lossless PNG compression (1–9); JPEG quality (1–100); alpha flatten |
 | **WebP suite** | WebP→PNG/JPG; PNG/JPEG→WebP (lossless WebP) |
@@ -43,9 +43,9 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
-| **Tests** | 179 Vitest unit tests |
+| **Tests** | 183 Vitest unit tests |
 
-**Latest (v3.5.0):** **Offline reliability & connectivity hardening** — stable PWA baseline, origin reachability probes, brand mark survives real offline navigation, mobile notice stack. See [docs/releases/v3.5.0.md](docs/releases/v3.5.0.md). **Prior (v3.4.0):** Legal pages refresh — [docs/releases/v3.4.0.md](docs/releases/v3.4.0.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
+**Latest (v3.5.1):** **Batch drag-drop fix & download format UX** — multi-file Explorer drag on tool routes; batch workspace download tips + Settings row deep link. See [docs/releases/v3.5.1.md](docs/releases/v3.5.1.md). **Prior (v3.5.0):** Offline reliability & connectivity — [docs/releases/v3.5.0.md](docs/releases/v3.5.0.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 
@@ -122,7 +122,7 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v3.5.0)
+├── frontend/              # Next.js app (v3.5.1)
 ├── motor_transmutacion/   # Rust workspace (v1.6.0)
 │   ├── core_utils/
 │   ├── transmutador_jpg/         # JPEG → PNG
@@ -163,6 +163,7 @@ camaleon/
 | **Tier 3.6.1 — universal batch** | v3.2.4+ | 🔄 Slice A+B ✅ · **Slice C** (mixed cohorts) ⏳ |
 | **Tier 4a — optimization** | **v3.3.0** | ✅ Compress, resize (`transmutador_optimize` activated) |
 | **Offline reliability** | **v3.5.0** | ✅ Dual readiness, reachability, brand offline |
+| **Batch drop & download UX** | **v3.5.1** | ✅ Explorer multi-drag on tool routes; download format tips |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Architecture atlas: **[ARCHITECTURE.md](ARCHITECTURE.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 

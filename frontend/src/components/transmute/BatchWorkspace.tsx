@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { PanelScrollFade } from "@/components/ui/PanelScrollFade";
 import { OptionsControls } from "./OptionsControls";
 import { BatchFileRow } from "./BatchFileRow";
+import { SettingsFocusLink } from "@/components/settings/SettingsFocusLink";
 import { useI18n } from "@/providers/I18nProvider";
+import { useBatchDownloadMode } from "@/hooks/useBatchDownloadMode";
 import { formatBytes } from "@/lib/format/bytes";
 
 type BatchWorkspaceProps = {
@@ -77,8 +79,11 @@ export function BatchWorkspace({
   lastRunOptionValue,
 }: BatchWorkspaceProps) {
   const { t } = useI18n();
+  const batchDownloadMode = useBatchDownloadMode();
   const selectedCount = items.filter((i) => i.selected).length;
   const optionLabel = t(optionLabelKey);
+  const zipDelivery = batchDownloadMode === "zip";
+  const showDownloadFormatTip = items.length >= 2 && !running && !isPreparing;
 
   const panelOptionSpecs =
     tool.optionSpecs?.filter((spec) => spec.key !== "background") ?? [];
@@ -89,37 +94,75 @@ export function BatchWorkspace({
         return t("panel.batch.allDoneSelectHint");
       }
       if (cacheRedownloadAvailable) {
-        return t("panel.batch.allDoneCacheHint");
+        return zipDelivery
+          ? t("panel.batch.allDoneCacheHintZip")
+          : t("panel.batch.allDoneCacheHint");
       }
       if (optionsStale && lastRunOptionValue != null) {
-        return t("panel.batch.allDoneOptionsChangedHint", {
-          option: optionLabel,
-          lastRun: lastRunOptionValue,
-          current: currentOptionValue,
-        });
+        return zipDelivery
+          ? t("panel.batch.allDoneOptionsChangedHintZip", {
+              option: optionLabel,
+              lastRun: lastRunOptionValue,
+              current: currentOptionValue,
+            })
+          : t("panel.batch.allDoneOptionsChangedHint", {
+              option: optionLabel,
+              lastRun: lastRunOptionValue,
+              current: currentOptionValue,
+            });
       }
-      return t("panel.batch.allDoneReencodeHint");
+      return zipDelivery
+        ? t("panel.batch.allDoneReencodeHintZip")
+        : t("panel.batch.allDoneReencodeHint");
     }
 
     if (isPreparing) return null;
 
     if (optionsStale && preparedOptionsReady) {
-      return t("panel.batch.optionsChangedHint", {
-        option: optionLabel,
-        prepared: preparedOptionValue,
-        current: currentOptionValue,
-      });
+      return zipDelivery
+        ? t("panel.batch.optionsChangedHintZip", {
+            option: optionLabel,
+            prepared: preparedOptionValue,
+            current: currentOptionValue,
+          })
+        : t("panel.batch.optionsChangedHint", {
+            option: optionLabel,
+            prepared: preparedOptionValue,
+            current: currentOptionValue,
+          });
     }
 
     if (preparedOptionsReady && !optionsStale) {
-      return t("panel.batch.optionsValidatedHint", {
-        option: optionLabel,
-        prepared: preparedOptionValue,
-      });
+      return zipDelivery
+        ? t("panel.batch.optionsValidatedHintZip", {
+            option: optionLabel,
+            prepared: preparedOptionValue,
+          })
+        : t("panel.batch.optionsValidatedHint", {
+            option: optionLabel,
+            prepared: preparedOptionValue,
+          });
     }
 
     return null;
   })();
+
+  const downloadFormatTip =
+    showDownloadFormatTip && batchDownloadMode === "individual"
+      ? {
+          bodyKey: "panel.batch.downloadFormatSuggestZip" as const,
+          actionKey: "panel.batch.downloadFormatSwitchToZip" as const,
+        }
+      : showDownloadFormatTip && batchDownloadMode === "zip"
+        ? {
+            bodyKey: "panel.batch.downloadFormatSuggestIndividual" as const,
+            actionKey: "panel.batch.downloadFormatSwitchToIndividual" as const,
+          }
+        : null;
+
+  const primaryActionCount = allDone ? selectedDoneCount : transmutableSelectedCount;
+  const useZipPrimaryLabel =
+    !allDone && prepareCacheReady && zipDelivery && primaryActionCount >= 2;
 
   return (
     <div className="transmute-shell space-y-4 p-5 sm:p-6">
@@ -153,6 +196,17 @@ export function BatchWorkspace({
         <p className="rounded-lg border border-accent/25 bg-accent-subtle/20 px-3 py-2 text-xs text-text-secondary">
           {phaseHint}
         </p>
+      )}
+
+      {downloadFormatTip && (
+        <div className="rounded-lg border border-border/60 bg-bg-elevated/35 px-3 py-2 text-xs text-text-secondary">
+          <p>{t(downloadFormatTip.bodyKey)}</p>
+          <SettingsFocusLink
+            focus="batch-download"
+            labelKey={downloadFormatTip.actionKey}
+            className="mt-1.5 text-accent"
+          />
+        </div>
       )}
 
       {panelOptionSpecs.length > 0 && (
@@ -213,7 +267,9 @@ export function BatchWorkspace({
               onClick={onConvertAgain}
             >
               {cacheRedownloadAvailable
-                ? t("panel.batch.downloadAgainCount", { count: selectedDoneCount })
+                ? zipDelivery && selectedDoneCount >= 2
+                  ? t("panel.batch.downloadAgainZip", { count: selectedDoneCount })
+                  : t("panel.batch.downloadAgainCount", { count: selectedDoneCount })
                 : t("panel.batch.convertAgainCount", { count: selectedDoneCount })}
             </Button>
           </>
@@ -225,7 +281,9 @@ export function BatchWorkspace({
               onClick={onTransmuteSelected}
             >
               {prepareCacheReady
-                ? t("panel.batch.downloadSelected", { count: transmutableSelectedCount })
+                ? useZipPrimaryLabel
+                  ? t("panel.batch.downloadSelectedZip", { count: transmutableSelectedCount })
+                  : t("panel.batch.downloadSelected", { count: transmutableSelectedCount })
                 : t("panel.batch.transmuteSelected", { count: transmutableSelectedCount })}
             </Button>
             <Button
@@ -234,7 +292,9 @@ export function BatchWorkspace({
               onClick={onTransmuteAllReady}
             >
               {prepareCacheReady
-                ? t("panel.batch.downloadAll")
+                ? zipDelivery && readyCount >= 2
+                  ? t("panel.batch.downloadAllZip")
+                  : t("panel.batch.downloadAll")
                 : t("panel.batch.transmuteAll")}
             </Button>
           </>

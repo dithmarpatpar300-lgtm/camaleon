@@ -11,6 +11,8 @@ type SettingsRowProps = {
   bordered?: boolean;
   /** Stacked: label + control full-width columns (better for wide segments). */
   layout?: "inline" | "stacked";
+  /** Enables settings deep-link row pulse (see settings-focus.ts). */
+  id?: string;
 };
 
 export function SettingsRow({
@@ -20,11 +22,14 @@ export function SettingsRow({
   className,
   bordered = true,
   layout = "inline",
+  id,
 }: SettingsRowProps) {
   const stacked = layout === "stacked";
 
   return (
     <div
+      id={id}
+      data-settings-focus-row={id ? "" : undefined}
       className={cn(
         stacked
           ? "flex flex-col gap-2.5 px-4 py-4"

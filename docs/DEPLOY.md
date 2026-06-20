@@ -179,6 +179,7 @@ After `npm run build:cf` or deploy to Cloudflare:
 11. **Connectivity (v3.5.0):** `preview:cf` or tunnel with server running → green dot, no false “Working offline” toast. Stop server or cut network → offline within ~15–30s.
 12. **Brand mark offline (v3.5.0):** real offline (airplane mode) or force-offline → navigate `/` ↔ `/transmute/*` → header logo persists (mobile + desktop).
 13. **Mobile notice stack (v3.5.0):** narrow viewport → offline banner + install promo + toast visible together → stacked vertically, no overlap.
+14. **Batch multi-drag (v3.5.1):** on `/transmute/png-to-jpg` (batch-enabled route), drag 3+ PNG files from OS file manager onto dropzone → batch workspace with all files. Repeat via file picker → same result. Universal home drop unchanged.
 
 **Note:** `npm run dev` does not register Serwist — full offline reload requires a production build (`preview:cf` or deploy).
 

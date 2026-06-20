@@ -404,7 +404,10 @@ export function BatchTransmutationPanel({
       setRunProgress(null);
       setPhase("staged");
       toast({
-        message: t("panel.batch.cachedDownloadSummary", { count: queue.length }),
+        message:
+          getBatchDownloadMode() === "zip" && queue.length >= 2
+            ? t("panel.batch.cachedDownloadSummaryZip", { count: queue.length })
+            : t("panel.batch.cachedDownloadSummary", { count: queue.length }),
         variant: "success",
       });
     },
@@ -601,9 +604,12 @@ export function BatchTransmutationPanel({
 
       setPhase("staged");
       const allCached = cacheHits === completed;
+      const zipMode = getBatchDownloadMode() === "zip" && completed >= 2;
       toast({
         message: allCached
-          ? t("panel.batch.cachedDownloadSummary", { count: completed })
+          ? zipMode
+            ? t("panel.batch.cachedDownloadSummaryZip", { count: completed })
+            : t("panel.batch.cachedDownloadSummary", { count: completed })
           : t("panel.batch.doneSummary", { done: completed, total: queue.length }),
         variant: "success",
       });
@@ -754,7 +760,9 @@ export function BatchTransmutationPanel({
     toast({
       message:
         cacheHits === completed
-          ? t("panel.batch.cachedDownloadSummary", { count: completed })
+          ? getBatchDownloadMode() === "zip" && completed >= 2
+            ? t("panel.batch.cachedDownloadSummaryZip", { count: completed })
+            : t("panel.batch.cachedDownloadSummary", { count: completed })
           : t("panel.batch.doneSummary", { done: completed, total: queue.length }),
       variant: "success",
     });

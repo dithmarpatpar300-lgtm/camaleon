@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.5.0** · Engine **v1.6.0** · Branch **`main`** · **25 active tools** · **13 Wasm crates** · **179 Vitest tests**
+**Snapshot:** App **v3.5.1** · Engine **v1.6.0** · Branch **`main`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
 
 ---
 
@@ -157,7 +157,8 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
-| **Current** | **v3.5.0** | Offline reliability · origin reachability · brand offline · mobile notice stack |
+| **Current** | **v3.5.1** | Batch Explorer drag fix · download format UX · settings-focus batch-download |
+| **Prior** | **v3.5.0** | Offline reliability · origin reachability · brand offline · mobile notice stack |
 | **Prior** | **v3.3.3** | UX-4a lanes · 4a-pre mobile top notices · settings-focus uncached Wasm |
 | **Prior** | **v3.3.2** | Offline install promo on home · settings-focus → Offline & cache |
 | **Next** | TBD | **4a.1** metrics UX · **UX-4a** ToolBrowser Convert vs Optimize lanes |
@@ -294,10 +295,12 @@ sequenceDiagram
 
 ### 7.4 Tool-route batch (Tier 3.6.0)
 
-1. User drops **N files** directly on `/transmute/png-to-jpg`.
+1. User drops **N files** directly on `/transmute/png-to-jpg` (drag from OS or file picker).
 2. If `files.length >= 2` and slug is batch-enabled → batch workspace.
 3. Incompatible extensions **skipped with notice** (not silently dropped).
-4. Sequential processing; one download per result (ZIP deferred to 3.6.2).
+4. Sequential processing; individual or ZIP download per S7 pref (v3.2.9+).
+
+**Multi-file OS drag (v3.5.1):** `getDroppedFiles()` + dropzone `stopPropagation()`; `PageDropOverlay` does not intercept pointer events; `usePageFileDrop` defers to dropzone when target is `.transmute-dropzone`.
 
 ### 7.5 Mixed formats (current behavior)
 
@@ -580,10 +583,16 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 | `batch-prepare-queue.ts` | Sequential per-item prepare |
 | `batch-option-scope.ts` | Global-only options in batch (no per-row sliders) |
 | `BatchTransmutationPanel.tsx` | Orchestrator UI |
+| `BatchWorkspace.tsx` | Row list, download tips, mode-aware hints (v3.5.1) |
+| `lib/files/dropped-files.ts` | `getDroppedFiles()` — Explorer multi-select safe (v3.5.1) |
+| `hooks/usePageFileDrop.ts` | Page-level drop; skips `.transmute-dropzone` (v3.5.1) |
+| `hooks/useBatchDownloadMode.ts` | Reactive `batchDownloadMode` pref (v3.5.1) |
 
 **Default row selection:** Settings S7 `defaultSelection: "all" | "none"` (`batch-universal-prefs.ts`).
 
-**Deferred (3.6.2+):** ZIP export, GIF/TIFF/ICO/SVG batch, per-row frame/page pickers.
+**Download format (v3.2.9+):** S7 `batchDownloadMode: "individual" | "zip"`. Batch workspace suggests opposite format with Settings deep link to `batch-download` row (v3.5.1).
+
+**Deferred (3.6.3+):** GIF/TIFF/ICO/SVG batch, per-row frame/page pickers.
 
 ---
 
@@ -710,7 +719,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 | Piece | Role |
 |-------|------|
-| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.5.0) |
+| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.5.1) |
 | `lib/releases/entries/v*.ts` | Per-version highlights |
 | `ReleaseCommsProvider` | Mounts onboarding + modals |
 | `OnboardingPanel` | First-visit welcome |
@@ -725,7 +734,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 ### Frontend (Vitest)
 
-**Config:** `frontend/vitest.config.ts` · **147 tests** in 36 files · Node environment · no component tests
+**Config:** `frontend/vitest.config.ts` · **183 tests** in 48 files · Node environment · no component tests
 
 | Area | Example files |
 |------|---------------|

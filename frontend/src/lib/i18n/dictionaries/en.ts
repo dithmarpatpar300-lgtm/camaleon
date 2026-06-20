@@ -430,6 +430,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v351: {
+        title: "Batch drag-drop fix & download UX — v3.5.1",
+        summary:
+          "Dragging multiple files from your desktop onto a dedicated transmutator (e.g. PNG→JPEG) now loads every file into batch mode — same as the file picker and the Universal transmutator. Batch workspace also suggests the opposite download format with a one-click Settings link.",
+        technical:
+          "stopPropagation on tool dropzone drag/drop; PageDropOverlay pointer-events-none; usePageFileDrop skips .transmute-dropzone; getDroppedFiles() via dataTransfer.items. Batch download tip + openSettings({ focus: batch-download }) row pulse. useBatchDownloadMode reactive pref. SPEC §7.17. App v3.5.1 · engine 1.6.0.",
+        highlights: {
+          toolRouteDrop: {
+            title: "Multi-file drop on tool routes",
+            body: "Drag several images from Windows Explorer onto PNG→JPEG (and other batch routes) — all files enter batch mode instead of only the first.",
+          },
+          batchDownloadUx: {
+            title: "Smarter batch download hints",
+            body: "When you have multiple files, the workspace recommends ZIP or individual downloads and links straight to the download format row in Settings.",
+          },
+        },
+      },
       v350: {
         title: "Offline reliability & connectivity — v3.5.0",
         summary:
@@ -1439,8 +1456,10 @@ const en: Dictionary = {
       selectNone: "Select none",
       transmuteSelected: "Transmute {count}",
       downloadSelected: "Download {count}",
+      downloadSelectedZip: "Download ZIP ({count})",
       transmuteAll: "Transmute all ready",
       downloadAll: "Download all ready",
+      downloadAllZip: "Download all as ZIP",
       preparing: "Preparing {current} / {total}",
       processing: "{current} / {total} · {fileName}",
       rowReady: "Ready",
@@ -1465,15 +1484,30 @@ const en: Dictionary = {
       convertAgainCount: "Convert again ({count})",
       downloadAgain: "Download again",
       downloadAgainCount: "Download again ({count})",
+      downloadAgainZip: "Download ZIP again ({count})",
       allDoneSelectHint: "Select one or more files above to download or convert again.",
       allDoneReencodeHint:
-        "Selected files will be re-encoded with the settings above — no re-read needed.",
+        "Selected files will be re-encoded with the settings above — each downloads separately.",
+      allDoneReencodeHintZip:
+        "Selected files will be re-encoded with the settings above — then packaged into one ZIP.",
       allDoneOptionsChangedHint:
-        "Last run used {option} {lastRun}; current setting is {current}. Convert again to re-encode.",
+        "Last run used {option} {lastRun}; current setting is {current}. Convert again to re-encode — files download separately.",
+      allDoneOptionsChangedHintZip:
+        "Last run used {option} {lastRun}; current setting is {current}. Convert again to re-encode and download as one ZIP.",
       optionsValidatedHint:
-        "Files validated at {option} {prepared}. Change the slider to adjust output — no re-read needed.",
+        "Files validated at {option} {prepared}. Change the slider to adjust output — each file downloads separately when ready.",
+      optionsValidatedHintZip:
+        "Files validated at {option} {prepared}. Change the slider to adjust output — ready files are packaged into one ZIP when you download.",
       optionsChangedHint:
-        "Validated at {option} {prepared}; current setting is {current}. Transmute to apply.",
+        "Validated at {option} {prepared}; current setting is {current}. Transmute to apply — files download separately.",
+      optionsChangedHintZip:
+        "Validated at {option} {prepared}; current setting is {current}. Transmute to re-encode and download as one ZIP.",
+      downloadFormatSuggestZip:
+        "Prefer one download? Use ZIP archive — converted files are bundled automatically after each run.",
+      downloadFormatSuggestIndividual:
+        "Prefer separate files? Use individual downloads — each converted file saves on its own.",
+      downloadFormatSwitchToZip: "Switch to ZIP archive in Settings",
+      downloadFormatSwitchToIndividual: "Switch to individual files in Settings",
       optionCompression: "compression",
       optionQuality: "quality",
       optionSettings: "settings",
@@ -1481,7 +1515,10 @@ const en: Dictionary = {
         "Selected files will be re-prepared with the options above. Unselected files stay Done.",
       allDoneCacheHint:
         "Same settings as your last run for the selected files — instant download from cache when available.",
+      allDoneCacheHintZip:
+        "Same settings as your last run — instant ZIP from cached outputs (no re-encoding).",
       cachedDownloadSummary: "Downloaded {count} cached file(s) — no re-encoding needed.",
+      cachedDownloadSummaryZip: "Downloaded ZIP with {count} cached file(s) — no re-encoding needed.",
       cacheRedownloadMiss:
         "Cache expired or unavailable — change a setting or wait, then use Convert again to re-process.",
       transmuteAnother: "Transmute more",

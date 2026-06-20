@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.5.0  
-**Last updated:** 2026-06-20  
-**Status:** v3.5.0 on `main` (offline reliability · connectivity hardening) · v3.4.0 legal refresh · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Version:** 3.5.1  
+**Last updated:** 2026-06-19  
+**Status:** v3.5.1 on `main` (batch drag-drop fix · download format UX) · v3.5.0 offline reliability · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -1017,6 +1017,7 @@ pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 ### 7.1 Dropzone (Implemented — Phase 3)
 
 - **Input:** Drag-and-drop and click-to-select
+- **Multi-file (v3.5.1):** On batch-enabled tool routes, OS drag delivers all selected files via `getDroppedFiles()` (`dataTransfer.items` fallback). Tool dropzone calls `stopPropagation()` so `usePageFileDrop` does not double-handle. `PageDropOverlay` is visual-only (`pointer-events-none`).
 - **Format filter:** `.jpg`, `.jpeg`, `.png` (active); `.webp` (Tier 1 — planned) — auto-routed to correct module by extension
 - **Routing (active):**
   - `.jpg` / `.jpeg` → `transmutador_jpg` → outputs `.png` (`image/png`)
@@ -1405,7 +1406,7 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`. `RiskModeProvider` wraps `SettingsProvider` for reactive limit pipeline. `OfflineProvider` registers Service Worker and tracks connectivity.
 
-**Deep-link focus (v3.3.1):** `openSettings({ focus?: SettingsFocusTarget })` queues scroll + pulse on drawer open. Targets: `risk`, `offline`, `batch`, `performance`, `notices`, `updates`, `defaults`. Implemented in `settings-focus.ts`; consumed by `SettingsDrawer` after enter animation. **`OfflineInstallPromoNotice`** on home uses `focus: "offline"` (v3.3.2). **`UncachedToolNotice`** via `SettingsFocusLink` (v3.3.3).
+**Deep-link focus (v3.3.1):** `openSettings({ focus?: SettingsFocusTarget })` queues scroll + pulse on drawer open. Targets: `risk`, `offline`, `batch`, `batch-download`, `performance`, `notices`, `updates`, `defaults`. Implemented in `settings-focus.ts`; consumed by `SettingsDrawer` after enter animation. **`OfflineInstallPromoNotice`** on home uses `focus: "offline"` (v3.3.2). **`UncachedToolNotice`** via `SettingsFocusLink` (v3.3.3). **`batch-download`** (v3.5.1) pulses only the download format row inside Batch & universal.
 
 **Client storage (v3.3.4):** `frontend/src/lib/storage/` — canonical key registry (`keys.ts`), factory defaults (`factory-defaults.ts`), bootstrap seed (`seed-storage.ts` + `ClientStorageSeed`). All Settings sections (S1–S7) + tool browser prefs (`tools.lane`, `tools.tab`, `tools.density`) persist under **`camaleon-user-settings-v1`** with factory values written on first visit. Legacy keys (`camaleon.tools.lane.v1`, etc.) migrate once. Theme/locale/tool lane mirrored to cookies for SSR first paint.
 
@@ -1472,6 +1473,14 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Reference:** `docs/releases/v3.5.0.md` · DEPLOY PWA QA steps 11–13
 
+### 7.17 Batch drop & download UX (Implemented — v3.5.1)
+
+**Tool-route multi-file drop:** `TransmutationPanel` dropzone + `usePageFileDrop` previously both consumed the same drop when dragging from the OS file manager. Fix: `stopPropagation()` on tool drag/drop handlers (same pattern as `UniversalTransmutator`); `PageDropOverlay` uses `pointer-events-none` so drops reach the dropzone; window handler skips targets inside `.transmute-dropzone`. File extraction: `lib/files/dropped-files.ts` → `getDroppedFiles()` prefers `DataTransferItemList.getAsFile()` for Explorer multi-select.
+
+**Batch download format guidance:** When batch workspace has 2+ files, `BatchWorkspace` shows a contextual tip recommending the opposite of the current `batchDownloadMode` pref (`individual` ↔ `zip`). Link opens Settings with `focus: "batch-download"` — scrolls to Batch & universal and pulses `#settings-row-batch-download` only. Validation and post-run hints are mode-aware (individual vs ZIP); cached ZIP download reuses stored outputs via `buildBatchZipBlob`.
+
+**Reference:** `docs/releases/v3.5.1.md` · `settings-focus.ts` · `useBatchDownloadMode.ts`
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -1521,6 +1530,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.5.1-batch-drop-ux | 2026-06-19 | Chief Architect | §7.1 multi-file drop; §7.17 batch download UX; getDroppedFiles; settings-focus batch-download | `docs/releases/v3.5.1.md` |
 | 3.5.0-offline-connectivity | 2026-06-20 | Chief Architect | §7.15 brand offline + §7.16 origin reachability; mobile notice stack; v3.5.0 stable offline baseline | `docs/releases/v3.5.0.md` |
 | 3.4.1-offline-persistence | 2026-06-20 | Chief Architect | §7.15 dual shell+wasm readiness; apply-update purge fix; reprecache shell; force-offline fallback (merged in v3.5.0) | `docs/releases/v3.4.1.md` |
 | 3.4.0-legal-refresh | 2026-06-20 | Chief Architect | §7.14 Legal pages v3.4 refresh; block content model; LegalRefreshNotice; storage disclosure table; v3.4.0 | `docs/releases/v3.4.0.md` |
