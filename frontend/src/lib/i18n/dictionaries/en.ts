@@ -431,7 +431,7 @@ const en: Dictionary = {
     },
     entries: {
       v352: {
-        title: "Risk Mode decoder fix & batch UX — v3.5.2",
+        title: "Risk Mode decoder fix & batch UX",
         summary:
           "Risk Mode now properly bypasses internal decoder memory limits so large files (200 MP, 50–80 MB) transmute without error. Batch workflow hardened: error items auto-unselect, a 'Download Again' button appears for already-converted files even in mixed state, and file sizes are always accurate during prepare and across Universal handoff.",
         technical:
@@ -456,7 +456,7 @@ const en: Dictionary = {
         },
       },
       v351: {
-        title: "Batch drag-drop fix & download UX — v3.5.1",
+        title: "Batch drag-drop fix & download UX",
         summary:
           "Dragging multiple files from your desktop onto a dedicated transmutator (e.g. PNG→JPEG) now loads every file into batch mode — same as the file picker and the Universal transmutator. Batch workspace also suggests the opposite download format with a one-click Settings link.",
         technical:
@@ -473,7 +473,7 @@ const en: Dictionary = {
         },
       },
       v350: {
-        title: "Offline reliability & connectivity — v3.5.0",
+        title: "Offline reliability & connectivity",
         summary:
           "PWA offline is production-stable: honest shell + Wasm readiness, reliable app updates, and connectivity that works on localhost, tunnel, and real network loss — without false offline or a missing header logo.",
         technical:
@@ -498,7 +498,7 @@ const en: Dictionary = {
         },
       },
       v341: {
-        title: "Offline persistence fix — v3.4.1",
+        title: "Offline persistence fix",
         summary:
           "PWA offline is reliable again after clear cache, app update, or reload without network. Settings now shows app shell and Wasm engine readiness separately.",
         technical:
@@ -519,7 +519,7 @@ const en: Dictionary = {
         },
       },
       v340: {
-        title: "Legal pages refresh — v3.4",
+        title: "Legal pages refresh",
         summary:
           "About, Contact, Privacy, and Terms are fully rewritten for Camaleon v3.4. A dedicated notice prompts you to review Privacy and Terms — this is separate from feature release notes.",
         technical:
