@@ -33,8 +33,7 @@ export function BatchFileRow({
   const checkboxEnabled =
     item.status === "ready" ||
     item.status === "needs_consent" ||
-    item.status === "done" ||
-    item.status === "error";
+    item.status === "done";
 
   const rowPicker: BatchRowPickerConfig | null = resolveBatchRowPicker(
     tool.slug,
@@ -67,7 +66,7 @@ export function BatchFileRow({
   })();
 
   const detailsLine = formatBatchFileDetailsLine(
-    item.file.size,
+    item.displaySize,
     item.sourceMeta ?? item.prepared?.sourceMeta ?? null
   );
 

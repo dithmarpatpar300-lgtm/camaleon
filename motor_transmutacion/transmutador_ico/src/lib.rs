@@ -239,9 +239,13 @@ pub fn estimate_png_to_ico_size(input_bytes: &[u8], target_size: u32) -> Result<
 
     core_utils::validate_input(input_bytes)?;
     let target_size = validate_icon_size(target_size)?;
-    let img = ImageReader::new(Cursor::new(input_bytes))
+    let mut reader = ImageReader::new(Cursor::new(input_bytes))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?;
     let rgba = ico_encode::resize_for_ico(&img, target_size);

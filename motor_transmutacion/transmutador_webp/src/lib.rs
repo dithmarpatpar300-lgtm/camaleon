@@ -47,9 +47,13 @@ fn validate_quality(q: u8) -> Result<u8, String> {
 }
 
 fn webp_bytes_to_png_bytes(input: &[u8], compression: u8) -> Result<Vec<u8>, String> {
-    let img = ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
 
@@ -88,9 +92,13 @@ pub fn transmutar_webp_a_png_inner(input: &[u8], compression: u8) -> Result<Vec<
 pub fn assess_webp_alpha(input: &[u8]) -> Result<AlphaAssessment, String> {
     core_utils::validate_input(input)?;
     let structural = webp_has_alpha_channel(input);
-    let img = ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
     let has_channel = structural || img.color().has_alpha();
@@ -124,9 +132,13 @@ pub fn estimate_webp_to_png_size(
 ) -> Result<u32, String> {
     core_utils::validate_input(input_bytes)?;
     validate_compression(compression)?;
-    let img = ImageReader::new(Cursor::new(input_bytes))
+    let mut reader = ImageReader::new(Cursor::new(input_bytes))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
 
@@ -159,9 +171,13 @@ pub fn estimate_webp_to_png_size(
 // ---------------------------------------------------------------------------
 
 fn webp_bytes_to_jpg_bytes(input: &[u8], quality: u8, bg_r: u8, bg_g: u8, bg_b: u8) -> Result<Vec<u8>, String> {
-    let img = ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
 
@@ -210,9 +226,13 @@ pub fn estimate_webp_to_jpg_size(
 ) -> Result<u32, String> {
     core_utils::validate_input(input_bytes)?;
     validate_quality(quality)?;
-    let img = ImageReader::new(Cursor::new(input_bytes))
+    let mut reader = ImageReader::new(Cursor::new(input_bytes))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt WebP data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode WebP: {}", e))?;
 

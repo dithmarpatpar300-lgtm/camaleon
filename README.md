@@ -2,7 +2,7 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.5.1** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.5.2** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
@@ -45,7 +45,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Tests** | 183 Vitest unit tests |
 
-**Latest (v3.5.1):** **Batch drag-drop fix & download format UX** — multi-file Explorer drag on tool routes; batch workspace download tips + Settings row deep link. See [docs/releases/v3.5.1.md](docs/releases/v3.5.1.md). **Prior (v3.5.0):** Offline reliability & connectivity — [docs/releases/v3.5.0.md](docs/releases/v3.5.0.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
+**Latest (v3.5.2):** **Risk Mode decoder fix & batch UX hardening** — Risk Mode now bypasses internal decoder memory limits for large files (200 MP); batch error items auto-deselect; re-download done files in mixed state; correct file sizes during prepare. See [docs/releases/v3.5.2.md](docs/releases/v3.5.2.md). **Prior (v3.5.1):** **Batch drag-drop fix & download format UX** — multi-file Explorer drag on tool routes; batch workspace download tips + Settings row deep link. See [docs/releases/v3.5.1.md](docs/releases/v3.5.1.md). **Prior (v3.5.0):** Offline reliability & connectivity — [docs/releases/v3.5.0.md](docs/releases/v3.5.0.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 
@@ -164,6 +164,7 @@ camaleon/
 | **Tier 4a — optimization** | **v3.3.0** | ✅ Compress, resize (`transmutador_optimize` activated) |
 | **Offline reliability** | **v3.5.0** | ✅ Dual readiness, reachability, brand offline |
 | **Batch drop & download UX** | **v3.5.1** | ✅ Explorer multi-drag on tool routes; download format tips |
+| **Risk Mode decoder & batch UX** | **v3.5.2** | ✅ Decoder limits bypassed; batch error/done state fixes |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Architecture atlas: **[ARCHITECTURE.md](ARCHITECTURE.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 

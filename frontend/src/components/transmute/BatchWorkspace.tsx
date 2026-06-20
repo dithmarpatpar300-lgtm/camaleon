@@ -286,6 +286,19 @@ export function BatchWorkspace({
                   : t("panel.batch.downloadSelected", { count: transmutableSelectedCount })
                 : t("panel.batch.transmuteSelected", { count: transmutableSelectedCount })}
             </Button>
+            {selectedDoneCount > 0 && (
+              <Button
+                variant="subtle"
+                disabled={running}
+                onClick={onConvertAgain}
+              >
+                {cacheRedownloadAvailable
+                  ? zipDelivery && selectedDoneCount >= 2
+                    ? t("panel.batch.downloadAgainZip", { count: selectedDoneCount })
+                    : t("panel.batch.downloadAgainCount", { count: selectedDoneCount })
+                  : t("panel.batch.convertAgainCount", { count: selectedDoneCount })}
+              </Button>
+            )}
             <Button
               variant="subtle"
               disabled={running || readyCount === 0}

@@ -23,6 +23,13 @@ const store = new Map<string, BatchHandoffEntry>();
 
 let pendingNavigationBatchHandoffId: string | null = null;
 
+/** Maps reconstructed File objects to their original disk size (handoff path). */
+const originalSizeMap = new WeakMap<File, number>();
+
+export function getOriginalSizeForFile(file: File): number | undefined {
+  return originalSizeMap.get(file);
+}
+
 export class BatchHandoffError extends Error {
   constructor(
     message: string,
@@ -90,6 +97,7 @@ export async function stageBatchHandoffFromFiles(
       fileName: file.name,
       bytes,
       lastModified: file.lastModified,
+      originalSize: file.size,
     });
   }
 
@@ -138,7 +146,11 @@ export function consumeBatchHandoff(id: string): BatchHandoffPayload | null {
 }
 
 export function batchHandoffPayloadToFiles(payload: BatchHandoffPayload): File[] {
-  return payload.items.map((item) => handoffPayloadToFile(item));
+  return payload.items.map((item) => {
+    const file = handoffPayloadToFile(item);
+    originalSizeMap.set(file, item.originalSize);
+    return file;
+  });
 }
 
 export function clearBatchHandoffsForTests(): void {

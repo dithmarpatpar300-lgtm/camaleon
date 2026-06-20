@@ -431,8 +431,33 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v352: {
+        title: "Fix decoder Risk Mode y UX batch",
+        summary:
+          "El Modo Risk ahora ignora correctamente los límites internos de memoria del decodificador para que archivos grandes (200 MP, 50–80 MB) transmuten sin error. Flujo batch endurecido: los archivos con error se auto-desmarcan, aparece un botón 'Descargar de nuevo' para archivos ya convertidos incluso en estado mixto, y los pesos de archivo siempre son precisos durante el preparado y en el handoff Universal.",
+        technical:
+          "Los 8 crates transmutadores basados en ImageReader: reader.no_limits() cuando risk_mode_enabled() antes de .decode() — bypassea max_alloc de 512 MB del crate image. Batch: isTransmutableStatus excluye error; items en error auto-deseleccionados + checkbox deshabilitado; handleSelectAll omite error; BatchWorkspace modo normal gana botón onConvertAgain cuando selectedDoneCount > 0. FileHandoffPayload incluye originalSize; WeakMap lo preserva en la reconstrucción; BatchItem.displaySize usado en BatchFileRow. BatchPrepareProgress incluye fileSize para mostrar el peso por archivo durante el preparado. App v3.5.2 · motor 1.6.0.",
+        highlights: {
+          riskModeDecoder: {
+            title: "Modo Risk respeta límites de memoria del decodificador",
+            body: "Convertir imágenes grandes (200 MP, 50–80 MB) con Modo Risk activado ahora funciona — el decodificador ya no rechaza archivos que caben dentro del techo elevado de 500 MB del modo risk.",
+          },
+          batchErrorUx: {
+            title: "Manejo inteligente de errores en batch",
+            body: "Los archivos que fallan al preparar o transmutar ahora se auto-deseleccionan y sus checkboxes se deshabilitan. Los contadores de descarga ahora solo reflejan archivos válidos y accionables.",
+          },
+          batchDoneRedownload: {
+            title: "Re-descargar archivos terminados en estado mixto",
+            body: "Cuando algunos archivos están listos y otros fallaron, seleccionar los terminados ahora muestra un botón 'Descargar de nuevo' — sin esperar a que todos los archivos estén completos.",
+          },
+          prepareFileSize: {
+            title: "Pesos correctos durante el preparado",
+            body: "La pantalla de progreso del preparado batch ahora muestra el peso real en disco de cada archivo a medida que se procesa, no un valor fijo.",
+          },
+        },
+      },
       v351: {
-        title: "Fix arrastre batch y UX de descarga — v3.5.1",
+        title: "Fix arrastre batch y UX de descarga",
         summary:
           "Arrastrar varios archivos desde el escritorio a un transmutador dedicado (p. ej. PNG→JPEG) ahora carga todos en modo batch — igual que el selector de archivos y el Transmutador Universal. El workspace batch también sugiere el formato de descarga opuesto con enlace directo a Ajustes.",
         technical:
@@ -449,7 +474,7 @@ const es: Dictionary = {
         },
       },
       v350: {
-        title: "Fiabilidad offline y conectividad — v3.5.0",
+        title: "Fiabilidad offline y conectividad",
         summary:
           "El modo offline PWA es estable en producción: preparación honesta shell + Wasm, actualizaciones fiables y conectividad que funciona en localhost, túnel y pérdida real de red — sin falsos offline ni logo ausente en el header.",
         technical:
@@ -474,7 +499,7 @@ const es: Dictionary = {
         },
       },
       v341: {
-        title: "Fix persistencia offline — v3.4.1",
+        title: "Fix persistencia offline",
         summary:
           "El modo offline PWA vuelve a ser fiable tras borrar cache, actualizar la app o recargar sin red. Ajustes muestra shell y motores Wasm por separado.",
         technical:
@@ -495,7 +520,7 @@ const es: Dictionary = {
         },
       },
       v340: {
-        title: "Refresh de páginas legales — v3.4",
+        title: "Refresh de páginas legales",
         summary:
           "About, Contact, Privacy y Terms fueron reescritas por completo para Camaleon v3.4. Un aviso dedicado te pide revisar Privacy y Terms — separado de las notas de funciones.",
         technical:

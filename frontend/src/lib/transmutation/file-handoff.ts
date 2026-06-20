@@ -4,6 +4,8 @@ export type FileHandoffPayload = {
   fileName: string;
   bytes: ArrayBuffer;
   lastModified: number;
+  /** Original file size from disk (preserved across handoff reconstruction). */
+  originalSize: number;
 };
 
 type HandoffEntry = {
@@ -16,6 +18,13 @@ const store = new Map<string, HandoffEntry>();
 /** Survives Strict Mode remount — cleared after successful consume. */
 let pendingNavigationHandoffId: string | null = null;
 
+/** Maps reconstructed File objects to their original disk size. */
+const originalSizeMap = new WeakMap<File, number>();
+
+export function getOriginalHandoffSize(file: File): number | undefined {
+  return originalSizeMap.get(file);
+}
+
 function purgeExpired(): void {
   const now = Date.now();
   for (const [id, entry] of store) {
@@ -24,9 +33,11 @@ function purgeExpired(): void {
 }
 
 export function handoffPayloadToFile(payload: FileHandoffPayload): File {
-  return new File([payload.bytes], payload.fileName, {
+  const file = new File([payload.bytes], payload.fileName, {
     lastModified: payload.lastModified,
   });
+  originalSizeMap.set(file, payload.originalSize);
+  return file;
 }
 
 /** Read file bytes before navigation so the payload survives route changes. */
@@ -42,6 +53,7 @@ export async function stageFileHandoffFromFile(file: File): Promise<string> {
       fileName: file.name,
       bytes,
       lastModified: file.lastModified,
+      originalSize: file.size,
     },
     expiresAt: Date.now() + HANDOFF_TTL_MS,
   });

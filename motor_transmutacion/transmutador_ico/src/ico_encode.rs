@@ -35,9 +35,13 @@ pub fn resize_for_ico(img: &DynamicImage, target_size: u32) -> RgbaImage {
 }
 
 fn decode_png_input(input: &[u8]) -> Result<DynamicImage, String> {
-    ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    reader
         .decode()
         .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))
 }

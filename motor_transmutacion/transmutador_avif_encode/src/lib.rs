@@ -127,9 +127,13 @@ pub fn transmutar_png_a_avif_inner(
     validate_encode_quality(quality)?;
     validate_encode_speed(speed)?;
 
-    let img = ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode PNG: {}", e))?;
 
@@ -147,9 +151,13 @@ pub fn transmutar_jpg_a_avif_inner(
     validate_encode_quality(quality)?;
     validate_encode_speed(speed)?;
 
-    let img = ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
 

@@ -13,9 +13,13 @@ use image::ImageReader;
 use wasm_bindgen::prelude::*;
 
 fn png_bytes_to_webp_bytes(input: &[u8]) -> Result<Vec<u8>, String> {
-    let img = ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode PNG: {}", e))?;
 
@@ -49,9 +53,13 @@ pub fn transmutar_png_a_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
 #[wasm_bindgen]
 pub fn estimate_png_to_webp_size(input_bytes: &[u8]) -> Result<u32, String> {
     core_utils::validate_input(input_bytes)?;
-    let img = ImageReader::new(Cursor::new(input_bytes))
+    let mut reader = ImageReader::new(Cursor::new(input_bytes))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt PNG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode PNG: {}", e))?;
 
@@ -69,9 +77,13 @@ pub fn estimate_png_to_webp_size(input_bytes: &[u8]) -> Result<u32, String> {
 // ---------------------------------------------------------------------------
 
 fn jpg_bytes_to_webp_bytes(input: &[u8]) -> Result<Vec<u8>, String> {
-    let img = ImageReader::new(Cursor::new(input))
+    let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
 
@@ -97,9 +109,13 @@ pub fn transmutar_jpg_a_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
 #[wasm_bindgen]
 pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String> {
     core_utils::validate_input(input_bytes)?;
-    let img = ImageReader::new(Cursor::new(input_bytes))
+    let mut reader = ImageReader::new(Cursor::new(input_bytes))
         .with_guessed_format()
-        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?
+        .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?;
+    if core_utils::risk_mode_enabled() {
+        reader.no_limits();
+    }
+    let img = reader
         .decode()
         .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
 

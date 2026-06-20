@@ -15,6 +15,7 @@ export type BatchPrepareProgress = {
   current: number;
   total: number;
   fileName: string;
+  fileSize: number;
 };
 
 export type BatchPrepareValidateContext = {
@@ -43,7 +44,7 @@ export async function runBatchPrepareQueue(
   for (let i = 0; i < toPrepare.length; i++) {
     if (isCancelled()) break;
     const item = toPrepare[i];
-    onProgress({ current: i + 1, total, fileName: item.file.name });
+    onProgress({ current: i + 1, total, fileName: item.file.name, fileSize: item.file.size });
     onPatch(item.id, { status: "preparing", errorMessage: null });
 
     const result = await prepareBatchItem(tool, item.file, riskModeEnabled, deviceMemoryGb);
@@ -131,7 +132,7 @@ export async function runBatchPrepareQueue(
           sourceMeta: result.prepared.sourceMeta ?? null,
           status: "error",
           errorMessage: decodeCheck.message,
-          selected: true,
+          selected: false,
         });
         continue;
       }
