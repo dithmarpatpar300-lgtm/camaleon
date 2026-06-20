@@ -309,7 +309,8 @@ const en: Dictionary = {
       "App server unreachable (localhost stopped or host offline). Cached Wasm still works if already loaded.",
     noticeExitOfflineMode: "Disable offline mode",
     uncachedTool:
-      "This tool is not cached yet. Connect to the internet once to download its engine, or enable “Download all conversion tools” in Settings.",
+      "This tool is not cached yet. Connect to the internet once to download its engine.",
+    uncachedToolOpenOffline: "Open Offline & cache in Settings",
     fallbackTitle: "You are offline",
     fallbackBody:
       "Camaleon needs a network connection on first visit. Open the app while online, then offline conversion works for cached tools.",
@@ -408,6 +409,27 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v333: {
+        title: "Tool lanes, mobile notices & Settings deep-links",
+        summary:
+          "Convert and Optimize are separate lanes in the tool browser and command palette. Top offline notices no longer overlap the sticky toolbar on mobile.",
+        technical:
+          "useTopFloatingNoticeOffset + --layout-top-notice-height; mobile full-width top notices. tool-lanes.ts; ToolBrowser + CommandPalette lanes; filter-tools optimize aliases. SettingsFocusLink; UncachedToolNotice → openSettings({ focus: offline }). App v3.3.3 · engine 1.6.0.",
+        highlights: {
+          toolLanes: {
+            title: "Convert vs Optimize lanes",
+            body: "Browse 21 convert tools and 4 optimize tools separately — same lane chips in the command palette. Search finds compress and resize by keyword.",
+          },
+          mobileNotices: {
+            title: "Mobile notices stay out of the way",
+            body: "Offline and server-down toasts sit full-width below the header; the Available transmutations bar sticks underneath instead of colliding on scroll.",
+          },
+          settingsFocusUncached: {
+            title: "Uncached engine → Offline settings",
+            body: "When a tool’s Wasm is not cached, tap Open Offline & cache — Settings scrolls to the download section with the same focus pulse.",
+          },
+        },
+      },
       v332: {
         title: "Offline setup — discover it from home",
         summary:
@@ -1205,6 +1227,11 @@ const en: Dictionary = {
       comingSoon: "Coming soon",
       jumpNavAria: "Jump to tool families",
       tabsAria: "Tool families",
+      lanesAria: "Tool category",
+      lanes: {
+        convert: "Convert",
+        optimize: "Optimize",
+      },
       densityAria: "List density",
       jumpLinks: {
         avif: "AVIF",
@@ -1995,7 +2022,13 @@ const en: Dictionary = {
     noResults: "No tools match your search",
     close: "Close",
     categoryImage: "Image",
+    categoryOptimize: "Optimize",
     categorySoon: "Coming soon",
+    lanesAria: "Tool category",
+    lanes: {
+      convert: "Convert",
+      optimize: "Optimize",
+    },
     closeHint: "Esc to close",
     groups: {
       avif: "AVIF",

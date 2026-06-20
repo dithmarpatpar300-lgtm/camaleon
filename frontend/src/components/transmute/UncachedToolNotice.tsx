@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SettingsFocusLink } from "@/components/settings/SettingsFocusLink";
 import { useI18n } from "@/providers/I18nProvider";
 import { useOffline } from "@/providers/OfflineProvider";
 import { isWasmCrateCached } from "@/lib/offline/cache-status";
@@ -32,7 +33,14 @@ export function UncachedToolNotice({ module }: Props) {
       role="status"
       className="rounded-lg border border-border bg-bg-elevated/60 px-4 py-3 text-sm text-text-secondary"
     >
-      {t("offline.uncachedTool")}
+      <p>{t("offline.uncachedTool")}</p>
+      <p className="mt-2">
+        <SettingsFocusLink
+          focus="offline"
+          labelKey="offline.uncachedToolOpenOffline"
+          className="text-accent"
+        />
+      </p>
     </div>
   );
 }

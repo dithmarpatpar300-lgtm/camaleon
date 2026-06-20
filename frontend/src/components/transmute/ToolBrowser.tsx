@@ -8,6 +8,13 @@ import {
   groupToolsByKey,
   toolGroupAnchorId,
 } from "@/lib/tools/tool-groups";
+import {
+  TOOL_LANE_ORDER,
+  filterToolsByLane,
+  readStoredLane,
+  writeStoredLane,
+  type ToolLane,
+} from "@/lib/tools/tool-lanes";
 import type { ToolDefinition, ToolGroupKey } from "@/lib/tools/types";
 import { cn } from "@/lib/utils";
 import { ToolCard } from "./ToolCard";
@@ -100,7 +107,12 @@ function ToolListing({
 
 export function ToolBrowser() {
   const { t } = useI18n();
-  const sections = useMemo(() => groupToolsByKey(getActiveTools()), []);
+  const [activeLane, setActiveLane] = useState<ToolLane>("convert");
+  const laneTools = useMemo(
+    () => filterToolsByLane(getActiveTools(), activeLane),
+    [activeLane]
+  );
+  const sections = useMemo(() => groupToolsByKey(laneTools), [laneTools]);
   const soonTools = useMemo(() => getSoonTools(), []);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("all");
@@ -114,8 +126,10 @@ export function ToolBrowser() {
   useEffect(() => {
     const storedTab = readStoredTab();
     const storedDensity = readStoredDensity();
+    const storedLane = readStoredLane();
     const hashTab = parseHashTab(window.location.hash);
 
+    if (storedLane) setActiveLane(storedLane);
     if (hashTab) setActiveTab(hashTab);
     else if (storedTab) setActiveTab(storedTab);
 
@@ -140,6 +154,22 @@ export function ToolBrowser() {
       /* ignore */
     }
   }, [density, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    writeStoredLane(activeLane);
+  }, [activeLane, hydrated]);
+
+  useEffect(() => {
+    if (activeTab === "all") return;
+    const hasTab = sections.some((section) => section.key === activeTab);
+    if (!hasTab) setActiveTab("all");
+  }, [activeTab, sections]);
+
+  const selectLane = useCallback((lane: ToolLane) => {
+    setActiveLane(lane);
+    setAnimateRows(true);
+  }, []);
 
   const ensurePanelVisible = useCallback(() => {
     const toolbar = toolbarRef.current;
@@ -206,7 +236,7 @@ export function ToolBrowser() {
     <section
       key={section.key}
       id={toolGroupAnchorId(section.key)}
-      className="scroll-mt-[calc(var(--header-height)+var(--layout-sticky-gap)+7.5rem)]"
+      className="scroll-mt-[calc(var(--header-height)+var(--layout-sticky-gap)+var(--layout-top-notice-height,0px)+7.5rem)]"
     >
       {showDivider && (
         <SectionDivider
@@ -241,6 +271,22 @@ export function ToolBrowser() {
         className="tool-browser-sticky sticky z-40 -mx-4 px-4 sm:-mx-6 sm:px-6"
       >
         <div className="tool-browser-toolbar surface-subnav rounded-xl px-4 py-3 sm:px-5">
+          <div
+            role="tablist"
+            aria-label={t("landing.tools.lanesAria")}
+            className="mb-3 flex gap-1 rounded-lg border border-border/60 bg-bg-surface p-0.5"
+          >
+            {TOOL_LANE_ORDER.map((lane) => (
+              <LaneButton
+                key={lane}
+                lane={lane}
+                active={activeLane === lane}
+                label={t(`landing.tools.lanes.${lane}`)}
+                onSelect={() => selectLane(lane)}
+              />
+            ))}
+          </div>
+
           <h2
             id="transmute-tools-heading"
             className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted"
@@ -305,7 +351,7 @@ export function ToolBrowser() {
           renderSection(section, activeTab === "all")
         )}
 
-        {activeTab === "all" && soonTools.length > 0 && (
+        {activeTab === "all" && activeLane === "convert" && soonTools.length > 0 && (
           <section className="border-t border-border/50 pt-8">
             <SectionDivider label={t("landing.tools.comingSoon")} count={soonTools.length} />
             <ToolListing tools={soonTools} density={density} animateRows={false} />
@@ -370,6 +416,37 @@ function ToolbarMeta({
         </>
       )}
     </p>
+  );
+}
+
+function LaneButton({
+  lane,
+  active,
+  label,
+  onSelect,
+}: {
+  lane: ToolLane;
+  active: boolean;
+  label: string;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      id={`lane-${lane}`}
+      aria-selected={active}
+      onClick={onSelect}
+      className={cn(
+        "min-h-9 flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-bg-base",
+        active
+          ? "bg-accent-subtle/50 text-text-primary shadow-sm shadow-accent/10"
+          : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+      )}
+    >
+      {label}
+    </button>
   );
 }
 

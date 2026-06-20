@@ -15,9 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.3.2** (`dev`) | **25 tools** · Tier 4a optimize **functional** · Offline home promo · Settings focus |
+| **Frontend (app)** | **v3.3.3** (`dev`) | **25 tools** · UX-4a lanes · Mobile offline notices · Settings focus |
 | **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** |
-| **SPEC** | v3.3.2 | NFR-9 offline shell; §7.13 Settings S1–S7 + focus; §6.13 optimize crate |
+| **SPEC** | v3.3.3 | NFR-9 offline shell; §7.13 Settings S1–S7 + focus; §6.13 optimize crate |
+
+**v3.3.3** (`dev`): **UX-4a** Convert vs Optimize lanes; **4a-pre** mobile notice coexistence; **UncachedToolNotice** → settings-focus offline. Release: `docs/releases/v3.3.3.md`.
 
 **v3.3.2** (`dev`): **Offline install promo** on home — `OfflineInstallPromoNotice`, settings-focus to Offline & cache, 7-day snooze. Release: `docs/releases/v3.3.2.md`.
 
@@ -37,7 +39,7 @@
 
 **v3.0.0–v3.0.1** (`main`): **PWA / offline shell (Tier 3.4 capstone)** — Serwist SW, Settings S5, offline UX. Releases: `docs/releases/v3.0.0.md`, `v3.0.1.md`. **Tier 3 complete.**
 
-**Next:** **4a.1** metrics-first optimize UX · **UX-4a** ToolBrowser Convert vs Optimize lanes · **3.6.3** SVG batch.
+**Next:** **4a.1** metrics-first optimize UX · **3.6.3** SVG batch.
 
 **v2.3.8**: **Risk mode (S6)** + hotfixes. Release: `docs/releases/v2.3.8.md`.
 

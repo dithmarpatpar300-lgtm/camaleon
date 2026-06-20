@@ -3,6 +3,7 @@
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { FloatingNotices } from "@/components/layout/FloatingNotices";
+import { useTopFloatingNoticeOffset } from "@/hooks/useTopFloatingNoticeOffset";
 import {
   demoteNoticeHosts,
   promoteNoticeHosts,
@@ -31,6 +32,8 @@ export function FloatingNoticesRoot() {
   useLayoutEffect(() => {
     return registerFloatingNoticesLayer({ promote, demote });
   }, [promote, demote]);
+
+  useTopFloatingNoticeOffset(topHostRef);
 
   return (
     <ModalPortal>

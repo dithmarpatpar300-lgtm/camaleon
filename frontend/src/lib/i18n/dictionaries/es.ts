@@ -309,7 +309,8 @@ const es: Dictionary = {
       "Servidor de la app inaccesible (localhost detenido u host offline). Wasm en caché sigue si ya estaba cargado.",
     noticeExitOfflineMode: "Desactivar modo sin conexion",
     uncachedTool:
-      "Esta herramienta aún no está en caché. Conéctate a internet una vez para descargar su motor, o activa «Descargar todas las herramientas» en Ajustes.",
+      "Esta herramienta aún no está en caché. Conéctate a internet una vez para descargar su motor.",
+    uncachedToolOpenOffline: "Abrir Offline y caché en Ajustes",
     fallbackTitle: "Estás sin conexión",
     fallbackBody:
       "Camaleon necesita conexión en la primera visita. Abre la app en línea y luego la conversión sin conexión funcionará para las herramientas en caché.",
@@ -408,6 +409,27 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v333: {
+        title: "Carriles de herramientas, avisos móvil y deep-links en Ajustes",
+        summary:
+          "Convertir y Optimizar tienen carriles separados en el navegador y la paleta de comandos. Los avisos offline superiores ya no chocan con la barra sticky en móvil.",
+        technical:
+          "useTopFloatingNoticeOffset + --layout-top-notice-height; avisos superiores a ancho completo en móvil. tool-lanes.ts; carriles en ToolBrowser + CommandPalette; alias optimize en filter-tools. SettingsFocusLink; UncachedToolNotice → openSettings({ focus: offline }). App v3.3.3 · motor 1.6.0.",
+        highlights: {
+          toolLanes: {
+            title: "Carriles Convertir vs Optimizar",
+            body: "Explora 21 herramientas de conversión y 4 de optimización por separado — mismos chips en la paleta. La búsqueda encuentra compress y resize por palabra clave.",
+          },
+          mobileNotices: {
+            title: "Avisos móvil sin solaparse",
+            body: "Los toasts offline y de servidor caído van a ancho completo bajo la cabecera; la barra de transmutaciones se fija debajo en lugar de chocar al hacer scroll.",
+          },
+          settingsFocusUncached: {
+            title: "Motor sin caché → Ajustes Offline",
+            body: "Si el Wasm de una herramienta no está en caché, pulsa Abrir Offline y caché — Ajustes baja a la sección de descarga con el mismo pulse de foco.",
+          },
+        },
+      },
       v332: {
         title: "Modo offline — descúbrelo desde inicio",
         summary:
@@ -1205,6 +1227,11 @@ const es: Dictionary = {
       comingSoon: "Proximamente",
       jumpNavAria: "Ir a familias de herramientas",
       tabsAria: "Familias de herramientas",
+      lanesAria: "Categoría de herramientas",
+      lanes: {
+        convert: "Transmutar",
+        optimize: "Optimizar",
+      },
       densityAria: "Densidad de la lista",
       jumpLinks: {
         avif: "AVIF",
@@ -1981,7 +2008,13 @@ const es: Dictionary = {
     noResults: "Ninguna herramienta coincide con tu busqueda",
     close: "Cerrar",
     categoryImage: "Imagen",
+    categoryOptimize: "Optimizar",
     categorySoon: "Proximamente",
+    lanesAria: "Categoría de herramientas",
+    lanes: {
+      convert: "Transmutar",
+      optimize: "Optimizar",
+    },
     closeHint: "Esc para cerrar",
     groups: {
       avif: "AVIF",

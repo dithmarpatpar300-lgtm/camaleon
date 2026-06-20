@@ -1,7 +1,7 @@
 # Tier 4 — Image Optimization & Editing
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v3.3.2 on `dev`** — Tier 4a.0 **✅ functional** · **4a.1** metrics UX pending · **UX-4a** ToolBrowser lanes pending · **4b** editing planned  
+> **Status:** **v3.3.3 on `dev`** — Tier 4a.0 **✅ functional** · **UX-4a ✅** (v3.3.3) · **4a-pre ✅** mobile notices (v3.3.3) · **4a.1** metrics UX pending · **4b** editing planned  
 > **Prerequisite:** Tier 3 **complete** (v3.0.1) · Tier 3.5 Universal ✅ · Tier 3.6.0–3.6.2 ✅ (v3.2.9) · Settings S1–S7 core ✅  
 > **Doctrine:** Same pipeline as convert tools — decode → honest options → re-encode → StripAll → **estimate-first** (metrics are the product on Ladder C)  
 > **SPEC anchor:** §1.3 Ladders C & D · §5.1 mental model · §12.5 Tier 4a · §12.6 Tier 4b · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -18,7 +18,8 @@ Tier 4 is Camaleon's **second major capability line** after the 21-tool convert 
 |-----------|-----|----------|----------|----------------|--------|
 | **4a.0** | Activation | Make PNG/JPEG compress & resize **actually run** | `transmutador_optimize` (exists) | **v3.3.0** | **✅ Shipped on `dev`** |
 | **4a.1** | Metrics UX | Size delta as primary affordance; optimize honesty copy | — (frontend) | v3.3.x | 📋 Planned |
-| **UX-4a** | Discovery | ToolBrowser **Convert vs Optimize** lanes (`category`) | — (frontend) | v3.3.x | 📋 Planned |
+| **UX-4a** | Discovery | ToolBrowser **Convert vs Optimize** lanes (`category`) | — (frontend) | **v3.3.3** | **✅ Shipped on `dev`** |
+| **4a-pre** | Mobile UX | Top offline notices + sticky ToolBrowser coexistence | — (frontend) | **v3.3.3** | **✅ Shipped on `dev`** |
 | **4a.2** | Matrix expand | WebP recompress; optional SVG minify spike | `transmutador_optimize` or new | v3.4.x | 📋 Backlog |
 | **4a.3** | Batch optimize | Same settings × N files for compress/resize | orchestration only | v3.4.x | 📋 Backlog |
 | **4b.1** | Crop | User-defined region → encode | `transmutador_edit` (proposed) | v4.0.x | 📋 Planned |
@@ -193,7 +194,8 @@ set_risk_mode(enabled: bool)
 | Release | Scope |
 |---------|-------|
 | **v3.3.0** | 4a.0 activation only (recommended — focused hotfix milestone) |
-| v3.3.1+ | 4a.1 metrics UX, UX-4a lanes (can combine if small) |
+| **v3.3.3** | 4a-pre mobile notices + UX-4a lanes + settings-focus (uncached Wasm) |
+| v3.3.4+ | 4a.1 metrics UX |
 
 Engine semver: stay **1.6.0** unless optimize crate API changes warrant **1.6.1**.
 
@@ -215,23 +217,36 @@ Optimize tools sell on **numbers**, not format badges.
 
 ---
 
-## 6. Phase UX-4a — ToolBrowser Convert vs Optimize lanes
+## 6. Phase UX-4a — ToolBrowser Convert vs Optimize lanes ✅ (v3.3.3)
 
 Full spec: `pre_tier3_ui_ux_plan.md` §4.2.
 
-| Deliverable | Detail |
-|-------------|--------|
-| **Landing tabs** | Transmutar (convert) · Optimizar · Editar (edit tab hidden until 4b) |
-| **`ToolDefinition.category`** | Filter `image` vs `optimize` vs `edit` |
-| **Command palette** | Category chips at top |
-| **Universal entry** | Stays convert-first; optimize routes reached via browser or direct slug |
-| **i18n** | EN/ES tab labels |
+| Deliverable | Detail | Status |
+|-------------|--------|--------|
+| **Landing tabs** | Transmutar (convert) · Optimizar · Editar (edit tab hidden until 4b) | ✅ v3.3.3 |
+| **`ToolDefinition.category`** | Filter `image` vs `optimize` vs `edit` | ✅ |
+| **Command palette** | Category chips at top | ✅ v3.3.3 |
+| **Universal entry** | Stays convert-first; optimize routes reached via browser or direct slug | ✅ unchanged |
+| **i18n** | EN/ES tab labels | ✅ |
 
-**Exit gate:** New user finds compress without knowing slug; convert grid not cluttered with 4 optimize rows.
+**Shipped:** `tool-lanes.ts`, `camaleon.tools.lane.v1`, ToolBrowser segmented control, CommandPalette lane chips, optimize search aliases in `filter-tools.ts`. Release: `docs/releases/v3.3.3.md`.
 
-**Schedule:** Can ship with **v3.3.1** after 4a.0, or parallel on `dev` if UI-only.
+**Exit gate:** ✅ New user finds compress without knowing slug; convert grid not cluttered with 4 optimize rows.
 
 ---
+
+## 6b. Phase 4a-pre — Mobile offline notice coexistence ✅ (v3.3.3)
+
+**Problem:** On narrow viewports, fixed top-right offline/server-down notices collided with the sticky **Available transmutations** toolbar when scrolling.
+
+| Deliverable | Detail |
+|-------------|--------|
+| **`--layout-top-notice-height`** | Published by `useTopFloatingNoticeOffset` from top floating-notice host |
+| **Sticky toolbar offset** | `.tool-browser-sticky` top includes notice height |
+| **Mobile layout** | Top notices full-width below header (`max-width: 639px`) |
+| **Desktop** | Unchanged — notice top-right, toolbar centered |
+
+**Exit gate:** Offline mode + server-down toast visible while scrolling tool list on mobile — no overlap with family tabs.
 
 ## 7. Phase 4a.2 — Expand optimize matrix (backlog)
 
@@ -347,9 +362,12 @@ Input bytes → Decode → Edit op (crop/rotate on raster buffer) → Encode (pn
 ## 13. Recommended execution order
 
 ```
-─────── v3.3.0 (4a.0 ✅ on dev) ───────
+─────── v3.3.0 (4a.0 ✅) ───────
+v3.3.1  Risk unlock + settings-focus (risk)
+v3.3.2  Offline install promo + settings-focus (offline)
+v3.3.3  4a-pre mobile notices + UX-4a lanes + settings-focus (uncached Wasm) ✅
+─────── next ───────
 4a.1    Metrics-first UX polish
-UX-4a   ToolBrowser Convert vs Optimize lanes
 ─────── optional parallel ───────
 3.6.3   SVG batch + aggregate RAM (Tier 3 maintenance — see tier3_6_multi_file_plan.md)
 ─────── expand ───────
@@ -362,7 +380,7 @@ UX-4a   ToolBrowser Convert vs Optimize lanes
 4b.3    Favicon pack
 ```
 
-**Rationale:** **4a.0 before any 4a feature work** — fixes the Live error with minimal diff. UX-4a can follow immediately so optimize tools are discoverable once functional. **4b** waits until Ladder C is trustworthy — editing UI is larger than optimize sliders.
+**Rationale:** **4a.0 before any 4a feature work** — fixes the Live error with minimal diff. **UX-4a** and **4a-pre** shipped in **v3.3.3** so optimize tools are discoverable and mobile offline UX is clean before **4a.1** metrics polish. **4b** waits until Ladder C is trustworthy — editing UI is larger than optimize sliders.
 
 ---
 
@@ -404,8 +422,8 @@ UX-4a   ToolBrowser Convert vs Optimize lanes
 | **Q2** | Separate `estimate_resize_*` in Wasm? | **Defer** — full encode for estimate OK at MVP |
 | **Q3** | Version **v3.3.0** vs **v3.2.10** for activation? | **v3.3.0** — user-visible new capability |
 | **Q4** | One `image-crop` tool vs per-format slugs? | **Per-format slugs** — match convert pattern |
-| **Q5** | Combine UX-4a with 4a.0 release? | **Split** if UX slips — functional > navigation |
+| **Q5** | Combine UX-4a with 4a.0 release? | **Split** — UX-4a shipped **v3.3.3** after v3.3.0 functional fix |
 
 ---
 
-*Planning doc for Tier 4 — Image Optimization & Editing. **v3.3.0** activates Ladder C (4a.0). Next: **4a.1** metrics UX and **UX-4a** discovery lanes.*
+*Planning doc for Tier 4 — Image Optimization & Editing. **v3.3.0** activates Ladder C (4a.0). **v3.3.3** ships UX-4a lanes + 4a-pre mobile notices. Next: **4a.1** metrics UX.*

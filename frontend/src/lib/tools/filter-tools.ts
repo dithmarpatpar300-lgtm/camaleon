@@ -1,11 +1,12 @@
 import { getToolStrings, resolveToolActionTitle } from "@/lib/i18n/tool-copy";
 import type { TranslateFn } from "@/lib/i18n/types";
+import { OPTIMIZE_SEARCH_ALIASES } from "./tool-lanes";
 import type { ToolDefinition } from "./types";
 
 function toolSearchText(tool: ToolDefinition, t: TranslateFn): string {
   const copy = getToolStrings(tool, t);
   const actionTitle = resolveToolActionTitle(tool.id, t);
-  return [
+  const parts = [
     tool.title,
     tool.slug,
     tool.id,
@@ -13,10 +14,11 @@ function toolSearchText(tool: ToolDefinition, t: TranslateFn): string {
     tool.toFormat,
     actionTitle,
     copy.description,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  ];
+  if (tool.category === "optimize") {
+    parts.push(OPTIMIZE_SEARCH_ALIASES);
+  }
+  return parts.filter(Boolean).join(" ").toLowerCase();
 }
 
 /** Filter tools by query (title, slug, formats, i18n copy). Empty query returns all. */

@@ -15,6 +15,7 @@
   --color-info: #38BDF8;
   --header-height: 3.5rem;
   --layout-sticky-gap: 0.625rem;
+  --layout-top-notice-height: 0px;
   --layout-edge-inline: max(0.75rem, env(safe-area-inset-right, 0px));
   --overlay-scrollbar-gutter: 1.25rem;
 }
@@ -777,7 +778,9 @@ dialog.whats-new-drawer {
 
 /* Tool browser toolbar — primary navigation deck (above list content) */
 .tool-browser-sticky {
-  top: calc(var(--header-height) + var(--layout-sticky-gap));
+  top: calc(
+    var(--header-height) + var(--layout-sticky-gap) + var(--layout-top-notice-height, 0px)
+  );
 }
 
 .tool-browser-toolbar {
@@ -1580,8 +1583,10 @@ dialog.whats-new-drawer {
   }
 
   .floating-notice-stack--top-right {
+    left: var(--layout-edge-inline);
     right: var(--layout-edge-inline);
-    width: min(18.5rem, calc(100vw - var(--layout-edge-inline) * 2));
+    width: auto;
+    max-width: none;
   }
 }
 

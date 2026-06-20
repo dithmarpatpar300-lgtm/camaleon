@@ -6,6 +6,13 @@ import { useRouter } from "next/navigation";
 import { getActiveTools, getSoonTools } from "@/lib/tools/tool-registry";
 import { filterTools } from "@/lib/tools/filter-tools";
 import { groupToolsByKey } from "@/lib/tools/tool-groups";
+import {
+  TOOL_LANE_ORDER,
+  filterToolsByLane,
+  readStoredLane,
+  writeStoredLane,
+  type ToolLane,
+} from "@/lib/tools/tool-lanes";
 import type { ToolDefinition } from "@/lib/tools/types";
 import { Badge } from "@/components/ui/Badge";
 import { SurfaceDialog } from "@/components/ui/SurfaceDialog";
@@ -108,10 +115,15 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
     const rowRefs = useRef<(HTMLAnchorElement | null)[]>([]);
     const [query, setQuery] = useState("");
     const [activeIndex, setActiveIndex] = useState(0);
+    const [lane, setLane] = useState<ToolLane>("convert");
 
+    const laneTools = useMemo(
+      () => filterToolsByLane(activeTools, lane),
+      [lane]
+    );
     const filteredActive = useMemo(
-      () => filterTools(activeTools, query, t),
-      [query, t]
+      () => filterTools(laneTools, query, t),
+      [laneTools, query, t]
     );
     const filteredSoon = useMemo(
       () => filterTools(soonTools, query, t),
@@ -127,12 +139,20 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
       if (!open) return;
       setQuery("");
       setActiveIndex(0);
+      const storedLane = readStoredLane();
+      if (storedLane) setLane(storedLane);
       requestAnimationFrame(() => searchRef.current?.focus());
     }, [open]);
 
+    const selectLane = useCallback((next: ToolLane) => {
+      setLane(next);
+      writeStoredLane(next);
+      setActiveIndex(0);
+    }, []);
+
     useEffect(() => {
       setActiveIndex(0);
-    }, [query]);
+    }, [query, lane]);
 
     useEffect(() => {
       rowRefs.current[activeIndex]?.scrollIntoView({ block: "nearest" });
@@ -211,6 +231,31 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
                     className="w-full rounded-xl border border-border bg-bg-elevated py-2.5 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   />
                 </div>
+
+                <div
+                  role="tablist"
+                  aria-label={t("commandPalette.lanesAria")}
+                  className="mt-3 flex gap-1 rounded-lg border border-border/60 bg-bg-surface p-0.5"
+                >
+                  {TOOL_LANE_ORDER.map((laneKey) => (
+                    <button
+                      key={laneKey}
+                      type="button"
+                      role="tab"
+                      aria-selected={lane === laneKey}
+                      onClick={() => selectLane(laneKey)}
+                      className={cn(
+                        "min-h-9 flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset",
+                        lane === laneKey
+                          ? "bg-accent-subtle/50 text-text-primary"
+                          : "text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+                      )}
+                    >
+                      {t(`commandPalette.lanes.${laneKey}`)}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* ── Grouped tools ───────────────────────────────────────── */}
@@ -256,7 +301,7 @@ export const CommandPalette = forwardRef<HTMLDialogElement, CommandPaletteProps>
               </div>
 
               {/* ── Coming soon ─────────────────────────────────────────── */}
-              {filteredSoon.length > 0 && (
+              {lane === "convert" && filteredSoon.length > 0 && (
                 <div className="mt-1 border-t border-border px-3 pt-2 pb-1">
                   <p className="mb-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
                     {t("commandPalette.categorySoon")}
