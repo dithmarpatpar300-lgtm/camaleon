@@ -1,8 +1,9 @@
 import { setNetworkGuardEnabled } from "./network-guard";
 import { syncForceOfflineToServiceWorker } from "./sw-sync-force-offline";
+import { SESSION_KEYS } from "@/lib/storage/keys";
 
 /** Tab-scoped "simulate offline" flag — sessionStorage, not persisted across browser restarts. */
-export const FORCE_OFFLINE_SESSION_KEY = "camaleon:force-offline";
+export const FORCE_OFFLINE_SESSION_KEY = SESSION_KEYS.FORCE_OFFLINE;
 
 const listeners = new Set<() => void>();
 

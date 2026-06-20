@@ -15,5 +15,11 @@ export function getLegalPageContent(
   return byLocale[locale]?.[pageId] ?? byLocale.en[pageId];
 }
 
-export type { LegalPageContent, LegalPageId, LegalSection, LegalAction } from "./types";
+export type { LegalPageContent, LegalPageId, LegalSection, LegalAction, LegalBlock } from "./types";
 export { LEGAL_PAGES } from "./pages";
+export { CURRENT_LEGAL_REVISION } from "./constants";
+export {
+  isLegalRevisionAcked,
+  markLegalRevisionAcked,
+  readLegalRevisionAck,
+} from "./revision-ack";

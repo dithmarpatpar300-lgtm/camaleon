@@ -14,6 +14,7 @@ import {
   snoozeReleaseNotes,
 } from "@/lib/releases";
 import { getShowChangelogOnUpdate } from "@/lib/prefs/user-settings";
+import { isLegalRevisionAcked } from "@/lib/legal/revision-ack";
 
 export function useReleaseCommsState() {
   const pathname = usePathname();
@@ -38,6 +39,7 @@ export function useReleaseCommsState() {
 
   const shouldShowChangelog = useMemo(() => {
     if (!ready || !isHome || changelogDismissed || shouldShowOnboarding) return false;
+    if (!isLegalRevisionAcked()) return false;
     if (!getShowChangelogOnUpdate()) return false;
     if (!isOnboardingComplete() && !getLastSeenRelease()) return false;
     if (isReleaseSnoozed()) return false;

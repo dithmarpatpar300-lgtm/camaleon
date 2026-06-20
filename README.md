@@ -2,7 +2,7 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.3.4** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.4.0** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
@@ -38,13 +38,13 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Memory lifecycle** | Wasm worker recycled when leaving any transmute route (SPA-safe) |
 | **Staged transmutation flow** | Drop → prepare → adjust options → Transmutar → preview + delta → download |
 | **EN / ES** | Full UI i18n with persisted locale |
-| **Legal pages** | `/about`, `/contact`, `/privacy`, `/terms` (bilingual) |
+| **Legal pages** | `/about`, `/contact`, `/privacy`, `/terms` — **v3.4.0 full refresh** + dedicated review notice |
 | **Dark / light theme** | Design tokens, no-FOUC persistence |
 | **Production** | Cloudflare Workers + OpenNext ([docs/DEPLOY.md](docs/DEPLOY.md)) |
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
-| **Tests** | 147 Vitest unit tests |
+| **Tests** | 153 Vitest unit tests |
 
-**Latest (v3.3.4):** **Settings + toasts coexistence** — interactive bottom toasts while Settings is open; **`lib/storage`** factory seed; lane SSR persistence; mobile offline dock. See [docs/releases/v3.3.4.md](docs/releases/v3.3.4.md). **Prior (v3.3.3):** Tool lanes + mobile notices — [docs/releases/v3.3.3.md](docs/releases/v3.3.3.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
+**Latest (v3.4.0):** **Legal pages refresh** — About/Contact/Privacy/Terms rewritten for v3.4; minimal UI; **LegalRefreshNotice** prompts Privacy/Terms review. See [docs/releases/v3.4.0.md](docs/releases/v3.4.0.md). **Prior (v3.3.4):** Settings + toasts — [docs/releases/v3.3.4.md](docs/releases/v3.3.4.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 
