@@ -54,7 +54,7 @@ export function TransmutationDefaultsSection({ drawerOpen }: Props) {
   );
 
   return (
-    <SettingsSection title={t("settings.tools.section")}>
+    <SettingsSection title={t("settings.tools.section")} focusTarget="defaults">
       <SettingsRange
         label={t("settings.tools.jpegQualityLabel")}
         hint={t("settings.tools.jpegQualityHint")}

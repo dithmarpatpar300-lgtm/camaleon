@@ -175,7 +175,8 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
   return (
     <SettingsSection
       title={t("settings.offline.section")}
-      className="[&>div]:border-accent/20 [&>div]:shadow-[0_0_0_1px_rgba(34,197,94,0.06)]"
+      focusTarget="offline"
+      className="[&>[data-settings-focus-card]]:border-accent/20 [&>[data-settings-focus-card]]:shadow-[0_0_0_1px_rgba(34,197,94,0.06)]"
     >
       <div className="space-y-5 p-4 sm:p-5">
         {/* Hero status */}

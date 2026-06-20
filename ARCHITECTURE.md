@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.3.0** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **124 Vitest tests**
+**Snapshot:** App **v3.3.1** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **134 Vitest tests**
 
 ---
 
@@ -157,7 +157,8 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
-| **Current** | **v3.3.0** | Tier 4a.0 activation · PWA brand icons · warmup regression tests |
+| **Current** | **v3.3.1** | Risk unlock proceed UX · Settings deep-link focus |
+| **Prior** | **v3.3.0** | Tier 4a.0 activation · PWA brand icons · warmup regression tests |
 | **Next** | TBD | **4a.1** metrics UX · **UX-4a** ToolBrowser Convert vs Optimize lanes |
 
 ---
@@ -515,6 +516,10 @@ Prepare syncs **risk mode** and **session input limit** before any Wasm call.
 
 When enabled: bypass 40 MP, auto-consent elevated bytes, hard cap → 500/250 MB. **SVG external href security is never bypassed.**
 
+**Unlock proceed (v3.3.1):** Gate-blocked files are retained in `hardLimitPendingFile`. Toggling Risk on shows `RiskUnlockProceedPanel` (Continue / Start over) instead of a dead-end error — single panel, Universal handoff, staged workspace, and batch (`risk-unlock.ts`, `BatchTransmutationPanel` re-prepare).
+
+**Settings focus (v3.3.1):** `openSettings({ focus: "risk" | … })` scrolls the drawer and pulses the target section; `LimitUnlockHint` uses `focus: "risk"`.
+
 ### Astro downscale
 
 Images > 40 MP (or astronomical threshold) → client-side canvas downscale (`AstroResizePanel`) before Wasm. Presets 4K–12K.
@@ -686,7 +691,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 | Piece | Role |
 |-------|------|
-| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.3.0) |
+| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.3.1) |
 | `lib/releases/entries/v*.ts` | Per-version highlights |
 | `ReleaseCommsProvider` | Mounts onboarding + modals |
 | `OnboardingPanel` | First-visit welcome |
@@ -701,7 +706,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 ### Frontend (Vitest)
 
-**Config:** `frontend/vitest.config.ts` · **124 tests** in 29 files · Node environment · no component tests
+**Config:** `frontend/vitest.config.ts` · **134 tests** in 31 files · Node environment · no component tests
 
 | Area | Example files |
 |------|---------------|
@@ -799,4 +804,4 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 
 ---
 
-*Last updated: 2026-06-19 · App v3.3.0 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-19 · App v3.3.1 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*

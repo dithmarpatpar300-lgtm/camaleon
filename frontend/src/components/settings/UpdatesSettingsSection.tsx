@@ -89,7 +89,7 @@ export function UpdatesSettingsSection({ drawerOpen, onRequestClose }: Props) {
   );
 
   return (
-    <SettingsSection title={t("settings.updates.section")}>
+    <SettingsSection title={t("settings.updates.section")} focusTarget="updates">
       <SettingsRow
         label={t("settings.updates.autoDetectLabel")}
         description={t("settings.updates.autoDetectHint")}

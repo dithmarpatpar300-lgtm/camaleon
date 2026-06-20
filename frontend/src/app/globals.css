@@ -1114,6 +1114,85 @@ dialog.whats-new-drawer {
   }
 }
 
+/* Settings drawer — deep-link focus pulse (tone per data-pulse on card) */
+@keyframes settingsSectionFocusPulse {
+  0%,
+  16%,
+  31% {
+    box-shadow: none;
+  }
+  8%,
+  23%,
+  38% {
+    box-shadow:
+      0 0 0 1px var(--settings-focus-ring),
+      0 0 18px 3px var(--settings-focus-glow);
+  }
+  /* Outro — shorter tail, snaps to rest without a hard cut */
+  45% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--settings-focus-ring) 72%, transparent),
+      0 0 12px 2px color-mix(in srgb, var(--settings-focus-glow) 58%, transparent);
+  }
+  56% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--settings-focus-ring) 38%, transparent),
+      0 0 5px 1px color-mix(in srgb, var(--settings-focus-glow) 28%, transparent);
+  }
+  68% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--settings-focus-ring) 14%, transparent),
+      0 0 0 0 transparent;
+  }
+  78%,
+  100% {
+    box-shadow: none;
+  }
+}
+
+[data-settings-focus-card][data-pulse="warning"].settings-section-focus-pulse,
+[data-settings-focus-card][data-pulse="warning"].settings-section-focus-static {
+  --settings-focus-ring: color-mix(in srgb, var(--color-warning) 48%, var(--color-border));
+  --settings-focus-glow: color-mix(in srgb, var(--color-warning) 42%, transparent);
+}
+
+[data-settings-focus-card][data-pulse="accent"].settings-section-focus-pulse,
+[data-settings-focus-card][data-pulse="accent"].settings-section-focus-static {
+  --settings-focus-ring: color-mix(in srgb, var(--color-accent) 42%, var(--color-border));
+  --settings-focus-glow: color-mix(in srgb, var(--color-accent) 38%, transparent);
+}
+
+[data-settings-focus-card][data-pulse="muted"].settings-section-focus-pulse,
+[data-settings-focus-card][data-pulse="muted"].settings-section-focus-static {
+  --settings-focus-ring: color-mix(in srgb, var(--color-text-muted) 35%, var(--color-border));
+  --settings-focus-glow: color-mix(in srgb, var(--color-text-muted) 22%, transparent);
+}
+
+[data-settings-focus-card].settings-section-focus-pulse {
+  animation: settingsSectionFocusPulse 4.2s ease-in-out forwards;
+}
+
+[data-settings-focus-card].settings-section-focus-static {
+  box-shadow: 0 0 0 2px var(--settings-focus-ring);
+  transition: box-shadow 0.4s ease-out;
+}
+
+[data-settings-focus-card].settings-section-focus-static-out {
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-settings-focus-card].settings-section-focus-pulse {
+    animation: none;
+    box-shadow: 0 0 0 2px var(--settings-focus-ring);
+    transition: box-shadow 0.4s ease-out;
+  }
+
+  [data-settings-focus-card].settings-section-focus-pulse.settings-section-focus-static-out {
+    box-shadow: none;
+  }
+}
+
 .connectivity-indicator {
   padding: 0 0.25rem;
 }

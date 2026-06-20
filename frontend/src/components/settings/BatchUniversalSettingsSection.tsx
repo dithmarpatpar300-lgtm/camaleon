@@ -82,7 +82,7 @@ export function BatchUniversalSettingsSection({ drawerOpen }: Props) {
   );
 
   return (
-    <SettingsSection title={t("settings.batchUniversal.section")}>
+    <SettingsSection title={t("settings.batchUniversal.section")} focusTarget="batch">
       <SettingsRow
         label={t("settings.batchUniversal.selectionLabel")}
         description={t("settings.batchUniversal.selectionHint")}

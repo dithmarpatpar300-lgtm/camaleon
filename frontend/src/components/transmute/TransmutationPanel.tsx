@@ -65,6 +65,9 @@ import {
   resolveBatchHandoffId,
 } from "@/lib/batch/batch-handoff";
 import { useRiskMode } from "@/providers/RiskModeProvider";
+import type { LimitBlockReason } from "@/lib/transmutation/limit-context";
+import { shouldPromptRiskUnlockProceed } from "@/lib/transmutation/risk-unlock";
+import { RiskUnlockProceedPanel } from "./RiskUnlockProceedPanel";
 import { isBatchEnabledTool } from "@/lib/batch/batch-tool-allowlist";
 import { capBatchFiles } from "@/lib/batch/batch-limits";
 import { partitionFilesForTool } from "@/lib/batch/partition-for-tool";
@@ -110,6 +113,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hardLimitBlocked, setHardLimitBlocked] = useState(false);
+  const [hardLimitPendingFile, setHardLimitPendingFile] = useState<File | null>(null);
+  const [riskUnlockAwaitingConfirm, setRiskUnlockAwaitingConfirm] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [hasAlpha, setHasAlpha] = useState(false);
@@ -128,18 +133,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       : undefined;
   const { riskModeEnabled } = useRiskMode();
   const prevRiskModeRef = useRef(riskModeEnabled);
+  const prevLimitBlockWhileRiskOffRef = useRef<LimitBlockReason>(null);
   const hardLimit = getHardLimitBytes(deviceMemoryGb, riskModeEnabled);
-
-  useEffect(() => {
-    if (prevRiskModeRef.current && !riskModeEnabled && staged) {
-      setShowRiskDeactivatedNotice(true);
-      setAstroResizeMode(false);
-    }
-    if (riskModeEnabled) {
-      setShowRiskDeactivatedNotice(false);
-    }
-    prevRiskModeRef.current = riskModeEnabled;
-  }, [riskModeEnabled, staged]);
 
   const prepareIdRef = useRef(0);
   const preparedRef = useRef(prepared);
@@ -204,6 +199,62 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     riskModeEnabled,
   });
   const accept = tool.acceptExtensions.join(",");
+
+  useEffect(() => {
+    if (!riskModeEnabled && staged) {
+      prevLimitBlockWhileRiskOffRef.current = metrics.limitContext.blockReason;
+    }
+  }, [riskModeEnabled, staged, metrics.limitContext.blockReason]);
+
+  useEffect(() => {
+    const wasRisk = prevRiskModeRef.current;
+    const riskJustEnabled = !wasRisk && riskModeEnabled;
+    const riskJustDisabled = wasRisk && !riskModeEnabled;
+
+    if (riskJustEnabled) {
+      setShowRiskDeactivatedNotice(false);
+      if (
+        shouldPromptRiskUnlockProceed(true, true, {
+          hardLimitPendingFile,
+          stagedFileSize: staged?.effectiveSize ?? staged?.file.size ?? null,
+          prevBlockReasonWhileRiskOff: prevLimitBlockWhileRiskOffRef.current,
+          deviceMemoryGb,
+        })
+      ) {
+        setRiskUnlockAwaitingConfirm(true);
+        setHardLimitBlocked(false);
+        setErrorMessage(null);
+      }
+    }
+
+    if (riskJustDisabled) {
+      setRiskUnlockAwaitingConfirm(false);
+      if (hardLimitPendingFile && hardLimitPendingFile.size > hardLimit) {
+        setStatus("error");
+        setHardLimitBlocked(true);
+        setErrorMessage(
+          t("panel.hardLimit.body", {
+            limit: formatHardLimitLabel(hardLimit, false),
+          })
+        );
+      }
+      if (staged) {
+        setShowRiskDeactivatedNotice(true);
+        setAstroResizeMode(false);
+      }
+    } else if (riskModeEnabled) {
+      setShowRiskDeactivatedNotice(false);
+    }
+
+    prevRiskModeRef.current = riskModeEnabled;
+  }, [
+    riskModeEnabled,
+    staged,
+    hardLimitPendingFile,
+    deviceMemoryGb,
+    hardLimit,
+    t,
+  ]);
 
   const handleOptionsChange = useCallback(
     (next: TransmutationOptions) => {
@@ -295,6 +346,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     }
 
     if (file.size > hardLimit) {
+      setHardLimitPendingFile(file);
       setStatus("error");
       setHardLimitBlocked(true);
       setErrorMessage(
@@ -304,6 +356,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
       );
       return;
     }
+
+    setHardLimitPendingFile(null);
 
     const prepareId = ++prepareIdRef.current;
     releasePreparedContext(preparedRef.current);
@@ -315,6 +369,7 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setAstroResizeMode(false);
     setResizing(false);
     setHardLimitBlocked(false);
+    setRiskUnlockAwaitingConfirm(false);
     setErrorMessage(null);
 
     let bytes: ArrayBuffer;
@@ -734,6 +789,19 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     toast({ message: t("toast.downloadStarted"), variant: "success" });
   }, [result, toast, t]);
 
+  const handleRiskUnlockContinue = useCallback(() => {
+    setRiskUnlockAwaitingConfirm(false);
+    const pending = hardLimitPendingFile;
+    if (pending) {
+      setHardLimitPendingFile(null);
+      setStatus("idle");
+      setErrorMessage(null);
+      setHardLimitBlocked(false);
+      void handleFileSelect(pending);
+      return;
+    }
+  }, [hardLimitPendingFile, handleFileSelect]);
+
   const handleReset = useCallback(() => {
     if (batchEntrySource === "handoff" && batchFiles != null) {
       prepareIdRef.current++;
@@ -751,6 +819,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
     setStatus("idle");
     setErrorMessage(null);
     setHardLimitBlocked(false);
+    setHardLimitPendingFile(null);
+    setRiskUnlockAwaitingConfirm(false);
     setHasAlpha(false);
     setPreviewUrl(null);
     setCrossfading(false);
@@ -934,6 +1004,8 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
                 onTransmutar={handleTransmutar}
                 onReset={handleReset}
                 showRiskDeactivatedNotice={showRiskDeactivatedNotice}
+                riskUnlockAwaitingConfirm={riskUnlockAwaitingConfirm}
+                onRiskUnlockContinue={handleRiskUnlockContinue}
               />
             </div>
           )}
@@ -1020,7 +1092,16 @@ export function TransmutationPanel({ tool }: TransmutationPanelProps) {
         </div>
       )}
 
-      {status === "error" && errorMessage && (
+      {riskUnlockAwaitingConfirm && hardLimitPendingFile && status === "error" && (
+        <RiskUnlockProceedPanel
+          fileName={hardLimitPendingFile.name}
+          fileSize={hardLimitPendingFile.size}
+          onContinue={handleRiskUnlockContinue}
+          onStartOver={handleReset}
+        />
+      )}
+
+      {status === "error" && errorMessage && !riskUnlockAwaitingConfirm && (
         <div role="alert" className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
           <p className="font-semibold">
             {hardLimitBlocked ? t("panel.hardLimit.title") : t("panel.errorTitle")}

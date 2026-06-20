@@ -401,6 +401,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v331: {
+        title: "Flujo Risk unlock y deep-link en Ajustes",
+        summary:
+          "Al activar Risk mode tras un bloqueo por limite, el archivo se conserva y puedes continuar — sin callejon sin salida. Los avisos de limite abren Ajustes en la seccion correcta.",
+        technical:
+          "risk-unlock.ts + RiskUnlockProceedPanel; TransmutationPanel hardLimitPendingFile; StagedWorkspace + BatchTransmutationPanel re-prepare al Continuar. settings-focus.ts; openSettings({ focus }); LimitUnlockHint → foco risk; CSS settingsSectionFocusPulse. Vitest risk-unlock + settings-focus. App v3.3.1 · motor 1.6.0.",
+        highlights: {
+          riskUnlock: {
+            title: "Modo Risk — continuar donde lo dejaste",
+            body: "Superaste el limite de tamano? Activa Risk en Ajustes y Camaleon conserva tu archivo — confirma con Continuar en lugar de empezar de cero. Funciona en herramientas sueltas, handoff Universal y batch.",
+          },
+          settingsFocus: {
+            title: "Ajustes va a la seccion correcta",
+            body: "“Abrir Ajustes” desde los avisos de limite lleva a Avanzado / Risk y resalta la seccion para encontrar el toggle mas rapido.",
+          },
+        },
+      },
       v330: {
         title: "Optimización de imagen activa e iconos PWA corregidos",
         summary:
@@ -1362,6 +1379,13 @@ const es: Dictionary = {
     riskDeactivated: {
       title: "Modo Risk desactivado",
       body: "Los limites de Camaleon vuelven a estar activos. Este archivo supera los limites normales — usa redimensionado o escala abajo, o reactiva Risk mode en Ajustes.",
+    },
+    riskUnlock: {
+      title: "Modo Risk activado",
+      body: "Los limites de seguridad de Camaleon estan desactivados en esta sesion. Desea continuar con el archivo cargado?",
+      bodyBatch:
+        "Los limites de seguridad estan desactivados. Re-preparar {count} archivos bloqueados y continuar?",
+      continue: "Continuar",
     },
     hardFileBlock: {
       title: "Archivo demasiado grande para modo estandar",

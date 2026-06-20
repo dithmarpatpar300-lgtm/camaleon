@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useI18n } from "@/providers/I18nProvider";
+import { useSettings } from "@/providers/SettingsProvider";
 import { APP_VERSION } from "@/lib/site";
+import {
+  runSettingsFocusNavigation,
+  SETTINGS_DRAWER_ENTER_MS,
+} from "@/lib/settings/settings-focus";
 import { SurfaceDialog } from "@/components/ui/SurfaceDialog";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { PanelScrollFade } from "@/components/ui/PanelScrollFade";
@@ -31,6 +36,27 @@ type Props = {
 
 function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => void; open: boolean }) {
   const { t } = useI18n();
+  const { focusRequest, clearFocusRequest } = useSettings();
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || !focusRequest) return;
+
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        const scroller = scrollViewportRef.current;
+        if (!scroller || cancelled) return;
+        await runSettingsFocusNavigation(scroller, focusRequest.target);
+        if (!cancelled) clearFocusRequest();
+      })();
+    }, SETTINGS_DRAWER_ENTER_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [open, focusRequest, clearFocusRequest]);
 
   return (
     <>
@@ -58,6 +84,7 @@ function SettingsDrawerBody({ onRequestClose, open }: { onRequestClose: () => vo
           className="h-full px-4 py-4"
           maxHeightClass="h-full"
           ariaLabel={t("settings.title")}
+          viewportRef={scrollViewportRef}
         >
           <div className="flex flex-col gap-5 pb-2">
             <SettingsSection title={t("settings.general.section")}>

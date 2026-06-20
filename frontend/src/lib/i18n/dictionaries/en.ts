@@ -401,6 +401,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v331: {
+        title: "Risk unlock flow & Settings deep-link",
+        summary:
+          "Enabling Risk mode after a limit block now keeps your file and asks to continue — no more dead-end errors. Limit hints open Settings scrolled to the right section.",
+        technical:
+          "risk-unlock.ts + RiskUnlockProceedPanel; TransmutationPanel hardLimitPendingFile; StagedWorkspace + BatchTransmutationPanel re-prepare on Continue. settings-focus.ts; openSettings({ focus }); LimitUnlockHint → risk focus; settingsSectionFocusPulse CSS. risk-unlock + settings-focus Vitest. App v3.3.1 · engine 1.6.0.",
+        highlights: {
+          riskUnlock: {
+            title: "Risk mode — continue where you left off",
+            body: "Hit the file-size limit? Enable Risk in Settings and Camaleon keeps your file — confirm with Continue instead of starting over. Works on single tools, Universal handoff, and batch.",
+          },
+          settingsFocus: {
+            title: "Settings jumps to the right section",
+            body: "“Open Settings” from limit hints scrolls to Advanced / Risk and highlights the section so you find the toggle faster.",
+          },
+        },
+      },
       v330: {
         title: "Image optimize tools live & PWA icons fixed",
         summary:
@@ -1362,6 +1379,13 @@ const en: Dictionary = {
     riskDeactivated: {
       title: "Risk mode turned off",
       body: "Camaleon's safety limits are active again. This file exceeds normal limits — use resize or scale options below, or re-enable Risk mode in Settings.",
+    },
+    riskUnlock: {
+      title: "Risk mode active",
+      body: "Camaleon's safety limits are disabled for this session. Continue with the loaded file?",
+      bodyBatch:
+        "Camaleon's safety limits are disabled. Re-prepare {count} blocked files and continue?",
+      continue: "Continue",
     },
     hardFileBlock: {
       title: "File too large for standard mode",

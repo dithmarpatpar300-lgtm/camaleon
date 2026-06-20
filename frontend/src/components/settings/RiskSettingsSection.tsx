@@ -30,7 +30,11 @@ export function RiskSettingsSection({ drawerOpen }: Props) {
   );
 
   return (
-    <SettingsSection title={t("settings.risk.section")} className="[&>div]:border-warning/30">
+    <SettingsSection
+      title={t("settings.risk.section")}
+      focusTarget="risk"
+      className="[&>[data-settings-focus-card]]:border-warning/30"
+    >
       <div className="space-y-5 p-4 sm:p-5">
         <p className="text-sm leading-relaxed text-text-secondary">{t("settings.risk.intro")}</p>
 

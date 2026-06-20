@@ -68,7 +68,7 @@ export function PerformanceSettingsSection({ drawerOpen }: Props) {
   );
 
   return (
-    <SettingsSection title={t("settings.performance.section")}>
+    <SettingsSection title={t("settings.performance.section")} focusTarget="performance">
       <SettingsRow
         layout="stacked"
         label={t("settings.performance.tierLabel")}

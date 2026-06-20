@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type Ref } from "react";
 import { cn } from "@/lib/utils";
 
 const useSyncLayoutEffect =
@@ -14,6 +14,8 @@ type PanelScrollFadeProps = {
   /** Edge fade size in px. */
   fadePx?: number;
   ariaLabel?: string;
+  /** Optional ref to the scroll viewport (for imperative scroll). */
+  viewportRef?: Ref<HTMLDivElement>;
 };
 
 const EDGE_THRESHOLD = 4; // px tolerance for "at top / at bottom"
@@ -42,6 +44,7 @@ export function PanelScrollFade({
   maxHeightClass = "max-h-[316px]",
   fadePx = 44,
   ariaLabel,
+  viewportRef,
 }: PanelScrollFadeProps) {
   const ref = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -102,9 +105,21 @@ export function PanelScrollFade({
     };
   }, [onScroll, applyMask, children]);
 
+  const setViewportRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      ref.current = node;
+      if (typeof viewportRef === "function") {
+        viewportRef(node);
+      } else if (viewportRef) {
+        viewportRef.current = node;
+      }
+    },
+    [viewportRef]
+  );
+
   return (
     <div
-      ref={ref}
+      ref={setViewportRef}
       role={hasOverflow ? "region" : undefined}
       tabIndex={hasOverflow ? 0 : undefined}
       aria-label={hasOverflow ? ariaLabel : undefined}

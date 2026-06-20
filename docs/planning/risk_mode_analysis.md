@@ -3,6 +3,7 @@
 > **Date:** 2026-06-11  
 > **Status:** **Implemented (v2.3.8, Settings S6)** — see `docs/releases/v2.3.8.md`  
 > **Prerequisites:** v2.3.6 on `dev` (SVG→JPEG, LimitUnlockHint UI)  
+> **v3.3.1:** Risk unlock proceed UX — gate-blocked files retained; `RiskUnlockProceedPanel` on Risk enable; batch re-prepare. See `docs/releases/v3.3.1.md`.  
 > **Related:** `docs/LIMIT_PIPELINE.md`, `docs/planning/settings_panel_plan.md`, `docs/planning/astro_imagery_tier.md`, `docs/planning/adaptive_limits_proposal.md`
 
 ---

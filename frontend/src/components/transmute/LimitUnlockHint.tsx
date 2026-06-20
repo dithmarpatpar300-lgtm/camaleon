@@ -36,7 +36,7 @@ export function LimitUnlockHint({ variant = "error" }: LimitUnlockHintProps) {
       <button
         type="button"
         className="mt-2 font-medium underline underline-offset-2 hover:opacity-80"
-        onClick={openSettings}
+        onClick={() => openSettings({ focus: "risk" })}
       >
         {t("panel.limitsUnlock.openSettings")}
       </button>

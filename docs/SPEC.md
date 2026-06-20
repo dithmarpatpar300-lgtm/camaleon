@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.3.0  
+**Version:** 3.3.1  
 **Last updated:** 2026-06-19  
-**Status:** v3.3.0 on `dev` (Tier 4a.0 **functional** · PWA brand icons) · v3.2.9 on `main` · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Status:** v3.3.1 on `dev` (Risk unlock UX · Settings focus) · v3.3.0 · v3.2.9 on `main` · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -1399,11 +1399,13 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 | SVG output scale block | Bypassed when output W×H > 40 MP |
 | Security (SVG external href) | **Never** bypassed |
 
-**UI:** `RiskSettingsSection` in drawer; `RiskModeBanner` in staged workspace when active; `LimitUnlockHint` hidden when Risk on.
+**UI:** `RiskSettingsSection` in drawer; `RiskModeBanner` in staged workspace when active; `LimitUnlockHint` hidden when Risk on; **`RiskUnlockProceedPanel`** when Risk is enabled after a prior limit block (v3.3.1 — retains file, Continue re-prepares). **`openSettings({ focus: "risk" })`** from limit hints (v3.3.1).
 
 **Wasm:** `core_utils::set_risk_mode` exported from all transmutation crates; worker calls `applyRiskMode` per request; prepare/alpha assess sync via `syncWasmRiskMode`. Reference: `docs/planning/risk_mode_analysis.md`, `docs/LIMIT_PIPELINE.md`.
 
 **Provider:** `SettingsProvider` wraps app shell inside `ReleaseCommsProvider`. `RiskModeProvider` wraps `SettingsProvider` for reactive limit pipeline. `OfflineProvider` registers Service Worker and tracks connectivity.
+
+**Deep-link focus (v3.3.1):** `openSettings({ focus?: SettingsFocusTarget })` queues scroll + pulse on drawer open. Targets: `risk`, `offline`, `batch`, `performance`, `notices`, `updates`, `defaults`. Implemented in `settings-focus.ts`; consumed by `SettingsDrawer` after enter animation.
 
 ---
 
@@ -1454,6 +1456,7 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.3.1-risk-unlock | 2026-06-19 | Chief Architect | §7.13 S6 Risk unlock proceed UX; Settings deep-link focus (`openSettings({ focus })`); `risk-unlock.ts`; v3.3.1 | `docs/releases/v3.3.1.md` |
 | 3.3.0-tier-4a0 | 2026-06-19 | Chief Architect | §6.13 `transmutador_optimize` functional; §12.5 activation; warmup-wasm + wasm-modules.d.ts; PWA brand icons; v3.3.0 | `docs/releases/v3.3.0.md` |
 | 3.2.9-tier-36-4a | 2026-06-19 | Chief Architect | §1.3 Ladder C scaffold; Tier 3.6.1 Slice C + 3.6.2 batch ZIP/per-row; `transmutador_optimize` crate + registry; S7 batch prefs; 25 tools | `docs/releases/v3.2.9.md` |
 | 3.0.1-offline-mode | 2026-06-11 | Chief Architect | §7.13 S5 Offline mode; connectivity UX; force-offline architecture | `docs/releases/v3.0.1.md` |

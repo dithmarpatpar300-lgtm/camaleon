@@ -39,6 +39,7 @@ import { useRiskMode } from "@/providers/RiskModeProvider";
 import { RiskModeBanner } from "./RiskModeBanner";
 import { RiskDeactivatedNotice } from "./RiskDeactivatedNotice";
 import { HardFileBlockPanel } from "./HardFileBlockPanel";
+import { RiskUnlockProceedPanel } from "./RiskUnlockProceedPanel";
 import { UncachedToolNotice } from "./UncachedToolNotice";
 
 type StagedWorkspaceProps = {
@@ -83,6 +84,8 @@ type StagedWorkspaceProps = {
   onTransmutar: () => void;
   onReset: () => void;
   showRiskDeactivatedNotice?: boolean;
+  riskUnlockAwaitingConfirm?: boolean;
+  onRiskUnlockContinue?: () => void;
 };
 
 export function StagedWorkspace({
@@ -121,6 +124,8 @@ export function StagedWorkspace({
   onTransmutar,
   onReset,
   showRiskDeactivatedNotice = false,
+  riskUnlockAwaitingConfirm = false,
+  onRiskUnlockContinue,
 }: StagedWorkspaceProps) {
   const { t } = useI18n();
   const { riskModeEnabled } = useRiskMode();
@@ -135,7 +140,8 @@ export function StagedWorkspace({
   const dimensionBlocked = limitContext.blockReason === "pixels";
   const hardFileBlocked = limitContext.blockReason === "hard_file";
   const limitBlocked = dimensionBlocked || hardFileBlocked;
-  const canTransmute = limitContext.canTransmute;
+  const awaitingRiskConfirm = riskUnlockAwaitingConfirm;
+  const canTransmute = limitContext.canTransmute && !awaitingRiskConfirm;
   /**
    * Block transmute while a stale estimate is being refreshed (options changed),
    * or when the last estimate failed while limits still allow trying again.
@@ -219,6 +225,16 @@ export function StagedWorkspace({
   return (
     <div className="p-5 sm:p-6">
       {riskModeEnabled && <RiskModeBanner />}
+      {awaitingRiskConfirm && onRiskUnlockContinue && (
+        <div className="mb-4">
+          <RiskUnlockProceedPanel
+            fileName={fileName}
+            fileSize={fileSize}
+            onContinue={onRiskUnlockContinue}
+            onStartOver={onReset}
+          />
+        </div>
+      )}
       {!riskModeEnabled && showRiskDeactivatedNotice && limitBlocked && (
         <RiskDeactivatedNotice />
       )}

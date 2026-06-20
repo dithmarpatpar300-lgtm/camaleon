@@ -47,6 +47,7 @@ import { releaseFramePreviewSessions } from "@/lib/imaging/frame-preview-cache";
 import { FilePrepareGate } from "./FilePrepareGate";
 import { BatchWorkspace } from "./BatchWorkspace";
 import { OversizeConsentPanel } from "./OversizeConsentPanel";
+import { RiskUnlockProceedPanel } from "./RiskUnlockProceedPanel";
 
 type BatchTransmutationPanelProps = {
   tool: ToolDefinition;
@@ -89,6 +90,7 @@ export function BatchTransmutationPanel({
   );
   const [preparedOptions, setPreparedOptions] = useState<TransmutationOptions | null>(null);
   const [oversizeConsented, setOversizeConsented] = useState(false);
+  const [riskUnlockAwaitingConfirm, setRiskUnlockAwaitingConfirm] = useState(false);
   const [prepareProgress, setPrepareProgress] = useState({ current: 0, total: files.length, fileName: "" });
   const [runProgress, setRunProgress] = useState<{ current: number; total: number; fileName: string } | null>(null);
   const [lastRunSummary, setLastRunSummary] = useState<{ done: number; total: number } | null>(null);
@@ -96,6 +98,7 @@ export function BatchTransmutationPanel({
 
   const cancelRef = useRef(false);
   const prepareRunIdRef = useRef(0);
+  const prevRiskModeRef = useRef(riskModeEnabled);
   /** Bumps to cancel in-flight transmute / redownload loops (navigation, reset, supersede). */
   const activeRunIdRef = useRef(0);
   const bytesByIdRef = useRef(new Map<string, ArrayBuffer>());
@@ -278,6 +281,76 @@ export function BatchTransmutationPanel({
       )
     );
   }, [commitItems]);
+
+  const blockedHardFileCount = useMemo(
+    () =>
+      items.filter((item) => item.status === "blocked" && item.blockReason === "hard_file")
+        .length,
+    [items]
+  );
+
+  useEffect(() => {
+    const wasRisk = prevRiskModeRef.current;
+    const riskJustEnabled = !wasRisk && riskModeEnabled;
+    const riskJustDisabled = wasRisk && !riskModeEnabled;
+    prevRiskModeRef.current = riskModeEnabled;
+
+    if (riskJustDisabled) {
+      setRiskUnlockAwaitingConfirm(false);
+      return;
+    }
+
+    if (!riskJustEnabled || !initialPrepareComplete) return;
+
+    const blockedHard = itemsRef.current.filter(
+      (item) => item.status === "blocked" && item.blockReason === "hard_file"
+    );
+    const needsConsent = itemsRef.current.some((item) => item.status === "needs_consent");
+
+    if (blockedHard.length > 0) {
+      setRiskUnlockAwaitingConfirm(true);
+      return;
+    }
+
+    if (needsConsent && !oversizeConsented) {
+      setRiskUnlockAwaitingConfirm(true);
+    }
+  }, [riskModeEnabled, initialPrepareComplete, oversizeConsented]);
+
+  const handleRiskUnlockContinue = useCallback(() => {
+    setRiskUnlockAwaitingConfirm(false);
+
+    const blockedHard = itemsRef.current.filter(
+      (item) => item.status === "blocked" && item.blockReason === "hard_file"
+    );
+    if (blockedHard.length === 0) return;
+
+    for (const item of blockedHard) {
+      releaseBatchItemPrepared(item);
+    }
+
+    const runId = ++prepareRunIdRef.current;
+    const requeued = itemsRef.current.map((item) =>
+      item.status === "blocked" && item.blockReason === "hard_file"
+        ? {
+            ...item,
+            status: "queued" as const,
+            blockReason: null,
+            prepared: null,
+            bytes: null,
+            sourceMeta: null,
+            errorMessage: null,
+          }
+        : item
+    );
+    commitItems(() => requeued);
+    startPrepareQueue(
+      requeued.filter((item) => item.status === "queued"),
+      runId,
+      options,
+      "inline"
+    );
+  }, [commitItems, startPrepareQueue, options]);
 
   const buildQueue = useCallback(
     (selectedOnly: boolean) => {
@@ -882,7 +955,7 @@ export function BatchTransmutationPanel({
         </div>
       )}
 
-      {needsElevatedConsent && elevatedSample && (
+      {needsElevatedConsent && elevatedSample && !riskUnlockAwaitingConfirm && (
         <div className="transmute-shell p-5 sm:p-6">
           <OversizeConsentPanel
             fileSize={elevatedSample.file.size}
@@ -895,6 +968,28 @@ export function BatchTransmutationPanel({
             })}
           </p>
         </div>
+      )}
+
+      {riskUnlockAwaitingConfirm && (
+        <RiskUnlockProceedPanel
+          fileName={
+            items.find((item) => item.status === "blocked" && item.blockReason === "hard_file")
+              ?.file.name ??
+            elevatedSample?.file.name ??
+            files[0]?.name ??
+            ""
+          }
+          fileSize={
+            items.find((item) => item.status === "blocked" && item.blockReason === "hard_file")
+              ?.file.size ??
+            elevatedSample?.file.size ??
+            files[0]?.size ??
+            0
+          }
+          fileCount={blockedHardFileCount > 1 ? blockedHardFileCount : undefined}
+          onContinue={handleRiskUnlockContinue}
+          onStartOver={handlePanelReset}
+        />
       )}
 
       <BatchWorkspace

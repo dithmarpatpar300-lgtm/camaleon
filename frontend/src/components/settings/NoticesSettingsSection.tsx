@@ -62,7 +62,7 @@ export function NoticesSettingsSection({ drawerOpen }: Props) {
   );
 
   return (
-    <SettingsSection title={t("settings.notices.section")}>
+    <SettingsSection title={t("settings.notices.section")} focusTarget="notices">
       <SettingsRow
         layout="stacked"
         label={t("settings.notices.densityLabel")}

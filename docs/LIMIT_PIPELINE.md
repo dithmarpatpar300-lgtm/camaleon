@@ -34,6 +34,17 @@ Session ceiling when Risk on: `effectiveSessionInputLimit` returns full hard lim
 
 See `docs/planning/risk_mode_analysis.md` for the full surface map.
 
+### Risk unlock proceed (v3.3.1)
+
+When a file is **gate-blocked** (> standard hard limit with Risk off), the panel **retains** the `File` in `hardLimitPendingFile` instead of discarding it. After the user enables Risk mode:
+
+1. `shouldPromptRiskUnlockProceed` (`risk-unlock.ts`) decides whether the file fits the risk hard ceiling.
+2. `RiskUnlockProceedPanel` replaces the dead-end error — **Continue** runs prepare; **Start over** clears state.
+3. **Staged** paths (hard file block or elevated consent while Risk was off) show the same panel inside `StagedWorkspace` until confirmed.
+4. **Batch** re-queues `status: "blocked"` / `blockReason: "hard_file"` rows on Continue.
+
+Symmetric behavior when Risk is **disabled** again: gate-blocked files restore the standard hard-limit error; staged workspace shows `RiskDeactivatedNotice`.
+
 ---
 
 ## Zone model (`frontend/src/lib/transmutation/limits.ts`)
@@ -131,6 +142,8 @@ Before merging limit/alpha/prepare/AVIF changes:
 |------|------|
 | Limits & zones | `frontend/src/lib/transmutation/limits.ts` |
 | LimitContext | `frontend/src/lib/transmutation/limit-context.ts` |
+| Risk unlock UX | `frontend/src/lib/transmutation/risk-unlock.ts`, `RiskUnlockProceedPanel.tsx` |
+| Settings focus | `frontend/src/lib/settings/settings-focus.ts` |
 | Prepare | `frontend/src/lib/transmutation/prepare/run-prepare.ts` |
 | Semantic alpha | `frontend/src/lib/semantic-alpha/assess.ts` |
 | Astro UI | `DimensionsBlockPanel`, `AstroResizePanel`, `downscale-image.ts` |
