@@ -154,6 +154,7 @@ export function TransmutationWorkerProvider({ children }: { children: ReactNode 
             userConsentedOversize: meta?.userConsentedOversize,
             alphaHint: meta?.alphaHint,
             riskModeEnabled: meta?.riskModeEnabled,
+            engineLoadHints: meta?.engineLoadHints,
           },
           [transferBytes]
         );

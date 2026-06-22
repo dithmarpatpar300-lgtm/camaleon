@@ -180,6 +180,16 @@ const en: Dictionary = {
       modeOff: "Off",
       resetAction: "Reset to adaptive",
       resetDone: "Performance settings restored to adaptive defaults.",
+      scoreLabel: "Device score — {score}/100",
+      scoreHint: "Your device scored {score}/100. {recommendation} mode is recommended for the best experience.",
+      scoreRecommendation: {
+        conservative: "Conservative",
+        conservativeReason: "Low RAM, limited cores, or critically low storage space detected. Conservative mode disables result caching and reduces resource usage to avoid crashes.",
+        balanced: "Balanced",
+        balancedReason: "Your device has moderate resources. Balanced mode enables result caching with limits and adapts estimate behavior.",
+        aggressive: "Aggressive",
+        aggressiveReason: "Plenty of RAM and CPU power available. Aggressive mode enables full result caching, faster debounce, and larger estimate limits.",
+      },
     },
     notices: {
       section: "Notices & prepare",
@@ -335,6 +345,13 @@ const en: Dictionary = {
     fallbackBody:
       "Camaleon needs a network connection on first visit. Open the app while online, then offline conversion works for cached tools.",
     fallbackHome: "Back to home",
+    chunkMissTitle: "Page not available offline",
+    chunkMissBody:
+      "This page couldn't load because Camaleon is in offline mode and the required resources are not cached. Reload the page or go back to a cached route.",
+    chunkMissRetry: "Try again",
+    chunkMissHome: "Go home",
+    genericErrorBody:
+      "An unexpected error occurred. Reloading the page usually fixes it.",
   },
 
   offlinePromo: {
@@ -452,6 +469,44 @@ const en: Dictionary = {
           prepareFileSize: {
             title: "Correct file sizes during prepare",
             body: "The batch prepare progress screen now shows the actual disk size of each file as it's being processed, not a fixed value.",
+          },
+        },
+      },
+      v354: {
+        title: "Offline mode chunk error fix",
+        summary:
+          "Fixed a critical blank-page crash when navigating between routes in offline mode. Added friendly error screens instead of blank pages when a route isn't cached, and improved cache behavior so offline mode stays reliable during long sessions.",
+        technical:
+          "app/error.tsx + app/global-error.tsx error boundaries catch ChunkLoadError and Failed to fetch. sw.ts: isAlreadyCachedInSw prevents cache duplication in SHELL_CACHE_NAME. tryForceOfflineFallbackInSw enhanced with stripped-pathname matching. trimShellCache caps SHELL_CACHE_NAME at 75 entries on put + activate. Force-offline listener serves /~offline for document misses before 503. App v3.5.4 · engine 1.6.0.",
+        highlights: {
+          chunkErrorBoundary: {
+            title: "Friendly offline error screens",
+            body: "When a page isn't cached for offline use, you'll now see a clear message with 'Try again' and 'Go home' buttons — instead of a blank white page.",
+          },
+          cacheResilience: {
+            title: "More reliable offline cache",
+            body: "The cache no longer duplicates chunks that are already stored, and old entries are automatically cleaned up — keeping offline mode stable during long browsing sessions.",
+          },
+        },
+      },
+      v353: {
+        title: "Low-end device resilience",
+        summary:
+          "Camaleon now adapts how it loads its engine based on your device. On phones with limited RAM or critically low storage, it uses a safer loading method to prevent crashes. A new device score in Settings → Performance shows how your device ranks and explains the recommended mode.",
+        technical:
+          "device-capability.ts: computeWasmLoadHints, computeStoragePressure, DeviceCapabilityProfile. load-glue.ts: initWasmModule with streaming/buffered/buffered-with-retry strategies. WorkerRequest.engineLoadHints propagated from useFileMetrics via sendMessage. navigator.storage.estimate() scored in computeResourceProfile. PerformanceSettingsSection: score bar + adaptive recommendation. All 13 init*Wasm funcs migrated to initWasmModule. App v3.5.3 · engine 1.6.0.",
+        highlights: {
+          adaptiveWasm: {
+            title: "Smarter engine loading for low-end phones",
+            body: "If your device has limited RAM, Camaleon fetches the engine as a complete buffer instead of streaming — preventing crashes caused by partial data on slow or unstable connections.",
+          },
+          deviceScore: {
+            title: "Device score in Performance settings",
+            body: "Open Settings → Performance to see your device score (0–100) and a recommendation — Conservative, Balanced, or Aggressive — with an explanation of why it was chosen.",
+          },
+          storagePressure: {
+            title: "Storage pressure detection",
+            body: "Camaleon can now tell if your browser storage is almost full and adjusts its behavior automatically — all detection happens on your device, nothing is sent anywhere.",
           },
         },
       },

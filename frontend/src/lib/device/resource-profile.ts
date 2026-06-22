@@ -18,6 +18,7 @@ export type ResourceSignals = {
   effectiveType?: string;
   saveData?: boolean;
   visibilityState?: DocumentVisibilityState;
+  freeStoragePercent?: number;
 };
 
 /** Tier-derived tuning knobs (shared by auto-detect and manual tier override). */
@@ -68,6 +69,9 @@ export function computeResourceProfile(
   else if (net === "3g") score -= 10;
 
   if (signals.saveData) score -= 15;
+
+  if (signals.freeStoragePercent !== undefined && signals.freeStoragePercent < 5) score -= 20;
+  else if (signals.freeStoragePercent !== undefined && signals.freeStoragePercent < 15) score -= 10;
 
   score = Math.max(0, Math.min(100, score));
 

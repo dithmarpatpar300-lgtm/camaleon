@@ -45,6 +45,26 @@ export function useAdaptiveResourceProfile(fileSize: number): ResourceProfile {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let cancelled = false;
+
+    async function readStorage() {
+      try {
+        const estimate = await navigator.storage.estimate();
+        if (!cancelled && estimate.quota && estimate.quota > 0 && estimate.usage !== undefined) {
+          const freePercent = ((estimate.quota - estimate.usage) / estimate.quota) * 100;
+          setSignals((prev) => ({ ...prev, freeStoragePercent: freePercent }));
+        }
+      } catch {
+        // Storage API unavailable or throws in private browsing
+      }
+    }
+
+    readStorage();
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => subscribePerformancePrefs(() => setPrefsRevision((v) => v + 1)), []);
 
   return useMemo(() => {

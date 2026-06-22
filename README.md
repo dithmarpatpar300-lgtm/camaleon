@@ -2,7 +2,7 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.5.2** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.5.4** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
@@ -32,6 +32,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **Operational Notice Rail** | Adaptive context for all tools — slow-path, limits, fidelity (**v2.3.0**) |
 | **Adaptive limits** | Byte zones (50 MB soft / 150 MB hard), 40 MP pixel cap, oversize consent |
 | **Risk mode (S6)** | Settings opt-out for soft limits and consent prompts; **unlock proceed UX (v3.3.1)** |
+| **Device capability engine (v3.5.3)** | Adaptive WASM loading (streaming/buffered/retry) by device tier; storage pressure detection; device score in Performance settings |
 | **Settings panel** | S1–S4 (defaults, performance, notices/prepare) · **S5** offline cache · **S6** risk · **S7** batch & universal prefs · **deep-link focus (v3.3.1)** |
 | **Smart app updates** | Background version beacon, deep refresh on Live deploys (**v3.2.5–3.2.6**; shell-safe **v3.5.0**) |
 | **Toast notifications** | FIFO queue, responsive cap (3 desktop / 2 mobile), **unified mobile dock (v3.5.0)** |
@@ -45,7 +46,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Tests** | 183 Vitest unit tests |
 
-**Latest (v3.5.2):** **Risk Mode decoder fix & batch UX hardening** — Risk Mode now bypasses internal decoder memory limits for large files (200 MP); batch error items auto-deselect; re-download done files in mixed state; correct file sizes during prepare. See [docs/releases/v3.5.2.md](docs/releases/v3.5.2.md). **Prior (v3.5.1):** **Batch drag-drop fix & download format UX** — multi-file Explorer drag on tool routes; batch workspace download tips + Settings row deep link. See [docs/releases/v3.5.1.md](docs/releases/v3.5.1.md). **Prior (v3.5.0):** Offline reliability & connectivity — [docs/releases/v3.5.0.md](docs/releases/v3.5.0.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
+**Latest (v3.5.4):** **Offline chunk error fix & cache resilience** — Critical `ChunkLoadError` during force-offline navigation now shows a friendly error screen instead of a blank page. SW cache duplication prevented, auto-cleanup of stale cache entries, and `/~offline` served for uncached documents. See [docs/releases/v3.5.4.md](docs/releases/v3.5.4.md). **Prior (v3.5.3):** **Low-end device resilience & adaptive WASM loading** — adaptive engine loading strategies by device tier, storage pressure detection, device score in Performance settings. See [docs/releases/v3.5.3.md](docs/releases/v3.5.3.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 

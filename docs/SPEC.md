@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.5.2
-**Last updated:** 2026-06-20
-**Status:** v3.5.2 on `dev` (Risk Mode decoder bypass · batch error/done state hardening) · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Version:** 3.5.4
+**Last updated:** 2026-06-22
+**Status:** v3.5.4 on `dev` (Offline chunk error fix · cache resilience · error boundaries) · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -1481,6 +1481,76 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Reference:** `docs/releases/v3.5.1.md` · `settings-focus.ts` · `useBatchDownloadMode.ts`
 
+### 7.18 Device Capability Engine (Implemented — v3.5.3)
+
+**Purpose:** Adaptive device detection and WASM loading strategy — all client-side, zero telemetry. Extends the existing `ResourceProfile` tier system with storage pressure awareness and engine-loading hints so Camaleon works reliably on devices of any tier, from flagship to ultra-budget.
+
+**Architecture:**
+
+```
+navigator signals (deviceMemory, cores, net, saveData, storage.estimate)
+         │
+         ▼
+  computeResourceProfile()          ← existing (resource-profile.ts)
+         │
+         ▼
+  ResourceProfile { tier, score, ... }
+         │
+         ├──► Performance settings S3 override (auto/balanced/aggressive)
+         │
+         └──► computeWasmLoadHints(tier)    ← NEW (device-capability.ts)
+                   │
+                   ▼
+              WasmLoadHints { strategy, retries }
+                   │
+                   ▼
+              WorkerRequest.engineLoadHints  →  initWasmModule()
+```
+
+**New module:** `frontend/src/lib/device/device-capability.ts`
+
+| Export | Role |
+|--------|------|
+| `WasmLoadStrategy` | `"streaming"` \| `"buffered"` \| `"buffered-with-retry"` |
+| `WasmLoadHints` | `{ strategy: WasmLoadStrategy; retries: number }` |
+| `computeWasmLoadHints(tier)` | Maps `ResourceTier` → `WasmLoadHints` |
+| `computeStoragePressure(freePercent)` | Classifies storage health: `critical` / `warning` / `normal` |
+| `computeDeviceCapabilityProfile(resource, freePercent)` | Full profile combining tier + storage |
+| `scoreRecommendationKey(tier)` | Returns i18n key for recommendation label |
+
+**WASM loading strategies:**
+
+| Tier | Strategy | Retries | Behavior |
+|------|----------|---------|----------|
+| `high` | `streaming` | 0 | `module.default()` — `instantiateStreaming` (unchanged) |
+| `mid` | `streaming` | 1 | Same, retries once on validation error |
+| `low` | `buffered-with-retry` | 2 | Pre-fetches complete `.wasm` ArrayBuffer, calls `module.default(buffer)` with cache-bust on retry |
+
+**Storage pressure detection:**
+
+- `navigator.storage.estimate()` queried async on mount — returns `{ quota, usage }`.
+- `freeStoragePercent = ((quota - usage) / quota) * 100`.
+- `<5% free` → penalizes device score by **-20 pts**.
+- `<15% free` → **-10 pts**.
+- All computation local; no data sent anywhere.
+
+**Worker protocol extension:**
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `engineLoadHints` | `WasmLoadHints?` | Passed on `WorkerRequest` and `WorkerRequestMeta`; set before module init in worker |
+
+**UI — Device score in Performance settings (S3):**
+
+- When opening Settings → Performance, a color-coded score bar (0–100) displays the auto-detected device tier.
+- Adaptive recommendation message explains why the tier was chosen and what it means.
+- Score colors: green ≥65, yellow 35–64, red <35.
+- S3 tier overrides (`conservative`/`balanced`/`aggressive`) remain fully functional — the score display reflects the *detected* tier even when overridden.
+
+**Privacy:** All signals are standard browser APIs (`navigator.deviceMemory`, `hardwareConcurrency`, `connection.effectiveType`, `storage.estimate()`). No network calls. No data collection. No new permissions. Fully compliant with P1 (Privacy by design).
+
+**Reference:** `docs/releases/v3.5.3.md` · `lib/device/device-capability.ts` · `lib/wasm/load-glue.ts` · `components/settings/PerformanceSettingsSection.tsx`
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -1530,6 +1600,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
+| 3.5.4-offline-chunk-fix | 2026-06-22 | OpenCode | Offline chunk error fix: `app/error.tsx` + `app/global-error.tsx` error boundaries for ChunkLoadError; SW cache duplication prevention via `isAlreadyCachedInSw`; `trimShellCache` caps `SHELL_CACHE_NAME` at 75 entries; enhanced `tryForceOfflineFallbackInSw` with stripped-pathname matching; force-offline listener serves `/~offline` for document misses. | `docs/releases/v3.5.4.md` |
+| 3.5.3-device-capability | 2026-06-22 | Chief Architect | §7.18 Device Capability Engine; `lib/device/device-capability.ts`; adaptive WASM loading strategies (streaming/buffered/buffered-with-retry); storage pressure detection via `navigator.storage.estimate()`; `engineLoadHints` on WorkerRequest; device score display in Performance settings S3; `initWasmModule()` in load-glue.ts. 13 init funcs + frame-preview worker migrated. | `docs/releases/v3.5.3.md` |
 | 3.5.2-risk-batch-ux | 2026-06-20 | Chief Architect | §6.13/§12.5 Risk Mode decoder no_limits fix across 8 ImageReader crates; batch error/done state UX hardening; file size preservation via handoff originalSize + displaySize; prepare per-file size display. See §7.1 batch item handling, §7.13 S6 Risk Mode effectiveness. | `docs/releases/v3.5.2.md` |
 | 3.5.1-batch-drop-ux | 2026-06-19 | Chief Architect | §7.1 multi-file drop; §7.17 batch download UX; getDroppedFiles; settings-focus batch-download | `docs/releases/v3.5.1.md` |
 | 3.5.0-offline-connectivity | 2026-06-20 | Chief Architect | §7.15 brand offline + §7.16 origin reachability; mobile notice stack; v3.5.0 stable offline baseline | `docs/releases/v3.5.0.md` |
