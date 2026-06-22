@@ -180,6 +180,16 @@ const es: Dictionary = {
       modeOff: "No",
       resetAction: "Restablecer adaptativo",
       resetDone: "Rendimiento restablecido a valores adaptativos.",
+      scoreLabel: "Puntaje del dispositivo — {score}/100",
+      scoreHint: "Tu dispositivo obtuvo {score}/100. Se recomienda usar el modo {recommendation} para la mejor experiencia.",
+      scoreRecommendation: {
+        conservative: "Conservador",
+        conservativeReason: "Se detecto poca RAM, pocos nucleos o almacenamiento critico. El modo Conservador desactiva la cache de resultados y reduce el uso de recursos para evitar fallos.",
+        balanced: "Equilibrado",
+        balancedReason: "Tu dispositivo tiene recursos moderados. El modo Equilibrado activa la cache de resultados con limites y adapta la estimacion automatica.",
+        aggressive: "Agresivo",
+        aggressiveReason: "Buena cantidad de RAM y CPU disponible. El modo Agresivo activa cache completa, respuesta mas rapida y mayor limite de estimacion.",
+      },
     },
     notices: {
       section: "Avisos y preparacion",
@@ -336,6 +346,13 @@ const es: Dictionary = {
     fallbackBody:
       "Camaleon necesita conexión en la primera visita. Abre la app en línea y luego la conversión sin conexión funcionará para las herramientas en caché.",
     fallbackHome: "Volver al inicio",
+    chunkMissTitle: "Pagina no disponible sin conexion",
+    chunkMissBody:
+      "Esta pagina no pudo cargarse porque Camaleon esta en modo offline y los recursos necesarios no estan en cache. Recarga la pagina o vuelve a una ruta almacenada.",
+    chunkMissRetry: "Reintentar",
+    chunkMissHome: "Ir al inicio",
+    genericErrorBody:
+      "Ocurrio un error inesperado. Recargar la pagina suele solucionarlo.",
   },
 
   offlinePromo: {
@@ -453,6 +470,44 @@ const es: Dictionary = {
           prepareFileSize: {
             title: "Pesos correctos durante el preparado",
             body: "La pantalla de progreso del preparado batch ahora muestra el peso real en disco de cada archivo a medida que se procesa, no un valor fijo.",
+          },
+        },
+      },
+      v354: {
+        title: "Correccion de error de carga en modo offline",
+        summary:
+          "Corregido un fallo critico que mostraba pagina en blanco al navegar entre rutas en modo offline. Ahora aparecen pantallas de error amigables en lugar de paginas en blanco cuando una ruta no esta en cache, y el comportamiento del cache es mas fiable durante sesiones largas.",
+        technical:
+          "app/error.tsx + app/global-error.tsx capturan ChunkLoadError y Failed to fetch. sw.ts: isAlreadyCachedInSw evita duplicacion en SHELL_CACHE_NAME. tryForceOfflineFallbackInSw mejorado con coincidencia de pathname sin query params. trimShellCache limita SHELL_CACHE_NAME a 75 entradas en put + activate. Listener force-offline sirve /~offline para documentos antes del 503. App v3.5.4 · motor 1.6.0.",
+        highlights: {
+          chunkErrorBoundary: {
+            title: "Pantallas de error amigables offline",
+            body: "Cuando una pagina no esta en cache para uso offline, ahora ves un mensaje claro con botones 'Reintentar' e 'Ir al inicio' — en lugar de una pagina blanca.",
+          },
+          cacheResilience: {
+            title: "Cache offline mas fiable",
+            body: "El cache ya no duplica archivos que ya estan almacenados, y las entradas antiguas se limpian automaticamente — manteniendo el modo offline estable en sesiones de navegacion largas.",
+          },
+        },
+      },
+      v353: {
+        title: "Resiliencia en dispositivos basicos",
+        summary:
+          "Camaleon ahora adapta como carga su motor segun tu dispositivo. En telefonos con poca RAM o almacenamiento critico, usa un metodo de carga mas seguro para evitar fallos. Un nuevo puntaje en Ajustes → Rendimiento muestra como se clasifica tu dispositivo y explica el modo recomendado.",
+        technical:
+          "device-capability.ts: computeWasmLoadHints, computeStoragePressure, DeviceCapabilityProfile. load-glue.ts: initWasmModule con estrategias streaming/buffered/buffered-with-retry. WorkerRequest.engineLoadHints propagado desde useFileMetrics via sendMessage. navigator.storage.estimate() puntuado en computeResourceProfile. PerformanceSettingsSection: barra de puntaje + recomendacion adaptativa. Las 13 funciones init*Wasm migradas a initWasmModule. App v3.5.3 · motor 1.6.0.",
+        highlights: {
+          adaptiveWasm: {
+            title: "Carga inteligente del motor en telefonos basicos",
+            body: "Si tu dispositivo tiene poca RAM, Camaleon obtiene el motor como un buffer completo en lugar de streaming — evitando fallos causados por datos parciales en conexiones lentas o inestables.",
+          },
+          deviceScore: {
+            title: "Puntaje del dispositivo en Ajustes",
+            body: "Abre Ajustes → Rendimiento para ver el puntaje de tu dispositivo (0–100) y una recomendacion — Conservador, Equilibrado o Agresivo — con una explicacion de por que fue elegido.",
+          },
+          storagePressure: {
+            title: "Deteccion de presion de almacenamiento",
+            body: "Camaleon ahora puede detectar si el almacenamiento de tu navegador esta casi lleno y ajusta su comportamiento automaticamente — toda la deteccion ocurre en tu dispositivo, nada se envia a ningun lado.",
           },
         },
       },

@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.5.2** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
+**Snapshot:** App **v3.5.4** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
 
 ---
 
@@ -157,7 +157,9 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
-| **Current** | **v3.5.2** | Risk Mode decoder bypass · batch error/done state hardening · file size display fixes |
+| **Current** | **v3.5.4** | Offline chunk error fix · cache resilience · error boundaries |
+| **Prior** | **v3.5.3** | Device capability engine · adaptive WASM loading · S3 device score |
+| **Prior** | **v3.5.2** | Risk Mode decoder bypass · batch error/done state hardening |
 | **Prior** | **v3.5.1** | Explorer multi-drag fix · download format UX · settings-focus batch-download |
 | **Prior** | **v3.5.0** | Offline reliability · origin reachability · brand offline · mobile notice stack |
 | **Prior** | **v3.3.3** | UX-4a lanes · 4a-pre mobile top notices · settings-focus uncached Wasm |
@@ -248,7 +250,7 @@ idle → preparing → staged → processing → success | error
 | `i18n/` | Dictionaries EN/ES, metadata, error localization |
 | `format/`, `gif/`, `bmp/`, `tiff/`, `ico/`, `avif/`, `svg/`, `tga/` | Format-specific Wasm clients + meta inspect |
 | `imaging/` | Client resize, astro downscale, frame preview |
-| `device/` | Resource tier / performance profile |
+| `device/` | Resource tier / performance profile / device capability detection |
 
 ---
 
@@ -820,6 +822,7 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 | `docs/SPEC.md` | Normative behavior, Wasm contracts, NFRs |
 | `docs/ROADMAP.md` | What's shipped vs planned |
 | `docs/LIMIT_PIPELINE.md` | Before touching limits, prepare, risk mode |
+| `lib/device/device-capability.ts` | WASM load strategies, storage pressure, device scoring |
 | `docs/DEPLOY.md` | Cloudflare deploy + PWA QA |
 | `docs/planning/tier3_6_multi_file_plan.md` | Batch/universal multi-file phases |
 | `docs/planning/tier3_5_universal_transmutator_plan.md` | Universal entry design |
@@ -833,4 +836,4 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 
 ---
 
-*Last updated: 2026-06-20 · App v3.3.4 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-22 · App v3.5.4 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*

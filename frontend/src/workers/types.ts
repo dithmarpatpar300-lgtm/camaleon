@@ -1,3 +1,5 @@
+import type { WasmLoadHints } from "@/lib/device/device-capability";
+
 export type TransmutationModule =
   | "transmutador_jpg"
   | "transmutador_png"
@@ -62,6 +64,7 @@ export type WorkerRequestMeta = {
   userConsentedOversize?: boolean;
   alphaHint?: WorkerAlphaHint | null;
   riskModeEnabled?: boolean;
+  engineLoadHints?: WasmLoadHints;
 };
 
 export type WorkerRequest = {
@@ -83,6 +86,7 @@ export type WorkerRequest = {
   userConsentedOversize?: boolean;
   alphaHint?: WorkerAlphaHint | null;
   riskModeEnabled?: boolean;
+  engineLoadHints?: WasmLoadHints;
 };
 
 export type WorkerResponseSuccess = {

@@ -6,7 +6,8 @@ import type {
   WorkerResponse,
 } from "./types";
 import { SOFT_LIMIT_BYTES } from "@/lib/transmutation/limits";
-import { importWasmGlue, wasmExport, type WasmGlueModule } from "@/lib/wasm/load-glue";
+import { importWasmGlue, wasmExport, initWasmModule, type WasmGlueModule } from "@/lib/wasm/load-glue";
+import type { WasmLoadHints } from "@/lib/device/device-capability";
 import { ResultCache } from "./result-cache";
 
 type TransmutarFn = (input: Uint8Array) => Uint8Array;
@@ -211,6 +212,8 @@ const ALPHA_CONFIDENCE_CODE: Record<WorkerAlphaHint["confidence"], number> = {
   full: 3,
 };
 
+let activeEngineHints: WasmLoadHints | undefined;
+
 /** Maps prepare-time alpha assessment to Wasm estimate hint bytes (E0.5). */
 function wasmAlphaParams(hint?: WorkerAlphaHint | null): [number, number] {
   if (!hint || hint.confidence === "structural") {
@@ -342,7 +345,7 @@ let initOptimizePromise: Promise<void> | null = null;
 
 async function initJpgWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_jpg");
-  await module.default();
+  await initWasmModule(module, "transmutador_jpg", activeEngineHints);
   transmutarJpg = wasmExport<TransmutarFn>(module, "transmutar_jpg_a_png");
   transmutarJpgWithCompression = wasmExport<TransmutarJpgWithCompression>(
     module,
@@ -355,7 +358,7 @@ async function initJpgWasm(): Promise<void> {
 
 async function initPngWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_png");
-  await module.default();
+  await initWasmModule(module, "transmutador_png", activeEngineHints);
   transmutarPng = wasmExport<TransmutarFn>(module, "transmutar_png_a_jpg");
   transmutarPngWithQuality = wasmExport<TransmutarPngWithQuality>(
     module,
@@ -372,7 +375,7 @@ async function initPngWasm(): Promise<void> {
 
 async function initWebpWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_webp");
-  await module.default();
+  await initWasmModule(module, "transmutador_webp", activeEngineHints);
   transmutarWebp = wasmExport<TransmutarFn>(module, "transmutar_webp_a_png");
   transmutarWebpWithCompression = wasmExport<TransmutarWebpWithCompression>(
     module,
@@ -405,7 +408,7 @@ function ensureWebpWasmInitialized(): Promise<void> {
 
 async function initEncodeWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_encode");
-  await module.default();
+  await initWasmModule(module, "transmutador_encode", activeEngineHints);
   transmutarPngToWebp = wasmExport<TransmutarFn>(module, "transmutar_png_a_webp");
   estimatePngToWebpSize = wasmExport<EstimatePngToWebpSizeFn>(module, "estimate_png_to_webp_size");
   transmutarJpgToWebp = wasmExport<TransmutarFn>(module, "transmutar_jpg_a_webp");
@@ -421,7 +424,7 @@ function ensureEncodeWasmInitialized(): Promise<void> {
 
 async function initGifWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_gif");
-  await module.default();
+  await initWasmModule(module, "transmutador_gif", activeEngineHints);
   transmutarGif = wasmExport<TransmutarFn>(module, "transmutar_gif_a_png");
   transmutarGifWithCompression = wasmExport<TransmutarGifWithCompression>(
     module,
@@ -444,7 +447,7 @@ function ensureGifWasmInitialized(): Promise<void> {
 
 async function initBmpWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_bmp");
-  await module.default();
+  await initWasmModule(module, "transmutador_bmp", activeEngineHints);
   transmutarBmp = wasmExport<TransmutarFn>(module, "transmutar_bmp_a_png");
   transmutarBmpWithCompression = wasmExport<TransmutarBmpWithCompression>(
     module,
@@ -467,7 +470,7 @@ function ensureBmpWasmInitialized(): Promise<void> {
 
 async function initTiffWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_tiff");
-  await module.default();
+  await initWasmModule(module, "transmutador_tiff", activeEngineHints);
   transmutarTiff = wasmExport<(input: Uint8Array, page_index: number) => Uint8Array>(
     module,
     "transmutar_tiff_a_png"
@@ -499,7 +502,7 @@ function ensureTiffWasmInitialized(): Promise<void> {
 
 async function initIcoWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_ico");
-  await module.default();
+  await initWasmModule(module, "transmutador_ico", activeEngineHints);
   transmutarIco = wasmExport<(input: Uint8Array, entry_index: number) => Uint8Array>(
     module,
     "transmutar_ico_a_png"
@@ -528,7 +531,7 @@ function ensureIcoWasmInitialized(): Promise<void> {
 
 async function initTgaWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_tga");
-  await module.default();
+  await initWasmModule(module, "transmutador_tga", activeEngineHints);
   transmutarTgaWithCompression = wasmExport<TransmutarTgaWithCompression>(
     module,
     "transmutar_tga_a_png_with_compression"
@@ -548,7 +551,7 @@ function ensureTgaWasmInitialized(): Promise<void> {
 
 async function initOptimizeWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_optimize");
-  await module.default();
+  await initWasmModule(module, "transmutador_optimize", activeEngineHints);
   recompressPng = wasmExport<RecompressPngFn>(module, "recompress_png");
   recompressJpeg = wasmExport<RecompressJpegFn>(module, "recompress_jpeg");
   resizePng = wasmExport<ResizePngFn>(module, "resize_png");
@@ -572,7 +575,7 @@ function ensureOptimizeWasmInitialized(): Promise<void> {
 
 async function initAvifWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_avif");
-  await module.default();
+  await initWasmModule(module, "transmutador_avif", activeEngineHints);
   transmutarAvifWithCompression = wasmExport<TransmutarAvifWithCompression>(
     module,
     "transmutar_avif_a_png_with_compression"
@@ -600,7 +603,7 @@ function ensureAvifWasmInitialized(): Promise<void> {
 
 async function initAvifEncodeWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_avif_encode");
-  await module.default();
+  await initWasmModule(module, "transmutador_avif_encode", activeEngineHints);
   transmutarPngToAvifWithOptions = wasmExport<TransmutarPngToAvifWithOptions>(
     module,
     "transmutar_png_a_avif_with_options"
@@ -628,7 +631,7 @@ function ensureAvifEncodeWasmInitialized(): Promise<void> {
 
 async function initSvgWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_svg");
-  await module.default();
+  await initWasmModule(module, "transmutador_svg", activeEngineHints);
   transmutarSvgToPng = wasmExport<TransmutarSvgToPngFn>(module, "transmutar_svg_a_png");
   estimateSvgToPngSize = wasmExport<EstimateSvgToPngSizeFn>(
     module,
@@ -1329,6 +1332,7 @@ async function handleRequest(req: WorkerRequest): Promise<WorkerResponse> {
   const { mime, extension } = resolveMimeExtension(route);
 
   try {
+    activeEngineHints = req.engineLoadHints;
     if (route.isJpg) {
       await ensureJpgWasmInitialized();
     } else if (route.isWebpToPng || route.isWebpToJpg) {

@@ -11,13 +11,17 @@
 
 ---
 
-## Current Snapshot (2026-06-20)
+## Current Snapshot (2026-06-22)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.5.2** (`dev`) | **25 tools** · **Risk Mode decoder bypass** · Batch error/done state hardening |
+| **Frontend (app)** | **v3.5.4** (`dev`) | **25 tools** · **Offline chunk error fix** · Cache resilience · Error boundaries |
 | **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** |
-| **SPEC** | v3.5.2 | §6.13 Risk Mode decoder · §7 batch state fixes · file size preservation |
+| **SPEC** | v3.5.4 | §7.18 Device Capability Engine · offline chunk error fix · cache resilience |
+
+**v3.5.4** (`dev`): **Offline mode chunk error fix** — `ChunkLoadError` during force-offline navigation no longer shows a blank page; `app/error.tsx` + `app/global-error.tsx` catch the error and show recovery UI. SW cache duplication prevented via `isAlreadyCachedInSw`. `trimShellCache` caps `SHELL_CACHE_NAME` at 75 entries. Force-offline listener serves `/~offline` for document misses. Release: `docs/releases/v3.5.4.md`.
+
+**v3.5.3** (`dev`): **Low-end device resilience** — `device-capability.ts`: adaptive WASM loading strategies (streaming/buffered/buffered-with-retry) derived from device tier; storage pressure detection via `navigator.storage.estimate()` scored into `computeResourceProfile`; `engineLoadHints` on `WorkerRequest` flows to `initWasmModule()` in worker; device score bar + adaptive recommendation in Performance settings S3; all 13 transmutator init functions + frame-preview worker migrated to `initWasmModule`. Zero telemetry — all signals client-side. Release: `docs/releases/v3.5.3.md`.
 
 **v3.5.2** (`dev`): **Risk Mode decoder fix & batch UX hardening** — Risk Mode now bypasses `image` crate 512 MB `max_alloc` across all 8 ImageReader-based transmutator crates; batch error items auto-deselect with disabled checkbox; "Download Again" button for done files in mixed state; file sizes preserved across Universal handoff via `originalSize`; per-file size display during batch prepare. Release: `docs/releases/v3.5.2.md`.
 
@@ -348,6 +352,8 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-22 | OpenCode | **v3.5.4 on `dev`:** Offline chunk error fix — `app/error.tsx` + `app/global-error.tsx` ChunkLoadError boundaries; SW cache dedup via `isAlreadyCachedInSw`; `trimShellCache` (75-entry cap); enhanced `tryForceOfflineFallbackInSw`; `/~offline` served for document misses in force-offline listener |
+| 2026-06-22 | OpenCode | **v3.5.3 on `dev`:** Device capability engine (`device-capability.ts`); adaptive WASM loading (streaming/buffered/buffered-with-retry); storage pressure detection via `navigator.storage.estimate()`; `engineLoadHints` on WorkerRequest; device score bar in Performance settings S3; `initWasmModule()` across 13 init funcs + frame-preview worker. SPEC/ROADMAP/README/ARCHITECTURE → v3.5.3 |
 | 2026-06-20 | Chief Architect (Cursor) | **v3.5.2 on `dev`:** Risk Mode decoder no_limits fix (8 ImageReader crates); batch error auto-unselect + checkbox disabled; Download Again in mixed done state; file size preservation via handoff originalSize; prepare per-file size; SPEC/ROADMAP → v3.5.2 |
 | 2026-06-19 | Chief Architect (Cursor) | **v3.3.2 on `dev`:** Offline install promo on home; settings-focus → Offline & cache; docs → v3.3.2 |
 | 2026-06-19 | Chief Architect (Cursor) | **v3.3.1 on `dev`:** Risk unlock proceed UX; Settings deep-link focus; docs/SPEC/ROADMAP → v3.3.1 |

@@ -26,9 +26,48 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 const WASM_CACHE = "camaleon-wasm-v1";
+const SHELL_CACHE_MAX_ENTRIES = 75;
 
 /** When true, same-origin GET requests are cache-only (simulated offline). */
 let forceOfflineSim = false;
+let trimShellCachePending = false;
+
+/** Remove oldest entries from SHELL_CACHE_NAME when it exceeds the limit. */
+async function trimShellCache(): Promise<void> {
+  if (trimShellCachePending) return;
+  trimShellCachePending = true;
+  try {
+    const cache = await caches.open(SHELL_CACHE_NAME);
+    const keys = await cache.keys();
+    if (keys.length > SHELL_CACHE_MAX_ENTRIES) {
+      const excess = keys.length - SHELL_CACHE_MAX_ENTRIES;
+      for (let i = 0; i < excess; i++) {
+        await cache.delete(keys[i]);
+      }
+    }
+  } catch {
+    // Never block on cache maintenance
+  } finally {
+    trimShellCachePending = false;
+  }
+}
+
+/** Check if a request URL is already cached in any bucket (avoids duplication). */
+async function isAlreadyCachedInSw(request: Request): Promise<boolean> {
+  try {
+    const direct = await caches.match(request);
+    if (direct) return true;
+    const names = await caches.keys();
+    for (const name of names) {
+      const cache = await caches.open(name);
+      const hit = await cache.match(request);
+      if (hit) return true;
+    }
+  } catch {
+    // On error, assume not cached
+  }
+  return false;
+}
 
 async function matchAnyCacheInSw(request: Request): Promise<Response | undefined> {
   const direct = await caches.match(request);
@@ -78,6 +117,12 @@ async function tryForceOfflineFallbackInSw(
     const byPath = await matchByPathnameInSw(url.pathname);
     if (byPath) return byPath;
 
+    const stripped = url.pathname.replace(/\?.*$/, "").replace(/#.*$/, "");
+    if (stripped !== url.pathname) {
+      const strippedMatch = await matchByPathnameInSw(stripped);
+      if (strippedMatch) return strippedMatch;
+    }
+
     const imageAsset = decodeNextImageAssetPath(url.pathname, url.search);
     if (imageAsset) {
       const assetHit = await matchByPathnameInSw(imageAsset);
@@ -110,8 +155,12 @@ async function serveOfflineShellAssetRequest(request: Request): Promise<Response
   try {
     const response = await fetch(request);
     if (response.ok) {
-      const cache = await caches.open(SHELL_CACHE_NAME);
-      await cache.put(request, response.clone());
+      const alreadyCached = await isAlreadyCachedInSw(request);
+      if (!alreadyCached) {
+        const cache = await caches.open(SHELL_CACHE_NAME);
+        await cache.put(request, response.clone());
+        trimShellCache();
+      }
     }
     return response;
   } catch {
@@ -152,8 +201,12 @@ const shellDocumentRuntimeCache: RuntimeCaching = {
       try {
         const response = await fetch(request);
         if (response.ok) {
-          const cache = await caches.open(SHELL_CACHE_NAME);
-          await cache.put(request, response.clone());
+          const alreadyCached = await isAlreadyCachedInSw(request);
+          if (!alreadyCached) {
+            const cache = await caches.open(SHELL_CACHE_NAME);
+            await cache.put(request, response.clone());
+            trimShellCache();
+          }
         }
         return response;
       } catch {
@@ -238,6 +291,10 @@ self.addEventListener("message", (event) => {
   }
 });
 
+self.addEventListener("activate", (event) => {
+  event.waitUntil(trimShellCache());
+});
+
 /** Cache-first shell assets before Serwist precache — real offline must match force-offline logo path. */
 self.addEventListener("fetch", (event) => {
   const request = event.request;
@@ -268,9 +325,17 @@ self.addEventListener("fetch", (event) => {
       const fallback = await tryForceOfflineFallbackInSw(request);
       if (fallback) return fallback;
 
+      if (request.destination === "document") {
+        const offlineHtml = await matchByPathnameInSw(OFFLINE_FALLBACK_PATH);
+        if (offlineHtml) return offlineHtml;
+        const homeHtml = await matchByPathnameInSw("/");
+        if (homeHtml) return homeHtml;
+      }
+
       return new Response("Offline mode — resource not in cache", {
         status: 503,
         statusText: "Offline Mode",
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
       });
     })()
   );

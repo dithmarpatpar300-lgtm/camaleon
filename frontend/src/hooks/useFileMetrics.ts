@@ -10,6 +10,7 @@ import type {
 } from "@/workers/types";
 import { computeSizeDelta, type SizeDelta } from "@/lib/format/metrics";
 import type { ResourceProfile } from "@/lib/device/resource-profile";
+import { computeWasmLoadHints } from "@/lib/device/device-capability";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
 import type { AlphaAssessment } from "@/lib/semantic-alpha";
 import {
@@ -174,6 +175,7 @@ export function useFileMetrics({
       userConsentedOversize: oversizeConsented || riskModeEnabled,
       riskModeEnabled,
       alphaHint,
+      engineLoadHints: computeWasmLoadHints(profile.tier),
     };
   }, [
     file,
@@ -187,6 +189,7 @@ export function useFileMetrics({
     riskModeEnabled,
     limitFileSize,
     alphaAssessment,
+    profile.tier,
   ]);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { importWasmGlue, wasmExport, type WasmGlueModule } from "@/lib/wasm/load-glue";
+import { importWasmGlue, wasmExport, initWasmModule, type WasmGlueModule } from "@/lib/wasm/load-glue";
 
 type AvifSessionHandle = {
   frame_count: number;
@@ -58,7 +58,7 @@ let framePumpRunning = false;
 async function ensureAvifModule(): Promise<WasmGlueModule> {
   if (avifModule) return avifModule;
   const module = await importWasmGlue("transmutador_avif");
-  await module.default();
+  await initWasmModule(module, "transmutador_avif");
   avifModule = module;
   return module;
 }
