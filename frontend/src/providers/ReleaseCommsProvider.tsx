@@ -12,10 +12,11 @@ import { OnboardingPanel } from "@/components/release-comms/OnboardingPanel";
 import { ReleaseNotesModal } from "@/components/release-comms/ReleaseNotesModal";
 import { WhatsNewDrawer } from "@/components/release-comms/WhatsNewDrawer";
 import { useReleaseCommsState } from "@/hooks/useReleaseComms";
-import { LegalRefreshProvider } from "@/providers/LegalRefreshProvider";
+import { resetOnboarding } from "@/lib/releases/storage";
 
 type ReleaseCommsContextValue = {
   openWhatsNew: () => void;
+  openOnboarding: () => void;
 };
 
 const ReleaseCommsContext = createContext<ReleaseCommsContextValue | null>(null);
@@ -30,6 +31,7 @@ export function useReleaseComms() {
 
 export function ReleaseCommsProvider({ children }: { children: ReactNode }) {
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const {
     shouldShowOnboarding,
     shouldShowChangelog,
@@ -42,14 +44,22 @@ export function ReleaseCommsProvider({ children }: { children: ReactNode }) {
   const openWhatsNew = useCallback(() => setWhatsNewOpen(true), []);
   const closeWhatsNew = useCallback(() => setWhatsNewOpen(false), []);
 
-  const value = useMemo(() => ({ openWhatsNew }), [openWhatsNew]);
+  const openOnboarding = useCallback(() => {
+    resetOnboarding();
+    setShowOnboarding(true);
+  }, []);
+
+  const handleDismissOnboarding = useCallback(() => {
+    setShowOnboarding(false);
+    dismissOnboarding();
+  }, [dismissOnboarding]);
+
+  const value = useMemo(() => ({ openWhatsNew, openOnboarding }), [openWhatsNew, openOnboarding]);
 
   return (
     <ReleaseCommsContext.Provider value={value}>
-      <LegalRefreshProvider shouldDeferToOnboarding={shouldShowOnboarding}>
-        {children}
-      </LegalRefreshProvider>
-      <OnboardingPanel open={shouldShowOnboarding} onDismiss={dismissOnboarding} />
+      {children}
+      <OnboardingPanel open={shouldShowOnboarding || showOnboarding} onDismiss={handleDismissOnboarding} />
       {latestRelease && (
         <ReleaseNotesModal
           open={shouldShowChangelog}

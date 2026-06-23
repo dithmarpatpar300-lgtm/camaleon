@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.6.0** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
+**Snapshot:** App **v3.6.1** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
 
 ---
 
@@ -157,8 +157,8 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
-| **Current** | **v3.6.0** | Resize Premium — 5 filters, upscale, quality control, target dims, estimate parity |
-| **Prior** | **v3.5.4** | Offline chunk error fix · cache resilience · error boundaries |
+| **Current** | **v3.6.1** | UpdateEngine refactor · onboarding UX · 2min polling |
+| **Prior** | **v3.6.0** | Resize Premium — 5 filters, upscale, quality control, target dims, estimate parity |
 | **Prior** | **v3.5.3** | Device capability engine · adaptive WASM loading · S3 device score |
 | **Prior** | **v3.5.1** | Explorer multi-drag fix · download format UX · settings-focus batch-download |
 | **Prior** | **v3.5.0** | Offline reliability · origin reachability · brand offline · mobile notice stack |
@@ -836,4 +836,4 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 
 ---
 
-*Last updated: 2026-06-22 · App v3.6.0 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-22 · App v3.6.1 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*

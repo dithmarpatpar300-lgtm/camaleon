@@ -29,8 +29,8 @@ type Props = {
 export function UpdatesSettingsSection({ drawerOpen, onRequestClose }: Props) {
   const { t } = useI18n();
   const { toast } = useToast();
-  const { openWhatsNew } = useReleaseComms();
-  const { checkForUpdatesNow, checkingForUpdates } = useAppUpdate();
+  const { openWhatsNew, openOnboarding } = useReleaseComms();
+  const { checkForUpdatesNow, checking } = useAppUpdate();
   const [autoDetect, setAutoDetect] = useState(true);
   const [showChangelog, setShowChangelog] = useState(true);
 
@@ -77,9 +77,9 @@ export function UpdatesSettingsSection({ drawerOpen, onRequestClose }: Props) {
   }, [onRequestClose, openWhatsNew]);
 
   const handleResetWelcome = useCallback(() => {
-    resetOnboarding();
-    toast({ message: t("settings.updates.welcomeResetDone"), variant: "success" });
-  }, [t, toast]);
+    onRequestClose();
+    openOnboarding();
+  }, [onRequestClose, openOnboarding]);
 
   const actionButtonClass = cn(
     "rounded-lg border border-border bg-bg-elevated/50 px-3 py-2 text-xs font-medium text-text-secondary",
@@ -107,10 +107,10 @@ export function UpdatesSettingsSection({ drawerOpen, onRequestClose }: Props) {
         <button
           type="button"
           onClick={() => void handleCheckNow()}
-          disabled={checkingForUpdates}
+          disabled={checking}
           className={actionButtonClass}
         >
-          {checkingForUpdates
+          {checking
             ? t("settings.updates.checkNowRunning")
             : t("settings.updates.checkNowAction")}
         </button>

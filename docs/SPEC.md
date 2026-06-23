@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.6.0
+**Version:** 3.6.1
 **Last updated:** 2026-06-22
-**Status:** v3.6.0 on `dev` (Resize Premium — 5 filters, upscale, quality control, target dims, estimate parity) · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Status:** v3.6.1 on `dev` (UpdateEngine refactor · onboarding UX · 2min polling) · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 
@@ -1416,7 +1416,7 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Purpose:** Bilingual About, Contact, Privacy, and Terms pages linked from the footer. Content lives in `frontend/src/lib/legal/content/{en,es}.ts`; rendered by `LegalDocument` inside `LegalPageShell`.
 
-**Revision tracking:** Each page carries `legalRevision` (e.g. `2026-06-v3.4`). User acknowledgment stored in `camaleon-legal-revision-ack` (`{ revision, acknowledgedAt }`). **`LegalRefreshNotice`** modal prompts review when revision changes — separate from What's New / release changelog.
+**Revision tracking:** Each page carries `legalRevision` (e.g. `2026-06-v3.4`). User acknowledgment stored in `camaleon-legal-revision-ack` (`{ revision, acknowledgedAt }`). A `LegalRefreshNotice` modal was shipped in v3.4.0 and has since been **retired** (v3.6.1) — the legal refresh notice is no longer shown to users.
 
 **Content model (v3.4.0):** Sections use stable `id` anchors, `blocks` array (`paragraph`, `list`, `callout`, `table`). Privacy includes a storage-key table synced with `frontend/src/lib/storage/keys.ts`.
 
@@ -1600,7 +1600,8 @@ Chief Architect validates SPEC diff during second-pass review.
 
 | Version | Date | Author | Summary | Report ref |
 |---------|------|--------|---------|------------|
-| 3.6.0-resize-premium | 2026-06-22 | OpenCode | Resize Premium Phases A-E: 5 interpolation filters (CatmullRom default, Lanczos3, Triangle, Nearest, Gaussian via Advanced toggle); upscale support 1-200% (400% with advanced toggle); JPEG quality control on resize; target dimensions display; resize-specific notices; dedicated `estimate_resize_*_size` exports; Rust `filter_from_code()`, `resize_*_with_filter`, `resize_jpeg_with_filter_and_quality`. | `docs/releases/v3.6.0.md` |
+| 3.6.1-update-engine | 2026-06-22 | OpenCode | UpdateEngine refactor: centralized `lib/app-update/update-engine.ts` with state machine (idle/checking/available/applying); 2 min polling interval; SW subscription integrated; AppUpdateProvider simplified to ~50-line thin wrapper; `openOnboarding()` in ReleaseCommsProvider for immediate onboarding panel. | `docs/releases/v3.6.1.md` |
+| 3.6.0-resize-premium | 2026-06-22 | OpenCode | Resize Premium Phases A-E: 5 interpolation filters (CatmullRom default, Lanczos3, Triangle, Nearest, Gaussian via Advanced toggle); upscale support 1-200% (400% with advanced toggle); JPEG quality control on resize; target dimensions display; resize-specific notices (generational loss, extreme downscale, upscale honesty, filter-specific warnings); dedicated `estimate_resize_*_size` exports; Rust `filter_from_code()`, `resize_*_with_filter`, `resize_jpeg_with_filter_and_quality`. | `docs/releases/v3.6.0.md` |
 | 3.5.4-offline-chunk-fix | 2026-06-22 | OpenCode | Offline chunk error fix: `app/error.tsx` + `app/global-error.tsx` error boundaries for ChunkLoadError; SW cache duplication prevention via `isAlreadyCachedInSw`; `trimShellCache` caps `SHELL_CACHE_NAME` at 75 entries; enhanced `tryForceOfflineFallbackInSw` with stripped-pathname matching; force-offline listener serves `/~offline` for document misses. | `docs/releases/v3.5.4.md` |
 | 3.5.3-device-capability | 2026-06-22 | Chief Architect | §7.18 Device Capability Engine; `lib/device/device-capability.ts`; adaptive WASM loading strategies (streaming/buffered/buffered-with-retry); storage pressure detection via `navigator.storage.estimate()`; `engineLoadHints` on WorkerRequest; device score display in Performance settings S3; `initWasmModule()` in load-glue.ts. 13 init funcs + frame-preview worker migrated. | `docs/releases/v3.5.3.md` |
 | 3.5.2-risk-batch-ux | 2026-06-20 | Chief Architect | §6.13/§12.5 Risk Mode decoder no_limits fix across 8 ImageReader crates; batch error/done state UX hardening; file size preservation via handoff originalSize + displaySize; prepare per-file size display. See §7.1 batch item handling, §7.13 S6 Risk Mode effectiveness. | `docs/releases/v3.5.2.md` |

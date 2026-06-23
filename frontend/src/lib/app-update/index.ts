@@ -19,6 +19,12 @@ export {
 } from "./sw-activation";
 export type { AppUpdateSource, VersionBeacon } from "./types";
 export {
+  type CheckForUpdatesResult,
+  type UpdateEngineState,
+  type UpdateEngineValue,
+  useUpdateEngine,
+} from "./update-engine";
+export {
   fetchVersionBeacon,
   isRemoteVersionNewer,
   parseVersionBeaconPayload,

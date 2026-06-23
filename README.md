@@ -2,7 +2,7 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.6.0** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.6.1** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
@@ -46,7 +46,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Tests** | 183 Vitest unit tests |
 
-**Latest (v3.6.0):** **Resize Premium** — 5 resampling filters (CatmullRom, Lanczos3, Triangle, Nearest, Gaussian), upscale to 200% (advanced 400%), JPEG quality control on resize, target dimensions display, resize-specific notices, dedicated estimate exports. Resize tools are fully production-hardened with competitive parity against desktop editors. See [docs/releases/v3.6.0.md](docs/releases/v3.6.0.md). **Prior (v3.5.4):** Offline chunk error fix & cache resilience. See [docs/releases/v3.5.4.md](docs/releases/v3.5.4.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
+**Latest (v3.6.1):** **UpdateEngine refactor & onboarding UX** — centralized update detection with state machine, 2-minute polling (was 5 min). "Show again" in Settings → Updates now opens onboarding panel immediately. See [docs/releases/v3.6.1.md](docs/releases/v3.6.1.md). **Prior (v3.6.0):** **Resize Premium** — 5 filters, upscale, quality control, target dims. See [docs/releases/v3.6.0.md](docs/releases/v3.6.0.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 
