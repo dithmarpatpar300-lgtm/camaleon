@@ -12,8 +12,6 @@ import { OnboardingPanel } from "@/components/release-comms/OnboardingPanel";
 import { ReleaseNotesModal } from "@/components/release-comms/ReleaseNotesModal";
 import { WhatsNewDrawer } from "@/components/release-comms/WhatsNewDrawer";
 import { useReleaseCommsState } from "@/hooks/useReleaseComms";
-import { LegalRefreshProvider } from "@/providers/LegalRefreshProvider";
-
 import { resetOnboarding } from "@/lib/releases/storage";
 
 type ReleaseCommsContextValue = {
@@ -60,9 +58,7 @@ export function ReleaseCommsProvider({ children }: { children: ReactNode }) {
 
   return (
     <ReleaseCommsContext.Provider value={value}>
-      <LegalRefreshProvider shouldDeferToOnboarding={shouldShowOnboarding}>
-        {children}
-      </LegalRefreshProvider>
+      {children}
       <OnboardingPanel open={shouldShowOnboarding || showOnboarding} onDismiss={handleDismissOnboarding} />
       {latestRelease && (
         <ReleaseNotesModal
