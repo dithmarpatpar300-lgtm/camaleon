@@ -472,6 +472,31 @@ const en: Dictionary = {
           },
         },
       },
+      v360: {
+        title: "Resize Premium — 5 filters, upscale, quality control",
+        summary:
+          "The resize tools got a major upgrade: choose from 5 resampling filters (Sharp, Sharpest, Smooth, Pixel Perfect, Anti-alias), upscale images up to 200%, and control JPEG quality directly on resize. Target dimensions update live as you adjust the slider.",
+        technical:
+          "transmutador_optimize: filter_from_code (0=Nearest..4=Lanczos3), resize_*_with_filter, resize_jpeg_with_filter_and_quality, estimate_resize_*_size. CatmullRom new default. MAX_RESIZE_PERCENT 400 (u16). 5 filters in FilterSelector UI with advanced toggle. Upscale honesty notices, JPEG generational loss notices, filter-specific >200% warnings. Amber styling for >100%. Tool descriptions updated. App v3.6.0 · engine 1.6.0.",
+        highlights: {
+          resizeFilters: {
+            title: "5 resampling filters",
+            body: "Choose Sharp (CatmullRom, recommended), Sharpest (Lanczos3), Smooth (Triangle), Pixel Perfect (Nearest), or Anti-alias (Gaussian) — each with an explanation of when to use it.",
+          },
+          resizeUpscale: {
+            title: "Upscale with honesty",
+            body: "Resize images beyond their original size up to 200% (or 400% with advanced scaling). Clear warnings explain that no new detail is created.",
+          },
+          resizeQuality: {
+            title: "JPEG quality on resize",
+            body: "When resizing JPEGs, you can now control compression quality independently — reducing file size or preserving detail as needed.",
+          },
+          resizeDimensions: {
+            title: "Live dimensions preview",
+            body: "The target pixel dimensions update in real time as you move the slider, so you always know the exact output size before transmuting.",
+          },
+        },
+      },
       v354: {
         title: "Offline mode chunk error fix",
         summary:
@@ -1772,6 +1797,25 @@ const en: Dictionary = {
     },
   },
 
+  resize: {
+    filterLabel: "Resampling filter",
+    filter: {
+      sharp: "Sharp",
+      sharpDesc: "CatmullRom — Best balance of sharpness and speed. Industry-standard bicubic.",
+      sharpest: "Sharpest",
+      sharpestDesc: "Lanczos3 — Maximum detail preservation. May produce halos on high-contrast edges.",
+      smooth: "Smooth",
+      smoothDesc: "Triangle — Fast and artifact-free. Softer output, suitable for thumbnails.",
+      nearest: "Pixel Perfect",
+      nearestDesc: "Nearest-neighbor — Preserves hard edges. Expect jagged lines on photographs. Ideal for pixel art.",
+      gaussian: "Anti-alias",
+      gaussianDesc: "Gaussian — Intentionally blurry pre-filter. Best for extreme downscaling (<25%) to prevent Moiré.",
+      advanced: "Advanced",
+    },
+    advancedScaling: "Advanced scaling",
+    advancedScalingOn: "Advanced scaling ON",
+  },
+
   tools: {
     "jpg-to-png": {
       actionTitle: "Preserve Quality",
@@ -1990,29 +2034,36 @@ const en: Dictionary = {
     },
     "png-resize": {
       actionTitle: "Resize PNG",
-      description: "Downscale by percent with Lanczos — output stays PNG.",
-      fidelityHint: "Resampling is lossless for dimensions but may soften detail when shrinking.",
+      description: "Scale PNG by percent — 5 resampling filters, upscale to 200%, preserves format.",
+      fidelityHint: "Resampling is lossless for dimensions but may soften detail when shrinking. Choose from 5 filters for optimal results.",
       options: {
         resizePercent: {
           label: "Output scale",
           hint: "Percent of source width and height (aspect ratio locked).",
           lowerLabel: "Smaller",
           upperLabel: "Larger",
-          presets: { "25%": "25%", "50%": "50%", "75%": "75%" },
+          presets: { "25%": "25%", "33%": "33%", "50%": "50%", "66%": "66%", "75%": "75%" },
         },
       },
     },
     "jpg-resize": {
       actionTitle: "Resize JPEG",
-      description: "Downscale by percent with Lanczos — output stays JPEG.",
-      fidelityHint: "Resampling plus JPEG encode — lossy output.",
+      description: "Scale JPEG by percent — 5 resampling filters, configurable quality, upscale to 200%.",
+      fidelityHint: "Resampling plus JPEG encode — lossy output. Re-encoding adds another generation of compression loss.",
       options: {
         resizePercent: {
           label: "Output scale",
           hint: "Percent of source width and height (aspect ratio locked).",
           lowerLabel: "Smaller",
           upperLabel: "Larger",
-          presets: { "25%": "25%", "50%": "50%", "75%": "75%" },
+          presets: { "25%": "25%", "33%": "33%", "50%": "50%", "66%": "66%", "75%": "75%" },
+        },
+        quality: {
+          label: "JPEG quality",
+          hint: "Higher values preserve more detail but produce larger files.",
+          lowerLabel: "Smaller file",
+          upperLabel: "Higher quality",
+          presets: { "60%": "60%", "75%": "75%", "85%": "85%", "92%": "92%" },
         },
       },
     },
@@ -2237,6 +2288,17 @@ const en: Dictionary = {
         "Filters and advanced SVG features may render differently than in Illustrator or Inkscape.",
       svgJpegLossy:
         "JPEG is lossy — vector detail and transparency are permanently lost after rasterization.",
+      jpegResizeGenerational:
+        "Re-encoding a JPEG after resize adds another lossy generation — detail degrades cumulatively.",
+      resizeExtremeDownscale:
+        "Extreme downscaling permanently discards fine detail. The output may appear soft or lack texture.",
+      resizeUpscale:
+        "Upscaling — no new detail is created. Pixels are interpolated from neighbors. File size will increase significantly.",
+      resizeAdvancedScale: {
+        general: "Scaling above 200% — pixels are heavily interpolated. The result will appear soft regardless of filter.",
+        lanczos: "⚠ Lanczos3 above 200% produces strong ringing artifacts (halos on edges). Consider switching to CatmullRom or Triangle.",
+        blur: "Above 200%, this filter will produce a visibly blurry result. No new detail is created.",
+      },
     },
     estimate: {
       cheapSlow: "Still calculating…",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { ToolOptionSpec, RgbColor } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
@@ -12,15 +12,19 @@ type OptionsControlsProps = {
   specs: ToolOptionSpec[];
   values: TransmutationOptions;
   onChange: (next: TransmutationOptions) => void;
+  sourceWidth?: number;
+  sourceHeight?: number;
 };
 
 function rgbEq(a: RgbColor, b: RgbColor): boolean {
   return a.r === b.r && a.g === b.g && a.b === b.b;
 }
 
-export function OptionsControls({ toolId, specs, values, onChange }: OptionsControlsProps) {
+export function OptionsControls({ toolId, specs, values, onChange, sourceWidth, sourceHeight }: OptionsControlsProps) {
   const { t } = useI18n();
   if (specs.length === 0) return null;
+
+  const hasResize = specs.some((s) => s.kind === "slider" && s.key === "resizePercent");
 
   return (
     <div className="space-y-6">
@@ -34,6 +38,8 @@ export function OptionsControls({ toolId, specs, values, onChange }: OptionsCont
             allValues={values}
             onChange={(v) => onChange({ ...values, [spec.key]: v })}
             t={t}
+            sourceWidth={sourceWidth}
+            sourceHeight={sourceHeight}
           />
         ) : (
           <ColorControl
@@ -46,6 +52,13 @@ export function OptionsControls({ toolId, specs, values, onChange }: OptionsCont
           />
         )
       )}
+      {hasResize && (
+        <ResizeFilterControl
+          value={values.resizeFilter ?? 2}
+          onChange={(v) => onChange({ ...values, resizeFilter: v })}
+          t={t}
+        />
+      )}
     </div>
   );
 }
@@ -57,6 +70,8 @@ function SliderControl({
   allValues,
   onChange,
   t,
+  sourceWidth,
+  sourceHeight,
 }: {
   toolId: string;
   spec: Extract<ToolOptionSpec, { kind: "slider" }>;
@@ -64,12 +79,20 @@ function SliderControl({
   allValues: TransmutationOptions;
   onChange: (v: number) => void;
   t: ReturnType<typeof useI18n>["t"];
+  sourceWidth?: number;
+  sourceHeight?: number;
 }) {
   const strings = getOptionSpecStrings(toolId, spec, t);
+  const [advancedScale, setAdvancedScale] = useState(false);
+
+  const isResize = spec.key === "resizePercent";
+  const effectiveMax = isResize && advancedScale ? 400 : spec.max;
+  const isUpscale = isResize && value > 100;
+
   const valueLabel =
     spec.key === "iconSize"
       ? `${value}px`
-      : spec.key === "resizePercent"
+      : isResize
         ? `${value}%`
         : spec.key === "outputScale" &&
           allValues.outputWidth != null &&
@@ -77,11 +100,26 @@ function SliderControl({
         ? `${allValues.outputWidth} × ${allValues.outputHeight}`
         : String(value);
 
+  const showResizeDims =
+    isResize &&
+    sourceWidth != null &&
+    sourceHeight != null &&
+    sourceWidth > 0 &&
+    sourceHeight > 0;
+  const targetW = showResizeDims ? Math.max(1, Math.round(sourceWidth! * value / 100)) : null;
+  const targetH = showResizeDims ? Math.max(1, Math.round(sourceHeight! * value / 100)) : null;
+  const isLarger = showResizeDims && targetW != null && sourceWidth != null && targetW > sourceWidth;
+
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-medium text-text-secondary">{strings.label}</span>
-        <span className="font-mono text-xs tabular-nums text-text-primary">
+        <span
+          className={cn(
+            "font-mono text-xs tabular-nums",
+            isUpscale ? "text-[#F59E0B]" : "text-text-primary"
+          )}
+        >
           {valueLabel}
         </span>
       </div>
@@ -102,13 +140,51 @@ function SliderControl({
       {spec.key !== "iconSize" && spec.key !== "outputScale" && (
         <div className="flex items-center gap-3">
           {strings.lowerLabel && <span className="shrink-0 text-xs text-text-muted">{strings.lowerLabel}</span>}
-          <input type="range" min={spec.min} max={spec.max} step={spec.step} value={value}
-            onChange={(e) => onChange(Number(e.target.value))} aria-label={strings.label}
-            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-bg-elevated accent-accent" />
+          <div className="relative w-full">
+            {isResize && (
+              <span
+                className="absolute top-1/2 -translate-y-1/2 text-[9px] text-text-muted select-none pointer-events-none"
+                style={{ left: `${((100 - spec.min) / (effectiveMax - spec.min)) * 100}%` }}
+              >
+                │
+              </span>
+            )}
+            <input type="range" min={spec.min} max={effectiveMax} step={spec.step} value={value}
+              onChange={(e) => onChange(Number(e.target.value))} aria-label={strings.label}
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-bg-elevated accent-accent" />
+          </div>
           {strings.upperLabel && <span className="shrink-0 text-xs text-text-muted">{strings.upperLabel}</span>}
         </div>
       )}
       <p className="mt-1.5 text-xs text-text-muted">{strings.hint}</p>
+      {showResizeDims && targetW != null && targetH != null && (
+        <p className="mt-1 text-xs text-text-muted">
+          <span className="text-text-secondary">{sourceWidth} × {sourceHeight}</span>
+          {" → "}
+          <span className={cn("font-mono tabular-nums", isLarger ? "text-[#F59E0B]" : "text-text-primary")}>
+            {targetW} × {targetH}
+          </span>
+        </p>
+      )}
+      {isResize && (
+        <button
+          type="button"
+          onClick={() => {
+            const next = !advancedScale;
+            setAdvancedScale(next);
+            if (!next && value > 200) onChange(200);
+          }}
+          className={cn(
+            "mt-2 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+            advancedScale
+              ? "bg-[#F59E0B]/20 text-[#F59E0B]"
+              : "bg-bg-elevated text-text-muted hover:text-text-secondary"
+          )}
+        >
+          {advancedScale ? t("resize.advancedScalingOn") : t("resize.advancedScaling")}
+        </button>
+      )}
     </div>
   );
 }
@@ -167,6 +243,98 @@ function ColorControl({
         )}
       </div>
       <p className="mt-1.5 text-xs text-text-muted">{strings.hint}</p>
+    </div>
+  );
+}
+
+const RESIZE_FILTERS = [
+  { value: 2, key: "sharp", descKey: "sharpDesc" },
+  { value: 4, key: "sharpest", descKey: "sharpestDesc" },
+  { value: 1, key: "smooth", descKey: "smoothDesc" },
+] as const;
+
+const ADVANCED_FILTERS = [
+  { value: 0, key: "nearest", descKey: "nearestDesc" },
+  { value: 3, key: "gaussian", descKey: "gaussianDesc" },
+] as const;
+
+function ResizeFilterControl({
+  value,
+  onChange,
+  t,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  t: ReturnType<typeof useI18n>["t"];
+}) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const activeFilter = [...RESIZE_FILTERS, ...ADVANCED_FILTERS].find((f) => f.value === value);
+  const activeKey = activeFilter?.key ?? "sharp";
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-text-secondary">
+          {t("resize.filterLabel")}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t("resize.filterLabel")}>
+        {RESIZE_FILTERS.map((f) => (
+          <button
+            key={f.value}
+            type="button"
+            onClick={() => onChange(f.value)}
+            aria-pressed={value === f.value}
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+              value === f.value
+                ? "bg-accent text-white"
+                : "bg-bg-elevated text-text-muted hover:text-text-secondary"
+            )}
+          >
+            {t(`resize.filter.${f.key}`)}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className={cn(
+            "rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+            showAdvanced
+              ? "bg-accent/20 text-accent"
+              : "bg-bg-elevated text-text-muted hover:text-text-secondary"
+          )}
+        >
+          {t("resize.filter.advanced")}
+        </button>
+      </div>
+      {showAdvanced && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {ADVANCED_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => onChange(f.value)}
+              aria-pressed={value === f.value}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                value === f.value
+                  ? "bg-accent text-white"
+                  : "bg-bg-elevated text-text-muted hover:text-text-secondary"
+              )}
+            >
+              {t(`resize.filter.${f.key}`)}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="mt-1.5 text-xs text-text-muted">
+        {t(`resize.filter.${activeKey}Desc`)}
+      </p>
     </div>
   );
 }
