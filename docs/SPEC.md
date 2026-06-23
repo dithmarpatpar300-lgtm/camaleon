@@ -1416,7 +1416,7 @@ This UI track runs after the §5.8 backend refinements (now complete) and feeds 
 
 **Purpose:** Bilingual About, Contact, Privacy, and Terms pages linked from the footer. Content lives in `frontend/src/lib/legal/content/{en,es}.ts`; rendered by `LegalDocument` inside `LegalPageShell`.
 
-**Revision tracking:** Each page carries `legalRevision` (e.g. `2026-06-v3.4`). User acknowledgment stored in `camaleon-legal-revision-ack` (`{ revision, acknowledgedAt }`). **`LegalRefreshNotice`** modal prompts review when revision changes — separate from What's New / release changelog.
+**Revision tracking:** Each page carries `legalRevision` (e.g. `2026-06-v3.4`). User acknowledgment stored in `camaleon-legal-revision-ack` (`{ revision, acknowledgedAt }`). A `LegalRefreshNotice` modal was shipped in v3.4.0 and has since been **retired** (v3.6.1) — the legal refresh notice is no longer shown to users.
 
 **Content model (v3.4.0):** Sections use stable `id` anchors, `blocks` array (`paragraph`, `list`, `callout`, `table`). Privacy includes a storage-key table synced with `frontend/src/lib/storage/keys.ts`.
 
