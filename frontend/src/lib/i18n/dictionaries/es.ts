@@ -473,6 +473,31 @@ const es: Dictionary = {
           },
         },
       },
+      v360: {
+        title: "Resize Premium — 5 filtros, escalado, control de calidad",
+        summary:
+          "Las herramientas de redimension obtuvieron una mejora mayor: elige entre 5 filtros de remuestreo (Nitido, Mas nitido, Suave, Pixel Perfecto, Anti-alias), escala imagenes hasta 200%, y controla la calidad JPEG directamente al redimensionar. Las dimensiones objetivo se actualizan en vivo al mover el slider.",
+        technical:
+          "transmutador_optimize: filter_from_code (0=Nearest..4=Lanczos3), resize_*_with_filter, resize_jpeg_with_filter_and_quality, estimate_resize_*_size. CatmullRom nuevo default. MAX_RESIZE_PERCENT 400 (u16). 5 filtros en FilterSelector UI con toggle avanzado. Avisos de honestidad al escalar, perdida generacional JPEG, advertencias especificas por filtro >200%. Estilo ambar para >100%. Descripciones de herramientas actualizadas. App v3.6.0 · motor 1.6.0.",
+        highlights: {
+          resizeFilters: {
+            title: "5 filtros de remuestreo",
+            body: "Elige Nitido (CatmullRom, recomendado), Mas nitido (Lanczos3), Suave (Triangle), Pixel Perfecto (Nearest) o Anti-alias (Gaussian) — cada uno con explicacion de cuando usarlo.",
+          },
+          resizeUpscale: {
+            title: "Escalado con honestidad",
+            body: "Redimensiona imagenes mas alla de su tamano original hasta 200% (o 400% con escalado avanzado). Avisos claros explican que no se crea nuevo detalle.",
+          },
+          resizeQuality: {
+            title: "Calidad JPEG al redimensionar",
+            body: "Al redimensionar JPEGs, ahora puedes controlar la calidad de compresion independientemente — reduciendo el tamano del archivo o preservando detalle segun necesites.",
+          },
+          resizeDimensions: {
+            title: "Vista previa de dimensiones en vivo",
+            body: "Las dimensiones en pixeles se actualizan en tiempo real al mover el slider, para que siempre sepas el tamano exacto de salida antes de transmutar.",
+          },
+        },
+      },
       v354: {
         title: "Correccion de error de carga en modo offline",
         summary:
@@ -1773,6 +1798,25 @@ const es: Dictionary = {
     },
   },
 
+  resize: {
+    filterLabel: "Filtro de remuestreo",
+    filter: {
+      sharp: "Nitido",
+      sharpDesc: "CatmullRom — Mejor balance de nitidez y velocidad. Bicubico estandar de la industria.",
+      sharpest: "Mas nitido",
+      sharpestDesc: "Lanczos3 — Maxima preservacion de detalle. Puede producir halos en bordes de alto contraste.",
+      smooth: "Suave",
+      smoothDesc: "Triangle — Rapido y sin artefactos. Salida mas suave, adecuado para miniaturas.",
+      nearest: "Pixel Perfecto",
+      nearestDesc: "Vecino mas cercano — Conserva bordes duros. Lineas dentadas en fotografias. Ideal para pixel art.",
+      gaussian: "Anti-alias",
+      gaussianDesc: "Gaussiano — Pre-filtro intencionalmente borroso. Ideal para reduccion extrema (<25%) para evitar Moire.",
+      advanced: "Avanzado",
+    },
+    advancedScaling: "Escalado avanzado",
+    advancedScalingOn: "Escalado avanzado ON",
+  },
+
   tools: {
     "jpg-to-png": {
       actionTitle: "Preservar Calidad",
@@ -1977,29 +2021,36 @@ const es: Dictionary = {
     },
     "png-resize": {
       actionTitle: "Redimensionar PNG",
-      description: "Reduce por porcentaje con Lanczos — salida PNG.",
-      fidelityHint: "El remuestreo preserva dimensiones proporcionales al reducir.",
+      description: "Escala PNG por porcentaje — 5 filtros de remuestreo, hasta 200%, conserva el formato.",
+      fidelityHint: "El remuestreo preserva las dimensiones pero puede suavizar el detalle al reducir. Elige entre 5 filtros.",
       options: {
         resizePercent: {
           label: "Escala de salida",
           hint: "Porcentaje del ancho y alto de origen (proporcion bloqueada).",
           lowerLabel: "Mas pequeno",
           upperLabel: "Mas grande",
-          presets: { "25%": "25%", "50%": "50%", "75%": "75%" },
+          presets: { "25%": "25%", "33%": "33%", "50%": "50%", "66%": "66%", "75%": "75%" },
         },
       },
     },
     "jpg-resize": {
       actionTitle: "Redimensionar JPEG",
-      description: "Reduce por porcentaje con Lanczos — salida JPEG.",
-      fidelityHint: "Remuestreo mas encode JPEG — salida con perdida.",
+      description: "Escala JPEG por porcentaje — 5 filtros, calidad configurable, hasta 200%.",
+      fidelityHint: "Remuestreo mas encode JPEG — salida con perdida. Re-codificar agrega otra generacion de compresion.",
       options: {
         resizePercent: {
           label: "Escala de salida",
           hint: "Porcentaje del ancho y alto de origen (proporcion bloqueada).",
           lowerLabel: "Mas pequeno",
           upperLabel: "Mas grande",
-          presets: { "25%": "25%", "50%": "50%", "75%": "75%" },
+          presets: { "25%": "25%", "33%": "33%", "50%": "50%", "66%": "66%", "75%": "75%" },
+        },
+        quality: {
+          label: "Calidad JPEG",
+          hint: "Valores mas altos preservan mas detalle pero producen archivos mas grandes.",
+          lowerLabel: "Archivo menor",
+          upperLabel: "Mayor calidad",
+          presets: { "web": "Web", "balanced": "Equilibrado", "high": "Alta", "native": "Nativo" },
         },
       },
     },
@@ -2224,6 +2275,17 @@ const es: Dictionary = {
         "Filtros y funciones SVG avanzadas pueden renderizarse distinto que en Illustrator o Inkscape.",
       svgJpegLossy:
         "JPEG tiene perdida — el detalle vectorial y la transparencia se pierden permanentemente tras la rasterizacion.",
+      jpegResizeGenerational:
+        "Re-codificar un JPEG despues de redimensionar agrega otra generacion con perdida — el detalle se degrada acumulativamente.",
+      resizeExtremeDownscale:
+        "La reduccion extrema descarta permanentemente el detalle fino. La salida puede verse suave o sin textura.",
+      resizeUpscale:
+        "Escalado — no se crea nuevo detalle. Los pixeles se interpolan de los vecinos. El tamano del archivo aumentara significativamente.",
+      resizeAdvancedScale: {
+        general: "Escalado superior al 200% — los pixeles estan fuertemente interpolados. El resultado se vera suave independientemente del filtro.",
+        lanczos: "⚠ Lanczos3 por encima del 200% produce fuertes artefactos de anillos (halos en bordes). Considera cambiar a CatmullRom o Triangle.",
+        blur: "Por encima del 200%, este filtro producira un resultado visiblemente borroso. No se crea nuevo detalle.",
+      },
     },
     estimate: {
       cheapSlow: "Calculando…",

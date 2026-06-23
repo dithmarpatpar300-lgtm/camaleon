@@ -15,8 +15,8 @@ pub const DEFAULT_PNG_COMPRESSION: u8 = 6;
 pub const MIN_JPEG_QUALITY: u8 = 1;
 pub const MAX_JPEG_QUALITY: u8 = 100;
 pub const DEFAULT_JPEG_QUALITY: u8 = 85;
-pub const MIN_RESIZE_PERCENT: u8 = 10;
-pub const MAX_RESIZE_PERCENT: u8 = 100;
+pub const MIN_RESIZE_PERCENT: u16 = 1;
+pub const MAX_RESIZE_PERCENT: u16 = 400;
 
 fn decode_image(input: &[u8]) -> Result<DynamicImage, String> {
     core_utils::validate_input(input)?;
@@ -67,7 +67,18 @@ fn encode_jpeg(img: &DynamicImage, quality: u8) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
-fn resize_by_percent(img: DynamicImage, percent: u8) -> Result<DynamicImage, String> {
+fn filter_from_code(code: u8) -> Result<ResizeFilter, String> {
+    Ok(match code {
+        0 => ResizeFilter::Nearest,
+        1 => ResizeFilter::Triangle,
+        2 => ResizeFilter::CatmullRom,
+        3 => ResizeFilter::Gaussian,
+        4 => ResizeFilter::Lanczos3,
+        _ => return Err(format!("Unknown filter code: {code} — valid codes are 0 (Nearest), 1 (Triangle), 2 (CatmullRom), 3 (Gaussian), 4 (Lanczos3)")),
+    })
+}
+
+fn resize_by_percent(img: DynamicImage, percent: u16, filter: ResizeFilter) -> Result<DynamicImage, String> {
     if !(MIN_RESIZE_PERCENT..=MAX_RESIZE_PERCENT).contains(&percent) {
         return Err(format!(
             "Resize percent must be between {MIN_RESIZE_PERCENT} and {MAX_RESIZE_PERCENT}"
@@ -79,7 +90,7 @@ fn resize_by_percent(img: DynamicImage, percent: u8) -> Result<DynamicImage, Str
     if nw == w && nh == h {
         return Ok(img);
     }
-    Ok(img.resize_exact(nw, nh, ResizeFilter::Lanczos3))
+    Ok(img.resize_exact(nw, nh, filter))
 }
 
 fn ensure_png(input: &[u8]) -> Result<(), String> {
@@ -111,19 +122,49 @@ pub fn recompress_jpeg(input_bytes: &[u8], quality: u8) -> Result<Vec<u8>, Strin
 }
 
 #[wasm_bindgen]
-pub fn resize_png(input_bytes: &[u8], resize_percent: u8) -> Result<Vec<u8>, String> {
+pub fn resize_png(input_bytes: &[u8], resize_percent: u16) -> Result<Vec<u8>, String> {
+    resize_png_with_filter(input_bytes, resize_percent, 2)
+}
+
+#[wasm_bindgen]
+pub fn resize_jpeg(input_bytes: &[u8], resize_percent: u16) -> Result<Vec<u8>, String> {
+    resize_jpeg_with_filter(input_bytes, resize_percent, 2)
+}
+
+#[wasm_bindgen]
+pub fn resize_png_with_filter(
+    input_bytes: &[u8],
+    resize_percent: u16,
+    filter_code: u8,
+) -> Result<Vec<u8>, String> {
     ensure_png(input_bytes)?;
     let img = decode_image(input_bytes)?;
-    let resized = resize_by_percent(img, resize_percent)?;
+    let filter = filter_from_code(filter_code)?;
+    let resized = resize_by_percent(img, resize_percent, filter)?;
     encode_png(&resized, DEFAULT_PNG_COMPRESSION)
 }
 
 #[wasm_bindgen]
-pub fn resize_jpeg(input_bytes: &[u8], resize_percent: u8) -> Result<Vec<u8>, String> {
+pub fn resize_jpeg_with_filter(
+    input_bytes: &[u8],
+    resize_percent: u16,
+    filter_code: u8,
+) -> Result<Vec<u8>, String> {
+    resize_jpeg_with_filter_and_quality(input_bytes, resize_percent, filter_code, DEFAULT_JPEG_QUALITY)
+}
+
+#[wasm_bindgen]
+pub fn resize_jpeg_with_filter_and_quality(
+    input_bytes: &[u8],
+    resize_percent: u16,
+    filter_code: u8,
+    quality: u8,
+) -> Result<Vec<u8>, String> {
     ensure_jpeg(input_bytes)?;
     let img = decode_image(input_bytes)?;
-    let resized = resize_by_percent(img, resize_percent)?;
-    encode_jpeg(&resized, DEFAULT_JPEG_QUALITY)
+    let filter = filter_from_code(filter_code)?;
+    let resized = resize_by_percent(img, resize_percent, filter)?;
+    encode_jpeg(&resized, quality)
 }
 
 #[wasm_bindgen]
@@ -135,6 +176,18 @@ pub fn estimate_png_recompress_size(input_bytes: &[u8], compression: u8) -> Resu
 #[wasm_bindgen]
 pub fn estimate_jpeg_recompress_size(input_bytes: &[u8], quality: u8) -> Result<u32, String> {
     let out = recompress_jpeg(input_bytes, quality)?;
+    Ok(out.len() as u32)
+}
+
+#[wasm_bindgen]
+pub fn estimate_resize_png_size(input_bytes: &[u8], resize_percent: u16, filter_code: u8) -> Result<u32, String> {
+    let out = resize_png_with_filter(input_bytes, resize_percent, filter_code)?;
+    Ok(out.len() as u32)
+}
+
+#[wasm_bindgen]
+pub fn estimate_resize_jpeg_size(input_bytes: &[u8], resize_percent: u16, filter_code: u8, quality: u8) -> Result<u32, String> {
+    let out = resize_jpeg_with_filter_and_quality(input_bytes, resize_percent, filter_code, quality)?;
     Ok(out.len() as u32)
 }
 

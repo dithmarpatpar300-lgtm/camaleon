@@ -192,8 +192,13 @@ type RecompressPngFn = (input: Uint8Array, compression: number) => Uint8Array;
 type RecompressJpegFn = (input: Uint8Array, quality: number) => Uint8Array;
 type ResizePngFn = (input: Uint8Array, resize_percent: number) => Uint8Array;
 type ResizeJpegFn = (input: Uint8Array, resize_percent: number) => Uint8Array;
+type ResizePngWithFilterFn = (input: Uint8Array, resize_percent: number, filter_code: number) => Uint8Array;
+type ResizeJpegWithFilterFn = (input: Uint8Array, resize_percent: number, filter_code: number) => Uint8Array;
+type ResizeJpegWithFilterAndQualityFn = (input: Uint8Array, resize_percent: number, filter_code: number, quality: number) => Uint8Array;
 type EstimatePngRecompressSizeFn = (input: Uint8Array, compression: number) => number;
 type EstimateJpegRecompressSizeFn = (input: Uint8Array, quality: number) => number;
+type EstimateResizePngSizeFn = (input: Uint8Array, resize_percent: number, filter_code: number) => number;
+type EstimateResizeJpegSizeFn = (input: Uint8Array, resize_percent: number, filter_code: number, quality: number) => number;
 
 type SessionLimitFn = (maxBytes: number) => void;
 type RiskModeFn = (enabled: boolean) => void;
@@ -321,8 +326,13 @@ let recompressPng: RecompressPngFn | null = null;
 let recompressJpeg: RecompressJpegFn | null = null;
 let resizePng: ResizePngFn | null = null;
 let resizeJpeg: ResizeJpegFn | null = null;
+let resizePngWithFilter: ResizePngWithFilterFn | null = null;
+let resizeJpegWithFilter: ResizeJpegWithFilterFn | null = null;
+let resizeJpegWithFilterAndQuality: ResizeJpegWithFilterAndQualityFn | null = null;
 let estimatePngRecompressSize: EstimatePngRecompressSizeFn | null = null;
 let estimateJpegRecompressSize: EstimateJpegRecompressSizeFn | null = null;
+let estimateResizePngSize: EstimateResizePngSizeFn | null = null;
+let estimateResizeJpegSize: EstimateResizeJpegSizeFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
@@ -556,6 +566,9 @@ async function initOptimizeWasm(): Promise<void> {
   recompressJpeg = wasmExport<RecompressJpegFn>(module, "recompress_jpeg");
   resizePng = wasmExport<ResizePngFn>(module, "resize_png");
   resizeJpeg = wasmExport<ResizeJpegFn>(module, "resize_jpeg");
+  resizePngWithFilter = wasmExport<ResizePngWithFilterFn>(module, "resize_png_with_filter");
+  resizeJpegWithFilter = wasmExport<ResizeJpegWithFilterFn>(module, "resize_jpeg_with_filter");
+  resizeJpegWithFilterAndQuality = wasmExport<ResizeJpegWithFilterAndQualityFn>(module, "resize_jpeg_with_filter_and_quality");
   estimatePngRecompressSize = wasmExport<EstimatePngRecompressSizeFn>(
     module,
     "estimate_png_recompress_size"
@@ -564,6 +577,8 @@ async function initOptimizeWasm(): Promise<void> {
     module,
     "estimate_jpeg_recompress_size"
   );
+  estimateResizePngSize = wasmExport<EstimateResizePngSizeFn>(module, "estimate_resize_png_size");
+  estimateResizeJpegSize = wasmExport<EstimateResizeJpegSizeFn>(module, "estimate_resize_jpeg_size");
   setOptimizeSessionLimit = pickSessionLimit(module);
   setOptimizeRiskMode = pickRiskMode(module);
 }
@@ -956,10 +971,30 @@ function runFullEncode(
   }
   if (route.isOptimize) {
     const resizePercent = opts?.resizePercent;
+    const resizeFilter = opts?.resizeFilter;
     if (route.isOptimizeResize && resizePercent != null) {
       if (route.isOptimizePng) {
+        if (resizeFilter != null && resizeFilter !== 2 && resizePngWithFilter) {
+          return resizePngWithFilter(input, resizePercent, resizeFilter);
+        }
         if (!resizePng) throw new Error("Wasm module not initialized");
         return resizePng(input, resizePercent);
+      }
+      if (route.isOptimizeJpg) {
+        const quality = opts?.quality;
+        const hasQuality = quality != null && quality !== 85;
+        const hasFilter = resizeFilter != null && resizeFilter !== 2;
+        if (hasQuality && resizeJpegWithFilterAndQuality) {
+          return resizeJpegWithFilterAndQuality(input, resizePercent, resizeFilter ?? 2, quality);
+        }
+        if (hasFilter && resizeJpegWithFilter) {
+          return resizeJpegWithFilter(input, resizePercent, resizeFilter);
+        }
+        if (hasQuality && resizeJpegWithFilterAndQuality) {
+          return resizeJpegWithFilterAndQuality(input, resizePercent, 2, quality);
+        }
+        if (!resizeJpeg) throw new Error("Wasm module not initialized");
+        return resizeJpeg(input, resizePercent);
       }
       if (!resizeJpeg) throw new Error("Wasm module not initialized");
       return resizeJpeg(input, resizePercent);
@@ -1161,10 +1196,31 @@ function runSizeEstimate(
   }
   if (route.isOptimize) {
     const resizePercent = opts?.resizePercent;
+    const resizeFilter = opts?.resizeFilter;
     if (route.isOptimizeResize && resizePercent != null) {
       if (route.isOptimizePng) {
+        if (estimateResizePngSize) {
+          return estimateResizePngSize(input, resizePercent, resizeFilter ?? 2);
+        }
+        if (resizeFilter != null && resizeFilter !== 2 && resizePngWithFilter) {
+          return resizePngWithFilter(input, resizePercent, resizeFilter).byteLength;
+        }
         if (!resizePng) throw new Error("Wasm estimate export not initialized");
         return resizePng(input, resizePercent).byteLength;
+      }
+      if (route.isOptimizeJpg) {
+        const quality = opts?.quality ?? 85;
+        if (estimateResizeJpegSize) {
+          return estimateResizeJpegSize(input, resizePercent, resizeFilter ?? 2, quality);
+        }
+        if (resizeJpegWithFilterAndQuality) {
+          return resizeJpegWithFilterAndQuality(input, resizePercent, resizeFilter ?? 2, quality).byteLength;
+        }
+        if (resizeFilter != null && resizeFilter !== 2 && resizeJpegWithFilter) {
+          return resizeJpegWithFilter(input, resizePercent, resizeFilter).byteLength;
+        }
+        if (!resizeJpeg) throw new Error("Wasm estimate export not initialized");
+        return resizeJpeg(input, resizePercent).byteLength;
       }
       if (!resizeJpeg) throw new Error("Wasm estimate export not initialized");
       return resizeJpeg(input, resizePercent).byteLength;

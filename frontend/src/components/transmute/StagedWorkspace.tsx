@@ -379,6 +379,8 @@ export function StagedWorkspace({
             specs={panelOptionSpecs}
             values={options}
             onChange={onOptionsChange}
+            sourceWidth={sourceMeta?.width}
+            sourceHeight={sourceMeta?.height}
           />
         </div>
       )}
