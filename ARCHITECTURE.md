@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.7.0** · Engine **v1.6.1** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
+**Snapshot:** App **v3.7.1** · Engine **v1.7.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
 
 ---
 
@@ -158,7 +158,8 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
 | **Prior** | **v3.6.0** | Resize Premium — 5 filters, upscale, quality control, target dims, estimate parity |
-| **Current** | **v3.7.0** | Compress Premium Phase A — honesty notices, color type fix, defaults alignment |
+| **Current** | **v3.7.1** | Compress Premium Phase B — JPEG encoder swap, subsampling control |
+| **Prior** | **v3.7.0** | Compress Premium Phase A — honesty notices, color type fix, defaults alignment |
 | **Next** | TBD | **Compress Phase B** — JPEG encoder swap · UX-4a ToolBrowser |
 
 ---

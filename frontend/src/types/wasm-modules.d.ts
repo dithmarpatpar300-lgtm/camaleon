@@ -315,10 +315,12 @@ declare module "*/transmutador_tga/transmutador_tga.js" {
 declare module "*/transmutador_optimize/transmutador_optimize.js" {
   export function recompress_png(input_bytes: Uint8Array, compression: number): Uint8Array;
   export function recompress_jpeg(input_bytes: Uint8Array, quality: number): Uint8Array;
+  export function recompress_jpeg_with_options(input_bytes: Uint8Array, quality: number, chroma_code: number): Uint8Array;
   export function resize_png(input_bytes: Uint8Array, resize_percent: number): Uint8Array;
   export function resize_jpeg(input_bytes: Uint8Array, resize_percent: number): Uint8Array;
   export function estimate_png_recompress_size(input_bytes: Uint8Array, compression: number): number;
   export function estimate_jpeg_recompress_size(input_bytes: Uint8Array, quality: number): number;
+  export function estimate_jpeg_recompress_with_options(input_bytes: Uint8Array, quality: number, chroma_code: number): number;
   export function set_session_input_limit(max_bytes: number): void;
   export function reset_session_input_limit(): void;
   export function set_risk_mode(enabled: boolean): void;

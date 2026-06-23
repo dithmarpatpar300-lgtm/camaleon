@@ -472,6 +472,23 @@ const en: Dictionary = {
           },
         },
       },
+      v371: {
+        title: "Compress Premium Phase B — JPEG encoder swap & subsampling",
+        summary:
+          "The JPEG encoder has been replaced with jpeg-encoder — a pure Rust library that produces 5-15% smaller files at the same quality via optimized Huffman tables. New chroma subsampling control lets you choose between maximum compression (4:2:0), balanced (4:2:2), and highest color fidelity (4:4:4) for text and screenshots.",
+        technical:
+          "image::JpegEncoder → jpeg-encoder v0.7.0. Optimized Huffman tables enabled by default for all JPEG encode paths (compress + resize). New Wasm exports: recompress_jpeg_with_options(quality, chroma_code), estimate_jpeg_recompress_with_options. Subsampling slider on jpg-compress: 0=4:2:0, 1=4:2:2, 2=4:4:4. Engine v1.7.0. App v3.7.1.",
+        highlights: {
+          jpegEncoderSwap: {
+            title: "Smarter JPEG encoding",
+            body: "The new jpeg-encoder engine uses optimized Huffman tables for every encode, producing noticeably smaller files at the same quality setting. No action needed — it just works.",
+          },
+          subsampling: {
+            title: "Chroma subsampling control",
+            body: "New slider on JPEG Compress: 4:2:0 for maximum compression (photos), 4:2:2 for balanced quality, or 4:4:4 for pixel-perfect color in text, logos, and screenshots.",
+          },
+        },
+      },
       v370: {
         title: "Compress Premium Phase A — honesty, color-type fix, defaults",
         summary:
@@ -2068,6 +2085,13 @@ const en: Dictionary = {
           upperLabel: "Faithful",
           presets: { web: "Web", balanced: "Balanced", high: "High" },
         },
+        subsampling: {
+          label: "Chroma subsampling",
+          hint: "4:2:0 = best compression for photos. 4:4:4 = highest color fidelity (text, screenshots).",
+          lowerLabel: "4:2:0",
+          upperLabel: "4:4:4",
+          presets: { s420: "4:2:0", s422: "4:2:2", s444: "4:4:4" },
+        },
       },
     },
     "png-resize": {
@@ -2345,6 +2369,8 @@ const en: Dictionary = {
         "Maximum compression produces the smallest file but encoding is slower. Pixels remain identical — lossless quality.",
       compressLarger:
         "At these settings, the output may be larger than the input. Try a higher compression level or lower quality to reduce file size.",
+      jpegSubsampling444:
+        "Chroma subsampling 4:4:4 preserves full color detail for every pixel — best for text, screenshots, and graphics with sharp edges. Produces larger files than 4:2:0.",
     },
     estimate: {
       cheapSlow: "Still calculating…",

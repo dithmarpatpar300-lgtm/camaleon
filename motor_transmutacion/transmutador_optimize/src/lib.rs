@@ -3,10 +3,10 @@
 use std::io::Cursor;
 
 use image::GenericImageView;
-use image::codecs::jpeg::JpegEncoder;
 use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use image::imageops::FilterType as ResizeFilter;
 use image::{DynamicImage, ExtendedColorType, ImageEncoder, ImageReader};
+use jpeg_encoder::{ColorType, Encoder, SamplingFactor};
 use wasm_bindgen::prelude::*;
 
 pub const MIN_PNG_COMPRESSION: u8 = 1;
@@ -60,7 +60,15 @@ fn encode_png(img: &DynamicImage, compression: u8) -> Result<Vec<u8>, String> {
     Ok(buf.into_inner())
 }
 
-fn encode_jpeg(img: &DynamicImage, quality: u8) -> Result<Vec<u8>, String> {
+fn subsampling_from_code(code: u8) -> SamplingFactor {
+    match code {
+        1 => SamplingFactor::F_2_1,
+        2 => SamplingFactor::R_4_4_4,
+        _ => SamplingFactor::F_2_2,
+    }
+}
+
+fn encode_jpeg_inner(img: &DynamicImage, quality: u8, subsampling: SamplingFactor) -> Result<Vec<u8>, String> {
     if !(MIN_JPEG_QUALITY..=MAX_JPEG_QUALITY).contains(&quality) {
         return Err(format!(
             "JPEG quality must be between {MIN_JPEG_QUALITY} and {MAX_JPEG_QUALITY}"
@@ -69,11 +77,17 @@ fn encode_jpeg(img: &DynamicImage, quality: u8) -> Result<Vec<u8>, String> {
     let rgb = img.to_rgb8();
     let (w, h) = rgb.dimensions();
     let mut out = Vec::new();
-    let mut encoder = JpegEncoder::new_with_quality(&mut out, quality);
+    let mut encoder = Encoder::new(&mut out, quality);
+    encoder.set_sampling_factor(subsampling);
+    encoder.set_optimized_huffman_tables(true);
     encoder
-        .encode(rgb.as_raw(), w, h, ExtendedColorType::Rgb8)
+        .encode(rgb.as_raw(), w as u16, h as u16, ColorType::Rgb)
         .map_err(|e| format!("JPEG encode failed: {e}"))?;
     Ok(out)
+}
+
+fn encode_jpeg(img: &DynamicImage, quality: u8) -> Result<Vec<u8>, String> {
+    encode_jpeg_inner(img, quality, SamplingFactor::F_2_2)
 }
 
 fn filter_from_code(code: u8) -> Result<ResizeFilter, String> {
@@ -125,9 +139,19 @@ pub fn recompress_png(input_bytes: &[u8], compression: u8) -> Result<Vec<u8>, St
 
 #[wasm_bindgen]
 pub fn recompress_jpeg(input_bytes: &[u8], quality: u8) -> Result<Vec<u8>, String> {
+    recompress_jpeg_with_options(input_bytes, quality, 0)
+}
+
+#[wasm_bindgen]
+pub fn recompress_jpeg_with_options(
+    input_bytes: &[u8],
+    quality: u8,
+    chroma_code: u8,
+) -> Result<Vec<u8>, String> {
     ensure_jpeg(input_bytes)?;
     let img = decode_image(input_bytes)?;
-    encode_jpeg(&img, quality)
+    let ss = subsampling_from_code(chroma_code);
+    encode_jpeg_inner(&img, quality, ss)
 }
 
 #[wasm_bindgen]
@@ -189,6 +213,16 @@ pub fn estimate_jpeg_recompress_size(input_bytes: &[u8], quality: u8) -> Result<
 }
 
 #[wasm_bindgen]
+pub fn estimate_jpeg_recompress_with_options(
+    input_bytes: &[u8],
+    quality: u8,
+    chroma_code: u8,
+) -> Result<u32, String> {
+    let out = recompress_jpeg_with_options(input_bytes, quality, chroma_code)?;
+    Ok(out.len() as u32)
+}
+
+#[wasm_bindgen]
 pub fn estimate_resize_png_size(input_bytes: &[u8], resize_percent: u16, filter_code: u8) -> Result<u32, String> {
     let out = resize_png_with_filter(input_bytes, resize_percent, filter_code)?;
     Ok(out.len() as u32)
@@ -218,17 +252,28 @@ pub fn set_risk_mode(enabled: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use image::codecs::png::PngEncoder;
-    use image::{ImageEncoder, RgbImage};
+    use image::codecs::jpeg::JpegEncoder;
+    use image::codecs::png::PngEncoder as ImagePngEncoder;
+    use image::{ImageEncoder, RgbImage, RgbaImage};
 
     fn sample_png() -> Vec<u8> {
         let img = RgbImage::from_fn(32, 32, |x, y| {
             image::Rgb([(x * 8) as u8, (y * 8) as u8, 128])
         });
         let mut out = Vec::new();
-        PngEncoder::new(&mut out)
+        ImagePngEncoder::new(&mut out)
             .write_image(img.as_raw(), 32, 32, ExtendedColorType::Rgb8)
             .unwrap();
+        out
+    }
+
+    fn sample_jpeg(quality: u8) -> Vec<u8> {
+        let img = RgbImage::from_fn(64, 64, |x, y| {
+            image::Rgb([(x * 4) as u8, (y * 4) as u8, 128])
+        });
+        let mut out = Vec::new();
+        let mut enc = JpegEncoder::new_with_quality(&mut out, quality);
+        enc.encode(img.as_raw(), 64, 64, ExtendedColorType::Rgb8).unwrap();
         out
     }
 
@@ -247,5 +292,54 @@ mod tests {
         let img = decode_image(&out).unwrap();
         assert_eq!(img.width(), 16);
         assert_eq!(img.height(), 16);
+    }
+
+    #[test]
+    fn recompress_jpeg_roundtrip() {
+        let jpg = sample_jpeg(85);
+        let out = recompress_jpeg(&jpg, 75).expect("recompress");
+        ensure_jpeg(&out).unwrap();
+        assert!(out.len() > 0);
+    }
+
+    #[test]
+    fn recompress_jpeg_with_subsampling_444() {
+        let jpg = sample_jpeg(85);
+        let out420 = recompress_jpeg_with_options(&jpg, 75, 0).expect("4:2:0");
+        let out444 = recompress_jpeg_with_options(&jpg, 75, 2).expect("4:4:4");
+        ensure_jpeg(&out420).unwrap();
+        ensure_jpeg(&out444).unwrap();
+        assert!(out444.len() >= out420.len(), "4:4:4 should be >= 4:2:0 in size");
+    }
+
+    #[test]
+    fn recompress_jpeg_size_order() {
+        let jpg = sample_jpeg(75);
+        let out420 = recompress_jpeg_with_options(&jpg, 75, 0).expect("4:2:0");
+        let out422 = recompress_jpeg_with_options(&jpg, 75, 1).expect("4:2:2");
+        let out444 = recompress_jpeg_with_options(&jpg, 75, 2).expect("4:4:4");
+        assert!(out420.len() <= out422.len(), "4:2:0 <= 4:2:2");
+        assert!(out422.len() <= out444.len(), "4:2:2 <= 4:4:4");
+    }
+
+    #[test]
+    fn png_color_type_preserved_rgb() {
+        let png = sample_png();
+        let out = recompress_png(&png, 6).expect("recompress");
+        assert!(&out[0..8] == b"\x89PNG\r\n\x1a\n");
+        assert_eq!(out[25], 2, "Color type should be RGB (2), not RGBA (6)");
+    }
+
+    #[test]
+    fn png_color_type_preserved_rgba() {
+        let img = RgbaImage::from_fn(32, 32, |x, y| {
+            image::Rgba([(x * 8) as u8, (y * 8) as u8, 128, 200])
+        });
+        let mut png = Vec::new();
+        ImagePngEncoder::new(&mut png)
+            .write_image(img.as_raw(), 32, 32, ExtendedColorType::Rgba8)
+            .unwrap();
+        let out = recompress_png(&png, 6).expect("recompress");
+        assert_eq!(out[25], 6, "Color type should be RGBA (6)");
     }
 }

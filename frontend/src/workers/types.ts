@@ -42,6 +42,8 @@ export type TransmutationOptions = {
   resizePercent?: number;
   /** Tier 4a resize — interpolation filter code (0=Nearest, 1=Triangle, 2=CatmullRom, 3=Gaussian, 4=Lanczos3). */
   resizeFilter?: number;
+  /** Tier 4a compress — JPEG chroma subsampling (0=Auto/4:2:0, 1=4:4:4, 2=4:2:2). */
+  subsampling?: number;
   /** Computed SVG raster width (sent to Wasm). */
   outputWidth?: number;
   /** Computed SVG raster height (sent to Wasm). */

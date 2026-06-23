@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.7.0** (`dev`) | **25 tools** · **Compress Premium Phase A** · notices honesty · color type fix |
-| **Engine (Rust workspace)** | v1.6.1 | `encode_png` preserves RGB/RGBA — avoids unnecessary size inflation |
-| **SPEC** | v3.7.0 | Compress UX baseline · generational loss notices · color type preservation |
+| **Frontend (app)** | **v3.7.1** (`dev`) | **25 tools** · **Compress Phase B** · JPEG encoder swap · subsampling control |
+| **Engine (Rust workspace)** | v1.7.0 | `jpeg-encoder` crate: optimized Huffman, chroma subsampling (4:4:4/4:2:2/4:2:0) |
+| **SPEC** | v3.7.1 | JPEG encoder swap · subsampling · Huffman optimization |
 
-**v3.7.0** (`dev`): **Compress Premium Phase A** — honesty notices for JPEG generational loss, PNG fast/slow compression, and size increase warnings; `encode_png` preserves source color type (RGB→RGB, RGBA→RGBA) preventing 33% size inflation; worker fallback defaults aligned with registry (PNG comp=9, JPEG quality=75/85); i18n EN+ES for all new notices. Release: `docs/releases/v3.7.0.md`. **Next:** Compress Phase B — JPEG encoder swap (`jpeg-encoder` crate, subsampling control).
+**v3.7.1** (`dev`): **Compress Premium Phase B — JPEG encoder swap** — replaced `image::JpegEncoder` with `jpeg-encoder` crate (pure Rust, +18 KB Wasm). Optimized Huffman tables enabled by default — 5-15% smaller JPEG files at same quality without user action. New `recompress_jpeg_with_options` Wasm export with chroma subsampling control (4:2:0 / 4:2:2 / 4:4:4). Subsampling slider on `jpg-compress`. Fidelity notice for 4:4:4 mode. Applied to all JPEG encode paths (compress + resize). Engine v1.7.0. Release: `docs/releases/v3.7.1.md`. **Next:** Phase C — PNG lossless optimization (oxipng spike).
+
+**v3.7.0** (`dev`): **Compress Premium Phase A** — honesty notices for JPEG generational loss, PNG fast/slow compression, and size increase warnings; `encode_png` preserves source color type (RGB→RGB, RGBA→RGBA) preventing 33% size inflation; worker fallback defaults aligned with registry (PNG comp=9, JPEG quality=75/85); i18n EN+ES for all new notices. Release: `docs/releases/v3.7.0.md`.
 
 **v3.6.1** (`dev`): **UpdateEngine refactor** — centralized `lib/app-update/update-engine.ts` with state machine (idle→checking→available→applying). Polling interval reduced from 5 min to 2 min. SW subscription integrated directly into engine. AppUpdateProvider simplified to thin wrapper. "Show again" button in Settings→Updates now opens onboarding panel immediately. Release: `docs/releases/v3.6.1.md`.
 
@@ -53,7 +55,7 @@
 
 **v3.0.0–v3.0.1** (`main`): **PWA / offline shell (Tier 3.4 capstone)** — Serwist SW, Settings S5, offline UX. Releases: `docs/releases/v3.0.0.md`, `v3.0.1.md`. **Tier 3 complete.**
 
-**Next:** **Compress Phase B** — JPEG encoder swap · **4a.1** metrics-first optimize UX · **3.6.3** SVG batch.
+**Next:** **Phase C — PNG lossless optimization** (oxipng spike) · **Compress Phase D** lossy quantization.
 
 **v2.3.8**: **Risk mode (S6)** + hotfixes. Release: `docs/releases/v2.3.8.md`.
 
@@ -354,6 +356,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-23 | OpenCode | **v3.7.1 on `dev`:** Compress Premium Phase B — JPEG encoder swap (`jpeg-encoder` crate); optimized Huffman tables (5-15% smaller JPEG); chroma subsampling control (4:2:0/4:2:2/4:4:4) on `jpg-compress`; subsampling slider + fidelity notice + i18n EN/ES. Engine v1.7.0. |
 | 2026-06-23 | OpenCode | **v3.7.0 on `dev`:** Compress Premium Phase A — honesty notices for JPEG generational loss, PNG fast/slow compression, and size increase warnings; `encode_png` preserves source color type (RGB→RGB, RGBA→RGBA) preventing 33% size inflation; worker defaults aligned with registry (PNG comp=9, JPEG quality=75/85). SPEC/ROADMAP/README/ARCHITECTURE → v3.7.0 |
 | 2026-06-22 | OpenCode | **v3.6.1 on `dev`:** Centralized UpdateEngine with state machine; 2min polling; SW sub integrated into engine; onboarding opens immediately via `openOnboarding()`. SPEC/ROADMAP/README/ARCHITECTURE → v3.6.1 |
 | 2026-06-22 | OpenCode | **v3.6.0 on `dev`:** Resize Premium Phases A-E — 5 filters, upscale to 200% (400% advanced), JPEG quality control, target dimensions, resize notices, estimate parity. Tool descriptions updated. Competitive analysis vs waifu2x/Real-ESRGAN/Squoosh. SPEC/ROADMAP/README/ARCHITECTURE → v3.6.0 |

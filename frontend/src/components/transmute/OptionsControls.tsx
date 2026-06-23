@@ -93,6 +93,8 @@ function SliderControl({
   const valueLabel =
     spec.key === "iconSize"
       ? `${value}px`
+      : spec.key === "subsampling"
+        ? value === 0 ? "4:2:0" : value === 1 ? "4:2:2" : "4:4:4"
       : isResize
         ? `${value}%`
         : spec.key === "outputScale" &&

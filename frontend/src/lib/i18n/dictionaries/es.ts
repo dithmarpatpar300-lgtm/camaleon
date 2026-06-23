@@ -473,6 +473,23 @@ const es: Dictionary = {
           },
         },
       },
+      v371: {
+        title: "Compress Premium Fase B — encoder JPEG & control de submuestreo",
+        summary:
+          "El codificador JPEG ha sido reemplazado por jpeg-encoder — una libreria Rust pura que produce archivos 5-15% mas pequenos a la misma calidad mediante tablas Huffman optimizadas. Nuevo control de submuestreo de croma para elegir entre maxima compresion (4:2:0), equilibrado (4:2:2) y maxima fidelidad de color (4:4:4) para texto y capturas.",
+        technical:
+          "image::JpegEncoder → jpeg-encoder v0.7.0. Tablas Huffman optimizadas activadas por defecto en todas las rutas JPEG (compress + resize). Nuevos exports Wasm: recompress_jpeg_with_options(quality, chroma_code), estimate_jpeg_recompress_with_options. Slider de submuestreo en jpg-compress: 0=4:2:0, 1=4:2:2, 2=4:4:4. Motor v1.7.0. App v3.7.1.",
+        highlights: {
+          jpegEncoderSwap: {
+            title: "Codificacion JPEG mas inteligente",
+            body: "El nuevo motor jpeg-encoder usa tablas Huffman optimizadas en cada codificacion, produciendo archivos notablemente mas pequenos al mismo nivel de calidad. Sin necesidad de configuracion.",
+          },
+          subsampling: {
+            title: "Control de submuestreo de croma",
+            body: "Nuevo slider en Compresion JPEG: 4:2:0 para maxima compresion (fotos), 4:2:2 para calidad equilibrada, o 4:4:4 para color perfecto en texto, logos y capturas de pantalla.",
+          },
+        },
+      },
       v370: {
         title: "Compress Premium Fase A — honestidad, correccion de color type, valores por defecto",
         summary:
@@ -2055,6 +2072,13 @@ const es: Dictionary = {
           upperLabel: "Mas fiel",
           presets: { web: "Web", balanced: "Balanceado", high: "Alto" },
         },
+        subsampling: {
+          label: "Submuestreo de croma",
+          hint: "4:2:0 = mejor compresion para fotos. 4:4:4 = maxima fidelidad de color (texto, capturas).",
+          lowerLabel: "4:2:0",
+          upperLabel: "4:4:4",
+          presets: { s420: "4:2:0", s422: "4:2:2", s444: "4:4:4" },
+        },
       },
     },
     "png-resize": {
@@ -2332,6 +2356,8 @@ const es: Dictionary = {
         "La maxima compresion produce el archivo mas pequeno pero es mas lenta. Los pixeles permanecen identicos — calidad sin perdida.",
       compressLarger:
         "Con estos ajustes, la salida puede ser mas grande que la entrada. Prueba un nivel de compresion mas alto o una calidad mas baja para reducir el tamano.",
+      jpegSubsampling444:
+        "El submuestreo de croma 4:4:4 conserva todo el detalle de color por pixel — ideal para texto, capturas de pantalla y graficos con bordes nitidos. Produce archivos mas grandes que 4:2:0.",
     },
     estimate: {
       cheapSlow: "Calculando…",

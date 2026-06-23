@@ -9,6 +9,7 @@ export type FidelityNoticeContext = {
   resizeFilter?: number;
   compression?: number;
   quality?: number;
+  subsampling?: number;
 };
 
 export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
@@ -68,6 +69,19 @@ export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
       severity: "warn",
       messageKey: "notices.fidelity.compressLarger",
       priority: NOTICE_PRIORITY.warnFidelity,
+    });
+  }
+
+  if (
+    ctx.toolId === "jpg-compress" &&
+    ctx.subsampling != null &&
+    ctx.subsampling === 1
+  ) {
+    notices.push({
+      id: "fidelity-jpeg-subsampling-444",
+      severity: "info",
+      messageKey: "notices.fidelity.jpegSubsampling444",
+      priority: NOTICE_PRIORITY.info,
     });
   }
 

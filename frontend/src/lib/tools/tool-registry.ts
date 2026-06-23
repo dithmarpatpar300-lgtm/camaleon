@@ -770,6 +770,19 @@ export const TOOLS: ToolDefinition[] = [
           { label: "high", value: 95 },
         ],
       },
+      {
+        kind: "slider",
+        key: "subsampling",
+        min: 0,
+        max: 2,
+        step: 1,
+        defaultValue: 0,
+        presets: [
+          { label: "s420", value: 0 },
+          { label: "s422", value: 1 },
+          { label: "s444", value: 2 },
+        ],
+      },
     ],
   },
   {

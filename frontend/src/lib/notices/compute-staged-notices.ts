@@ -73,6 +73,7 @@ export function computeStagedNotices(ctx: StagedNoticeContext): Notice[] {
       resizeFilter: ctx.options.resizeFilter,
       compression: ctx.options.compression,
       quality: ctx.options.quality,
+      subsampling: ctx.options.subsampling,
     }),
     ...computeSvgHonestyNotices({
       toolId: ctx.toolId,
