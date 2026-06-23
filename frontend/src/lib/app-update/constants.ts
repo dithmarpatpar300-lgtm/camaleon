@@ -1,5 +1,5 @@
 /** How often to poll for SW updates and the live version beacon. */
-export const UPDATE_POLL_INTERVAL_MS = 5 * 60 * 1000;
+export const UPDATE_POLL_INTERVAL_MS = 2 * 60 * 1000;
 
 /** Max wait for a waiting service worker to take control after skipWaiting. */
 export const SW_CONTROL_TIMEOUT_MS = 10_000;

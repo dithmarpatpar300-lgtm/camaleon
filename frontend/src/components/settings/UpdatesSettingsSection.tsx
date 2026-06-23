@@ -30,7 +30,7 @@ export function UpdatesSettingsSection({ drawerOpen, onRequestClose }: Props) {
   const { t } = useI18n();
   const { toast } = useToast();
   const { openWhatsNew } = useReleaseComms();
-  const { checkForUpdatesNow, checkingForUpdates } = useAppUpdate();
+  const { checkForUpdatesNow, checking } = useAppUpdate();
   const [autoDetect, setAutoDetect] = useState(true);
   const [showChangelog, setShowChangelog] = useState(true);
 
@@ -107,10 +107,10 @@ export function UpdatesSettingsSection({ drawerOpen, onRequestClose }: Props) {
         <button
           type="button"
           onClick={() => void handleCheckNow()}
-          disabled={checkingForUpdates}
+          disabled={checking}
           className={actionButtonClass}
         >
-          {checkingForUpdates
+          {checking
             ? t("settings.updates.checkNowRunning")
             : t("settings.updates.checkNowAction")}
         </button>
