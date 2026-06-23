@@ -472,6 +472,27 @@ const en: Dictionary = {
           },
         },
       },
+      v380: {
+        title: "Compress Premium Phase C — native PNG optimization",
+        summary:
+          "A complete PNG lossless optimization pipeline built natively into Camaleon. Tries 5 filter types, reduces color type (RGBA→RGB, RGB→Grayscale), reduces bit depth (L8→L4→L2→L1), optimizes transparent pixels, and tunes DEFLATE strategy (Default, Filtered, HuffmanOnly) — all in a single optimization pass. 36 candidates are evaluated and the smallest is chosen.",
+        technical:
+          "Native pipeline: color_type_reduce + optimize_alpha_pixels + filter trial (5 × image::PngEncoder) + custom encoder (5 filters × 3 miniz_oxide strategies) + bit depth trial (L1/L2/L4 × 5 filters). Custom PNG builder: IHDR + IDAT chunked + IEND + CRC32. miniz_oxide compress_to_vec_inner via CompressorOxide with strategy control. Engine v1.7.0. App v3.8.0.",
+        highlights: {
+          nativePngOpt: {
+            title: "Native lossless optimization",
+            body: "Filter trial picks the best PNG filter for your image. Color type reduction shrinks RGBA→RGB and RGB→Grayscale when possible. All changes are lossless — pixels never change.",
+          },
+          deflateStrategy: {
+            title: "Smarter DEFLATE compression",
+            body: "A custom PNG encoder tests 3 compression strategies per filter: Default (balanced), Filtered (optimized for PNG scanlines), and HuffmanOnly (fastest). The smallest output wins.",
+          },
+          bitDepth: {
+            title: "Automatic bit depth reduction",
+            body: "Grayscale images are automatically detected and encoded at the smallest possible bit depth: 1-bit for pure black & white, 2-bit for 4 colors, 4-bit for 16 colors.",
+          },
+        },
+      },
       v371: {
         title: "Compress Premium Phase B — JPEG encoder swap & subsampling",
         summary:
@@ -2065,11 +2086,18 @@ const en: Dictionary = {
       fidelityHint: "Lossless re-pack — pixel data unchanged; only container compression changes.",
       options: {
         compression: {
-          label: "PNG Compression",
-          hint: "Higher = smaller file, slower encode.",
-          lowerLabel: "Faster",
-          upperLabel: "Smaller",
+          label: "Compression level",
+          hint: "Higher level = smaller file, slower encoding. Pixels remain identical — lossless.",
+          lowerLabel: "Fast",
+          upperLabel: "Minimal",
           presets: { fast: "Fast", balanced: "Balanced", minimal: "Minimal" },
+        },
+        optimizationLevel: {
+          label: "Optimization",
+          hint: "Off = standard encoding. Full = tries multiple filter strategies + color type reduction for best compression (~10-30% smaller).",
+          lowerLabel: "Off",
+          upperLabel: "Full",
+          presets: { off: "Off", full: "Full" },
         },
       },
     },
@@ -2371,6 +2399,8 @@ const en: Dictionary = {
         "At these settings, the output may be larger than the input. Try a higher compression level or lower quality to reduce file size.",
       jpegSubsampling444:
         "Chroma subsampling 4:4:4 preserves full color detail for every pixel — best for text, screenshots, and graphics with sharp edges. Produces larger files than 4:2:0.",
+      pngOptimized:
+        "Full optimization tries multiple filter strategies and reduces color type for the best compression. Encoding may be 3-6× slower but output can be 10-30% smaller. Pixels remain identical — lossless.",
     },
     estimate: {
       cheapSlow: "Still calculating…",

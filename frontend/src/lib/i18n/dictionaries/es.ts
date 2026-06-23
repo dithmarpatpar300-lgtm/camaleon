@@ -473,6 +473,27 @@ const es: Dictionary = {
           },
         },
       },
+      v380: {
+        title: "Compress Premium Fase C — optimizacion nativa de PNG",
+        summary:
+          "Un pipeline completo de optimizacion PNG sin perdida construido nativamente en Camaleon. Prueba 5 tipos de filtro, reduce el tipo de color (RGBA→RGB, RGB→Escala de grises), reduce la profundidad de bits (L8→L4→L2→L1), optimiza pixeles transparentes y ajusta la estrategia DEFLATE (Default, Filtered, HuffmanOnly) — todo en un solo pase de optimizacion. Se evaluan 36 candidatos y se elige el mas pequeno.",
+        technical:
+          "Pipeline nativo: color_type_reduce + optimize_alpha_pixels + filter trial (5 × image::PngEncoder) + encoder custom (5 filtros × 3 estrategias miniz_oxide) + bit depth trial (L1/L2/L4 × 5 filtros). Constructor PNG manual: IHDR + IDAT fragmentado + IEND + CRC32. CompressorOxide con control de estrategia. Motor v1.7.0. App v3.8.0.",
+        highlights: {
+          nativePngOpt: {
+            title: "Optimizacion nativa sin perdida",
+            body: "La prueba de filtros elige el mejor filtro PNG para tu imagen. La reduccion de tipo de color convierte RGBA→RGB y RGB→Escala de grises cuando es posible. Todos los cambios son sin perdida — los pixeles nunca cambian.",
+          },
+          deflateStrategy: {
+            title: "Compresion DEFLATE mas inteligente",
+            body: "Un codificador PNG personalizado prueba 3 estrategias de compresion por filtro: Default (equilibrada), Filtered (optimizada para scanlines PNG) y HuffmanOnly (la mas rapida). Gana la salida mas pequena.",
+          },
+          bitDepth: {
+            title: "Reduccion automatica de profundidad de bits",
+            body: "Las imagenes en escala de grises se detectan automaticamente y se codifican a la menor profundidad de bits posible: 1-bit para blanco y negro puro, 2-bit para 4 colores, 4-bit para 16 colores.",
+          },
+        },
+      },
       v371: {
         title: "Compress Premium Fase B — encoder JPEG & control de submuestreo",
         summary:
@@ -2052,11 +2073,18 @@ const es: Dictionary = {
       fidelityHint: "Reempaquetado sin perdida — los pixeles no cambian; solo la compresion del contenedor.",
       options: {
         compression: {
-          label: "Compresion PNG",
-          hint: "Mayor = archivo mas pequeno, encode mas lento.",
-          lowerLabel: "Mas rapido",
-          upperLabel: "Mas pequeno",
+          label: "Nivel de compresion",
+          hint: "Nivel mas alto = archivo mas pequeno, codificacion mas lenta. Los pixeles permanecen identicos — sin perdida.",
+          lowerLabel: "Rapido",
+          upperLabel: "Minimo",
           presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+        optimizationLevel: {
+          label: "Optimizacion",
+          hint: "Off = codificacion estandar. Full = prueba multiples filtros + reduccion de tipo de color para mejor compresion (~10-30% mas pequeno).",
+          lowerLabel: "Off",
+          upperLabel: "Full",
+          presets: { off: "Off", full: "Full" },
         },
       },
     },
@@ -2358,6 +2386,8 @@ const es: Dictionary = {
         "Con estos ajustes, la salida puede ser mas grande que la entrada. Prueba un nivel de compresion mas alto o una calidad mas baja para reducir el tamano.",
       jpegSubsampling444:
         "El submuestreo de croma 4:4:4 conserva todo el detalle de color por pixel — ideal para texto, capturas de pantalla y graficos con bordes nitidos. Produce archivos mas grandes que 4:2:0.",
+      pngOptimized:
+        "La optimizacion completa prueba multiples estrategias de filtro y reduce el tipo de color para la mejor compresion. La codificacion puede ser 3-6× mas lenta pero la salida puede ser 10-30% mas pequena. Pixeles identicos — sin perdida.",
     },
     estimate: {
       cheapSlow: "Calculando…",
