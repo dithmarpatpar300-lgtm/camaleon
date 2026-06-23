@@ -2063,7 +2063,7 @@ const en: Dictionary = {
           hint: "Higher values preserve more detail but produce larger files.",
           lowerLabel: "Smaller file",
           upperLabel: "Higher quality",
-          presets: { "60%": "60%", "75%": "75%", "85%": "85%", "92%": "92%" },
+          presets: { "web": "Web", "balanced": "Balanced", "high": "High", "native": "Native" },
         },
       },
     },

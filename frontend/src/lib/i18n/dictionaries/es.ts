@@ -2050,7 +2050,7 @@ const es: Dictionary = {
           hint: "Valores mas altos preservan mas detalle pero producen archivos mas grandes.",
           lowerLabel: "Archivo menor",
           upperLabel: "Mayor calidad",
-          presets: { "60%": "60%", "75%": "75%", "85%": "85%", "92%": "92%" },
+          presets: { "web": "Web", "balanced": "Equilibrado", "high": "Alta", "native": "Nativo" },
         },
       },
     },
