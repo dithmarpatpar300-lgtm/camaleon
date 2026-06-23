@@ -472,6 +472,23 @@ const en: Dictionary = {
           },
         },
       },
+      v361: {
+        title: "Update engine refactor & onboarding UX",
+        summary:
+          "The app update system has been rebuilt for more reliable detection — shorter polling, centralized state machine. The 'Show again' button in Settings now shows the welcome panel immediately instead of only on next visit.",
+        technical:
+          "lib/app-update/update-engine.ts: centralized state machine (idle→checking→available→applying). Polling: 5min→2min. SW subscription integrated. AppUpdateProvider ~50 lines. ReleaseCommsProvider: openOnboarding() + showOnboarding state. App v3.6.1 · engine 1.6.0.",
+        highlights: {
+          updateEngine: {
+            title: "Better update detection",
+            body: "The update system now polls every 2 minutes (instead of 5) and uses a single state machine to coordinate Service Worker and version beacon checks.",
+          },
+          onboardingUx: {
+            title: "Welcome panel on demand",
+            body: "Clicking 'Show again' in Settings → Updates now closes Settings and opens the welcome panel immediately — just like 'View What's New'.",
+          },
+        },
+      },
       v360: {
         title: "Resize Premium — 5 filters, upscale, quality control",
         summary:

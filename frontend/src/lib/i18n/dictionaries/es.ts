@@ -473,6 +473,23 @@ const es: Dictionary = {
           },
         },
       },
+      v361: {
+        title: "Refactor del motor de actualizaciones y UX de onboarding",
+        summary:
+          "El sistema de actualizaciones fue reconstruido para una deteccion mas fiable — polling mas corto, maquina de estados centralizada. El boton 'Mostrar de nuevo' en Ajustes ahora muestra el panel de bienvenida inmediatamente en lugar de solo en la proxima visita.",
+        technical:
+          "lib/app-update/update-engine.ts: maquina de estados centralizada (idle→checking→available→applying). Polling: 5min→2min. Suscripcion SW integrada. AppUpdateProvider ~50 lineas. ReleaseCommsProvider: openOnboarding() + showOnboarding. App v3.6.1 · motor 1.6.0.",
+        highlights: {
+          updateEngine: {
+            title: "Mejor deteccion de actualizaciones",
+            body: "El sistema ahora consulta cada 2 minutos (antes 5) y usa una unica maquina de estados para coordinar las comprobaciones del Service Worker y del beacon de version.",
+          },
+          onboardingUx: {
+            title: "Panel de bienvenida bajo demanda",
+            body: "Hacer clic en 'Mostrar de nuevo' en Ajustes → Actualizaciones ahora cierra Ajustes y abre el panel de bienvenida inmediatamente — igual que 'Ver Novedades'.",
+          },
+        },
+      },
       v360: {
         title: "Resize Premium — 5 filtros, escalado, control de calidad",
         summary:

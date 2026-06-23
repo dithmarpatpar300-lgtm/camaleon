@@ -15,11 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.6.0** (`dev`) | **25 tools** · **Resize Premium** — 5 filters · upscale · quality control · dimensions display |
-| **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates incl. **`transmutador_optimize`** (new resize exports) |
-| **SPEC** | v3.6.0 | §6.13 `transmutador_optimize` extended · §12.5 Tier 4a resize premium complete |
+| **Frontend (app)** | **v3.6.1** (`dev`) | **25 tools** · **UpdateEngine refactor** · onboarding UX · 2min polling |
+| **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates (unchanged) |
+| **SPEC** | v3.6.1 | UpdateEngine centralized · onboarding provider extension |
 
-**v3.6.0** (`dev`): **Resize Premium** — 5 interpolation filters (CatmullRom default, Lanczos3, Triangle, Nearest, Gaussian); upscale to 200% (advanced 400%); JPEG quality slider on resize; target dimensions display; resize-specific fidelity notices; dedicated estimate exports; competitive analysis vs waifu2x/Real-ESRGAN/Squoosh. Release: `docs/releases/v3.6.0.md`. Plan: `docs/planning/resize_premium_roadmap.md`.
+**v3.6.1** (`dev`): **UpdateEngine refactor** — centralized `lib/app-update/update-engine.ts` with state machine (idle→checking→available→applying). Polling interval reduced from 5 min to 2 min. SW subscription integrated directly into engine. AppUpdateProvider simplified to thin wrapper. "Show again" button in Settings→Updates now opens onboarding panel immediately. Release: `docs/releases/v3.6.1.md`.
 
 **v3.5.3** (`dev`): **Low-end device resilience** — `device-capability.ts`: adaptive WASM loading strategies (streaming/buffered/buffered-with-retry) derived from device tier; storage pressure detection via `navigator.storage.estimate()` scored into `computeResourceProfile`; `engineLoadHints` on `WorkerRequest` flows to `initWasmModule()` in worker; device score bar + adaptive recommendation in Performance settings S3; all 13 transmutator init functions + frame-preview worker migrated to `initWasmModule`. Zero telemetry — all signals client-side. Release: `docs/releases/v3.5.3.md`.
 
@@ -352,6 +352,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-22 | OpenCode | **v3.6.1 on `dev`:** Centralized UpdateEngine with state machine; 2min polling; SW sub integrated into engine; onboarding opens immediately via `openOnboarding()`. SPEC/ROADMAP/README/ARCHITECTURE → v3.6.1 |
 | 2026-06-22 | OpenCode | **v3.6.0 on `dev`:** Resize Premium Phases A-E — 5 filters, upscale to 200% (400% advanced), JPEG quality control, target dimensions, resize notices, estimate parity. Tool descriptions updated. Competitive analysis vs waifu2x/Real-ESRGAN/Squoosh. SPEC/ROADMAP/README/ARCHITECTURE → v3.6.0 |
 | 2026-06-22 | OpenCode | **v3.5.4 on `dev`:** Offline chunk error fix — `app/error.tsx` + `app/global-error.tsx` ChunkLoadError boundaries; SW cache dedup via `isAlreadyCachedInSw`; `trimShellCache` (75-entry cap); enhanced `tryForceOfflineFallbackInSw`; `/~offline` served for document misses in force-offline listener |
 | 2026-06-22 | OpenCode | **v3.5.3 on `dev`:** Device capability engine (`device-capability.ts`); adaptive WASM loading (streaming/buffered/buffered-with-retry); storage pressure detection via `navigator.storage.estimate()`; `engineLoadHints` on WorkerRequest; device score bar in Performance settings S3; `initWasmModule()` across 13 init funcs + frame-preview worker. SPEC/ROADMAP/README/ARCHITECTURE → v3.5.3 |
