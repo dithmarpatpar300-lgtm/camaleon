@@ -1000,11 +1000,11 @@ function runFullEncode(
       return resizeJpeg(input, resizePercent);
     }
     if (route.isOptimizePng) {
-      const compression = opts?.compression ?? 6;
+      const compression = opts?.compression ?? 9;
       if (!recompressPng) throw new Error("Wasm module not initialized");
       return recompressPng(input, compression);
     }
-    const quality = opts?.quality ?? 85;
+    const quality = opts?.quality ?? 75;
     if (!recompressJpeg) throw new Error("Wasm module not initialized");
     return recompressJpeg(input, quality);
   }
@@ -1226,11 +1226,11 @@ function runSizeEstimate(
       return resizeJpeg(input, resizePercent).byteLength;
     }
     if (route.isOptimizePng) {
-      const compression = opts?.compression ?? 6;
+      const compression = opts?.compression ?? 9;
       if (!estimatePngRecompressSize) throw new Error("Wasm estimate export not initialized");
       return estimatePngRecompressSize(input, compression);
     }
-    const quality = opts?.quality ?? 85;
+    const quality = opts?.quality ?? 75;
     if (!estimateJpegRecompressSize) throw new Error("Wasm estimate export not initialized");
     return estimateJpegRecompressSize(input, quality);
   }

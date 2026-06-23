@@ -11,13 +11,15 @@
 
 ---
 
-## Current Snapshot (2026-06-22)
+## Current Snapshot (2026-06-23)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.6.1** (`dev`) | **25 tools** · **UpdateEngine refactor** · onboarding UX · 2min polling |
-| **Engine (Rust workspace)** | v1.6.0 | **Thirteen** Wasm crates (unchanged) |
-| **SPEC** | v3.6.1 | UpdateEngine centralized · onboarding provider extension |
+| **Frontend (app)** | **v3.7.0** (`dev`) | **25 tools** · **Compress Premium Phase A** · notices honesty · color type fix |
+| **Engine (Rust workspace)** | v1.6.1 | `encode_png` preserves RGB/RGBA — avoids unnecessary size inflation |
+| **SPEC** | v3.7.0 | Compress UX baseline · generational loss notices · color type preservation |
+
+**v3.7.0** (`dev`): **Compress Premium Phase A** — honesty notices for JPEG generational loss, PNG fast/slow compression, and size increase warnings; `encode_png` preserves source color type (RGB→RGB, RGBA→RGBA) preventing 33% size inflation; worker fallback defaults aligned with registry (PNG comp=9, JPEG quality=75/85); i18n EN+ES for all new notices. Release: `docs/releases/v3.7.0.md`. **Next:** Compress Phase B — JPEG encoder swap (`jpeg-encoder` crate, subsampling control).
 
 **v3.6.1** (`dev`): **UpdateEngine refactor** — centralized `lib/app-update/update-engine.ts` with state machine (idle→checking→available→applying). Polling interval reduced from 5 min to 2 min. SW subscription integrated directly into engine. AppUpdateProvider simplified to thin wrapper. "Show again" button in Settings→Updates now opens onboarding panel immediately. Release: `docs/releases/v3.6.1.md`.
 
@@ -51,7 +53,7 @@
 
 **v3.0.0–v3.0.1** (`main`): **PWA / offline shell (Tier 3.4 capstone)** — Serwist SW, Settings S5, offline UX. Releases: `docs/releases/v3.0.0.md`, `v3.0.1.md`. **Tier 3 complete.**
 
-**Next:** **4a.1** metrics-first optimize UX · **3.6.3** SVG batch.
+**Next:** **Compress Phase B** — JPEG encoder swap · **4a.1** metrics-first optimize UX · **3.6.3** SVG batch.
 
 **v2.3.8**: **Risk mode (S6)** + hotfixes. Release: `docs/releases/v2.3.8.md`.
 
@@ -352,6 +354,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-23 | OpenCode | **v3.7.0 on `dev`:** Compress Premium Phase A — honesty notices for JPEG generational loss, PNG fast/slow compression, and size increase warnings; `encode_png` preserves source color type (RGB→RGB, RGBA→RGBA) preventing 33% size inflation; worker defaults aligned with registry (PNG comp=9, JPEG quality=75/85). SPEC/ROADMAP/README/ARCHITECTURE → v3.7.0 |
 | 2026-06-22 | OpenCode | **v3.6.1 on `dev`:** Centralized UpdateEngine with state machine; 2min polling; SW sub integrated into engine; onboarding opens immediately via `openOnboarding()`. SPEC/ROADMAP/README/ARCHITECTURE → v3.6.1 |
 | 2026-06-22 | OpenCode | **v3.6.0 on `dev`:** Resize Premium Phases A-E — 5 filters, upscale to 200% (400% advanced), JPEG quality control, target dimensions, resize notices, estimate parity. Tool descriptions updated. Competitive analysis vs waifu2x/Real-ESRGAN/Squoosh. SPEC/ROADMAP/README/ARCHITECTURE → v3.6.0 |
 | 2026-06-22 | OpenCode | **v3.5.4 on `dev`:** Offline chunk error fix — `app/error.tsx` + `app/global-error.tsx` ChunkLoadError boundaries; SW cache dedup via `isAlreadyCachedInSw`; `trimShellCache` (75-entry cap); enhanced `tryForceOfflineFallbackInSw`; `/~offline` served for document misses in force-offline listener |

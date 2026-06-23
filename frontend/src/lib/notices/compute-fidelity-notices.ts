@@ -7,6 +7,8 @@ export type FidelityNoticeContext = {
   estimateDelta: SizeDelta | null;
   resizePercent?: number;
   resizeFilter?: number;
+  compression?: number;
+  quality?: number;
 };
 
 export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
@@ -21,11 +23,50 @@ export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
     });
   }
 
-  if (ctx.toolId === "jpg-resize") {
+  if (ctx.toolId === "jpg-resize" || ctx.toolId === "jpg-compress") {
     notices.push({
-      id: "fidelity-jpeg-resize-generational",
+      id: "fidelity-jpeg-generational",
       severity: "warn",
-      messageKey: "notices.fidelity.jpegResizeGenerational",
+      messageKey: "notices.fidelity.jpegGenerational",
+      priority: NOTICE_PRIORITY.warnFidelity,
+    });
+  }
+
+  if (
+    ctx.toolId === "png-compress" &&
+    ctx.compression != null &&
+    ctx.compression <= 3
+  ) {
+    notices.push({
+      id: "fidelity-png-compress-fast",
+      severity: "info",
+      messageKey: "notices.fidelity.pngCompressFast",
+      priority: NOTICE_PRIORITY.info,
+    });
+  }
+
+  if (
+    ctx.toolId === "png-compress" &&
+    ctx.compression != null &&
+    ctx.compression >= 8
+  ) {
+    notices.push({
+      id: "fidelity-png-compress-slow",
+      severity: "info",
+      messageKey: "notices.fidelity.pngCompressSlow",
+      priority: NOTICE_PRIORITY.info,
+    });
+  }
+
+  if (
+    (ctx.toolId === "png-compress" || ctx.toolId === "jpg-compress") &&
+    ctx.estimateDelta != null &&
+    ctx.estimateDelta.deltaPct >= 0
+  ) {
+    notices.push({
+      id: "fidelity-compress-larger",
+      severity: "warn",
+      messageKey: "notices.fidelity.compressLarger",
       priority: NOTICE_PRIORITY.warnFidelity,
     });
   }

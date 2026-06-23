@@ -473,6 +473,27 @@ const es: Dictionary = {
           },
         },
       },
+      v370: {
+        title: "Compress Premium Fase A — honestidad, correccion de color type, valores por defecto",
+        summary:
+          "Nuevos avisos de honestidad para la perdida generacional JPEG, pistas de compresion rapida/lenta PNG, y advertencias de aumento de tamano. El motor encode_png ahora preserva el tipo de color de origen — sin mas inflacion innecesaria del canal alpha. Los valores por defecto del worker estan alineados con el registro de herramientas.",
+        technical:
+          "encode_png preserva DynamicImage color() — RGB se queda RGB, RGBA se queda RGBA. FidelityNoticeContext extendido con campos compression/quality. jpg-compress calidad por defecto 85. Worker fallback: PNG comp=9, JPEG quality=75. Motor v1.6.1. App v3.7.0.",
+        highlights: {
+          compressNotices: {
+            title: "Avisos honestos de compresion",
+            body: "La re-compresion JPEG ahora advierte sobre perdida generacional. PNG compress muestra las ventajas de velocidad vs tamano. Una nueva advertencia se activa cuando la salida seria mayor que la entrada.",
+          },
+          colorTypeFix: {
+            title: "Preservacion inteligente del tipo de color",
+            body: "Cuando comprimes un PNG RGB, la salida ahora es RGB — no RGBA con un canal alpha desperdiciado. Esto evita una inflacion innecesaria del 33% en imagenes opacas.",
+          },
+          defaults: {
+            title: "Mejores valores por defecto",
+            body: "Los valores del worker ahora coinciden con el registro de herramientas: la compresion PNG comienza en nivel 9 para archivos mas pequenos. La calidad JPEG por defecto es 85 con el preset balanced en 85.",
+          },
+        },
+      },
       v361: {
         title: "Refactor del motor de actualizaciones y UX de onboarding",
         summary:
@@ -2303,6 +2324,14 @@ const es: Dictionary = {
         lanczos: "⚠ Lanczos3 por encima del 200% produce fuertes artefactos de anillos (halos en bordes). Considera cambiar a CatmullRom o Triangle.",
         blur: "Por encima del 200%, este filtro producira un resultado visiblemente borroso. No se crea nuevo detalle.",
       },
+      jpegGenerational:
+        "Re-codificar un JPEG agrega otra generacion con perdida — los artefactos se acumulan con cada re-codificacion. Usalo solo para reduccion de tamano puntual.",
+      pngCompressFast:
+        "La codificacion rapida sacrifica compresion por velocidad. El archivo puede ser mas grande que en niveles superiores.",
+      pngCompressSlow:
+        "La maxima compresion produce el archivo mas pequeno pero es mas lenta. Los pixeles permanecen identicos — calidad sin perdida.",
+      compressLarger:
+        "Con estos ajustes, la salida puede ser mas grande que la entrada. Prueba un nivel de compresion mas alto o una calidad mas baja para reducir el tamano.",
     },
     estimate: {
       cheapSlow: "Calculando…",

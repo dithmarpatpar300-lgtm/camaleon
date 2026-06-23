@@ -38,16 +38,25 @@ fn encode_png(img: &DynamicImage, compression: u8) -> Result<Vec<u8>, String> {
         ));
     }
     let (w, h) = img.dimensions();
-    let rgba = img.to_rgba8();
+    let color = img.color();
     let mut buf = Cursor::new(Vec::new());
     let encoder = PngEncoder::new_with_quality(
         &mut buf,
         CompressionType::Level(compression),
         FilterType::Adaptive,
     );
-    encoder
-        .write_image(rgba.as_raw(), w, h, ExtendedColorType::Rgba8)
-        .map_err(|e| format!("PNG encode failed: {e}"))?;
+    let has_alpha = color.has_alpha();
+    if has_alpha {
+        let rgba = img.to_rgba8();
+        encoder
+            .write_image(rgba.as_raw(), w, h, ExtendedColorType::Rgba8)
+            .map_err(|e| format!("PNG encode failed: {e}"))?;
+    } else {
+        let rgb = img.to_rgb8();
+        encoder
+            .write_image(rgb.as_raw(), w, h, ExtendedColorType::Rgb8)
+            .map_err(|e| format!("PNG encode failed: {e}"))?;
+    }
     Ok(buf.into_inner())
 }
 

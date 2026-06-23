@@ -472,6 +472,27 @@ const en: Dictionary = {
           },
         },
       },
+      v370: {
+        title: "Compress Premium Phase A — honesty, color-type fix, defaults",
+        summary:
+          "New honesty notices for JPEG generational loss, PNG fast/slow compression hints, and size increase warnings. The encode_png engine now preserves the source color type — no more unnecessary alpha channel inflation. Worker defaults aligned with the tool registry for consistent behavior.",
+        technical:
+          "encode_png preserves DynamicImage color() — RGB stays RGB, RGBA stays RGBA. FidelityNoticeContext extended with compression/quality fields. jpg-compress default quality 85. Worker fallback: PNG comp=9, JPEG quality=75. Engine v1.6.1. App v3.7.0.",
+        highlights: {
+          compressNotices: {
+            title: "Honest compression warnings",
+            body: "JPEG re-compress now warns about generational loss. PNG compress shows speed vs size tradeoffs. A new warning fires when the output would be larger than the input.",
+          },
+          colorTypeFix: {
+            title: "Smart color-type preservation",
+            body: "When you compress an RGB PNG, the output is now RGB — not RGBA with a wasted alpha channel. This prevents unnecessary 33% file size inflation on opaque images.",
+          },
+          defaults: {
+            title: "Better default values",
+            body: "Worker defaults now match the tool registry: PNG compression starts at level 9 for smallest files. JPEG quality defaults to 85 with balanced preset at 85.",
+          },
+        },
+      },
       v361: {
         title: "Update engine refactor & onboarding UX",
         summary:
@@ -2316,6 +2337,14 @@ const en: Dictionary = {
         lanczos: "⚠ Lanczos3 above 200% produces strong ringing artifacts (halos on edges). Consider switching to CatmullRom or Triangle.",
         blur: "Above 200%, this filter will produce a visibly blurry result. No new detail is created.",
       },
+      jpegGenerational:
+        "Re-encoding a JPEG adds another lossy generation — artifacts accumulate with each re-encode. Consider this for one-time size reduction only.",
+      pngCompressFast:
+        "Fast encoding trades compression for speed. The output may be larger than higher compression levels.",
+      pngCompressSlow:
+        "Maximum compression produces the smallest file but encoding is slower. Pixels remain identical — lossless quality.",
+      compressLarger:
+        "At these settings, the output may be larger than the input. Try a higher compression level or lower quality to reduce file size.",
     },
     estimate: {
       cheapSlow: "Still calculating…",

@@ -71,6 +71,8 @@ export function computeStagedNotices(ctx: StagedNoticeContext): Notice[] {
       estimateDelta: ctx.estimateDelta,
       resizePercent: ctx.options.resizePercent,
       resizeFilter: ctx.options.resizeFilter,
+      compression: ctx.options.compression,
+      quality: ctx.options.quality,
     }),
     ...computeSvgHonestyNotices({
       toolId: ctx.toolId,
