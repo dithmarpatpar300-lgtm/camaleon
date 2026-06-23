@@ -13,7 +13,7 @@ import {
   isOfflinePromoSnoozed,
   isStandaloneDisplayMode,
 } from "@/lib/offline/offline-promo-storage";
-import { isOnboardingComplete } from "@/lib/releases";
+import { isOnboardingComplete, getLastSeenRelease } from "@/lib/releases";
 import { isShellReady } from "@/lib/offline/shell-cache-status";
 
 export function useOfflineInstallPromoVisible(): boolean {
@@ -40,6 +40,9 @@ export function useOfflineInstallPromoVisible(): boolean {
   if (dualReady || prefs.precacheCompletedAt) return false;
   if (isOfflinePromoSnoozed(prefs.installPromoSnoozedUntil)) return false;
   if (!isOnboardingComplete()) return false;
+
+  const lastSeen = getLastSeenRelease();
+  if (lastSeen === null) return false;
 
   return true;
 }
