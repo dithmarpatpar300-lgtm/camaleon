@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.6.1
-**Last updated:** 2026-06-22
-**Status:** v3.6.1 on `dev` (UpdateEngine refactor · onboarding UX · 2min polling) · Engine v1.6.0 · **25 tools** (21 convert + 4 optimize)
+**Version:** 3.8.1
+**Last updated:** 2026-06-23
+**Status:** v3.8.1 on `dev` (Compress Premium Phase D — lossy PNG quantization · palette reduction · indexed PNG encoding) · Engine v1.7.0 · **25 tools** (21 convert + 4 optimize)
 
 ---
 

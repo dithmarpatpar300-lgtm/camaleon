@@ -42,6 +42,14 @@ export type TransmutationOptions = {
   resizePercent?: number;
   /** Tier 4a resize — interpolation filter code (0=Nearest, 1=Triangle, 2=CatmullRom, 3=Gaussian, 4=Lanczos3). */
   resizeFilter?: number;
+  /** Tier 4a compress — JPEG chroma subsampling (0=4:2:0, 1=4:2:2, 2=4:4:4). */
+  subsampling?: number;
+  /** Tier 4a compress — PNG optimization level (0=off, 1=filter trial + color type reduction). */
+  optimizationLevel?: number;
+  /** Tier 4a compress — PNG lossy quantization mode (0=off, 1=on). */
+  lossyMode?: number;
+  /** Tier 4a compress — PNG lossy palette color count (2-256). */
+  lossyColors?: number;
   /** Computed SVG raster width (sent to Wasm). */
   outputWidth?: number;
   /** Computed SVG raster height (sent to Wasm). */

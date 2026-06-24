@@ -472,6 +472,82 @@ const en: Dictionary = {
           },
         },
       },
+      v380: {
+        title: "Compress Premium Phase C — native PNG optimization",
+        summary:
+          "A complete PNG lossless optimization pipeline built natively into Camaleon. Tries 5 filter types, reduces color type (RGBA→RGB, RGB→Grayscale), reduces bit depth (L8→L4→L2→L1), optimizes transparent pixels, and tunes DEFLATE strategy (Default, Filtered, HuffmanOnly) — all in a single optimization pass. 36 candidates are evaluated and the smallest is chosen.",
+        technical:
+          "Native pipeline: color_type_reduce + optimize_alpha_pixels + filter trial (5 × image::PngEncoder) + custom encoder (5 filters × 3 miniz_oxide strategies) + bit depth trial (L1/L2/L4 × 5 filters). Custom PNG builder: IHDR + IDAT chunked + IEND + CRC32. miniz_oxide compress_to_vec_inner via CompressorOxide with strategy control. Engine v1.7.0. App v3.8.0.",
+        highlights: {
+          nativePngOpt: {
+            title: "Native lossless optimization",
+            body: "Filter trial picks the best PNG filter for your image. Color type reduction shrinks RGBA→RGB and RGB→Grayscale when possible. All changes are lossless — pixels never change.",
+          },
+          deflateStrategy: {
+            title: "Smarter DEFLATE compression",
+            body: "A custom PNG encoder tests 3 compression strategies per filter: Default (balanced), Filtered (optimized for PNG scanlines), and HuffmanOnly (fastest). The smallest output wins.",
+          },
+          bitDepth: {
+            title: "Automatic bit depth reduction",
+            body: "Grayscale images are automatically detected and encoded at the smallest possible bit depth: 1-bit for pure black & white, 2-bit for 4 colors, 4-bit for 16 colors.",
+          },
+        },
+      },
+      v381: {
+        title: "Compress Premium Phase D — lossy PNG quantization",
+        summary:
+          "Lossy palette quantization via quantette (Wu method + FloydSteinberg dither). Reduce PNGs to 2–256 colors for 60–80% smaller files. Indexed PNG encoding via the png crate. Mandatory irreversibility warning. Fixed colors: u8→u16 bug (256 truncated to 0). Updated tool descriptions.",
+        technical:
+          "quantette v0.6 Pipeline: Wu() + FloydSteinberg dither + PaletteSize + ImageRef + output_srgb8_indexed_image. PNG indexed via png v0.18: ColorType::Indexed, BitDepth::Eight, set_palette, write_image_data. Colors param: u8→u16 (wasm-bindgen truncates 256→0). App v3.8.1 / engine 1.7.0.",
+        highlights: {
+          lossyQuant: {
+            title: "Lossy PNG quantization",
+            body: "Reduce photographic PNGs by 60-80% using Wu's color quantization and FloydSteinberg dither. Configurable from 2 to 256 colors. Off by default — mandatory warning before use.",
+          },
+          colorBugfix: {
+            title: "256-color fix",
+            body: "The lossy compressor now correctly accepts 256 colors. The previous `u8` type truncated 256 to 0 — 255 worked but 256 failed. Now uses `u16` for the full 2-256 range.",
+          },
+        },
+      },
+      v371: {
+        title: "Compress Premium Phase B — JPEG encoder swap & subsampling",
+        summary:
+          "The JPEG encoder has been replaced with jpeg-encoder — a pure Rust library that produces 5-15% smaller files at the same quality via optimized Huffman tables. New chroma subsampling control lets you choose between maximum compression (4:2:0), balanced (4:2:2), and highest color fidelity (4:4:4) for text and screenshots.",
+        technical:
+          "image::JpegEncoder → jpeg-encoder v0.7.0. Optimized Huffman tables enabled by default for all JPEG encode paths (compress + resize). New Wasm exports: recompress_jpeg_with_options(quality, chroma_code), estimate_jpeg_recompress_with_options. Subsampling slider on jpg-compress: 0=4:2:0, 1=4:2:2, 2=4:4:4. Engine v1.7.0. App v3.7.1.",
+        highlights: {
+          jpegEncoderSwap: {
+            title: "Smarter JPEG encoding",
+            body: "The new jpeg-encoder engine uses optimized Huffman tables for every encode, producing noticeably smaller files at the same quality setting. No action needed — it just works.",
+          },
+          subsampling: {
+            title: "Chroma subsampling control",
+            body: "New slider on JPEG Compress: 4:2:0 for maximum compression (photos), 4:2:2 for balanced quality, or 4:4:4 for pixel-perfect color in text, logos, and screenshots.",
+          },
+        },
+      },
+      v370: {
+        title: "Compress Premium Phase A — honesty, color-type fix, defaults",
+        summary:
+          "New honesty notices for JPEG generational loss, PNG fast/slow compression hints, and size increase warnings. The encode_png engine now preserves the source color type — no more unnecessary alpha channel inflation. Worker defaults aligned with the tool registry for consistent behavior.",
+        technical:
+          "encode_png preserves DynamicImage color() — RGB stays RGB, RGBA stays RGBA. FidelityNoticeContext extended with compression/quality fields. jpg-compress default quality 85. Worker fallback: PNG comp=9, JPEG quality=75. Engine v1.6.1. App v3.7.0.",
+        highlights: {
+          compressNotices: {
+            title: "Honest compression warnings",
+            body: "JPEG re-compress now warns about generational loss. PNG compress shows speed vs size tradeoffs. A new warning fires when the output would be larger than the input.",
+          },
+          colorTypeFix: {
+            title: "Smart color-type preservation",
+            body: "When you compress an RGB PNG, the output is now RGB — not RGBA with a wasted alpha channel. This prevents unnecessary 33% file size inflation on opaque images.",
+          },
+          defaults: {
+            title: "Better default values",
+            body: "Worker defaults now match the tool registry: PNG compression starts at level 9 for smallest files. JPEG quality defaults to 85 with balanced preset at 85.",
+          },
+        },
+      },
       v361: {
         title: "Update engine refactor & onboarding UX",
         summary:
@@ -2023,22 +2099,43 @@ const en: Dictionary = {
     },
     "png-compress": {
       actionTitle: "Compress PNG",
-      description: "Same-format re-encode — tune DEFLATE level and compare output size before download.",
-      fidelityHint: "Lossless re-pack — pixel data unchanged; only container compression changes.",
+      description: "Same-format re-encode with lossless optimization (filter trial, color/bit reduction, deflate strategy tuning) or lossy palette quantization — compare size delta in metrics.",
+      fidelityHint: "Lossless by default — pixels unchanged. Optional lossy mode: palette quantization for 60-80% smaller PNGs (irreversible).",
       options: {
         compression: {
-          label: "PNG Compression",
-          hint: "Higher = smaller file, slower encode.",
-          lowerLabel: "Faster",
-          upperLabel: "Smaller",
+          label: "Compression level",
+          hint: "Higher level = smaller file, slower encoding. Pixels remain identical — lossless.",
+          lowerLabel: "Fast",
+          upperLabel: "Minimal",
           presets: { fast: "Fast", balanced: "Balanced", minimal: "Minimal" },
+        },
+        optimizationLevel: {
+          label: "Optimization",
+          hint: "Off = standard encoding. Full = tries multiple filter strategies + color type reduction for best compression (~10-30% smaller).",
+          lowerLabel: "Off",
+          upperLabel: "Full",
+          presets: { off: "Off", full: "Full" },
+        },
+        lossyMode: {
+          label: "Lossy compression",
+          hint: "Reduces color depth via palette quantization. Irreversible — visual quality will change. 60-80% smaller for photos.",
+          lowerLabel: "Off",
+          upperLabel: "On",
+          presets: { off: "Off", on: "On" },
+        },
+        lossyColors: {
+          label: "Color count",
+          hint: "Number of colors in output palette (2-256). Fewer colors = smaller file but more visual quality loss.",
+          lowerLabel: "2",
+          upperLabel: "256",
+          presets: { "16": "16", "64": "64", "128": "128", "256": "256" },
         },
       },
     },
     "jpg-compress": {
       actionTitle: "Compress JPEG",
-      description: "Same-format re-encode at lower quality — metrics-first size reduction.",
-      fidelityHint: "Lossy — each re-encode adds generation loss. Compare size delta in metrics.",
+      description: "Same-format re-encode with optimized Huffman tables and chroma subsampling control — up to 15% smaller files at the same visual quality. Metrics-first size reduction with generational loss awareness.",
+      fidelityHint: "Lossy — each re-encode adds generation loss. Optimized Huffman by default (5-15% smaller). Subsampling: 4:4:4 for text/screenshots. Compare size delta in metrics.",
       options: {
         quality: {
           label: "JPEG Quality",
@@ -2046,6 +2143,13 @@ const en: Dictionary = {
           lowerLabel: "Smaller",
           upperLabel: "Faithful",
           presets: { web: "Web", balanced: "Balanced", high: "High" },
+        },
+        subsampling: {
+          label: "Chroma subsampling",
+          hint: "4:2:0 = best compression for photos. 4:4:4 = highest color fidelity (text, screenshots).",
+          lowerLabel: "4:2:0",
+          upperLabel: "4:4:4",
+          presets: { s420: "4:2:0", s422: "4:2:2", s444: "4:4:4" },
         },
       },
     },
@@ -2316,6 +2420,20 @@ const en: Dictionary = {
         lanczos: "⚠ Lanczos3 above 200% produces strong ringing artifacts (halos on edges). Consider switching to CatmullRom or Triangle.",
         blur: "Above 200%, this filter will produce a visibly blurry result. No new detail is created.",
       },
+      jpegGenerational:
+        "Re-encoding a JPEG adds another lossy generation — artifacts accumulate with each re-encode. Consider this for one-time size reduction only.",
+      pngCompressFast:
+        "Fast encoding trades compression for speed. The output may be larger than higher compression levels.",
+      pngCompressSlow:
+        "Maximum compression produces the smallest file but encoding is slower. Pixels remain identical — lossless quality.",
+      compressLarger:
+        "At these settings, the output may be larger than the input. Try a higher compression level or lower quality to reduce file size.",
+      jpegSubsampling444:
+        "Chroma subsampling 4:4:4 preserves full color detail for every pixel — best for text, screenshots, and graphics with sharp edges. Produces larger files than 4:2:0.",
+      pngOptimized:
+        "Full optimization tries multiple filter strategies and reduces color type for the best compression. Encoding may be 3-6× slower but output can be 10-30% smaller. Pixels remain identical — lossless.",
+      pngLossy:
+        "Lossy compression reduces color depth via palette quantization. Visual quality is permanently changed — this is irreversible. Ideal for photos where 60-80% size reduction is worth the quality trade-off.",
     },
     estimate: {
       cheapSlow: "Still calculating…",

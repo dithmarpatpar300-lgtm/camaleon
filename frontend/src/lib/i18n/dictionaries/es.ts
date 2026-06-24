@@ -473,6 +473,82 @@ const es: Dictionary = {
           },
         },
       },
+      v380: {
+        title: "Compress Premium Fase C — optimizacion nativa de PNG",
+        summary:
+          "Un pipeline completo de optimizacion PNG sin perdida construido nativamente en Camaleon. Prueba 5 tipos de filtro, reduce el tipo de color (RGBA→RGB, RGB→Escala de grises), reduce la profundidad de bits (L8→L4→L2→L1), optimiza pixeles transparentes y ajusta la estrategia DEFLATE (Default, Filtered, HuffmanOnly) — todo en un solo pase de optimizacion. Se evaluan 36 candidatos y se elige el mas pequeno.",
+        technical:
+          "Pipeline nativo: color_type_reduce + optimize_alpha_pixels + filter trial (5 × image::PngEncoder) + encoder custom (5 filtros × 3 estrategias miniz_oxide) + bit depth trial (L1/L2/L4 × 5 filtros). Constructor PNG manual: IHDR + IDAT fragmentado + IEND + CRC32. CompressorOxide con control de estrategia. Motor v1.7.0. App v3.8.0.",
+        highlights: {
+          nativePngOpt: {
+            title: "Optimizacion nativa sin perdida",
+            body: "La prueba de filtros elige el mejor filtro PNG para tu imagen. La reduccion de tipo de color convierte RGBA→RGB y RGB→Escala de grises cuando es posible. Todos los cambios son sin perdida — los pixeles nunca cambian.",
+          },
+          deflateStrategy: {
+            title: "Compresion DEFLATE mas inteligente",
+            body: "Un codificador PNG personalizado prueba 3 estrategias de compresion por filtro: Default (equilibrada), Filtered (optimizada para scanlines PNG) y HuffmanOnly (la mas rapida). Gana la salida mas pequena.",
+          },
+          bitDepth: {
+            title: "Reduccion automatica de profundidad de bits",
+            body: "Las imagenes en escala de grises se detectan automaticamente y se codifican a la menor profundidad de bits posible: 1-bit para blanco y negro puro, 2-bit para 4 colores, 4-bit para 16 colores.",
+          },
+        },
+      },
+      v381: {
+        title: "Compress Premium Fase D — cuantizacion PNG con perdida",
+        summary:
+          "Cuantizacion de paleta con perdida via quantette (metodo Wu + dither FloydSteinberg). Reduce PNGs a 2–256 colores para archivos 60-80% mas pequenos. Codificacion PNG indexada via crate png. Advertencia obligatoria de irreversibilidad. Corregido bug colors: u8→u16 (256 truncado a 0). Descripciones de herramientas actualizadas.",
+        technical:
+          "quantette v0.6 Pipeline: Wu() + FloydSteinberg dither + PaletteSize + ImageRef + output_srgb8_indexed_image. PNG indexado via png v0.18: ColorType::Indexed, BitDepth::Eight, set_palette, write_image_data. Param colors: u8→u16 (wasm-bindgen truncaba 256→0). App v3.8.1 / motor 1.7.0.",
+        highlights: {
+          lossyQuant: {
+            title: "Cuantizacion PNG con perdida",
+            body: "Reduce PNGs fotograficos 60-80% usando cuantizacion de color Wu y dither FloydSteinberg. Configurable de 2 a 256 colores. Desactivado por defecto — advertencia obligatoria antes de usar.",
+          },
+          colorBugfix: {
+            title: "Correccion de 256 colores",
+            body: "El compresor con perdida ahora acepta correctamente 256 colores. El tipo `u8` truncaba 256 a 0 — 255 funcionaba pero 256 fallaba. Ahora usa `u16` para el rango completo 2-256.",
+          },
+        },
+      },
+      v371: {
+        title: "Compress Premium Fase B — encoder JPEG & control de submuestreo",
+        summary:
+          "El codificador JPEG ha sido reemplazado por jpeg-encoder — una libreria Rust pura que produce archivos 5-15% mas pequenos a la misma calidad mediante tablas Huffman optimizadas. Nuevo control de submuestreo de croma para elegir entre maxima compresion (4:2:0), equilibrado (4:2:2) y maxima fidelidad de color (4:4:4) para texto y capturas.",
+        technical:
+          "image::JpegEncoder → jpeg-encoder v0.7.0. Tablas Huffman optimizadas activadas por defecto en todas las rutas JPEG (compress + resize). Nuevos exports Wasm: recompress_jpeg_with_options(quality, chroma_code), estimate_jpeg_recompress_with_options. Slider de submuestreo en jpg-compress: 0=4:2:0, 1=4:2:2, 2=4:4:4. Motor v1.7.0. App v3.7.1.",
+        highlights: {
+          jpegEncoderSwap: {
+            title: "Codificacion JPEG mas inteligente",
+            body: "El nuevo motor jpeg-encoder usa tablas Huffman optimizadas en cada codificacion, produciendo archivos notablemente mas pequenos al mismo nivel de calidad. Sin necesidad de configuracion.",
+          },
+          subsampling: {
+            title: "Control de submuestreo de croma",
+            body: "Nuevo slider en Compresion JPEG: 4:2:0 para maxima compresion (fotos), 4:2:2 para calidad equilibrada, o 4:4:4 para color perfecto en texto, logos y capturas de pantalla.",
+          },
+        },
+      },
+      v370: {
+        title: "Compress Premium Fase A — honestidad, correccion de color type, valores por defecto",
+        summary:
+          "Nuevos avisos de honestidad para la perdida generacional JPEG, pistas de compresion rapida/lenta PNG, y advertencias de aumento de tamano. El motor encode_png ahora preserva el tipo de color de origen — sin mas inflacion innecesaria del canal alpha. Los valores por defecto del worker estan alineados con el registro de herramientas.",
+        technical:
+          "encode_png preserva DynamicImage color() — RGB se queda RGB, RGBA se queda RGBA. FidelityNoticeContext extendido con campos compression/quality. jpg-compress calidad por defecto 85. Worker fallback: PNG comp=9, JPEG quality=75. Motor v1.6.1. App v3.7.0.",
+        highlights: {
+          compressNotices: {
+            title: "Avisos honestos de compresion",
+            body: "La re-compresion JPEG ahora advierte sobre perdida generacional. PNG compress muestra las ventajas de velocidad vs tamano. Una nueva advertencia se activa cuando la salida seria mayor que la entrada.",
+          },
+          colorTypeFix: {
+            title: "Preservacion inteligente del tipo de color",
+            body: "Cuando comprimes un PNG RGB, la salida ahora es RGB — no RGBA con un canal alpha desperdiciado. Esto evita una inflacion innecesaria del 33% en imagenes opacas.",
+          },
+          defaults: {
+            title: "Mejores valores por defecto",
+            body: "Los valores del worker ahora coinciden con el registro de herramientas: la compresion PNG comienza en nivel 9 para archivos mas pequenos. La calidad JPEG por defecto es 85 con el preset balanced en 85.",
+          },
+        },
+      },
       v361: {
         title: "Refactor del motor de actualizaciones y UX de onboarding",
         summary:
@@ -2010,22 +2086,43 @@ const es: Dictionary = {
     },
     "png-compress": {
       actionTitle: "Comprimir PNG",
-      description: "Re-codifica mismo formato — ajusta DEFLATE y compara tamano antes de descargar.",
-      fidelityHint: "Reempaquetado sin perdida — los pixeles no cambian; solo la compresion del contenedor.",
+      description: "Re-codifica mismo formato con optimizacion sin perdida (prueba de filtros, reduccion de color/bits, ajuste de estrategia DEFLATE) o cuantizacion con perdida por paleta — compara el delta de tamano en las metricas.",
+      fidelityHint: "Sin perdida por defecto — los pixeles no cambian. Modo con perdida opcional: cuantizacion por paleta para PNGs 60-80% mas pequenos (irreversible).",
       options: {
         compression: {
-          label: "Compresion PNG",
-          hint: "Mayor = archivo mas pequeno, encode mas lento.",
-          lowerLabel: "Mas rapido",
-          upperLabel: "Mas pequeno",
+          label: "Nivel de compresion",
+          hint: "Nivel mas alto = archivo mas pequeno, codificacion mas lenta. Los pixeles permanecen identicos — sin perdida.",
+          lowerLabel: "Rapido",
+          upperLabel: "Minimo",
           presets: { fast: "Rapido", balanced: "Balanceado", minimal: "Minimo" },
+        },
+        optimizationLevel: {
+          label: "Optimizacion",
+          hint: "Off = codificacion estandar. Full = prueba multiples filtros + reduccion de tipo de color para mejor compresion (~10-30% mas pequeno).",
+          lowerLabel: "Off",
+          upperLabel: "Full",
+          presets: { off: "Off", full: "Full" },
+        },
+        lossyMode: {
+          label: "Compresion con perdida",
+          hint: "Reduce la profundidad de color mediante cuantizacion de paleta. Irreversible — la calidad visual cambia. 60-80% mas pequeno para fotos.",
+          lowerLabel: "Off",
+          upperLabel: "On",
+          presets: { off: "Off", on: "On" },
+        },
+        lossyColors: {
+          label: "Numero de colores",
+          hint: "Cantidad de colores en la paleta de salida (2-256). Menos colores = archivo mas pequeno pero mayor perdida de calidad.",
+          lowerLabel: "2",
+          upperLabel: "256",
+          presets: { "16": "16", "64": "64", "128": "128", "256": "256" },
         },
       },
     },
     "jpg-compress": {
       actionTitle: "Comprimir JPEG",
-      description: "Re-codifica mismo formato con menor calidad — reduccion de tamano con metricas.",
-      fidelityHint: "Con perdida — cada re-codificacion anade generacion de perdida.",
+      description: "Re-codifica mismo formato con tablas Huffman optimizadas y control de submuestreo de croma — hasta 15% mas pequeno a la misma calidad visual. Reduccion de tamano con metricas y advertencia de perdida generacional.",
+      fidelityHint: "Con perdida — cada re-codificacion anade generacion de perdida. Huffman optimizado por defecto (5-15% mas pequeno). Submuestreo: 4:4:4 para texto/capturas. Compara delta en metricas.",
       options: {
         quality: {
           label: "Calidad JPEG",
@@ -2033,6 +2130,13 @@ const es: Dictionary = {
           lowerLabel: "Mas pequeno",
           upperLabel: "Mas fiel",
           presets: { web: "Web", balanced: "Balanceado", high: "Alto" },
+        },
+        subsampling: {
+          label: "Submuestreo de croma",
+          hint: "4:2:0 = mejor compresion para fotos. 4:4:4 = maxima fidelidad de color (texto, capturas).",
+          lowerLabel: "4:2:0",
+          upperLabel: "4:4:4",
+          presets: { s420: "4:2:0", s422: "4:2:2", s444: "4:4:4" },
         },
       },
     },
@@ -2303,6 +2407,20 @@ const es: Dictionary = {
         lanczos: "⚠ Lanczos3 por encima del 200% produce fuertes artefactos de anillos (halos en bordes). Considera cambiar a CatmullRom o Triangle.",
         blur: "Por encima del 200%, este filtro producira un resultado visiblemente borroso. No se crea nuevo detalle.",
       },
+      jpegGenerational:
+        "Re-codificar un JPEG agrega otra generacion con perdida — los artefactos se acumulan con cada re-codificacion. Usalo solo para reduccion de tamano puntual.",
+      pngCompressFast:
+        "La codificacion rapida sacrifica compresion por velocidad. El archivo puede ser mas grande que en niveles superiores.",
+      pngCompressSlow:
+        "La maxima compresion produce el archivo mas pequeno pero es mas lenta. Los pixeles permanecen identicos — calidad sin perdida.",
+      compressLarger:
+        "Con estos ajustes, la salida puede ser mas grande que la entrada. Prueba un nivel de compresion mas alto o una calidad mas baja para reducir el tamano.",
+      jpegSubsampling444:
+        "El submuestreo de croma 4:4:4 conserva todo el detalle de color por pixel — ideal para texto, capturas de pantalla y graficos con bordes nitidos. Produce archivos mas grandes que 4:2:0.",
+      pngOptimized:
+        "La optimizacion completa prueba multiples estrategias de filtro y reduce el tipo de color para la mejor compresion. La codificacion puede ser 3-6× mas lenta pero la salida puede ser 10-30% mas pequena. Pixeles identicos — sin perdida.",
+      pngLossy:
+        "La compresion con perdida reduce la profundidad de color mediante cuantizacion de paleta. La calidad visual cambia permanentemente — esto es irreversible. Ideal para fotos donde una reduccion del 60-80% justifica la perdida de calidad.",
     },
     estimate: {
       cheapSlow: "Calculando…",

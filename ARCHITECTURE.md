@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.6.1** · Engine **v1.6.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
+**Snapshot:** App **v3.8.1** · Engine **v1.7.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
 
 ---
 
@@ -36,6 +36,7 @@
 24. [CI, deploy & branches](#24-ci-deploy--branches)
 25. [Adding a new tool (checklist)](#25-adding-a-new-tool-checklist)
 26. [Document index](#26-document-index)
+27. [Optimization engine (Tier 4a)](#27-optimization-engine-tier-4a)
 
 ---
 
@@ -100,19 +101,21 @@ flowchart TB
 camaleon/
 ├── ARCHITECTURE.md          ← this document (atlas)
 ├── README.md                ← quick start & capability summary
-├── frontend/                ← Next.js 15 app (v3.2.9)
+├── frontend/                ← Next.js 15 app (v3.8.0)
 │   ├── src/
 │   │   ├── app/             ← App Router pages, layout, SW source
 │   │   ├── components/      ← React UI (transmute, settings, layout, toast…)
-│   │   ├── hooks/           ← useReleaseComms, useCommandPalette…
-│   │   ├── lib/             ← Business logic (batch, tools, prefs, notices…)
+│   │   │   └── transmute/   ← OptionsControls, ProcessingPanel, StagedWorkspace, TransmutationPanel, BatchTransmutationPanel, MetricsPanel, NoticeRail…
+│   │   ├── hooks/           ← useReleaseComms, useCommandPalette, usePageFileDrop…
+│   │   ├── lib/             ← Business logic (batch, tools, prefs, notices, releases…)
 │   │   ├── providers/       ← React context providers
-│   │   └── workers/         ← Web Worker entry points
+│   │   ├── types/           ← Shared TypeScript declarations (wasm-modules.d.ts)
+│   │   └── workers/         ← Web Worker entry points (transmutation.worker.ts, frame-preview.worker.ts)
 │   ├── public/wasm/         ← Generated Wasm artifacts (gitignored)
-│   └── scripts/             ← build-wasm.mjs, verify scripts
-├── motor_transmutacion/     ← Rust workspace (v1.6.0)
+│   └── scripts/             ← build-wasm.mjs (canonical), verify scripts
+├── motor_transmutacion/     ← Rust workspace (v1.7.0)
 │   ├── core_utils/          ← Shared validation, semantic alpha, limits
-│   └── transmutador_*/      ← 13 Wasm cdylib crates (incl. optimize)
+│   └── transmutador_*/      ← 13 Wasm cdylib crates (incl. optimize with custom PNG encoder)
 ├── docs/
 │   ├── SPEC.md              ← Normative spec (authoritative for behavior)
 │   ├── ROADMAP.md           ← Phased delivery
@@ -157,14 +160,11 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | Tier 3.6.1 Universal batch | v3.2.4–v3.2.9 | Homogeneous + mixed cohort picker (complete) |
 | Tier 3.6.2 | v3.2.9 | ZIP pref; GIF/TIFF/ICO per-row batch |
 | Tier 4a Optimize | v3.2.9 scaffold → **v3.3.0** | compress + resize (`transmutador_optimize`) **activated** |
-| **Current** | **v3.6.1** | UpdateEngine refactor · onboarding UX · 2min polling |
+| **Prior** | **v3.7.0** | Compress Premium Phase A — honesty notices, color type fix, defaults alignment |
 | **Prior** | **v3.6.0** | Resize Premium — 5 filters, upscale, quality control, target dims, estimate parity |
-| **Prior** | **v3.5.3** | Device capability engine · adaptive WASM loading · S3 device score |
-| **Prior** | **v3.5.1** | Explorer multi-drag fix · download format UX · settings-focus batch-download |
-| **Prior** | **v3.5.0** | Offline reliability · origin reachability · brand offline · mobile notice stack |
-| **Prior** | **v3.3.3** | UX-4a lanes · 4a-pre mobile top notices · settings-focus uncached Wasm |
-| **Prior** | **v3.3.2** | Offline install promo on home · settings-focus → Offline & cache |
-| **Next** | TBD | **4a.1** metrics UX · **UX-4a** ToolBrowser Convert vs Optimize lanes |
+| **Prior** | **v3.8.0** | Compress Premium Phase C — PNG lossless optimization (native pipeline) |
+| **Current** | **v3.8.1** | Compress Premium Phase D — lossy PNG quantization (quantette + indexed PNG) |
+| **Next** | TBD | **Phase E** — Zopfli + progressive JPEG (backlog) |
 
 ---
 
@@ -212,7 +212,8 @@ Bootstrap scripts run **before React paint** (no FOUC):
 
 | Area | Primary files | Role |
 |------|---------------|------|
-| Single-file workspace | `TransmutationPanel.tsx`, `StagedWorkspace.tsx` | Drop → prepare → options → transmute → download |
+| Single-file workspace | `TransmutationPanel.tsx`, `StagedWorkspace.tsx`, `OptionsControls.tsx`, `ResizeFilterControl` (inline) | Drop → prepare → options → transmute → download |
+| Compress options | `OptionsControls.tsx` (subsampling, optimization level sliders), `ProcessingPanel.tsx` (fine-tuning) | Compression level, JPEG quality, subsampling, PNG optimization |
 | Batch workspace | `BatchTransmutationPanel.tsx`, `lib/batch/BatchWorkspace.tsx` | Multi-file orchestration |
 | Universal entry | `UniversalTransmutator.tsx`, `UniversalOutputPicker.tsx`, `UniversalCohortSummary.tsx` | Home-page multi/single drop |
 | Settings | `SettingsDrawer.tsx` + `*SettingsSection.tsx` | S1–S7 preference sections |
@@ -236,14 +237,15 @@ idle → preparing → staged → processing → success | error
 | Directory | Responsibility |
 |-----------|----------------|
 | `tools/` | Registry, universal matrix, cohorts, extensions, filter |
-| `transmutation/` | Prepare, limits, handoff, download, fingerprint |
+| `transmutation/` | Prepare, limits, handoff, download, fingerprint, limit-context |
 | `batch/` | Batch types, handoff, allowlist, prepare queue, limits |
 | `universal/` | `resolveUniversalDrop()` classification |
-| `notices/` | Staged notice computation pipeline |
+| `notices/` | Staged notice computation pipeline (limit, fidelity, performance, estimate, SVG) |
 | `semantic-alpha/` | Alpha assessment wrappers |
 | `prefs/` | All user settings (localStorage) |
-| `offline/` | SW, precache, connectivity, force-offline |
-| `app-update/` | Version beacon, cache purge, hard reload |
+| `storage/` | Key registry, factory defaults, seed-storage, tool-browser-prefs |
+| `offline/` | SW, precache, connectivity, force-offline, origin-reachability, cache-status |
+| `app-update/` | UpdateEngine (state machine), version beacon, cache purge, hard reload |
 | `toast/` | Queue constants, responsive max visible |
 | `wasm/` | Crate URLs, glue loader, risk mode sync |
 | `releases/` | Manifest, per-version entries, storage |
@@ -309,37 +311,56 @@ sequenceDiagram
 
 Drop **different formats** in one gesture on Universal → **hint toast only**; no navigation. **Slice C** will add `UniversalCohortPicker` for mixed cohorts.
 
+### 7.6 Compress flow (Tier 4a)
+
+For `png-compress` and `jpg-compress`, no format change occurs:
+
+```
+Input PNG/JPEG → decode to raster → re-encode same format → output PNG/JPEG
+```
+
+The Compress Premium pipeline (v3.7.0–v3.8.0) adds:
+
+1. **JPEG path (v3.7.1):** `image::JpegEncoder` → `jpeg-encoder` crate (optimized Huffman tables, chroma subsampling control).
+2. **PNG path (v3.8.0):** Native optimization pipeline — color type reduction, filter trial, deflate strategy tuning, bit depth reduction. 36 candidates evaluated at opt_level=1.
+
+Options exposed: compression (1-9), quality (1-100), subsampling (0-2), optimizationLevel (0-1). Fidelity notices fire for generational loss (JPEG), speed/size tradeoffs (PNG), and size increase warnings.
+
 ---
 
 ## 8. Tool registry (25 tools)
 
 **Source of truth:** `frontend/src/lib/tools/tool-registry.ts`
 
-All tools: `status: "active"`, `category: "image"`.
+All tools: `status: "active"`. Categories: `"image"` (21 convert) + `"optimize"` (4 compress/resize).
 
-| # | Slug | Direction | Wasm module | Fidelity | Batch |
-|---|------|-----------|-------------|----------|-------|
-| 1 | `jpg-to-png` | JPG → PNG | `transmutador_jpg` | lossless | ✅ |
-| 2 | `png-to-jpg` | PNG → JPG | `transmutador_png` | lossy | ✅ |
-| 3 | `webp-to-png` | WebP → PNG | `transmutador_webp` | lossless | ✅ |
-| 4 | `webp-to-jpg` | WebP → JPG | `transmutador_webp` | lossy | ✅ |
-| 5 | `png-to-webp` | PNG → WebP | `transmutador_encode` | lossless | ✅ |
-| 6 | `jpg-to-webp` | JPEG → WebP | `transmutador_encode` | lossless | ✅ |
-| 7 | `gif-to-png` | GIF → PNG | `transmutador_gif` | lossless | ❌ |
-| 8 | `gif-to-jpg` | GIF → JPG | `transmutador_gif` | lossy | ❌ |
-| 9 | `bmp-to-png` | BMP → PNG | `transmutador_bmp` | lossless | ✅ |
-| 10 | `bmp-to-jpg` | BMP → JPG | `transmutador_bmp` | lossy | ✅ |
-| 11 | `tiff-to-png` | TIFF → PNG | `transmutador_tiff` | lossless | ❌ |
-| 12 | `tiff-to-jpg` | TIFF → JPG | `transmutador_tiff` | lossy | ❌ |
-| 13 | `ico-to-png` | ICO → PNG | `transmutador_ico` | lossless | ❌ |
-| 14 | `png-to-ico` | PNG → ICO | `transmutador_ico` | lossless | ✅ |
-| 15 | `avif-to-jpg` | AVIF → JPG | `transmutador_avif` | lossy | ✅ |
-| 16 | `jpg-to-avif` | JPEG → AVIF | `transmutador_avif_encode` | lossy | ✅ |
-| 17 | `png-to-avif` | PNG → AVIF | `transmutador_avif_encode` | lossy | ✅ |
-| 18 | `avif-to-png` | AVIF → PNG | `transmutador_avif` | lossless | ✅ |
-| 19 | `svg-to-png` | SVG → PNG | `transmutador_svg` | lossless | ❌ |
-| 20 | `svg-to-jpg` | SVG → JPG | `transmutador_svg` | lossy | ❌ |
-| 21 | `tga-to-png` | TGA → PNG | `transmutador_tga` | lossless | ✅ |
+| # | Slug | Direction | Wasm module | Fidelity | Category | Batch |
+|---|------|-----------|-------------|----------|----------|-------|
+| 1 | `jpg-to-png` | JPG → PNG | `transmutador_jpg` | lossless | image | ✅ |
+| 2 | `png-to-jpg` | PNG → JPG | `transmutador_png` | lossy | image | ✅ |
+| 3 | `webp-to-png` | WebP → PNG | `transmutador_webp` | lossless | image | ✅ |
+| 4 | `webp-to-jpg` | WebP → JPG | `transmutador_webp` | lossy | image | ✅ |
+| 5 | `png-to-webp` | PNG → WebP | `transmutador_encode` | lossless | image | ✅ |
+| 6 | `jpg-to-webp` | JPEG → WebP | `transmutador_encode` | lossless | image | ✅ |
+| 7 | `gif-to-png` | GIF → PNG | `transmutador_gif` | lossless | image | ❌ |
+| 8 | `gif-to-jpg` | GIF → JPG | `transmutador_gif` | lossy | image | ❌ |
+| 9 | `bmp-to-png` | BMP → PNG | `transmutador_bmp` | lossless | image | ✅ |
+| 10 | `bmp-to-jpg` | BMP → JPG | `transmutador_bmp` | lossy | image | ✅ |
+| 11 | `tiff-to-png` | TIFF → PNG | `transmutador_tiff` | lossless | image | ❌ |
+| 12 | `tiff-to-jpg` | TIFF → JPG | `transmutador_tiff` | lossy | image | ❌ |
+| 13 | `ico-to-png` | ICO → PNG | `transmutador_ico` | lossless | image | ❌ |
+| 14 | `png-to-ico` | PNG → ICO | `transmutador_ico` | lossless | image | ✅ |
+| 15 | `avif-to-jpg` | AVIF → JPG | `transmutador_avif` | lossy | image | ✅ |
+| 16 | `jpg-to-avif` | JPEG → AVIF | `transmutador_avif_encode` | lossy | image | ✅ |
+| 17 | `png-to-avif` | PNG → AVIF | `transmutador_avif_encode` | lossy | image | ✅ |
+| 18 | `avif-to-png` | AVIF → PNG | `transmutador_avif` | lossless | image | ✅ |
+| 19 | `svg-to-png` | SVG → PNG | `transmutador_svg` | lossless | image | ❌ |
+| 20 | `svg-to-jpg` | SVG → JPG | `transmutador_svg` | lossy | image | ❌ |
+| 21 | `tga-to-png` | TGA → PNG | `transmutador_tga` | lossless | image | ✅ |
+| 22 | `png-compress` | PNG → PNG | `transmutador_optimize` | lossless | optimize | ❌ |
+| 23 | `jpg-compress` | JPEG → JPEG | `transmutador_optimize` | lossy | optimize | ❌ |
+| 24 | `png-resize` | PNG → PNG | `transmutador_optimize` | lossless | optimize | ❌ |
+| 25 | `jpg-resize` | JPEG → JPEG | `transmutador_optimize` | lossy | optimize | ❌ |
 
 **Batch allowlist:** `frontend/src/lib/batch/batch-tool-allowlist.ts` — 14 slugs. GIF/TIFF/ICO/SVG excluded until per-row frame/page/entry UX exists (Tier 3.6.2+).
 
@@ -349,11 +370,14 @@ Defined in each tool's `optionSpecs` (`ToolOptionSpec`):
 
 | Kind | Key | Used by |
 |------|-----|---------|
-| `slider` | `compression` | PNG output tools (1–9) |
-| `slider` | `quality` | JPEG/AVIF lossy outputs (1–100) |
+| `slider` | `compression` | PNG output tools + `png-compress` (1–9) |
+| `slider` | `quality` | JPEG/AVIF lossy outputs + `jpg-compress` (1–100) |
 | `slider` | `speed` | AVIF encode (ravif speed) |
 | `slider` | `outputScale` | SVG → raster scale presets |
 | `slider` | `iconSize` | PNG → ICO target size |
+| `slider` | `resizePercent` | `png-resize` / `jpg-resize` (1–200%, 400% advanced) |
+| `slider` | `subsampling` | `jpg-compress` chroma subsampling (0=4:2:0, 1=4:2:2, 2=4:4:4) |
+| `slider` | `optimizationLevel` | `png-compress` native optimization (0=Off, 1=Full) |
 | `color` | `background` | Lossy tools with alpha flatten |
 
 Global defaults from Settings S2 (`transmutation-defaults.ts`) seed session options.
@@ -362,7 +386,7 @@ Global defaults from Settings S2 (`transmutation-defaults.ts`) seed session opti
 
 ## 9. Rust / Wasm engine
 
-**Workspace:** `motor_transmutacion/` · version **1.6.0** · edition 2021
+**Workspace:** `motor_transmutacion/` · version **1.7.0** · edition 2021
 
 ### Crates
 
@@ -381,7 +405,9 @@ Global defaults from Settings S2 (`transmutation-defaults.ts`) seed session opti
 | `transmutador_avif` | cdylib | AVIF → PNG, JPEG (+ animated session) |
 | `transmutador_avif_encode` | cdylib | PNG, JPEG → AVIF (split crate for size) |
 | `transmutador_svg` | cdylib | SVG → PNG, JPEG (resvg/usvg) |
-| `transmutador_optimize` | cdylib | PNG/JPEG compress + resize (Tier 4a) |
+| `transmutador_optimize` | cdylib | PNG/JPEG compress + resize + native optimization (Tier 4a) |
+
+**Dependencies of `transmutador_optimize`:** `image` v0.25 (png, jpeg), `jpeg-encoder` v0.7 (JPEG encoder swap, v3.7.1), `miniz_oxide` v0.8 (DEFLATE strategy tuning, v3.8.0). **Wasm size:** ~688 KB (within NFR-7 3 MB limit).
 
 ### Shared Wasm exports (every transmutador)
 
@@ -390,6 +416,47 @@ Global defaults from Settings S2 (`transmutation-defaults.ts`) seed session opti
 | `set_session_input_limit(max_bytes: u32)` | Raise byte ceiling for elevated/risk sessions |
 | `reset_session_input_limit()` | Restore default (50 MB soft) |
 | `set_risk_mode(enabled: bool)` | Bypass 40 MP cap; raise hard byte limits |
+
+### Optimize-specific Wasm exports (transmutador_optimize)
+
+**Compress (PNG):**
+| Export | Parameters | Purpose |
+|--------|-----------|---------|
+| `recompress_png` | `(bytes, compression)` | Standard re-encode at DEFLATE level 1-9 |
+| `recompress_png_optimized` | `(bytes, compression, opt_level)` | Native optimization pipeline: color type reduction + filter trial + deflate strategy tuning + bit depth reduction |
+| `estimate_png_recompress_size` | `(bytes, compression)` | Size estimate (standard) |
+| `estimate_png_recompress_optimized` | `(bytes, compression, opt_level)` | Size estimate (optimized) |
+
+**Compress (JPEG):**
+| Export | Parameters | Purpose |
+|--------|-----------|---------|
+| `recompress_jpeg` | `(bytes, quality)` | Standard re-encode at quality 1-100 (optimized Huffman) |
+| `recompress_jpeg_with_options` | `(bytes, quality, chroma_code)` | Re-encode with subsampling control (0=4:2:0, 1=4:2:2, 2=4:4:4) |
+| `estimate_jpeg_recompress_size` | `(bytes, quality)` | Size estimate (standard) |
+| `estimate_jpeg_recompress_with_options` | `(bytes, quality, chroma_code)` | Size estimate (with subsampling) |
+
+**Resize:**
+| Export | Parameters | Purpose |
+|--------|-----------|---------|
+| `resize_png` / `resize_jpeg` | `(bytes, percent)` | Resize with default filter (CatmullRom) |
+| `resize_*_with_filter` | `(bytes, percent, filter_code)` | Resize with specified filter (0=Nearest…4=Lanczos3) |
+| `resize_jpeg_with_filter_and_quality` | `(bytes, percent, filter_code, quality)` | JPEG resize + quality control |
+| `estimate_resize_png_size` / `estimate_resize_jpeg_size` | `(bytes, percent, filter_code, quality?)` | Resize size estimates |
+
+### Native PNG optimization pipeline (v3.8.0)
+
+The optimization level 1 (Full) pipeline within `transmutador_optimize` evaluates 36 candidates and picks the smallest:
+
+```
+Input → color_type_reduce (RGBA→RGB, RGB→Luma)
+      → optimize_alpha_pixels (zero transparent colors)
+      → 6 image::PngEncoder candidates (Adaptive + 5 filter trial)
+      → 15 custom encoder candidates (5 filters × 3 deflate strategies)
+      → 15 bit depth reduction candidates (L1/L4/L2 × 5 filters)
+      → Output = min(all 36 candidates)
+```
+
+**Custom PNG encoder** (`encode_png_custom_with_strategy`, `build_png_container`): Builds PNG from raw pixels using `miniz_oxide` directly for DEFLATE with strategy control (Default, Filtered, HuffmanOnly). Constructs IHDR, chunked IDAT (64 KB max per chunk), IEND, and CRC32 manually. **Zero external dependencies** — `miniz_oxide` already transitively available via `image` → `png` → `flate2`.
 
 ### `core_utils` highlights
 
@@ -435,7 +502,7 @@ Global defaults from Settings S2 (`transmutation-defaults.ts`) seed session opti
 | `purpose` | `"transmute"` \| `"estimate"` \| `"purge"` |
 | `outputExtension` | Disambiguates multi-output crates |
 | `encodeSource` | `"png"` \| `"jpeg"` for encode crates |
-| `options` | quality, compression, background, frameIndex, pageIndex, entryIndex, iconSize, speed, outputScale… |
+| `options` | quality, compression, background, frameIndex, pageIndex, entryIndex, iconSize, speed, outputScale, resizePercent, resizeFilter, subsampling, optimizationLevel… |
 | `effectiveMaxInputBytes` | Session byte ceiling |
 | `riskModeEnabled` | Syncs Wasm risk mode |
 | `alphaHint` | Skip redundant alpha scans on estimate (E0.5) |
@@ -564,7 +631,7 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 | Source | Module |
 |--------|--------|
 | Limits | `compute-limit-notices.ts` |
-| Fidelity / loss semantics | `compute-fidelity-notices.ts` |
+| Fidelity / loss semantics | `compute-fidelity-notices.ts` (compress generational loss, resize upscale/extreme, subsampling warnings, PNG optimization) |
 | Performance / slow path | `compute-performance-notices.ts` |
 | Estimate latency | `compute-estimate-notices.ts` |
 | SVG honesty | `compute-svg-honesty-notices.ts` |
@@ -722,7 +789,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 | Piece | Role |
 |-------|------|
-| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.5.1) |
+| `lib/releases/manifest.ts` | Ordered `RELEASE_MANIFEST` (latest: v3.8.0) |
 | `lib/releases/entries/v*.ts` | Per-version highlights |
 | `ReleaseCommsProvider` | Mounts onboarding + modals |
 | `OnboardingPanel` | First-visit welcome |
@@ -757,7 +824,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 cd motor_transmutacion && cargo test --workspace
 ```
 
-Integration tests per crate; `semantic_alpha_contract.rs` on 6 crates; estimate parity tests (e.g. WebP within 5%).
+Integration tests per crate; `semantic_alpha_contract.rs` on 6 crates; `transmutador_optimize` has 14 integration tests (recompress, resize, subsampling, color type preservation, optimization levels, bit depth reduction, alpha optimization, deflate strategy). Estimate parity tests (e.g. WebP within 5%). Pre-existing SVG fixture failure (`text_latin_meta_and_render`) documented.
 
 ---
 
@@ -830,10 +897,100 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 | `docs/planning/tier3_4_pwa_implementation_plan.md` | Offline shell details |
 | `docs/planning/semantic_alpha_engine_plan.md` | Alpha honesty engine |
 | `docs/planning/risk_mode_analysis.md` | Risk mode surface map |
-| `docs/releases/v3.2.*.md` | Recent release notes |
+| `docs/releases/v3.*.md` | Recent release notes (v3.7.0–v3.8.1) |
+| `docs/planning/compress_premium_roadmap.md` | Compress Premium phases A–E implementation plan |
+| `docs/planning/resize_premium_roadmap.md` | Resize Premium phases A–E (delivered v3.6.0) |
+| `docs/planning/tier4_plan.md` | Tier 4 umbrella — optimization & editing |
+| `docs/planning/resize_advanced_processing_*` | Resize advanced processing investigation (stand-by for Tier 4b) |
 | `CONTRIBUTING.md` | Contributor workflow |
 | `docs/BRANCHING.md` | Branch strategy |
 
 ---
 
-*Last updated: 2026-06-22 · App v3.6.1 · Engine v1.6.0 · Maintained alongside SPEC/ROADMAP promotions.*
+## 27. Optimization engine (Tier 4a)
+
+### Overview
+
+The optimization engine lives entirely within `motor_transmutacion/transmutador_optimize` — a single Rust/Wasm crate handling both **compress** (same-format re-encode) and **resize** (resample + re-encode) for PNG and JPEG. It is the sole crate supporting the `"optimize"` category tools (22-25 in the registry).
+
+### Two-pass architecture
+
+All compress and resize paths share a common decode → transform → encode pattern:
+
+```
+Input bytes → ImageReader::decode → DynamicImage → transform → encode → output bytes
+```
+
+**Compress transform:** None (pixels unchanged — re-encode only).  
+**Resize transform:** `imageops::resize_exact` with user-selected filter and percent.
+
+### Compress pipeline detail (v3.7.0–v3.8.0)
+
+The compress pipeline has evolved through three phases:
+
+| Phase | Version | Capability | Technique |
+|-------|---------|------------|-----------|
+| Phase A | v3.7.0 | Honesty notices, color type preservation, defaults alignment | `encode_png` detects RGB vs RGBA via `color.has_alpha()` |
+| Phase B | v3.7.1 | JPEG encoder swap, subsampling control | `image::JpegEncoder` → `jpeg-encoder` crate; optimized Huffman tables |
+| Phase C | v3.8.0 | Native PNG lossless optimization | Custom PNG encoder with filter trial, color type reduction, bit depth reduction, deflate strategy tuning |
+
+**Optimization levels (png-compress):**
+- **Level 0 (Off):** Standard re-encode at chosen compression level (Adaptive filter). Identical to pre-v3.8.0 behavior.
+- **Level 1 (Full):** 36-candidate pipeline — 6 `image::PngEncoder` encodes (Adaptive + 5 filter trial) + 15 custom encoder encodes (5 filters × 3 deflate strategies) + 15 bit depth reduction encodes (L1/L4/L2 × 5 filters). Picks smallest output.
+
+**Color type reduction (lossless):**
+- RGBA → RGB when all alpha pixels = 255
+- RGB → Grayscale (L8) when R=G=B for all pixels
+
+**Deflate strategy tuning (lossless):**
+Three strategies tried per filter via `miniz_oxide::deflate::core::CompressorOxide`:
+- `Default` — standard LZ77 + Huffman
+- `Filtered` — optimized for pre-filtered PNG scanlines (matches ≥5 bytes)
+- `HuffmanOnly` — literal-only, may win on very small images
+
+**Bit depth reduction (lossless):**
+Detected and packed without quality loss:
+- L1 (1-bit): all pixels 0 or 255 → 8 pixels/byte, MSB-first
+- L2 (2-bit): all pixels % 85 == 0 → 4 pixels/byte
+- L4 (4-bit): all pixels % 17 == 0 → 2 pixels/byte
+
+**Alpha optimization (lossless):**
+Transparent pixels (alpha=0) have RGB channels zeroed — improves DEFLATE compression on RGBA images with transparent regions.
+
+### Custom PNG encoder
+
+Bypasses `image::PngEncoder` to control DEFLATE strategy directly:
+
+```
+Raw pixels → apply_png_filter_* (5 variants: None, Sub, Up, Avg, Paeth)
+           → deflate_with_strategy (miniz_oxide::deflate::stream::deflate with strategy control)
+           → build_png_container (IHDR + chunked IDAT[64KB] + IEND + CRC32 via manual implementation)
+```
+
+This is the only path in Camaleon that builds a PNG from scratch. All other paths use `image::PngEncoder`. The implementation adds +15 KB Wasm (miniz_oxide made explicit; already transitively available).
+
+### JPEG encoder swap (v3.7.1)
+
+All JPEG encode paths use `jpeg-encoder` crate (pure Rust) instead of `image::JpegEncoder`:
+- Optimized Huffman tables enabled by default — 5-15% smaller files at same quality
+- `set_optimized_huffman_tables(true)` on every encode
+- Chroma subsampling control via `SamplingFactor`: `F_2_2` (4:2:0), `F_2_1` (4:2:2), `R_4_4_4` (4:4:4)
+- Backward compatible: `recompress_jpeg(bytes, quality)` unchanged
+
+### Resize pipeline (v3.6.0)
+
+Five resampling filters (code 0-4): Nearest, Triangle, CatmullRom (default), Gaussian, Lanczos3. Upscale to 200% (400% with Advanced toggle). JPEG quality control on `jpg-resize`. Target dimensions display via `OptionsControls`. Honesty notices for upscale, extreme downscale, and filter-specific tradeoffs.
+
+### Frontend integration
+
+**Worker routing:** `transmutation.worker.ts` dispatches via `route.isOptimize` flags → `ensureOptimizeWasmInitialized()` → specific Wasm export based on `options` fields (`resizePercent`, `resizeFilter`, `subsampling`, `optimizationLevel`).
+
+**Options:** `OptionsControls.tsx` renders slider specs generically from registry. Special cases: `subsampling` value label (0→"4:2:0", 1→"4:2:2", 2→"4:4:4"), `optimizationLevel` label (0→"Off", 1→"Full"), `resizePercent` dimensions display + advanced toggle.
+
+**Notices:** `compute-fidelity-notices.ts` extended with `compression`, `quality`, `subsampling`, and `optimizationLevel` context fields. Notices fire for: JPEG generational loss (compress + resize), PNG fast/slow compression hints, size increase warnings, 4:4:4 subsampling trade-off, PNG optimization speed/quality.
+
+**State:** `TransmutationOptions` in `workers/types.ts` carries all compress/resize parameters alongside conversion parameters.
+
+---
+
+*Last updated: 2026-06-23 · App v3.8.1 · Engine v1.7.0 · Maintained alongside SPEC/ROADMAP promotions.*

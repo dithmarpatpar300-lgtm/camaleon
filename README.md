@@ -2,7 +2,7 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.6.1** (App) · Engine v1.6.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.8.1** (App) · Engine v1.7.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
@@ -46,7 +46,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Tests** | 183 Vitest unit tests |
 
-**Latest (v3.6.1):** **UpdateEngine refactor & onboarding UX** — centralized update detection with state machine, 2-minute polling (was 5 min). "Show again" in Settings → Updates now opens onboarding panel immediately. See [docs/releases/v3.6.1.md](docs/releases/v3.6.1.md). **Prior (v3.6.0):** **Resize Premium** — 5 filters, upscale, quality control, target dims. See [docs/releases/v3.6.0.md](docs/releases/v3.6.0.md). **Next:** metrics-first optimize UX (4a.1). [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
+**Latest (v3.8.1):** **Compress Premium Phase D — lossy PNG quantization** — palette quantization via quantette (Wu + FloydSteinberg), indexed PNG encoding, 2-256 colors. Mandatory irreversibility warning. Fixed `colors: u8` truncation bug. See [docs/releases/v3.8.1.md](docs/releases/v3.8.1.md). **Prior (v3.8.0):** Native PNG lossless optimization. See [docs/releases/v3.8.0.md](docs/releases/v3.8.0.md). **Next:** Phase E — Zopfli + progressive JPEG. [ROADMAP](docs/ROADMAP.md) · [Tier 4 plan](docs/planning/tier4_plan.md).
 
 ## Core principles
 
@@ -166,6 +166,10 @@ camaleon/
 | **Offline reliability** | **v3.5.0** | ✅ Dual readiness, reachability, brand offline |
 | **Batch drop & download UX** | **v3.5.1** | ✅ Explorer multi-drag on tool routes; download format tips |
 | **Risk Mode decoder & batch UX** | **v3.5.2** | ✅ Decoder limits bypassed; batch error/done state fixes |
+| **Compress Premium Phase A** | **v3.7.0** | ✅ Honesty notices, color type preservation, defaults alignment |
+| **Compress Premium Phase B** | **v3.7.1** | ✅ JPEG encoder swap, optimized Huffman, chroma subsampling control |
+| **Compress Premium Phase C** | **v3.8.0** | ✅ PNG lossless optimization — filter trial, color/bit reduction, deflate strategy tuning |
+| **Compress Premium Phase D** | **v3.8.1** | ✅ Lossy PNG quantization — palette reduction, indexed PNG, 2-256 colors |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Architecture atlas: **[ARCHITECTURE.md](ARCHITECTURE.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 
