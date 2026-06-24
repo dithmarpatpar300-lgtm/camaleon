@@ -325,6 +325,8 @@ declare module "*/transmutador_optimize/transmutador_optimize.js" {
   export function estimate_jpeg_recompress_with_options(input_bytes: Uint8Array, quality: number, chroma_code: number): number;
   export function recompress_png_lossy(input_bytes: Uint8Array, colors: number, dither: boolean): Uint8Array;
   export function estimate_png_recompress_lossy(input_bytes: Uint8Array, colors: number, dither: boolean): number;
+  export function recompress_jpeg_progressive(input_bytes: Uint8Array, quality: number, chroma_code: number): Uint8Array;
+  export function estimate_jpeg_recompress_progressive(input_bytes: Uint8Array, quality: number, chroma_code: number): number;
   export function set_session_input_limit(max_bytes: number): void;
   export function reset_session_input_limit(): void;
   export function set_risk_mode(enabled: boolean): void;

@@ -745,12 +745,13 @@ export const TOOLS: ToolDefinition[] = [
         kind: "slider",
         key: "optimizationLevel",
         min: 0,
-        max: 1,
+        max: 2,
         step: 1,
         defaultValue: 0,
         presets: [
           { label: "off", value: 0 },
           { label: "full", value: 1 },
+          { label: "archival", value: 2 },
         ],
       },
       {
@@ -819,6 +820,18 @@ export const TOOLS: ToolDefinition[] = [
           { label: "s420", value: 0 },
           { label: "s422", value: 1 },
           { label: "s444", value: 2 },
+        ],
+      },
+      {
+        kind: "slider",
+        key: "progressive",
+        min: 0,
+        max: 1,
+        step: 1,
+        defaultValue: 0,
+        presets: [
+          { label: "off", value: 0 },
+          { label: "on", value: 1 },
         ],
       },
     ],

@@ -3,6 +3,7 @@ import { releaseV370 } from "./entries/v3.7.0";
 import { releaseV371 } from "./entries/v3.7.1";
 import { releaseV380 } from "./entries/v3.8.0";
 import { releaseV381 } from "./entries/v3.8.1";
+import { releaseV382 } from "./entries/v3.8.2";
 import { releaseV361 } from "./entries/v3.6.1";
 import { releaseV360 } from "./entries/v3.6.0";
 import { releaseV354 } from "./entries/v3.5.4";
@@ -55,6 +56,7 @@ import { releaseV190 } from "./entries/v1.9.0";
 
 export const RELEASE_MANIFEST: ReleaseManifest = {
   entries: [
+    releaseV382,
     releaseV381,
     releaseV380,
     releaseV371,

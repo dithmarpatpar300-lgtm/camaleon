@@ -44,6 +44,8 @@ export type TransmutationOptions = {
   resizeFilter?: number;
   /** Tier 4a compress — JPEG chroma subsampling (0=4:2:0, 1=4:2:2, 2=4:4:4). */
   subsampling?: number;
+  /** Tier 4a compress — JPEG progressive scan (0=baseline, 1=progressive). */
+  progressive?: number;
   /** Tier 4a compress — PNG optimization level (0=off, 1=filter trial + color type reduction). */
   optimizationLevel?: number;
   /** Tier 4a compress — PNG lossy quantization mode (0=off, 1=on). */

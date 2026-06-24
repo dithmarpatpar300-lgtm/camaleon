@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.8.1** · Engine **v1.7.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
+**Snapshot:** App **v3.8.2** · Engine **v1.7.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
 
 ---
 
@@ -163,7 +163,8 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | **Prior** | **v3.7.0** | Compress Premium Phase A — honesty notices, color type fix, defaults alignment |
 | **Prior** | **v3.6.0** | Resize Premium — 5 filters, upscale, quality control, target dims, estimate parity |
 | **Prior** | **v3.8.0** | Compress Premium Phase C — PNG lossless optimization (native pipeline) |
-| **Current** | **v3.8.1** | Compress Premium Phase D — lossy PNG quantization (quantette + indexed PNG) |
+| **Current** | **v3.8.2** | Compress Premium Phases A–E complete — Zopfli archival, progressive JPEG |
+| **Prior** | **v3.8.1** | Compress Premium Phase D — lossy PNG quantization (quantette + indexed PNG) |
 | **Next** | TBD | **Phase E** — Zopfli + progressive JPEG (backlog) |
 
 ---
@@ -897,7 +898,7 @@ Workflow: daily work on `dev` → merge to `main` + tag on release.
 | `docs/planning/tier3_4_pwa_implementation_plan.md` | Offline shell details |
 | `docs/planning/semantic_alpha_engine_plan.md` | Alpha honesty engine |
 | `docs/planning/risk_mode_analysis.md` | Risk mode surface map |
-| `docs/releases/v3.*.md` | Recent release notes (v3.7.0–v3.8.1) |
+| `docs/releases/v3.*.md` | Recent release notes (v3.7.0–v3.8.2) |
 | `docs/planning/compress_premium_roadmap.md` | Compress Premium phases A–E implementation plan |
 | `docs/planning/resize_premium_roadmap.md` | Resize Premium phases A–E (delivered v3.6.0) |
 | `docs/planning/tier4_plan.md` | Tier 4 umbrella — optimization & editing |
@@ -993,4 +994,4 @@ Five resampling filters (code 0-4): Nearest, Triangle, CatmullRom (default), Gau
 
 ---
 
-*Last updated: 2026-06-23 · App v3.8.1 · Engine v1.7.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-23 · App v3.8.2 · Engine v1.7.0 · Maintained alongside SPEC/ROADMAP promotions.*

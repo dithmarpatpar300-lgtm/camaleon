@@ -96,7 +96,7 @@ function SliderControl({
       : spec.key === "subsampling"
         ? value === 0 ? "4:2:0" : value === 1 ? "4:2:2" : "4:4:4"
       : spec.key === "optimizationLevel"
-        ? value === 0 ? "Off" : "Full"
+        ? value === 0 ? "Off" : value === 1 ? "Full" : "Archival"
       : spec.key === "lossyMode"
         ? value === 0 ? "Off" : "On"
       : isResize
