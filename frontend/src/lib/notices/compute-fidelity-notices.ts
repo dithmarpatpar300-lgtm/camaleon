@@ -10,6 +10,8 @@ export type FidelityNoticeContext = {
   compression?: number;
   quality?: number;
   subsampling?: number;
+  optimizationLevel?: number;
+  lossyMode?: number;
 };
 
 export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
@@ -82,6 +84,32 @@ export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
       severity: "info",
       messageKey: "notices.fidelity.jpegSubsampling444",
       priority: NOTICE_PRIORITY.info,
+    });
+  }
+
+  if (
+    ctx.toolId === "png-compress" &&
+    ctx.optimizationLevel != null &&
+    ctx.optimizationLevel >= 1
+  ) {
+    notices.push({
+      id: "fidelity-png-optimized",
+      severity: "info",
+      messageKey: "notices.fidelity.pngOptimized",
+      priority: NOTICE_PRIORITY.info,
+    });
+  }
+
+  if (
+    ctx.toolId === "png-compress" &&
+    ctx.lossyMode != null &&
+    ctx.lossyMode >= 1
+  ) {
+    notices.push({
+      id: "fidelity-png-lossy",
+      severity: "warn",
+      messageKey: "notices.fidelity.pngLossy",
+      priority: NOTICE_PRIORITY.warnFidelity,
     });
   }
 

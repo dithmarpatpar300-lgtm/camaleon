@@ -15,11 +15,13 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.8.0** (`dev`) | **25 tools** · **Compress Phase C** · PNG lossless optimization (native) |
-| **Engine (Rust workspace)** | v1.7.0 | Filter trial + color type reduction + bit depth reduction + deflate strategy tuning |
-| **SPEC** | v3.8.0 | PNG lossless optimization · custom encoder · 36-candidate pipeline |
+| **Frontend (app)** | **v3.8.1** (`dev`) | **25 tools** · **Compress Phase D** · lossy PNG quantization · 256-color palette |
+| **Engine (Rust workspace)** | v1.7.0 | Lossy PNG quantization via quantette (Wu + FloydSteinberg) + indexed PNG via png crate |
+| **SPEC** | v3.8.1 | Lossy PNG quantization · palette reduction · colors fix (u8→u16) |
 
-**v3.8.0** (`dev`): **Compress Premium Phase C — PNG lossless optimization** — native implementation replacing the planned oxipng integration (spike-gated, libdeflate-sys not Wasm-viable). Filter trial (5 PNG filters, pick smallest). Color type reduction (RGBA→RGB, RGB→Grayscale). Bit depth reduction (L8→L4→L2→L1). Alpha optimization on transparent pixels. Custom PNG encoder with deflate strategy tuning (Default/Filtered/HuffmanOnly via miniz_oxide). Grayscale encoding fix (L8 not RGB). 36-candidate pipeline at optimization level 1. Engine v1.7.0, +15 KB Wasm. Release: `docs/releases/v3.8.0.md`. **Next:** Phase D — lossy PNG quantization (quantette spike).
+**v3.8.1** (`dev`): **Compress Premium Phase D — lossy PNG quantization** — palette quantization via `quantette` crate (Wu method + FloydSteinberg dither, pure Rust, MIT/Apache-2.0). Indexed PNG encoding via `png` crate (already transitively available). 3 new sliders on `png-compress`: lossy mode toggle (Off/On), color count (2-256), and automatic dither. Mandatory `warn` notice for irreversible quality change. Fixed `Colors: u8` bug (256 truncated to 0). Wasm +51.5 KB. Updated tool descriptions. Release: `docs/releases/v3.8.1.md`.
+
+**v3.8.0** (`dev`): **Compress Premium Phase C — PNG lossless optimization** — native implementation replacing the planned oxipng integration (spike-gated, libdeflate-sys not Wasm-viable). Filter trial (5 PNG filters, pick smallest). Color type reduction (RGBA→RGB, RGB→Grayscale). Bit depth reduction (L8→L4→L2→L1). Alpha optimization on transparent pixels. Custom PNG encoder with deflate strategy tuning (Default/Filtered/HuffmanOnly via miniz_oxide). Grayscale encoding fix (L8 not RGB). 36-candidate pipeline at optimization level 1. Engine v1.7.0, +15 KB Wasm.
 
 **v3.7.1** (`dev`): **Compress Premium Phase B — JPEG encoder swap** — replaced `image::JpegEncoder` with `jpeg-encoder` crate (pure Rust, +18 KB Wasm). Optimized Huffman tables enabled by default — 5-15% smaller JPEG files. New `recompress_jpeg_with_options` with chroma subsampling control. Engine v1.7.0. Release: `docs/releases/v3.7.1.md`.
 
@@ -57,7 +59,7 @@
 
 **v3.0.0–v3.0.1** (`main`): **PWA / offline shell (Tier 3.4 capstone)** — Serwist SW, Settings S5, offline UX. Releases: `docs/releases/v3.0.0.md`, `v3.0.1.md`. **Tier 3 complete.**
 
-**Next:** **Phase D — lossy PNG quantization** (quantette spike) · **Resize Premium** docs in stand-by for Tier 4b Image Editor.
+**Next:** **Phase E — Zopfli + progressive JPEG** (backlog) · **Resize Premium** docs in stand-by for Tier 4b Image Editor.
 
 **v2.3.8**: **Risk mode (S6)** + hotfixes. Release: `docs/releases/v2.3.8.md`.
 
@@ -358,6 +360,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-23 | OpenCode | **v3.8.1 on `dev`:** Compress Premium Phase D — lossy PNG quantization via quantette (Wu + FloydSteinberg). Palette reduction 2-256 colors, indexed PNG encoding via png crate. Fixed Colors: u8→u16 bug (256 truncated to 0). Tool descriptions updated. Wasm +51.5 KB. SPEC/ROADMAP/README/ARCHITECTURE → v3.8.1. |
 | 2026-06-23 | OpenCode | **v3.8.0 on `dev`:** Compress Premium Phase C — PNG lossless optimization native pipeline (oxipng spike failed). Filter trial + color type reduction + bit depth (L1/L2/L4) + alpha optimization + deflate strategy tuning (Default/Filtered/HuffmanOnly via miniz_oxide) + custom PNG encoder. 14 Rust tests, 0 external deps, +15 KB Wasm. SPEC/ROADMAP/README/ARCHITECTURE → v3.8.0. |
 | 2026-06-23 | OpenCode | **v3.7.1 on `dev`:** Compress Premium Phase B — JPEG encoder swap (`jpeg-encoder` crate); optimized Huffman tables (5-15% smaller JPEG); chroma subsampling control (4:2:0/4:2:2/4:4:4) on `jpg-compress`; subsampling slider + fidelity notice + i18n EN/ES. Engine v1.7.0. |
 | 2026-06-23 | OpenCode | **v3.7.0 on `dev`:** Compress Premium Phase A — honesty notices for JPEG generational loss, PNG fast/slow compression, and size increase warnings; `encode_png` preserves source color type (RGB→RGB, RGBA→RGBA) preventing 33% size inflation; worker defaults aligned with registry (PNG comp=9, JPEG quality=75/85). SPEC/ROADMAP/README/ARCHITECTURE → v3.7.0 |

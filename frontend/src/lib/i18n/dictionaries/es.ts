@@ -494,6 +494,23 @@ const es: Dictionary = {
           },
         },
       },
+      v381: {
+        title: "Compress Premium Fase D — cuantizacion PNG con perdida",
+        summary:
+          "Cuantizacion de paleta con perdida via quantette (metodo Wu + dither FloydSteinberg). Reduce PNGs a 2–256 colores para archivos 60-80% mas pequenos. Codificacion PNG indexada via crate png. Advertencia obligatoria de irreversibilidad. Corregido bug colors: u8→u16 (256 truncado a 0). Descripciones de herramientas actualizadas.",
+        technical:
+          "quantette v0.6 Pipeline: Wu() + FloydSteinberg dither + PaletteSize + ImageRef + output_srgb8_indexed_image. PNG indexado via png v0.18: ColorType::Indexed, BitDepth::Eight, set_palette, write_image_data. Param colors: u8→u16 (wasm-bindgen truncaba 256→0). App v3.8.1 / motor 1.7.0.",
+        highlights: {
+          lossyQuant: {
+            title: "Cuantizacion PNG con perdida",
+            body: "Reduce PNGs fotograficos 60-80% usando cuantizacion de color Wu y dither FloydSteinberg. Configurable de 2 a 256 colores. Desactivado por defecto — advertencia obligatoria antes de usar.",
+          },
+          colorBugfix: {
+            title: "Correccion de 256 colores",
+            body: "El compresor con perdida ahora acepta correctamente 256 colores. El tipo `u8` truncaba 256 a 0 — 255 funcionaba pero 256 fallaba. Ahora usa `u16` para el rango completo 2-256.",
+          },
+        },
+      },
       v371: {
         title: "Compress Premium Fase B — encoder JPEG & control de submuestreo",
         summary:
@@ -2069,8 +2086,8 @@ const es: Dictionary = {
     },
     "png-compress": {
       actionTitle: "Comprimir PNG",
-      description: "Re-codifica mismo formato — ajusta DEFLATE y compara tamano antes de descargar.",
-      fidelityHint: "Reempaquetado sin perdida — los pixeles no cambian; solo la compresion del contenedor.",
+      description: "Re-codifica mismo formato con optimizacion sin perdida (prueba de filtros, reduccion de color/bits, ajuste de estrategia DEFLATE) o cuantizacion con perdida por paleta — compara el delta de tamano en las metricas.",
+      fidelityHint: "Sin perdida por defecto — los pixeles no cambian. Modo con perdida opcional: cuantizacion por paleta para PNGs 60-80% mas pequenos (irreversible).",
       options: {
         compression: {
           label: "Nivel de compresion",
@@ -2086,12 +2103,26 @@ const es: Dictionary = {
           upperLabel: "Full",
           presets: { off: "Off", full: "Full" },
         },
+        lossyMode: {
+          label: "Compresion con perdida",
+          hint: "Reduce la profundidad de color mediante cuantizacion de paleta. Irreversible — la calidad visual cambia. 60-80% mas pequeno para fotos.",
+          lowerLabel: "Off",
+          upperLabel: "On",
+          presets: { off: "Off", on: "On" },
+        },
+        lossyColors: {
+          label: "Numero de colores",
+          hint: "Cantidad de colores en la paleta de salida (2-256). Menos colores = archivo mas pequeno pero mayor perdida de calidad.",
+          lowerLabel: "2",
+          upperLabel: "256",
+          presets: { "16": "16", "64": "64", "128": "128", "256": "256" },
+        },
       },
     },
     "jpg-compress": {
       actionTitle: "Comprimir JPEG",
-      description: "Re-codifica mismo formato con menor calidad — reduccion de tamano con metricas.",
-      fidelityHint: "Con perdida — cada re-codificacion anade generacion de perdida.",
+      description: "Re-codifica mismo formato con tablas Huffman optimizadas y control de submuestreo de croma — hasta 15% mas pequeno a la misma calidad visual. Reduccion de tamano con metricas y advertencia de perdida generacional.",
+      fidelityHint: "Con perdida — cada re-codificacion anade generacion de perdida. Huffman optimizado por defecto (5-15% mas pequeno). Submuestreo: 4:4:4 para texto/capturas. Compara delta en metricas.",
       options: {
         quality: {
           label: "Calidad JPEG",
@@ -2388,6 +2419,8 @@ const es: Dictionary = {
         "El submuestreo de croma 4:4:4 conserva todo el detalle de color por pixel — ideal para texto, capturas de pantalla y graficos con bordes nitidos. Produce archivos mas grandes que 4:2:0.",
       pngOptimized:
         "La optimizacion completa prueba multiples estrategias de filtro y reduce el tipo de color para la mejor compresion. La codificacion puede ser 3-6× mas lenta pero la salida puede ser 10-30% mas pequena. Pixeles identicos — sin perdida.",
+      pngLossy:
+        "La compresion con perdida reduce la profundidad de color mediante cuantizacion de paleta. La calidad visual cambia permanentemente — esto es irreversible. Ideal para fotos donde una reduccion del 60-80% justifica la perdida de calidad.",
     },
     estimate: {
       cheapSlow: "Calculando…",

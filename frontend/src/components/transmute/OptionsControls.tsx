@@ -95,6 +95,10 @@ function SliderControl({
       ? `${value}px`
       : spec.key === "subsampling"
         ? value === 0 ? "4:2:0" : value === 1 ? "4:2:2" : "4:4:4"
+      : spec.key === "optimizationLevel"
+        ? value === 0 ? "Off" : "Full"
+      : spec.key === "lossyMode"
+        ? value === 0 ? "Off" : "On"
       : isResize
         ? `${value}%`
         : spec.key === "outputScale" &&

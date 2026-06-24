@@ -189,6 +189,8 @@ type EstimateSvgToJpgSizeFn = (
 ) => number;
 
 type RecompressPngFn = (input: Uint8Array, compression: number) => Uint8Array;
+type RecompressPngOptimizedFn = (input: Uint8Array, compression: number, opt_level: number) => Uint8Array;
+type RecompressPngLossyFn = (input: Uint8Array, colors: number, dither: boolean) => Uint8Array;
 type RecompressJpegFn = (input: Uint8Array, quality: number) => Uint8Array;
 type RecompressJpegWithOptionsFn = (input: Uint8Array, quality: number, chroma_code: number) => Uint8Array;
 type ResizePngFn = (input: Uint8Array, resize_percent: number) => Uint8Array;
@@ -197,6 +199,8 @@ type ResizePngWithFilterFn = (input: Uint8Array, resize_percent: number, filter_
 type ResizeJpegWithFilterFn = (input: Uint8Array, resize_percent: number, filter_code: number) => Uint8Array;
 type ResizeJpegWithFilterAndQualityFn = (input: Uint8Array, resize_percent: number, filter_code: number, quality: number) => Uint8Array;
 type EstimatePngRecompressSizeFn = (input: Uint8Array, compression: number) => number;
+type EstimatePngRecompressOptimizedFn = (input: Uint8Array, compression: number, opt_level: number) => number;
+type EstimatePngRecompressLossyFn = (input: Uint8Array, colors: number, dither: boolean) => number;
 type EstimateJpegRecompressSizeFn = (input: Uint8Array, quality: number) => number;
 type EstimateJpegRecompressWithOptionsFn = (input: Uint8Array, quality: number, chroma_code: number) => number;
 type EstimateResizePngSizeFn = (input: Uint8Array, resize_percent: number, filter_code: number) => number;
@@ -325,6 +329,8 @@ let estimateSvgToJpgSize: EstimateSvgToJpgSizeFn | null = null;
 let setOptimizeSessionLimit: SessionLimitFn | null = null;
 let setOptimizeRiskMode: RiskModeFn | null = null;
 let recompressPng: RecompressPngFn | null = null;
+let recompressPngOptimized: RecompressPngOptimizedFn | null = null;
+let recompressPngLossy: RecompressPngLossyFn | null = null;
 let recompressJpeg: RecompressJpegFn | null = null;
 let recompressJpegWithOptions: RecompressJpegWithOptionsFn | null = null;
 let resizePng: ResizePngFn | null = null;
@@ -333,6 +339,8 @@ let resizePngWithFilter: ResizePngWithFilterFn | null = null;
 let resizeJpegWithFilter: ResizeJpegWithFilterFn | null = null;
 let resizeJpegWithFilterAndQuality: ResizeJpegWithFilterAndQualityFn | null = null;
 let estimatePngRecompressSize: EstimatePngRecompressSizeFn | null = null;
+let estimatePngRecompressOptimized: EstimatePngRecompressOptimizedFn | null = null;
+let estimatePngRecompressLossy: EstimatePngRecompressLossyFn | null = null;
 let estimateJpegRecompressSize: EstimateJpegRecompressSizeFn | null = null;
 let estimateJpegRecompressWithOptions: EstimateJpegRecompressWithOptionsFn | null = null;
 let estimateResizePngSize: EstimateResizePngSizeFn | null = null;
@@ -567,6 +575,8 @@ async function initOptimizeWasm(): Promise<void> {
   const module = await importWasmGlue("transmutador_optimize");
   await initWasmModule(module, "transmutador_optimize", activeEngineHints);
   recompressPng = wasmExport<RecompressPngFn>(module, "recompress_png");
+  recompressPngOptimized = wasmExport<RecompressPngOptimizedFn>(module, "recompress_png_optimized");
+  recompressPngLossy = wasmExport<RecompressPngLossyFn>(module, "recompress_png_lossy");
   recompressJpeg = wasmExport<RecompressJpegFn>(module, "recompress_jpeg");
   recompressJpegWithOptions = wasmExport<RecompressJpegWithOptionsFn>(module, "recompress_jpeg_with_options");
   resizePng = wasmExport<ResizePngFn>(module, "resize_png");
@@ -577,6 +587,14 @@ async function initOptimizeWasm(): Promise<void> {
   estimatePngRecompressSize = wasmExport<EstimatePngRecompressSizeFn>(
     module,
     "estimate_png_recompress_size"
+  );
+  estimatePngRecompressOptimized = wasmExport<EstimatePngRecompressOptimizedFn>(
+    module,
+    "estimate_png_recompress_optimized"
+  );
+  estimatePngRecompressLossy = wasmExport<EstimatePngRecompressLossyFn>(
+    module,
+    "estimate_png_recompress_lossy"
   );
   estimateJpegRecompressSize = wasmExport<EstimateJpegRecompressSizeFn>(
     module,
@@ -1010,6 +1028,15 @@ function runFullEncode(
     }
     if (route.isOptimizePng) {
       const compression = opts?.compression ?? 9;
+      const optLevel = opts?.optimizationLevel ?? 0;
+      const lossyMode = opts?.lossyMode ?? 0;
+      if (lossyMode > 0 && recompressPngLossy) {
+        const colors = opts?.lossyColors ?? 256;
+        return recompressPngLossy(input, colors, true);
+      }
+      if (optLevel > 0 && recompressPngOptimized) {
+        return recompressPngOptimized(input, compression, optLevel);
+      }
       if (!recompressPng) throw new Error("Wasm module not initialized");
       return recompressPng(input, compression);
     }
@@ -1240,6 +1267,15 @@ function runSizeEstimate(
     }
     if (route.isOptimizePng) {
       const compression = opts?.compression ?? 9;
+      const optLevel = opts?.optimizationLevel ?? 0;
+      const lossyMode = opts?.lossyMode ?? 0;
+      if (lossyMode > 0 && estimatePngRecompressLossy) {
+        const colors = opts?.lossyColors ?? 256;
+        return estimatePngRecompressLossy(input, colors, true);
+      }
+      if (optLevel > 0 && estimatePngRecompressOptimized) {
+        return estimatePngRecompressOptimized(input, compression, optLevel);
+      }
       if (!estimatePngRecompressSize) throw new Error("Wasm estimate export not initialized");
       return estimatePngRecompressSize(input, compression);
     }

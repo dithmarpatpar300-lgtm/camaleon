@@ -9,6 +9,9 @@ use image::{DynamicImage, ExtendedColorType, ImageEncoder, ImageReader};
 use jpeg_encoder::{ColorType, Encoder, SamplingFactor};
 use wasm_bindgen::prelude::*;
 
+use quantette::{ImageRef, PaletteSize, Pipeline, QuantizeMethod};
+use png::{BitDepth, ColorType as PngColorType, Compression as PngCompression, Encoder as PngEncoderCustom};
+
 pub const MIN_PNG_COMPRESSION: u8 = 1;
 pub const MAX_PNG_COMPRESSION: u8 = 9;
 pub const DEFAULT_PNG_COMPRESSION: u8 = 6;
@@ -754,6 +757,68 @@ pub fn estimate_resize_jpeg_size(
 ) -> Result<u32, String> {
     let out =
         resize_jpeg_with_filter_and_quality(input_bytes, resize_percent, filter_code, quality)?;
+    Ok(out.len() as u32)
+}
+
+fn quantize_to_png(img: &DynamicImage, colors: u16, dither: bool) -> Result<Vec<u8>, String> {
+    let size = PaletteSize::try_from(colors)
+        .map_err(|e| format!("Invalid color count: {e}"))?;
+    let rgb = img.to_rgb8();
+    let (w, h) = rgb.dimensions();
+    let image_ref = ImageRef::try_from(&rgb)
+        .map_err(|e| format!("Image conversion failed: {e}"))?;
+    let mut pipeline = Pipeline::new()
+        .palette_size(size)
+        .quantize_method(QuantizeMethod::Wu);
+    if dither {
+        pipeline = pipeline.ditherer(Some(quantette::dither::FloydSteinberg::new()));
+    }
+    let indexed = pipeline
+        .input_image(image_ref)
+        .output_srgb8_indexed_image();
+    let palette = indexed.palette();
+    let indices = indexed.indices();
+    let mut pal_bytes = Vec::with_capacity(palette.len() * 3);
+    for c in palette.iter() {
+        pal_bytes.push(c.red);
+        pal_bytes.push(c.green);
+        pal_bytes.push(c.blue);
+    }
+    let mut buf = Vec::new();
+    {
+        let mut encoder = PngEncoderCustom::new(&mut buf, w, h);
+        encoder.set_color(PngColorType::Indexed);
+        encoder.set_depth(BitDepth::Eight);
+        encoder.set_compression(PngCompression::Balanced);
+        encoder.set_palette(&pal_bytes);
+        let mut writer = encoder
+            .write_header()
+            .map_err(|e| format!("PNG write header failed: {e}"))?;
+        writer
+            .write_image_data(indices)
+            .map_err(|e| format!("PNG write data failed: {e}"))?;
+    }
+    Ok(buf)
+}
+
+#[wasm_bindgen]
+pub fn recompress_png_lossy(
+    input_bytes: &[u8],
+    colors: u16,
+    dither: bool,
+) -> Result<Vec<u8>, String> {
+    ensure_png(input_bytes)?;
+    let img = decode_image(input_bytes)?;
+    quantize_to_png(&img, colors, dither)
+}
+
+#[wasm_bindgen]
+pub fn estimate_png_recompress_lossy(
+    input_bytes: &[u8],
+    colors: u16,
+    dither: bool,
+) -> Result<u32, String> {
+    let out = recompress_png_lossy(input_bytes, colors, dither)?;
     Ok(out.len() as u32)
 }
 

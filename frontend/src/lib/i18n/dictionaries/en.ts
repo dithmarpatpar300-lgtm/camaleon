@@ -493,6 +493,23 @@ const en: Dictionary = {
           },
         },
       },
+      v381: {
+        title: "Compress Premium Phase D — lossy PNG quantization",
+        summary:
+          "Lossy palette quantization via quantette (Wu method + FloydSteinberg dither). Reduce PNGs to 2–256 colors for 60–80% smaller files. Indexed PNG encoding via the png crate. Mandatory irreversibility warning. Fixed colors: u8→u16 bug (256 truncated to 0). Updated tool descriptions.",
+        technical:
+          "quantette v0.6 Pipeline: Wu() + FloydSteinberg dither + PaletteSize + ImageRef + output_srgb8_indexed_image. PNG indexed via png v0.18: ColorType::Indexed, BitDepth::Eight, set_palette, write_image_data. Colors param: u8→u16 (wasm-bindgen truncates 256→0). App v3.8.1 / engine 1.7.0.",
+        highlights: {
+          lossyQuant: {
+            title: "Lossy PNG quantization",
+            body: "Reduce photographic PNGs by 60-80% using Wu's color quantization and FloydSteinberg dither. Configurable from 2 to 256 colors. Off by default — mandatory warning before use.",
+          },
+          colorBugfix: {
+            title: "256-color fix",
+            body: "The lossy compressor now correctly accepts 256 colors. The previous `u8` type truncated 256 to 0 — 255 worked but 256 failed. Now uses `u16` for the full 2-256 range.",
+          },
+        },
+      },
       v371: {
         title: "Compress Premium Phase B — JPEG encoder swap & subsampling",
         summary:
@@ -2082,8 +2099,8 @@ const en: Dictionary = {
     },
     "png-compress": {
       actionTitle: "Compress PNG",
-      description: "Same-format re-encode — tune DEFLATE level and compare output size before download.",
-      fidelityHint: "Lossless re-pack — pixel data unchanged; only container compression changes.",
+      description: "Same-format re-encode with lossless optimization (filter trial, color/bit reduction, deflate strategy tuning) or lossy palette quantization — compare size delta in metrics.",
+      fidelityHint: "Lossless by default — pixels unchanged. Optional lossy mode: palette quantization for 60-80% smaller PNGs (irreversible).",
       options: {
         compression: {
           label: "Compression level",
@@ -2099,12 +2116,26 @@ const en: Dictionary = {
           upperLabel: "Full",
           presets: { off: "Off", full: "Full" },
         },
+        lossyMode: {
+          label: "Lossy compression",
+          hint: "Reduces color depth via palette quantization. Irreversible — visual quality will change. 60-80% smaller for photos.",
+          lowerLabel: "Off",
+          upperLabel: "On",
+          presets: { off: "Off", on: "On" },
+        },
+        lossyColors: {
+          label: "Color count",
+          hint: "Number of colors in output palette (2-256). Fewer colors = smaller file but more visual quality loss.",
+          lowerLabel: "2",
+          upperLabel: "256",
+          presets: { "16": "16", "64": "64", "128": "128", "256": "256" },
+        },
       },
     },
     "jpg-compress": {
       actionTitle: "Compress JPEG",
-      description: "Same-format re-encode at lower quality — metrics-first size reduction.",
-      fidelityHint: "Lossy — each re-encode adds generation loss. Compare size delta in metrics.",
+      description: "Same-format re-encode with optimized Huffman tables and chroma subsampling control — up to 15% smaller files at the same visual quality. Metrics-first size reduction with generational loss awareness.",
+      fidelityHint: "Lossy — each re-encode adds generation loss. Optimized Huffman by default (5-15% smaller). Subsampling: 4:4:4 for text/screenshots. Compare size delta in metrics.",
       options: {
         quality: {
           label: "JPEG Quality",
@@ -2401,6 +2432,8 @@ const en: Dictionary = {
         "Chroma subsampling 4:4:4 preserves full color detail for every pixel — best for text, screenshots, and graphics with sharp edges. Produces larger files than 4:2:0.",
       pngOptimized:
         "Full optimization tries multiple filter strategies and reduces color type for the best compression. Encoding may be 3-6× slower but output can be 10-30% smaller. Pixels remain identical — lossless.",
+      pngLossy:
+        "Lossy compression reduces color depth via palette quantization. Visual quality is permanently changed — this is irreversible. Ideal for photos where 60-80% size reduction is worth the quality trade-off.",
     },
     estimate: {
       cheapSlow: "Still calculating…",
