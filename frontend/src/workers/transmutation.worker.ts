@@ -193,6 +193,7 @@ type RecompressPngOptimizedFn = (input: Uint8Array, compression: number, opt_lev
 type RecompressPngLossyFn = (input: Uint8Array, colors: number, dither: boolean) => Uint8Array;
 type RecompressJpegFn = (input: Uint8Array, quality: number) => Uint8Array;
 type RecompressJpegWithOptionsFn = (input: Uint8Array, quality: number, chroma_code: number) => Uint8Array;
+type RecompressJpegProgressiveFn = (input: Uint8Array, quality: number, chroma_code: number) => Uint8Array;
 type ResizePngFn = (input: Uint8Array, resize_percent: number) => Uint8Array;
 type ResizeJpegFn = (input: Uint8Array, resize_percent: number) => Uint8Array;
 type ResizePngWithFilterFn = (input: Uint8Array, resize_percent: number, filter_code: number) => Uint8Array;
@@ -203,6 +204,7 @@ type EstimatePngRecompressOptimizedFn = (input: Uint8Array, compression: number,
 type EstimatePngRecompressLossyFn = (input: Uint8Array, colors: number, dither: boolean) => number;
 type EstimateJpegRecompressSizeFn = (input: Uint8Array, quality: number) => number;
 type EstimateJpegRecompressWithOptionsFn = (input: Uint8Array, quality: number, chroma_code: number) => number;
+type EstimateJpegRecompressProgressiveFn = (input: Uint8Array, quality: number, chroma_code: number) => number;
 type EstimateResizePngSizeFn = (input: Uint8Array, resize_percent: number, filter_code: number) => number;
 type EstimateResizeJpegSizeFn = (input: Uint8Array, resize_percent: number, filter_code: number, quality: number) => number;
 
@@ -333,6 +335,7 @@ let recompressPngOptimized: RecompressPngOptimizedFn | null = null;
 let recompressPngLossy: RecompressPngLossyFn | null = null;
 let recompressJpeg: RecompressJpegFn | null = null;
 let recompressJpegWithOptions: RecompressJpegWithOptionsFn | null = null;
+let recompressJpegProgressive: RecompressJpegProgressiveFn | null = null;
 let resizePng: ResizePngFn | null = null;
 let resizeJpeg: ResizeJpegFn | null = null;
 let resizePngWithFilter: ResizePngWithFilterFn | null = null;
@@ -343,6 +346,7 @@ let estimatePngRecompressOptimized: EstimatePngRecompressOptimizedFn | null = nu
 let estimatePngRecompressLossy: EstimatePngRecompressLossyFn | null = null;
 let estimateJpegRecompressSize: EstimateJpegRecompressSizeFn | null = null;
 let estimateJpegRecompressWithOptions: EstimateJpegRecompressWithOptionsFn | null = null;
+let estimateJpegRecompressProgressive: EstimateJpegRecompressProgressiveFn | null = null;
 let estimateResizePngSize: EstimateResizePngSizeFn | null = null;
 let estimateResizeJpegSize: EstimateResizeJpegSizeFn | null = null;
 
@@ -579,6 +583,7 @@ async function initOptimizeWasm(): Promise<void> {
   recompressPngLossy = wasmExport<RecompressPngLossyFn>(module, "recompress_png_lossy");
   recompressJpeg = wasmExport<RecompressJpegFn>(module, "recompress_jpeg");
   recompressJpegWithOptions = wasmExport<RecompressJpegWithOptionsFn>(module, "recompress_jpeg_with_options");
+  recompressJpegProgressive = wasmExport<RecompressJpegProgressiveFn>(module, "recompress_jpeg_progressive");
   resizePng = wasmExport<ResizePngFn>(module, "resize_png");
   resizeJpeg = wasmExport<ResizeJpegFn>(module, "resize_jpeg");
   resizePngWithFilter = wasmExport<ResizePngWithFilterFn>(module, "resize_png_with_filter");
@@ -603,6 +608,10 @@ async function initOptimizeWasm(): Promise<void> {
   estimateJpegRecompressWithOptions = wasmExport<EstimateJpegRecompressWithOptionsFn>(
     module,
     "estimate_jpeg_recompress_with_options"
+  );
+  estimateJpegRecompressProgressive = wasmExport<EstimateJpegRecompressProgressiveFn>(
+    module,
+    "estimate_jpeg_recompress_progressive"
   );
   estimateResizePngSize = wasmExport<EstimateResizePngSizeFn>(module, "estimate_resize_png_size");
   estimateResizeJpegSize = wasmExport<EstimateResizeJpegSizeFn>(module, "estimate_resize_jpeg_size");
@@ -1042,6 +1051,10 @@ function runFullEncode(
     }
     const quality = opts?.quality ?? 75;
     const subsampling = opts?.subsampling ?? 0;
+    const progressive = opts?.progressive ?? 0;
+    if (progressive > 0 && recompressJpegProgressive) {
+      return recompressJpegProgressive(input, quality, subsampling);
+    }
     if (subsampling > 0 && recompressJpegWithOptions) {
       return recompressJpegWithOptions(input, quality, subsampling);
     }
@@ -1281,6 +1294,10 @@ function runSizeEstimate(
     }
     const quality = opts?.quality ?? 75;
     const subsampling = opts?.subsampling ?? 0;
+    const progressive = opts?.progressive ?? 0;
+    if (progressive > 0 && estimateJpegRecompressProgressive) {
+      return estimateJpegRecompressProgressive(input, quality, subsampling);
+    }
     if (subsampling > 0 && estimateJpegRecompressWithOptions) {
       return estimateJpegRecompressWithOptions(input, quality, subsampling);
     }

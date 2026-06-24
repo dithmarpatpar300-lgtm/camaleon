@@ -75,6 +75,19 @@ export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
   }
 
   if (
+    ctx.toolId === "png-compress" &&
+    ctx.optimizationLevel != null &&
+    ctx.optimizationLevel >= 2
+  ) {
+    notices.push({
+      id: "fidelity-png-zopfli",
+      severity: "info",
+      messageKey: "notices.fidelity.pngZopfli",
+      priority: NOTICE_PRIORITY.info,
+    });
+  }
+
+  if (
     ctx.toolId === "jpg-compress" &&
     ctx.subsampling != null &&
     ctx.subsampling === 1

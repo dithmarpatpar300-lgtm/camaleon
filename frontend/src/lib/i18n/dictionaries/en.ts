@@ -493,6 +493,23 @@ const en: Dictionary = {
           },
         },
       },
+      v382: {
+        title: "Compress Premium Phase E — Zopfli archival & progressive JPEG",
+        summary:
+          "Extreme archival PNG compression via Zopfli DEFLATE at opt_level=2 — 3-8% smaller than standard, but minutes for large images. Progressive JPEG scan toggle for gradual browser loading.",
+        technical:
+          "zopfli v0.8.3 Format::Zlib + Options::default(). try_zopfli_encode: 5 filters × Zopfli DEFLATE. Progressive JPEG via jpeg-encoder set_progressive(true). App v3.8.2 / engine 1.7.0.",
+        highlights: {
+          zopfli: {
+            title: "Zopfli archival compression",
+            body: "Extreme archival compression at opt_level=2. 3-8% smaller files but 10-100× slower — recommended only for long-term storage.",
+          },
+          progressive: {
+            title: "Progressive JPEG",
+            body: "Toggle on JPEG Compress: Baseline (standard) vs Progressive (loads gradually in browsers). File size is similar.",
+          },
+        },
+      },
       v381: {
         title: "Compress Premium Phase D — lossy PNG quantization",
         summary:
@@ -2111,10 +2128,10 @@ const en: Dictionary = {
         },
         optimizationLevel: {
           label: "Optimization",
-          hint: "Off = standard encoding. Full = tries multiple filter strategies + color type reduction for best compression (~10-30% smaller).",
+          hint: "Off = standard encoding. Full = filter trial + strategy tuning. Archival = Zopfli (3-8% more, extremely slow).",
           lowerLabel: "Off",
-          upperLabel: "Full",
-          presets: { off: "Off", full: "Full" },
+          upperLabel: "Archival",
+          presets: { off: "Off", full: "Full", archival: "Archival" },
         },
         lossyMode: {
           label: "Lossy compression",
@@ -2150,6 +2167,13 @@ const en: Dictionary = {
           lowerLabel: "4:2:0",
           upperLabel: "4:4:4",
           presets: { s420: "4:2:0", s422: "4:2:2", s444: "4:4:4" },
+        },
+        progressive: {
+          label: "Progressive scan",
+          hint: "Baseline = standard JPEG. Progressive = loads gradually in browsers. File size is similar to baseline.",
+          lowerLabel: "Baseline",
+          upperLabel: "Progressive",
+          presets: { off: "Baseline", on: "Progressive" },
         },
       },
     },
@@ -2434,6 +2458,8 @@ const en: Dictionary = {
         "Full optimization tries multiple filter strategies and reduces color type for the best compression. Encoding may be 3-6× slower but output can be 10-30% smaller. Pixels remain identical — lossless.",
       pngLossy:
         "Lossy compression reduces color depth via palette quantization. Visual quality is permanently changed — this is irreversible. Ideal for photos where 60-80% size reduction is worth the quality trade-off.",
+      pngZopfli:
+        "Archival mode uses Zopfli compression — 3-8% smaller than standard but extremely slow (minutes for large images). Recommended only for long-term storage, not everyday use.",
     },
     estimate: {
       cheapSlow: "Still calculating…",

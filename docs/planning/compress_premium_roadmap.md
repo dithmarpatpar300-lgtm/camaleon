@@ -166,7 +166,7 @@ Each JPEG re-encode is a **new lossy generation**. The decoded raster already co
 | **B** | **v3.7.1** ✅ | **JPEG encoder swap (`jpeg-encoder` crate) + subsampling control** | MINOR | **1.7.0** |
 | **C** | **v3.8.0** ✅ | **PNG lossless optimization (filter trial + color type reduction + bit depth + deflate strategy)** | MINOR | **1.7.0** (no new deps) |
 | **D** | **v3.8.1** ✅ | **Lossy PNG quantization (quantette + indexed PNG)** | PATCH | **1.7.0** (quantette + png deps) |
-| **E** | v3.9.x | Zopfli + progressive JPEG (backlog) | MINOR | 1.9.x |
+| **E** | **v3.8.2** ✅ | **Zopfli archival compression + progressive JPEG** | PATCH | **1.7.0** (zopfli dep) |
 
 ---
 
@@ -451,10 +451,12 @@ Phase D — v3.8.1 (PATCH, no engine bump) ✅
   ├── Lossy mode slider + color count + mandatory warning notice
   └── Fixed colors: u8 → u16 (256 truncated to 0 at Wasm boundary)
 
-Phase E — v3.9.x (backlog)
-  ├── SPIKE: zopfli crate
-  ├── Archival PNG compression
-  └── Progressive JPEG
+Phase E — v3.8.2 (PATCH, no engine bump) ✅
+  ├── Zopfli DEFLATE compression (Format::Zlib, 15 iterations)
+  ├── Archival optimization level (opt_level=2, 3-8% more savings)
+  ├── Progressive JPEG via jpeg-encoder set_progressive()
+  ├── Progressive slider on jpg-compress
+  └── Notices for archival slowness
 ```
 
 ---

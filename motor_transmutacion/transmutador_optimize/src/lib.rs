@@ -11,6 +11,7 @@ use wasm_bindgen::prelude::*;
 
 use quantette::{ImageRef, PaletteSize, Pipeline, QuantizeMethod};
 use png::{BitDepth, ColorType as PngColorType, Compression as PngCompression, Encoder as PngEncoderCustom};
+use zopfli::{Format, Options as ZopfliOptions};
 
 pub const MIN_PNG_COMPRESSION: u8 = 1;
 pub const MAX_PNG_COMPRESSION: u8 = 9;
@@ -21,7 +22,7 @@ pub const DEFAULT_JPEG_QUALITY: u8 = 85;
 pub const MIN_RESIZE_PERCENT: u16 = 1;
 pub const MAX_RESIZE_PERCENT: u16 = 400;
 pub const MIN_OPT_LEVEL: u8 = 0;
-pub const MAX_OPT_LEVEL: u8 = 1;
+pub const MAX_OPT_LEVEL: u8 = 2;
 
 const FILTERS_TO_TRIAL: [FilterType; 5] = [
     FilterType::Sub,
@@ -541,6 +542,13 @@ fn encode_png_optimized(
             best = custom;
         }
     }
+    if opt_level >= 2 {
+        if let Some(zopfli) = try_zopfli_encode(&optimized) {
+            if zopfli.len() < best.len() {
+                best = zopfli;
+            }
+        }
+    }
     Ok(best)
 }
 
@@ -552,11 +560,11 @@ fn subsampling_from_code(code: u8) -> SamplingFactor {
     }
 }
 
-fn encode_jpeg_inner(
-    img: &DynamicImage,
-    quality: u8,
-    subsampling: SamplingFactor,
-) -> Result<Vec<u8>, String> {
+fn encode_jpeg(img: &DynamicImage, quality: u8) -> Result<Vec<u8>, String> {
+    encode_jpeg_with_options(img, quality, SamplingFactor::F_2_2, false)
+}
+
+fn encode_jpeg_with_options(img: &DynamicImage, quality: u8, subsampling: SamplingFactor, progressive: bool) -> Result<Vec<u8>, String> {
     if !(MIN_JPEG_QUALITY..=MAX_JPEG_QUALITY).contains(&quality) {
         return Err(format!(
             "JPEG quality must be between {MIN_JPEG_QUALITY} and {MAX_JPEG_QUALITY}"
@@ -568,14 +576,13 @@ fn encode_jpeg_inner(
     let mut encoder = Encoder::new(&mut out, quality);
     encoder.set_sampling_factor(subsampling);
     encoder.set_optimized_huffman_tables(true);
+    if progressive {
+        encoder.set_progressive(true);
+    }
     encoder
         .encode(rgb.as_raw(), w as u16, h as u16, ColorType::Rgb)
         .map_err(|e| format!("JPEG encode failed: {e}"))?;
     Ok(out)
-}
-
-fn encode_jpeg(img: &DynamicImage, quality: u8) -> Result<Vec<u8>, String> {
-    encode_jpeg_inner(img, quality, SamplingFactor::F_2_2)
 }
 
 fn filter_from_code(code: u8) -> Result<ResizeFilter, String> {
@@ -652,7 +659,7 @@ pub fn recompress_jpeg_with_options(
     ensure_jpeg(input_bytes)?;
     let img = decode_image(input_bytes)?;
     let ss = subsampling_from_code(chroma_code);
-    encode_jpeg_inner(&img, quality, ss)
+    encode_jpeg_with_options(&img, quality, ss, false)
 }
 
 #[wasm_bindgen]
@@ -833,6 +840,71 @@ pub fn reset_session_input_limit() {
 }
 
 #[wasm_bindgen]
+pub fn recompress_jpeg_progressive(
+    input_bytes: &[u8],
+    quality: u8,
+    chroma_code: u8,
+) -> Result<Vec<u8>, String> {
+    ensure_jpeg(input_bytes)?;
+    let img = decode_image(input_bytes)?;
+    let ss = subsampling_from_code(chroma_code);
+    encode_jpeg_with_options(&img, quality, ss, true)
+}
+
+#[wasm_bindgen]
+pub fn estimate_jpeg_recompress_progressive(
+    input_bytes: &[u8],
+    quality: u8,
+    chroma_code: u8,
+) -> Result<u32, String> {
+    let out = recompress_jpeg_progressive(input_bytes, quality, chroma_code)?;
+    Ok(out.len() as u32)
+}
+
+fn zopfli_compress(data: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(data.len());
+    let _ = zopfli::compress(ZopfliOptions::default(), Format::Zlib, data, &mut out);
+    out
+}
+
+fn try_zopfli_encode(img: &DynamicImage) -> Option<Vec<u8>> {
+    let (w, h) = img.dimensions();
+    let color = img.color();
+    let (raw, channels, color_type_byte): (Vec<u8>, usize, u8) = if color.has_alpha() {
+        let rgba = img.to_rgba8();
+        (rgba.as_raw().to_vec(), 4, 6)
+    } else if color.channel_count() == 1 {
+        let luma = img.to_luma8();
+        (luma.as_raw().to_vec(), 1, 0)
+    } else {
+        let rgb = img.to_rgb8();
+        (rgb.as_raw().to_vec(), 3, 2)
+    };
+    let (w_usize, h_usize) = (w as usize, h as usize);
+    let filters: [fn(&[u8], usize, usize, usize) -> Vec<u8>; 5] = [
+        apply_png_filter_none,
+        apply_png_filter_sub,
+        apply_png_filter_up,
+        apply_png_filter_avg,
+        apply_png_filter_paeth,
+    ];
+    let mut best: Option<Vec<u8>> = None;
+    for filter_fn in filters.iter() {
+        let filtered = filter_fn(&raw, w_usize, h_usize, channels);
+        let compressed = zopfli_compress(&filtered);
+        if compressed.is_empty() {
+            continue;
+        }
+        let png = build_png_container(w, h, color_type_byte, 8, &compressed);
+        match &best {
+            Some(b) if png.len() >= b.len() => {}
+            _ => best = Some(png),
+        }
+    }
+    best
+}
+
+#[wasm_bindgen]
 pub fn set_risk_mode(enabled: bool) {
     core_utils::set_risk_mode(enabled);
 }
@@ -984,7 +1056,7 @@ mod tests {
     #[test]
     fn invalid_opt_level_rejected() {
         let png = sample_png();
-        assert!(recompress_png_optimized(&png, 6, 2).is_err());
+        assert!(recompress_png_optimized(&png, 6, 3).is_err());
     }
 
     fn sample_bw_png() -> Vec<u8> {
