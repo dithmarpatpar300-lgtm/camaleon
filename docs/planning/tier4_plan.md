@@ -1,7 +1,7 @@
 # Tier 4 — Image Optimization & Editing
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v3.9.0 on `dev`** — Compress Premium A–E **✅ complete** · Resize Premium ✅ (v3.6.0) · UX-4a ✅ (v3.3.3) · 4a-pre ✅ (v3.3.3) · **4a.1** metrics UX merged into delivered functionality · **4a.2a WebP compress ✅ (v3.9.0)** · 4a.2b SVG minify planned · **4b** editing planned  
+> **Status:** **v3.9.0 on `dev`** — Compress Premium A–E **✅ complete** · Resize Premium ✅ (v3.6.0) · UX-4a ✅ (v3.3.3) · 4a-pre ✅ (v3.3.3) · **4a.1** metrics UX merged into delivered functionality · **4a.2 Matrix Expand 🔄 in progress (4a.2a ✅ v3.9.0, 4a.2b ⏳ planned v3.9.1)** · **4b** editing planned  
 > **Prerequisite:** Tier 3 **complete** (v3.0.1) · Tier 3.5 Universal ✅ · Tier 3.6.0–3.6.2 ✅ · Settings S1–S7 core ✅  
 > **Doctrine:** Same pipeline as convert tools — decode → honest options → re-encode → StripAll → **estimate-first** (metrics are the product on Ladder C)  
 > **SPEC anchor:** §1.3 Ladders C & D · §5.1 mental model · §12.5 Tier 4a · §12.6 Tier 4b · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -25,6 +25,7 @@ Tier 4 is Camaleon's **second major capability line** after the 21-tool convert 
 | **Compress E** | Archival | Zopfli DEFLATE (opt_level=2), progressive JPEG | `transmutador_optimize` + `zopfli` | **v3.8.2** | ✅ **Shipped** |
 | **UX-4a** | Discovery | ToolBrowser **Convert vs Optimize** lanes (`category`) | — (frontend) | **v3.3.3** | ✅ **Shipped** |
 | **4a-pre** | Mobile UX | Top offline notices + sticky ToolBrowser coexistence | — (frontend) | **v3.3.3** | ✅ **Shipped** |
+| **4a.2 Matrix Expand** | **Umbrella** | **WebP recompress + SVG minify + WebP resize (4 sub-phases)** | **Multiple crates** | **v3.9.x** | **🔄 In progress** |
 | **4a.2a** | WebP compress | WebP VP8L lossless re-encode, predictor toggle, color type opt, animated reject | `transmutador_optimize` (extended) | **v3.9.0** | ✅ **Shipped** |
 | **4a.2b** | SVG minify | Lightweight text-optimization (zero deps), passes 1-6+10, .svgz input | `transmutador_svg` (extended) | v3.9.1 | 📋 Planned |
 | **4a.2c** | SVG aggressive | oxvg_optimiser spike (passes 7-9 + CSS minify), Wasm size gate | `transmutador_svg` (or new) | TBD | 📋 Backlog |
@@ -189,7 +190,9 @@ Input (PNG/JPEG)
 
 ---
 
-## 8. Phase 4a.2 — Expand optimize matrix
+## 8. Phase 4a.2 — Expand optimize matrix (umbrella)
+
+Phase 4a.2 "Matrix Expand" was split into 4 sub-phases due to scope. Only **4a.2a (WebP compress)** is shipped; 4a.2b–d remain in progress or backlog.
 
 ### 8.1 4a.2a — WebP compress ✅ (v3.9.0)
 
@@ -263,11 +266,12 @@ v3.7.1  Compress B — JPEG encoder swap, subsampling
 v3.8.0  Compress C — native lossless optimization
 v3.8.1  Compress D — lossy quantization
 v3.8.2  Compress E — Zopfli archival, progressive JPEG
-v3.9.0  4a.2a WebP compress — VP8L lossless re-encode
-─────── next ───────
+─── 4a.2 Matrix Expand (umbrella) ───
+v3.9.0  4a.2a WebP compress — VP8L lossless re-encode ✅
+─────── next ─────────────────────
 4a.2b   SVG minify (v3.9.1)
 4a.3    Batch optimize allowlist
-─────── future ───────
+─────── future ───────────────────
 4a.2c   SVG aggressive (oxvg spike)
 4a.2d   WebP resize
 4b.0    Image editor spike
