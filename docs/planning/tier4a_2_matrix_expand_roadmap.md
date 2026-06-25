@@ -1,6 +1,6 @@
 # Tier 4a.2 Matrix Expand Roadmap — Camaleon
 
-> **Status:** Ready for implementation · **Author:** OpenCode
+> **Status: v3.9.0 SHIPPED 2026-06-24 ✅** · 4a.2b pending · **Author:** OpenCode
 > **Scope:** WebP recompress (v3.9.0) + SVG minify (v3.9.1) — extend Ladder C optimization to WebP and SVG formats
 > **Parent doc:** `docs/planning/tier4_plan.md` §8 · **Investigation:** `docs/planning/tier4a_2_matrix_expand_investigation.md`
 > **SPEC anchor:** §12.5 Tier 4a · §1.3 Ladder C · §5.12 WebP science · §5.10 StripAll
@@ -14,7 +14,7 @@
 Extend Camaleon's optimization ladder (Ladder C) beyond PNG/JPEG to cover **WebP recompress** and **SVG minify** — two new tools that follow the same estimate-first, honesty-notice, privacy-first doctrine established by Compress Premium A–E and Resize Premium.
 
 **Deliverables:**
-- **v3.9.0** — `webp-compress` tool: lossless VP8L re-encode with honest lossy-source warnings
+- **v3.9.0** — `webp-compress` tool: lossless VP8L re-encode with honest lossy-source warnings **✅ SHIPPED**
 - **v3.9.1** — `svg-minify` tool: lightweight text-optimization (zero new deps) with optimization level + advanced toggles
 - **Future** — `4a.2c` oxvg_optimiser spike (aggressive SVG optimization) · `4a.2d` WebP resize
 
@@ -24,7 +24,7 @@ Extend Camaleon's optimization ladder (Ladder C) beyond PNG/JPEG to cover **WebP
 
 | Phase | App version | Engine version | Type bump | Rationale |
 |-------|-------------|----------------|-----------|-----------|
-| **4a.2a** WebP compress | **v3.9.0** | **v1.8.0** | MINOR | New tool + new `image` feature (`webp`) + new `image-webp` direct dep |
+| **4a.2a** WebP compress | **v3.9.0 ✅** | **v1.8.0** | MINOR | New tool + new `image` feature (`webp`) + new `image-webp` direct dep |
 | **4a.2b** SVG minify | **v3.9.1** | v1.8.0 | PATCH | New tool, no new deps, no engine change |
 | **4a.2c** oxvg spike (future) | TBD | TBD | TBD | Gated on Wasm size + API stability |
 | **4a.2d** WebP resize (future) | TBD | TBD | PATCH | Reuses 4a.2a pipeline |
@@ -37,39 +37,40 @@ Extend Camaleon's optimization ladder (Ladder C) beyond PNG/JPEG to cover **WebP
 
 ### 2.1 Spike gate — `image` `webp` feature + `image-webp` direct dep
 
-| # | Task | Gate | Abort condition |
-|---|------|------|-----------------|
-| S1 | Add `"webp"` to `transmutador_optimize/Cargo.toml` `image` features; add `image-webp = "0.2"` direct dep | Dep added | — |
-| S2 | `cargo check -p transmutador_optimize --target wasm32-unknown-unknown` | Compiles | ❌ if C deps pulled in (same as oxipng failure) |
-| S3 | `cd frontend && npm run build:wasm` | Builds | ❌ if wasm-pack fails |
-| S4 | Measure `transmutador_optimize` Wasm size delta | **Gate: < +200 KB** | ❌ if > +200 KB (would push optimize crate > 1 MB) |
-| S5 | Manual: decode + re-encode a lossless WebP → valid WebP output (RIFF magic) | Works | ❌ if output invalid |
+| # | Task | Gate | Result |
+|---|------|------|--------|
+| S1 | Add `"webp"` to `transmutador_optimize/Cargo.toml` `image` features; add `image-webp = "0.2"` direct dep | Dep added | ✅ PASS |
+| S2 | `cargo check -p transmutador_optimize --target wasm32-unknown-unknown` | Compiles | ✅ PASS — no C deps |
+| S3 | `cd frontend && npm run build:wasm` | Builds | ✅ PASS — 13/13 crates |
+| S4 | Measure `transmutador_optimize` Wasm size delta | **Gate: < +200 KB** | ✅ **+27.8 KB** (actual: 842→869 KB) |
+| S5 | Manual: decode + re-encode a lossless WebP → valid WebP output (RIFF magic) | Works | ✅ PASS |
 
-**Gate decision:** Proceed if S2-S5 all pass. If S2 fails (C deps), abort and document — same pattern as oxipng spike failure (compress_premium_roadmap.md §7.1).
+**Gate decision:** All gates passed. Abort conditions not triggered.
 
-**Expected Wasm delta:** +50-150 KB. `image-webp` is already a transitive dependency of the `image` crate (via the `webp` feature); adding it directly only links the VP8L encoder code that's already compiled. **Spike confirms.**
+**Actual Wasm delta:** +27.8 KB (far below the +50-150 KB estimate). `image-webp` was already compiled transitively; enabling it directly only linked minimal glue code.
 
 ### 2.2 Implementation tasks
 
 #### 2.2.1 Rust — `core_utils` (WebP format probe)
 
-| # | Task | File | Lines |
-|---|------|------|-------|
+| # | Task | File | Actual Lines |
+|---|------|------|-------------|
 | A1 | Add `WebpFormat` enum: `Lossy`, `Lossless`, `Extended` | `motor_transmutacion/core_utils/src/lib.rs` | ~15 |
-| A2 | Implement `probe_webp_format(bytes: &[u8]) -> Result<WebpFormat, String>` — RIFF header check + chunk type scan (`VP8 ` = lossy, `VP8L` = lossless, `VP8X` = extended). Pure byte parsing, same pattern as `probe_dimensions`. | `motor_transmutacion/core_utils/src/lib.rs` | ~40 |
-| A3 | Unit tests: valid lossy WebP, valid lossless WebP, valid extended WebP, corrupt RIFF, empty input, non-RIFF input | `motor_transmutacion/core_utils/src/lib.rs` | ~50 |
+| A2 | Implement `probe_webp_format(bytes: &[u8]) -> Result<WebpFormat, String>` — RIFF header check + chunk type scan. **Extra:** VP8X extended containers are recursively scanned for inner VP8/VP8L chunks instead of returning "Extended" directly (fix: most camera photos converted externally are VP8X with VP8 inside; without recursion, the lossy-source notice was not firing). | `motor_transmutacion/core_utils/src/lib.rs` | ~80 |
+| A3 | Unit tests: 10 tests covering lossy, lossless, VP8X→lossy resolution, VP8X→lossless resolution, VP8X no-payload fallback, empty input, too-short, non-RIFF, non-WEBP brand, unknown chunk type | `motor_transmutacion/core_utils/src/lib.rs` | ~90 |
 
-#### 2.2.2 Rust — `transmutador_optimize` (WebP recompress exports)
+#### 2.2.2 Rust — `transmutador_optimize` (WebP recompress exports + EXIF orientation)
 
-| # | Task | File | Lines |
-|---|------|------|-------|
-| B1 | Add `recompress_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String>` — standard VP8L re-encode with defaults (predictor on, color type auto) | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~5 (wrapper) |
-| B2 | Add `recompress_webp_with_options(input_bytes: &[u8], use_predictor: bool) -> Result<Vec<u8>, String>` — VP8L re-encode with predictor toggle + color type optimization (RGB vs RGBA based on alpha) | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~40 |
-| B3 | Add `estimate_webp_recompress_size(input_bytes: &[u8]) -> Result<u32, String>` — full encode for estimate (same pattern as JPEG estimate) | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~5 (wrapper) |
-| B4 | Add `estimate_webp_recompress_with_options(input_bytes: &[u8], use_predictor: bool) -> Result<u32, String>` | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~15 |
-| B5 | Implement `recompress_webp_inner(input, use_predictor) -> Result<Vec<u8>, String>`: validate_input → probe_webp_format → decode (risk mode aware) → color type reduce (RGB vs RGBA) → `image_webp::WebPEncoder` with `EncoderParams` → validate_output (OutputFormat::WebP) | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~50 |
-| B6 | Animated WebP detection: use `image::WebPDecoder::has_animation()` after decode; if true → error "Animated WebP not supported for recompress" | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~8 |
-| B7 | Integration tests: lossless→lossless (smaller or equal), lossy→lossless (valid output, size tracked), color type RGB (no alpha), color type RGBA (alpha preserved), animated reject, corrupt input, empty input, .webp with metadata (StripAll verified) | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~100 |
+| # | Task | File | Actual Lines |
+|---|------|------|-------------|
+| B1 | Add `recompress_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String>` — standard VP8L re-encode with defaults (predictor on, opt_level=0) | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~5 |
+| B2 | Add `recompress_webp_with_options(input_bytes: &[u8], use_predictor: bool, opt_level: u8) -> Result<Vec<u8>, String>` — signature expanded from investigation plan (added opt_level param). VP8L re-encode with predictor toggle + optimization level (0=standard, 1=color type reduce + both predictors tried, picks smallest). | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~55 |
+| B3 | Add `estimate_webp_recompress_size(input_bytes: &[u8]) -> Result<u32, String>` — full encode for estimate | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~5 |
+| B4 | Add `estimate_webp_recompress_with_options(input_bytes: &[u8], use_predictor: bool, opt_level: u8) -> Result<u32, String>` | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~15 |
+| B5 | Implement `recompress_webp_inner(input, use_predictor, opt_level) -> Result<Vec<u8>, String>`: validate_input → ensure_webp → animated detection (hard reject) → decode_image (risk mode aware, **with EXIF orientation applied**) → color_type_reduce (when opt_level>=1) → `image_webp::WebPEncoder` with `EncoderParams` → try both predictors when opt_level>=1 → validate_output (OutputFormat::WebP) | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~60 |
+| B6 | Animated WebP detection: `WebPDecoder::has_animation()` before decode; if true → "Animated WebP not supported for recompress" | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~8 |
+| B7 | Integration tests: 9 tests — lossless→lossless roundtrip, optimized smaller or equal, RGBA alpha preserved, empty input, corrupt input, RIFF-not-WebP, static not animated (no false positive), predictor toggle produces valid output, opaque RGBA→RGB reduction | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~120 |
+| B8 | **EXTRA: EXIF orientation in decode_image** — Added `JpegDecoder::orientation()` read + `DynamicImage::apply_orientation()` to the shared `decode_image` function (pre-existing, affects jpg-compress and jpg-resize too). Phone camera photos (Samsung S25 Ultra, iPhone) stored in landscape with EXIF Orientation tag; StripAll removed the tag, output appeared rotated. **Fix applied at the decode layer for ALL JPEG inputs** regardless of tool. | `motor_transmutacion/transmutador_optimize/src/lib.rs` | ~20 |
 
 #### 2.2.3 Frontend — Types & registry
 
@@ -100,22 +101,23 @@ Extend Camaleon's optimization ladder (Ladder C) beyond PNG/JPEG to cover **WebP
 
 #### 2.2.6 Frontend — Notices
 
-| # | Task | File | Lines |
-|---|------|------|-------|
+| # | Task | File | Actual Lines |
+|---|------|------|-------------|
 | F1 | Extend `FidelityNoticeContext` with `webpSourceFormat?: "lossy" \| "lossless" \| "extended"` field | `frontend/src/lib/notices/compute-fidelity-notices.ts` | +3 |
-| F2 | Add notice: `webpCompress.lossySource` — "Lossy WebP detected. Re-encoding as lossless will increase file size. Consider WebP → JPG for size reduction." Severity: `warn`. Triggered when `webpSourceFormat === "lossy"`. | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~15 |
-| F3 | Add notice: `webpCompress.losslessSource` — "Lossless WebP re-encoded with VP8L optimization." Severity: `info`. Triggered when `webpSourceFormat === "lossless"`. | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~10 |
-| F4 | Add notice: `webpCompress.metadataStripped` — "Metadata (EXIF, XMP, ICC) stripped per privacy policy." Severity: `info`. Always shown for webp-compress. | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~10 |
-| F5 | Add notice: `webpCompress.sizeIncrease` — "Output is larger than source. This is expected for lossy → lossless re-encode." Severity: `warn`. Triggered when estimate > input size. | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~10 |
-| F6 | Wire `webpSourceFormat` into notice computation: call `probeWebpFormat` during prepare, pass to `FidelityNoticeContext` | `frontend/src/lib/notices/compute-staged-notices.ts` | ~10 |
-| F7 | Add `webp-compress` to `tool-notice-profiles.ts` with cost profile (similar to png-compress) | `frontend/src/lib/notices/tool-notice-profiles.ts` | ~5 |
+| F2 | Add notice: `webpCompress.lossySource` — amber warning. Fires when `webpSourceFormat === "lossy"` **or `"extended"`** (extended fallback for unresolvable VP8X). Text: "Lossy WebP detected. Re-encoding as lossless VP8L will increase file size (entropy expansion — same as JPEG→PNG). Consider WebP → JPG for genuine size reduction instead." | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~15 |
+| F3 | Add notice: `webpCompress.losslessSource` — info when source is lossless VP8L. Text: "Lossless WebP re-encoded with VP8L optimization. If the file was already encoded by Camaleon or another VP8L encoder, it may not shrink further — lossless compression has a ceiling." | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~15 |
+| F4 | Add notice: `webpCompress.metadataStripped` — info: "Metadata (EXIF, XMP, ICC) stripped per privacy policy." Always shown for webp-compress. | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~10 |
+| F5 | Add notice: `compressLarger` — extended to include `webp-compress` (same existing `warn` notice for all compress tools). | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~5 |
+| F6 | **EXTRA: Add `webpCompressLosslessLimit`** — new conditional info notice. Fires when lossless WebP source yields ±2% delta (output same size as input). Text: "Lossless WebP already at compression limit. VP8L cannot reduce entropy further — pixels are stored exactly. For smaller files on photos, use WebP → JPG (lossy)." | `frontend/src/lib/notices/compute-fidelity-notices.ts` | ~10 |
+| F7 | Wire `webpSourceFormat` into notice computation: passed from `noticeContext.webpSourceFormat` through `StagedNoticeContext` to `FidelityNoticeContext` | `frontend/src/lib/notices/compute-staged-notices.ts` | +1 |
+| F8 | Add `webp-compress` to `tool-notice-profiles.ts` with cost profile (moderate estimate + transmute) | `frontend/src/lib/notices/tool-notice-profiles.ts` | ~5 |
 
-#### 2.2.7 Frontend — Prepare pipeline
+#### 2.2.7 Frontend — Prepare pipeline + client-side WebP probe
 
-| # | Task | File | Lines |
-|---|------|------|-------|
-| G1 | Add `webp-compress` to prepare flow: `warmupTransmutatorModule("transmutador_optimize")` already handles it (same module). Verify `run-prepare.ts` doesn't need format-specific inspect for WebP (dimension probe via `probe_dimensions` already handles WebP magic). | `frontend/src/lib/transmutation/prepare/run-prepare.ts` | ~0 (verify only) |
-| G2 | Add WebP format probe to prepare: call `probeWebpFormat` (from core_utils via wasm) or client-side RIFF check; store result in `PreparedFileContext` for notice computation | `frontend/src/lib/transmutation/prepare/run-prepare.ts` | ~15 |
+| # | Task | File | Actual Lines |
+|---|------|------|-------------|
+| G1 | Create `frontend/src/lib/format/probe-webp-format.ts` — client-side WebP RIFF probe with VP8X recursion (NOT a Wasm call). Returns `WebpSourceFormat \| null`. Used by StagedWorkspace to populate `noticeContext.webpSourceFormat`. | **`frontend/src/lib/format/probe-webp-format.ts` (NEW)** | ~30 |
+| G2 | Wire `probeWebpFormat()` in `StagedWorkspace.tsx` `useMemo` for `noticeContext`. The `fileBytes` prop (already available) is probed client-side without any Wasm call. | `frontend/src/components/transmute/StagedWorkspace.tsx` | ~5 |
 
 #### 2.2.8 Frontend — i18n
 
@@ -128,9 +130,9 @@ Extend Camaleon's optimization ladder (Ladder C) beyond PNG/JPEG to cover **WebP
 
 #### 2.2.9 Frontend — OptionsControls (UI)
 
-| # | Task | File | Lines |
-|---|------|------|-------|
-| I1 | Verify `OptionsControls.tsx` renders `optimizationLevel` and `usePredictor` sliders generically from registry `optionSpecs` (existing pattern — no new component needed). Add `usePredictor` value label mapping: 0→"Off", 1→"On". | `frontend/src/components/transmute/OptionsControls.tsx` | ~10 |
+| # | Task | File | Actual Lines |
+|---|------|------|-------------|
+| I1 | Add `usePredictor` value label mapping: 0→"Off", 1→"On" to OptionsControls ternary chain. **EXTRA:** Added `progressive` value label (0→"Off", 1→"On") — pre-existing oversight where jpg-compress progressive slider showed "0"/"1" instead of text labels. | `frontend/src/components/transmute/OptionsControls.tsx` | ~6 |
 
 #### 2.2.10 Build & verification
 
@@ -360,15 +362,15 @@ Extend Camaleon's optimization ladder (Ladder C) beyond PNG/JPEG to cover **WebP
 
 ## 7. Bundle size projections
 
-| Phase | Crate change | Wasm delta | JS delta |
-|-------|-------------|------------|----------|
-| 4a.2a WebP | `image` `webp` feature + `image-webp` direct | +50-150 KB | ~8 KB (registry + notices + i18n + worker dispatch) |
+| Phase | Crate change | Wasm delta (actual) | JS delta |
+|-------|-------------|---------------------|----------|
+| 4a.2a WebP | `image` `webp` feature + `image-webp` direct | **+27.8 KB** (est: +50-150 KB) | ~8 KB (registry + notices + i18n + worker dispatch) |
 | 4a.2b SVG | None (custom minifier code only) | +5-20 KB | ~12 KB (registry + UI toggles + notices + i18n) |
 | **Total** | | **+55-170 KB** | **~20 KB** |
 
-**Post-4a.2 Wasm sizes (projected):**
-- `transmutador_optimize`: ~900-1000 KB (current 842 KB + WebP feature)
-- `transmutador_svg`: ~1.65-1.67 MB (current 1.63 MB + minifier code)
+**Post-4a.2a Wasm sizes (actual):**
+- `transmutador_optimize`: **869 KB** (actual, not projected)
+- `transmutador_svg`: 1.63 MB (unchanged — no SVG minify shipped yet)
 
 Both well within NFR-7 (3 MB per module).
 
@@ -419,25 +421,29 @@ Both well within NFR-7 (3 MB per module).
 
 ## 10. File impact map
 
-### 10.1 Phase 4a.2a — files modified
+### 10.1 Phase 4a.2a — files modified (+ created)
 
 | File | Changes |
 |------|---------|
-| `motor_transmutacion/core_utils/src/lib.rs` | +`WebpFormat` enum, +`probe_webp_format()`, +tests |
+| `motor_transmutacion/core_utils/src/lib.rs` | +`WebpFormat` enum, +`probe_webp_format()` with VP8X recursion, +10 tests |
 | `motor_transmutacion/transmutador_optimize/Cargo.toml` | +`"webp"` feature on `image`, +`image-webp = "0.2"` |
-| `motor_transmutacion/transmutador_optimize/src/lib.rs` | +`recompress_webp*`, +`estimate_webp_recompress*`, +tests |
-| `frontend/src/workers/types.ts` | +`usePredictor?` in `TransmutationOptions` |
+| `motor_transmutacion/transmutador_optimize/src/lib.rs` | +`recompress_webp*`, +`estimate_webp_recompress*`, +`encode_webp`, +EXIF orientation in shared `decode_image`, +9 tests |
+| `motor_transmutacion/transmutador_encode/src/lib.rs` | +`read_jpeg_orientation()`, +`apply_orientation()` in `jpg_bytes_to_webp_bytes` — **EXTRA: not in original plan** |
+| `motor_transmutacion/transmutador_jpg/src/lib.rs` | +`read_jpeg_orientation()`, +`apply_orientation()` in `jpg_bytes_to_png_bytes` — **EXTRA: not in original plan** |
+| `frontend/src/workers/types.ts` | +`usePredictor?` in `TransmutationOptions`, +`"svg"` in `OutputExtension` |
 | `frontend/src/lib/tools/types.ts` | +`"usePredictor"` in `SliderOptionSpec.key` |
-| `frontend/src/lib/tools/tool-registry.ts` | +`webp-compress` tool definition |
-| `frontend/src/workers/transmutation.worker.ts` | +`isOptimizeWebp` route, +Wasm bindings, +dispatch |
-| `frontend/src/types/wasm-modules.d.ts` | +WebP optimize export declarations |
-| `frontend/src/lib/notices/compute-fidelity-notices.ts` | +WebP notices (lossy source, metadata, size increase) |
-| `frontend/src/lib/notices/compute-staged-notices.ts` | +`webpSourceFormat` wiring |
-| `frontend/src/lib/notices/tool-notice-profiles.ts` | +`webp-compress` profile |
-| `frontend/src/lib/transmutation/prepare/run-prepare.ts` | +WebP format probe for notices |
-| `frontend/src/components/transmute/OptionsControls.tsx` | +`usePredictor` value label mapping |
-| `frontend/src/lib/i18n/dictionaries/en.ts` | +tool keys, +notice keys |
-| `frontend/src/lib/i18n/dictionaries/es.ts` | +tool keys, +notice keys |
+| `frontend/src/lib/tools/tool-registry.ts` | +`webp-compress` tool definition (tool #26) |
+| `frontend/src/workers/transmutation.worker.ts` | +`isOptimizeWebp` route flag, +4 Wasm bindings, +transmute dispatch, +estimate dispatch, +mime resolution |
+| `frontend/src/types/wasm-modules.d.ts` | +4 WebP optimize export declarations |
+| `frontend/src/lib/notices/compute-fidelity-notices.ts` | +4 WebP notices (lossy source, lossless source, metadata stripped, lossless limit) + compressLarger extension |
+| `frontend/src/lib/notices/compute-staged-notices.ts` | +`webpSourceFormat` wiring from noticeContext |
+| `frontend/src/lib/notices/tool-notice-profiles.ts` | +`webp-compress` profile, +`webpSourceFormat` field in `ToolNoticeContext` |
+| `frontend/src/lib/format/probe-webp-format.ts` | **NEW: client-side WebP RIFF probe with VP8X recursion** |
+| `frontend/src/components/transmute/StagedWorkspace.tsx` | +`probeWebpFormat()` call in noticeContext useMemo |
+| `frontend/src/components/transmute/OptionsControls.tsx` | +`usePredictor` + `progressive` value label mappings |
+| `frontend/src/lib/i18n/dictionaries/en.ts` | +tool keys, +4 notice keys, +improved fidelity hints |
+| `frontend/src/lib/i18n/dictionaries/es.ts` | +tool keys, +4 notice keys, +improved fidelity hints |
+| `frontend/src/lib/tools/tool-lanes.test.ts` | Updated optimize tool count from 4→5 |
 
 ### 10.2 Phase 4a.2b — files modified
 
@@ -484,4 +490,4 @@ Both well within NFR-7 (3 MB per module).
 
 ---
 
-*Implementation roadmap for Tier 4a.2 Matrix Expand. Phase 4a.2a (WebP compress, v3.9.0) extends `transmutador_optimize` with VP8L re-encode. Phase 4a.2b (SVG minify, v3.9.1) extends `transmutador_svg` with lightweight text optimization. All 10 architectural decisions resolved. Spike gates, verification gates, and release checklists defined per phase.*
+*Implementation roadmap for Tier 4a.2 Matrix Expand. **Phase 4a.2a SHIPPED v3.9.0 (2026-06-24):** `transmutador_optimize` extended with VP8L lossless re-encode (4 Wasm exports, 9 tests). Actual Wasm: **869 KB (+27.8 KB)**. EXIF orientation auto-apply added across 3 crates. VP8X recursive probe fix. 5 new notices, improved fidelity hints. 31 files changed, +2149 lines. All 10 architectural decisions resolved. **Next: 4a.2b SVG minify (v3.9.1)** followed by 4a.2c oxvg spike and 4a.2d WebP resize as future backlog.*
