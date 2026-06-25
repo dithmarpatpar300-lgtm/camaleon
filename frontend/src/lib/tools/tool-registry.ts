@@ -912,6 +912,46 @@ export const TOOLS: ToolDefinition[] = [
       },
     ],
   },
+  {
+    id: "webp-compress",
+    slug: "webp-compress",
+    title: "WebP Compress",
+    fromFormat: "WEBP",
+    toFormat: "WEBP",
+    module: "transmutador_optimize",
+    category: "optimize",
+    toolGroup: "webp",
+    fidelity: "lossless",
+    status: "active",
+    acceptExtensions: [".webp"],
+    outputExtension: "webp",
+    optionSpecs: [
+      {
+        kind: "slider",
+        key: "optimizationLevel",
+        min: 0,
+        max: 1,
+        step: 1,
+        defaultValue: 0,
+        presets: [
+          { label: "off", value: 0 },
+          { label: "full", value: 1 },
+        ],
+      },
+      {
+        kind: "slider",
+        key: "usePredictor",
+        min: 0,
+        max: 1,
+        step: 1,
+        defaultValue: 1,
+        presets: [
+          { label: "off", value: 0 },
+          { label: "on", value: 1 },
+        ],
+      },
+    ],
+  },
 ];
 
 export function getToolBySlug(slug: string): ToolDefinition | undefined {

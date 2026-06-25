@@ -207,6 +207,10 @@ type EstimateJpegRecompressWithOptionsFn = (input: Uint8Array, quality: number, 
 type EstimateJpegRecompressProgressiveFn = (input: Uint8Array, quality: number, chroma_code: number) => number;
 type EstimateResizePngSizeFn = (input: Uint8Array, resize_percent: number, filter_code: number) => number;
 type EstimateResizeJpegSizeFn = (input: Uint8Array, resize_percent: number, filter_code: number, quality: number) => number;
+type RecompressWebpFn = (input: Uint8Array) => Uint8Array;
+type RecompressWebpWithOptionsFn = (input: Uint8Array, use_predictor: boolean, opt_level: number) => Uint8Array;
+type EstimateWebpRecompressSizeFn = (input: Uint8Array) => number;
+type EstimateWebpRecompressWithOptionsFn = (input: Uint8Array, use_predictor: boolean, opt_level: number) => number;
 
 type SessionLimitFn = (maxBytes: number) => void;
 type RiskModeFn = (enabled: boolean) => void;
@@ -349,6 +353,10 @@ let estimateJpegRecompressWithOptions: EstimateJpegRecompressWithOptionsFn | nul
 let estimateJpegRecompressProgressive: EstimateJpegRecompressProgressiveFn | null = null;
 let estimateResizePngSize: EstimateResizePngSizeFn | null = null;
 let estimateResizeJpegSize: EstimateResizeJpegSizeFn | null = null;
+let recompressWebp: RecompressWebpFn | null = null;
+let recompressWebpWithOptions: RecompressWebpWithOptionsFn | null = null;
+let estimateWebpRecompressSize: EstimateWebpRecompressSizeFn | null = null;
+let estimateWebpRecompressWithOptions: EstimateWebpRecompressWithOptionsFn | null = null;
 
 let pendingEstimateId: string | null = null;
 let pipeline: Promise<void> = Promise.resolve();
@@ -615,6 +623,10 @@ async function initOptimizeWasm(): Promise<void> {
   );
   estimateResizePngSize = wasmExport<EstimateResizePngSizeFn>(module, "estimate_resize_png_size");
   estimateResizeJpegSize = wasmExport<EstimateResizeJpegSizeFn>(module, "estimate_resize_jpeg_size");
+  recompressWebp = wasmExport<RecompressWebpFn>(module, "recompress_webp");
+  recompressWebpWithOptions = wasmExport<RecompressWebpWithOptionsFn>(module, "recompress_webp_with_options");
+  estimateWebpRecompressSize = wasmExport<EstimateWebpRecompressSizeFn>(module, "estimate_webp_recompress_size");
+  estimateWebpRecompressWithOptions = wasmExport<EstimateWebpRecompressWithOptionsFn>(module, "estimate_webp_recompress_with_options");
   setOptimizeSessionLimit = pickSessionLimit(module);
   setOptimizeRiskMode = pickRiskMode(module);
 }
@@ -775,6 +787,7 @@ type RouteFlags = {
   isOptimizePng: boolean;
   isOptimizeJpg: boolean;
   isOptimizeResize: boolean;
+  isOptimizeWebp: boolean;
   encodeSource?: EncodeSource;
 };
 
@@ -816,6 +829,7 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
   const isOptimizePng = isOptimize && (req.outputExtension ?? "png") === "png";
   const isOptimizeJpg = isOptimize && req.outputExtension === "jpg";
   const isOptimizeResize = isOptimize && req.options?.resizePercent != null;
+  const isOptimizeWebp = isOptimize && req.outputExtension === "webp";
   const encodeSource =
     isEncode || isAvifEncode ? req.encodeSource : undefined;
   return {
@@ -842,6 +856,7 @@ function resolveRoute(req: WorkerRequest): RouteFlags {
     isOptimizePng,
     isOptimizeJpg,
     isOptimizeResize,
+    isOptimizeWebp,
     encodeSource,
   };
 }
@@ -858,6 +873,9 @@ function resolveMimeExtension(route: RouteFlags): { mime: string; extension: Out
   }
   if (route.isOptimize && route.isOptimizePng) {
     return { mime: "image/png", extension: "png" };
+  }
+  if (route.isOptimize && route.isOptimizeWebp) {
+    return { mime: "image/webp", extension: "webp" };
   }
   if (
     route.isWebpToJpg ||
@@ -1034,6 +1052,18 @@ function runFullEncode(
       }
       if (!resizeJpeg) throw new Error("Wasm module not initialized");
       return resizeJpeg(input, resizePercent);
+    }
+    if (route.isOptimizeWebp) {
+      const optLevel = opts?.optimizationLevel ?? 0;
+      const usePredictor = opts?.usePredictor ?? 1;
+      if (optLevel > 0 && recompressWebpWithOptions) {
+        return recompressWebpWithOptions(input, true, optLevel);
+      }
+      if (usePredictor !== 1 && recompressWebpWithOptions) {
+        return recompressWebpWithOptions(input, usePredictor !== 0, 0);
+      }
+      if (!recompressWebp) throw new Error("Wasm module not initialized");
+      return recompressWebp(input);
     }
     if (route.isOptimizePng) {
       const compression = opts?.compression ?? 9;
@@ -1277,6 +1307,21 @@ function runSizeEstimate(
       }
       if (!resizeJpeg) throw new Error("Wasm estimate export not initialized");
       return resizeJpeg(input, resizePercent).byteLength;
+    }
+    if (route.isOptimizeWebp) {
+      const optLevel = opts?.optimizationLevel ?? 0;
+      const usePredictor = opts?.usePredictor ?? 1;
+      if (optLevel > 0 && estimateWebpRecompressWithOptions) {
+        return estimateWebpRecompressWithOptions(input, true, optLevel);
+      }
+      if (usePredictor !== 1 && estimateWebpRecompressWithOptions) {
+        return estimateWebpRecompressWithOptions(input, usePredictor !== 0, 0);
+      }
+      if (estimateWebpRecompressSize) {
+        return estimateWebpRecompressSize(input);
+      }
+      if (!recompressWebp) throw new Error("Wasm estimate export not initialized");
+      return recompressWebp(input).byteLength;
     }
     if (route.isOptimizePng) {
       const compression = opts?.compression ?? 9;

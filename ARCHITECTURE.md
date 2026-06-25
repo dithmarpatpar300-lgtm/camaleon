@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.8.2** · Engine **v1.7.0** · Branch **`dev`** · **25 active tools** · **13 Wasm crates** · **183 Vitest tests**
+**Snapshot:** App **v3.9.0** · Engine **v1.8.0** · Branch **`dev`** · **26 active tools** · **13 Wasm crates** · **183 Vitest tests**
 
 ---
 
@@ -17,7 +17,7 @@
 5. [Runtime architecture](#5-runtime-architecture)
 6. [Frontend architecture](#6-frontend-architecture)
 7. [Conversion flows](#7-conversion-flows)
-8. [Tool registry (25 tools)](#8-tool-registry-25-tools)
+8. [Tool registry (26 tools)](#8-tool-registry-26-tools)
 9. [Rust / Wasm engine](#9-rust--wasm-engine)
 10. [Worker protocol](#10-worker-protocol)
 11. [Prepare pipeline](#11-prepare-pipeline)
@@ -101,7 +101,7 @@ flowchart TB
 camaleon/
 ├── ARCHITECTURE.md          ← this document (atlas)
 ├── README.md                ← quick start & capability summary
-├── frontend/                ← Next.js 15 app (v3.8.0)
+├── frontend/                ← Next.js 15 app (v3.9.0)
 │   ├── src/
 │   │   ├── app/             ← App Router pages, layout, SW source
 │   │   ├── components/      ← React UI (transmute, settings, layout, toast…)
@@ -113,7 +113,7 @@ camaleon/
 │   │   └── workers/         ← Web Worker entry points (transmutation.worker.ts, frame-preview.worker.ts)
 │   ├── public/wasm/         ← Generated Wasm artifacts (gitignored)
 │   └── scripts/             ← build-wasm.mjs (canonical), verify scripts
-├── motor_transmutacion/     ← Rust workspace (v1.7.0)
+├── motor_transmutacion/     ← Rust workspace (v1.8.0)
 │   ├── core_utils/          ← Shared validation, semantic alpha, limits
 │   └── transmutador_*/      ← 13 Wasm cdylib crates (incl. optimize with custom PNG encoder)
 ├── docs/
@@ -165,7 +165,8 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | **Prior** | **v3.8.0** | Compress Premium Phase C — PNG lossless optimization (native pipeline) |
 | **Current** | **v3.8.2** | Compress Premium Phases A–E complete — Zopfli archival, progressive JPEG |
 | **Prior** | **v3.8.1** | Compress Premium Phase D — lossy PNG quantization (quantette + indexed PNG) |
-| **Next** | TBD | **Phase E** — Zopfli + progressive JPEG (backlog) |
+| **Current** | **v3.9.0** | Tier 4a.2a — WebP compress (VP8L lossless re-encode) |
+| **Next** | TBD | **4a.2b** — SVG minify |
 
 ---
 
@@ -329,11 +330,11 @@ Options exposed: compression (1-9), quality (1-100), subsampling (0-2), optimiza
 
 ---
 
-## 8. Tool registry (25 tools)
+## 8. Tool registry (26 tools)
 
 **Source of truth:** `frontend/src/lib/tools/tool-registry.ts`
 
-All tools: `status: "active"`. Categories: `"image"` (21 convert) + `"optimize"` (4 compress/resize).
+All tools: `status: "active"`. Categories: `"image"` (21 convert) + `"optimize"` (5 compress/resize).
 
 | # | Slug | Direction | Wasm module | Fidelity | Category | Batch |
 |---|------|-----------|-------------|----------|----------|-------|
@@ -362,6 +363,7 @@ All tools: `status: "active"`. Categories: `"image"` (21 convert) + `"optimize"`
 | 23 | `jpg-compress` | JPEG → JPEG | `transmutador_optimize` | lossy | optimize | ❌ |
 | 24 | `png-resize` | PNG → PNG | `transmutador_optimize` | lossless | optimize | ❌ |
 | 25 | `jpg-resize` | JPEG → JPEG | `transmutador_optimize` | lossy | optimize | ❌ |
+| 26 | `webp-compress` | WebP → WebP | `transmutador_optimize` | lossless | optimize | ❌ |
 
 **Batch allowlist:** `frontend/src/lib/batch/batch-tool-allowlist.ts` — 14 slugs. GIF/TIFF/ICO/SVG excluded until per-row frame/page/entry UX exists (Tier 3.6.2+).
 
@@ -406,9 +408,9 @@ Global defaults from Settings S2 (`transmutation-defaults.ts`) seed session opti
 | `transmutador_avif` | cdylib | AVIF → PNG, JPEG (+ animated session) |
 | `transmutador_avif_encode` | cdylib | PNG, JPEG → AVIF (split crate for size) |
 | `transmutador_svg` | cdylib | SVG → PNG, JPEG (resvg/usvg) |
-| `transmutador_optimize` | cdylib | PNG/JPEG compress + resize + native optimization (Tier 4a) |
+| `transmutador_optimize` | cdylib | PNG/JPEG/WebP compress + resize + native optimization (Tier 4a) |
 
-**Dependencies of `transmutador_optimize`:** `image` v0.25 (png, jpeg), `jpeg-encoder` v0.7 (JPEG encoder swap, v3.7.1), `miniz_oxide` v0.8 (DEFLATE strategy tuning, v3.8.0). **Wasm size:** ~688 KB (within NFR-7 3 MB limit).
+**Dependencies of `transmutador_optimize`:** `image` v0.25 (png, jpeg, webp), `jpeg-encoder` v0.7 (JPEG encoder swap, v3.7.1), `miniz_oxide` v0.8 (DEFLATE strategy tuning, v3.8.0), `image-webp` v0.2 (VP8L lossless WebP re-encode, v3.9.0). **Wasm size:** ~869 KB (within NFR-7 3 MB limit).
 
 ### Shared Wasm exports (every transmutador)
 
@@ -994,4 +996,4 @@ Five resampling filters (code 0-4): Nearest, Triangle, CatmullRom (default), Gau
 
 ---
 
-*Last updated: 2026-06-23 · App v3.8.2 · Engine v1.7.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-24 · App v3.9.0 · Engine v1.8.0 · Maintained alongside SPEC/ROADMAP promotions.*

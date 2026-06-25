@@ -11,13 +11,15 @@
 
 ---
 
-## Current Snapshot (2026-06-23)
+## Current Snapshot (2026-06-24)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.8.2** (`dev`) | **25 tools** · **Compress pipeline A–E complete** |
-| **Engine (Rust workspace)** | v1.7.0 | Zopfli archival + progressive JPEG — Compress Premium finished |
-| **SPEC** | v3.8.2 | Compress Premium Phases A through E delivered |
+| **Frontend (app)** | **v3.9.0** (`dev`) | **26 tools** · **Tier 4a.2a WebP compress** |
+| **Engine (Rust workspace)** | v1.8.0 | WebP VP8L lossless re-encode — Tier 4a.2a Matrix Expand begins |
+| **SPEC** | v3.9.0 | Tier 4a.2a WebP compress delivered |
+
+**v3.9.0** (`dev`): **Tier 4a.2a — WebP compress** — lossless VP8L re-encode with predictor transform toggle and color type optimization. Lossy WebP sources accepted with entropy expansion warning. Animated WebP rejected. New core_utils probe_webp_format with VP8X recursive chunk scanning (fixes false "extended" return). EXIF orientation auto-apply across 3 JPEG-decode crates (fixes phone camera photos displaying rotated). WebP UI/UX clarity improvements: lossless compression limit notice, explicit fidelity hints. Engine v1.8.0, +27.8 KB Wasm (869 KB total). Release: docs/releases/v3.9.0.md.
 
 **v3.8.2** (`dev`): **Compress Premium Phase E — Zopfli archival + progressive JPEG** — Zopfli DEFLATE compression (pure Rust, Apache-2.0) at opt_level=2. Progressive JPEG scan via `jpeg-encoder`. Compress pipeline A–E complete. Release: `docs/releases/v3.8.2.md`. **See also:** `docs/planning/compress_before_vs_after.md`.
 
@@ -360,6 +362,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-24 | OpenCode | **v3.9.0 on `dev`:** Tier 4a.2a WebP compress — VP8L lossless re-encode, predictor transform, color type optimization, animated reject, lossy source warning. VP8X recursive chunk probe fix. EXIF orientation auto-apply across 3 crates (jpg-to-webp, jpg-compress, jpg-to-png). UI/UX clarity: lossless limit notice, fidelity hint improvements. Engine v1.8.0, +27.8 KB Wasm. SPEC/ROADMAP/README/ARCHITECTURE → v3.9.0. |
 | 2026-06-23 | OpenCode | **v3.8.2 on `dev`:** Compress Premium Phase E — Zopfli archival (opt_level=2, 3-8% more savings) + progressive JPEG via jpeg-encoder. Compress pipeline A–E complete. See also compress_before_vs_after.md. |
 | 2026-06-23 | OpenCode | **v3.8.1 on `dev`:** Compress Premium Phase D — lossy PNG quantization via quantette (Wu + FloydSteinberg). Palette reduction 2-256 colors, indexed PNG encoding via png crate. Fixed Colors: u8→u16 bug. Tool descriptions updated. Wasm +51.5 KB. SPEC/ROADMAP/README/ARCHITECTURE → v3.8.1. |
 | 2026-06-23 | OpenCode | **v3.8.0 on `dev`:** Compress Premium Phase C — PNG lossless optimization native pipeline (oxipng spike failed). Filter trial + color type reduction + bit depth (L1/L2/L4) + alpha optimization + deflate strategy tuning (Default/Filtered/HuffmanOnly via miniz_oxide) + custom PNG encoder. 14 Rust tests, 0 external deps, +15 KB Wasm. SPEC/ROADMAP/README/ARCHITECTURE → v3.8.0. |

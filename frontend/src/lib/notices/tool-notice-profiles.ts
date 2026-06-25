@@ -9,6 +9,7 @@ export type ToolNoticeContext = {
   tiffPageCount?: number;
   icoEntryCount?: number;
   svgMeta?: SvgMeta | null;
+  webpSourceFormat?: "lossy" | "lossless" | "extended";
 };
 
 const DEFAULT_PROFILE: ToolNoticeProfile = {
@@ -77,6 +78,10 @@ const TOOL_PROFILES: Record<string, ToolNoticeProfile> = {
     estimateCost: "expensive",
     transmuteCost: "expensive",
     costFactors: ["quality", "outputScale"],
+  },
+  "webp-compress": {
+    estimateCost: "moderate",
+    transmuteCost: "moderate",
   },
 };
 

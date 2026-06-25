@@ -447,6 +447,23 @@ const en: Dictionary = {
       security: "Security",
     },
     entries: {
+      v390: {
+        title: "WebP Compress — Tier 4a.2a Matrix Expand",
+        summary:
+          "New WebP compress tool extends the optimize ladder beyond PNG/JPEG. Lossless VP8L re-encode with predictor transform toggle and color type optimization. Honest warnings for lossy WebP sources (entropy expansion). Animated WebP rejected. Metadata stripped per privacy policy.",
+        technical:
+          "transmutador_optimize extended with image webp feature + image-webp 0.2 (pure Rust VP8L). New exports: recompress_webp, recompress_webp_with_options, estimate_webp_recompress_*. core_utils: WebpFormat enum + probe_webp_format (RIFF chunk parsing). Client-side probe in StagedWorkspace for notice context. Animated WebP detected via WebPDecoder::has_animation() — hard reject. Optimization level 1: color_type_reduce + both predictor settings tried, smallest picked. OptionsControls: usePredictor + progressive value labels. App v3.9.0 · engine v1.8.0.",
+        highlights: {
+          webpCompress: {
+            title: "WebP compress tool",
+            body: "Same-format VP8L lossless re-encode with predictor transform control and color type optimization (RGBA→RGB). Optimization level Full tries both predictor settings and picks the smallest output.",
+          },
+          honestyNotices: {
+            title: "Honest lossy-source warnings",
+            body: "Lossy WebP sources are accepted with an amber warning about entropy expansion (file size will increase). A deep-link suggests WebP→JPG as an alternative for size reduction. Metadata is always stripped per privacy policy.",
+          },
+        },
+      },
       v352: {
         title: "Risk Mode decoder fix & batch UX",
         summary:
@@ -2000,13 +2017,13 @@ const en: Dictionary = {
     },
     "png-to-webp": {
       actionTitle: "Convert to Lossless WebP",
-      description: "Lossless WebP — preserves every pixel including transparency.",
-      fidelityHint: "Output is lossless VP8L WebP. Graphics and screenshots often shrink 20–30%; photographic PNGs may end up larger than the source.",
+      description: "Lossless VP8L WebP from PNG. Pixels preserved — no quality loss. Graphics/screenshots shrink 20-30%. Transparency kept (RGBA). Photos: WebP will be LARGER than JPEG — use JPEG for web delivery.",
+      fidelityHint: "Lossless VP8L WebP. Graphics and screenshots often shrink 20–30%; photographic PNGs may end up larger than the source. For web photos, JPEG is smaller.",
     },
     "jpg-to-webp": {
       actionTitle: "Convert to Lossless WebP",
-      description: "Lossless WebP from JPEG — every decoded pixel preserved in VP8L format.",
-      fidelityHint: "Lossless WebP from an already-compressed JPEG usually produces a significantly larger file (often 2x-10x). Best for archival round-trips, not for shrinking photos.",
+      description: "Lossless VP8L WebP from JPEG — output will be SIGNIFICANTLY LARGER than the JPEG source (entropy expansion, 2x-10x). Every decoded pixel stored exactly. Not for photo size reduction.",
+      fidelityHint: "Lossless WebP from an already-compressed JPEG — output will be MUCH larger (2x-10x). Best for archival round-trips. For smaller files on web, use JPEG or WebP→JPG.",
     },
     "gif-to-png": {
       actionTitle: "Convert to PNG",
@@ -2209,6 +2226,27 @@ const en: Dictionary = {
           lowerLabel: "Smaller file",
           upperLabel: "Higher quality",
           presets: { "web": "Web", "balanced": "Balanced", "high": "High", "native": "Native" },
+        },
+      },
+    },
+    "webp-compress": {
+      actionTitle: "Compress WebP",
+      description: "Same-format VP8L lossless re-encode. Pixels preserved — no quality loss. Already-optimized lossless WebP stays the same size. Lossy WebP sources INCREASE (entropy expansion). For genuine size reduction on photos, use WebP→JPG.",
+      fidelityHint: "Lossless VP8L re-encode — same format, same pixels. Already-optimized lossless WebP won't shrink further. Lossy WebP sources increase 2x-10x. For photo size reduction, use WebP→JPG instead.",
+      options: {
+        optimizationLevel: {
+          label: "Optimization level",
+          hint: "Full optimization tries both predictor settings and reduces color type for the smallest output.",
+          lowerLabel: "Off",
+          upperLabel: "Full",
+          presets: { "off": "Off", "full": "Full" },
+        },
+        usePredictor: {
+          label: "Predictor transform",
+          hint: "VP8L spatial predictor. On by default. Off may produce smaller files on noise-heavy images.",
+          lowerLabel: "Off",
+          upperLabel: "On",
+          presets: { "off": "Off", "on": "On" },
         },
       },
     },
@@ -2460,6 +2498,14 @@ const en: Dictionary = {
         "Lossy compression reduces color depth via palette quantization. Visual quality is permanently changed — this is irreversible. Ideal for photos where 60-80% size reduction is worth the quality trade-off.",
       pngZopfli:
         "Archival mode uses Zopfli compression — 3-8% smaller than standard but extremely slow (minutes for large images). Recommended only for long-term storage, not everyday use.",
+      webpLossySource:
+        "Lossy WebP detected. Re-encoding as lossless VP8L will increase file size (entropy expansion — same as JPEG→PNG). Consider WebP → JPG for genuine size reduction instead.",
+      webpLosslessSource:
+        "Lossless WebP re-encoded with VP8L optimization. If the file was already encoded by Camaleon or another VP8L encoder, it may not shrink further — lossless compression has a ceiling.",
+      webpMetadataStripped:
+        "Metadata (EXIF, XMP, ICC) stripped per privacy policy. No source metadata is carried to the output.",
+      webpCompressLosslessLimit:
+        "Lossless WebP already at compression limit. VP8L cannot reduce entropy further — pixels are stored exactly. For smaller files on photos, use WebP → JPG (lossy).",
     },
     estimate: {
       cheapSlow: "Still calculating…",

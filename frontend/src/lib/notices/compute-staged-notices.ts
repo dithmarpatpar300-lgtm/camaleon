@@ -76,6 +76,7 @@ export function computeStagedNotices(ctx: StagedNoticeContext): Notice[] {
       subsampling: ctx.options.subsampling,
       optimizationLevel: ctx.options.optimizationLevel,
       lossyMode: ctx.options.lossyMode,
+      webpSourceFormat: ctx.noticeContext?.webpSourceFormat,
     }),
     ...computeSvgHonestyNotices({
       toolId: ctx.toolId,

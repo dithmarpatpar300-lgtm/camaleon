@@ -11,6 +11,7 @@ import type { IcoMeta } from "@/lib/ico/ico-wasm-client";
 import type { SvgMeta } from "@/lib/svg/svg-wasm-client";
 import { isSvgTool } from "@/lib/svg/svg-prepare";
 import type { TiffMeta } from "@/lib/tiff/tiff-wasm-client";
+import { probeWebpFormat } from "@/lib/format/probe-webp-format";
 import { IcoEntryScrubber } from "./IcoEntryScrubber";
 import { TiffPageScrubber } from "./TiffPageScrubber";
 import type { SourceImageMeta } from "@/lib/format/source-image-meta";
@@ -162,8 +163,9 @@ export function StagedWorkspace({
       tiffPageCount: tiffMeta?.pageCount,
       icoEntryCount: icoMeta?.entryCount,
       svgMeta: svgMeta ?? undefined,
+      webpSourceFormat: fileBytes ? probeWebpFormat(fileBytes) ?? undefined : undefined,
     }),
-    [sourceMeta, gifSession, tiffMeta, icoMeta, svgMeta]
+    [sourceMeta, gifSession, tiffMeta, icoMeta, svgMeta, fileBytes]
   );
 
   const noticePhase = metrics.estimating ? ("estimating" as const) : ("staged" as const);

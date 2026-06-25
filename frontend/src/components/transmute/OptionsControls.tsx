@@ -99,6 +99,10 @@ function SliderControl({
         ? value === 0 ? "Off" : value === 1 ? "Full" : "Archival"
       : spec.key === "lossyMode"
         ? value === 0 ? "Off" : "On"
+      : spec.key === "usePredictor"
+        ? value === 0 ? "Off" : "On"
+      : spec.key === "progressive"
+        ? value === 0 ? "Off" : "On"
       : isResize
         ? `${value}%`
         : spec.key === "outputScale" &&

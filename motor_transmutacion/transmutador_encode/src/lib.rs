@@ -76,16 +76,33 @@ pub fn estimate_png_to_webp_size(input_bytes: &[u8]) -> Result<u32, String> {
 // JPEG → WebP exports
 // ---------------------------------------------------------------------------
 
+fn read_jpeg_orientation(input: &[u8]) -> image::metadata::Orientation {
+    use image::ImageDecoder;
+    if let Ok(mut decoder) = image::codecs::jpeg::JpegDecoder::new(Cursor::new(input)) {
+        decoder.orientation().unwrap_or(image::metadata::Orientation::NoTransforms)
+    } else {
+        image::metadata::Orientation::NoTransforms
+    }
+}
+
 fn jpg_bytes_to_webp_bytes(input: &[u8]) -> Result<Vec<u8>, String> {
+    // Read EXIF orientation before decoding (required for phone camera photos)
+    let orientation = read_jpeg_orientation(input);
+
     let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
         .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?;
     if core_utils::risk_mode_enabled() {
         reader.no_limits();
     }
-    let img = reader
+    let mut img = reader
         .decode()
         .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
+
+    // Apply EXIF orientation so pixel data matches the intended view
+    // Without this, phone camera photos (Samsung, iPhone, etc.) appear rotated
+    // because EXIF orientation is stripped by StripAll during re-encode
+    img.apply_orientation(orientation);
 
     let rgb = img.to_rgb8();
     let mut buf = Cursor::new(Vec::new());

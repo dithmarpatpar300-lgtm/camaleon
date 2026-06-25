@@ -448,6 +448,23 @@ const es: Dictionary = {
       security: "Seguridad",
     },
     entries: {
+      v390: {
+        title: "WebP Compress — Tier 4a.2a Matrix Expand",
+        summary:
+          "Nueva herramienta WebP compress extiende el ladder optimize mas alla de PNG/JPEG. Re-codificacion VP8L lossless con toggle de predictor transform y optimizacion de tipo de color. Avisos honestos para fuentes WebP lossy (expansion de entropia). WebP animado rechazado. Metadatos eliminados por politica de privacidad.",
+        technical:
+          "transmutador_optimize extendido con image webp feature + image-webp 0.2 (pure Rust VP8L). Nuevos exports: recompress_webp, recompress_webp_with_options, estimate_webp_recompress_*. core_utils: enum WebpFormat + probe_webp_format (parsing de chunk RIFF). Probe client-side en StagedWorkspace para contexto de notices. WebP animado detectado via WebPDecoder::has_animation() — rechazo duro. Optimization level Full: color_type_reduce + ambas configuraciones de predictor probadas, se elige la menor. OptionsControls: value labels para usePredictor + progressive. App v3.9.0 · motor v1.8.0.",
+        highlights: {
+          webpCompress: {
+            title: "Herramienta WebP compress",
+            body: "Re-codificacion same-format VP8L lossless con control de predictor transform y optimizacion de tipo de color (RGBA→RGB). Optimization level Full prueba ambas configuraciones de predictor y elige el output mas pequeno.",
+          },
+          honestyNotices: {
+            title: "Avisos honestos para fuentes lossy",
+            body: "Fuentes WebP lossy se aceptan con aviso amber sobre expansion de entropia (el tamano del archivo aumentara). Un deep-link sugiere WebP→JPG como alternativa para reduccion de tamano. Los metadatos siempre se eliminan por politica de privacidad.",
+          },
+        },
+      },
       v352: {
         title: "Fix decoder Risk Mode y UX batch",
         summary:
@@ -1987,13 +2004,13 @@ const es: Dictionary = {
     },
     "png-to-webp": {
       actionTitle: "Convertir a WebP sin Perdida",
-      description: "WebP sin perdida — preserva cada pixel incluyendo transparencia.",
-      fidelityHint: "El resultado es WebP VP8L sin perdida. Graficos y capturas suelen reducirse 20-30%; PNGs fotograficos pueden terminar mas grandes que el original.",
+      description: "WebP VP8L sin perdida desde PNG. Pixeles preservados — sin perdida de calidad. Graficos/capturas reducen 20-30%. Transparencia conservada (RGBA). Fotos: WebP sera MAYOR que JPEG — usa JPEG para web.",
+      fidelityHint: "WebP VP8L sin perdida. Graficos y capturas suelen reducirse 20-30%; PNGs fotograficos pueden terminar mas grandes que el original. Para fotos web, JPEG es mas pequeno.",
     },
     "jpg-to-webp": {
       actionTitle: "Convertir a WebP sin Perdida",
-      description: "WebP sin perdida desde JPEG — cada pixel decodificado preservado en formato VP8L.",
-      fidelityHint: "WebP sin perdida desde un JPEG ya comprimido suele producir un archivo mucho mas grande (a menudo 2x-10x). Ideal para archivado, no para reducir fotos.",
+      description: "WebP VP8L sin perdida desde JPEG — el output sera SIGNIFICATIVAMENTE MAYOR que el JPEG (expansion de entropia, 2x-10x). Cada pixel decodificado almacenado exactamente. No es para reducir fotos.",
+      fidelityHint: "WebP sin perdida desde un JPEG ya comprimido — output MUCHO mas grande (2x-10x). Ideal para archivado. Para archivos mas pequenos en web, usa JPEG o WebP→JPG.",
     },
     "gif-to-png": {
       actionTitle: "Convertir a PNG",
@@ -2196,6 +2213,27 @@ const es: Dictionary = {
           lowerLabel: "Archivo menor",
           upperLabel: "Mayor calidad",
           presets: { "web": "Web", "balanced": "Equilibrado", "high": "Alta", "native": "Nativo" },
+        },
+      },
+    },
+    "webp-compress": {
+      actionTitle: "Comprimir WebP",
+      description: "Re-codificacion same-format VP8L lossless. Pixeles preservados — sin perdida de calidad. WebP lossless ya optimizado mantiene el mismo tamano. Fuentes lossy AUMENTAN (expansion de entropia). Para reducir fotos de verdad, usa WebP→JPG.",
+      fidelityHint: "Re-codificacion VP8L lossless — mismo formato, mismos pixeles. WebP lossless ya optimizado no se reducira mas. Fuentes lossy aumentan 2x-10x. Para reducir fotos, usa WebP→JPG.",
+      options: {
+        optimizationLevel: {
+          label: "Nivel de optimizacion",
+          hint: "Optimizacion Full prueba ambas configuraciones de predictor y reduce el tipo de color para el menor output.",
+          lowerLabel: "Off",
+          upperLabel: "Full",
+          presets: { "off": "Off", "full": "Full" },
+        },
+        usePredictor: {
+          label: "Predictor transform",
+          hint: "Predictor espacial VP8L. On por defecto. Off puede producir archivos mas pequenos en imagenes con mucho ruido.",
+          lowerLabel: "Off",
+          upperLabel: "On",
+          presets: { "off": "Off", "on": "On" },
         },
       },
     },
@@ -2447,6 +2485,14 @@ const es: Dictionary = {
         "La compresion con perdida reduce la profundidad de color mediante cuantizacion de paleta. La calidad visual cambia permanentemente — esto es irreversible. Ideal para fotos donde una reduccion del 60-80% justifica la perdida de calidad.",
       pngZopfli:
         "El modo Archival usa compresion Zopfli — 3-8% mas pequeno que el estandar pero extremadamente lento (minutos para imagenes grandes). Recomendado solo para almacenamiento a largo plazo, no para uso diario.",
+      webpLossySource:
+        "WebP lossy detectado. Re-codificar como VP8L lossless aumentara el tamano del archivo (expansion de entropia — igual que JPEG→PNG). Considera WebP → JPG para reduccion genuina de tamano.",
+      webpLosslessSource:
+        "WebP lossless re-codificado con optimizacion VP8L. Si el archivo ya fue codificado por Camaleon u otro encoder VP8L, puede que no se reduzca mas — la compresion lossless tiene un limite.",
+      webpMetadataStripped:
+        "Metadatos (EXIF, XMP, ICC) eliminados por politica de privacidad. Ningun metadato de origen se transfiere al output.",
+      webpCompressLosslessLimit:
+        "WebP lossless ya en su limite de compresion. VP8L no puede reducir la entropia mas — los pixeles se almacenan exactamente. Para archivos mas pequenos en fotos, usa WebP → JPG (lossy).",
     },
     estimate: {
       cheapSlow: "Calculando…",

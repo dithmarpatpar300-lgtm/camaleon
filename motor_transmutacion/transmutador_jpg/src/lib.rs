@@ -104,16 +104,27 @@ pub fn jpg_bytes_to_png_bytes(
 ) -> Result<Vec<u8>, String> {
     validate_compression(options.compression)?;
 
+    // Read JPEG EXIF orientation before decoding (phone camera rotation fix)
+    let orientation = {
+        use image::ImageDecoder;
+        if let Ok(mut dec) = image::codecs::jpeg::JpegDecoder::new(Cursor::new(input)) {
+            dec.orientation().unwrap_or(image::metadata::Orientation::NoTransforms)
+        } else {
+            image::metadata::Orientation::NoTransforms
+        }
+    };
+
     let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
         .map_err(|e| format!("Invalid or corrupt JPEG data: {}", e))?;
     if core_utils::risk_mode_enabled() {
         reader.no_limits();
     }
-    let img = reader
+    let mut img = reader
         .decode()
         .map_err(|e| format!("Failed to decode JPEG: {}", e))?;
 
+    img.apply_orientation(orientation);
     let rgb = img.to_rgb8();
 
     let mut buf = Cursor::new(Vec::new());

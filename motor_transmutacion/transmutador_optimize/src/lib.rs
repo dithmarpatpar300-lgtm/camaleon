@@ -34,15 +34,28 @@ const FILTERS_TO_TRIAL: [FilterType; 5] = [
 
 fn decode_image(input: &[u8]) -> Result<DynamicImage, String> {
     core_utils::validate_input(input)?;
+    // Read JPEG EXIF orientation before decoding (phone camera rotation fix)
+    let orientation = {
+        use image::ImageDecoder;
+        if let Ok(mut dec) = image::codecs::jpeg::JpegDecoder::new(Cursor::new(input)) {
+            dec.orientation().unwrap_or(image::metadata::Orientation::NoTransforms)
+        } else {
+            image::metadata::Orientation::NoTransforms
+        }
+    };
     let mut reader = ImageReader::new(Cursor::new(input))
         .with_guessed_format()
         .map_err(|e| format!("Could not read image format: {e}"))?;
     if core_utils::risk_mode_enabled() {
         reader.no_limits();
     }
-    reader
+    let mut img = reader
         .decode()
-        .map_err(|e| format!("Could not decode image: {e}"))
+        .map_err(|e| format!("Could not decode image: {e}"))?;
+    // Apply EXIF orientation so pixel data matches the intended view;
+    // StripAll removes the EXIF tag, so the raster must store the correct orientation.
+    img.apply_orientation(orientation);
+    Ok(img)
 }
 
 fn color_type_reduce(img: &DynamicImage) -> DynamicImage {
@@ -629,6 +642,13 @@ fn ensure_jpeg(input: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
+fn ensure_webp(input: &[u8]) -> Result<(), String> {
+    if input.len() < 12 || &input[0..4] != b"RIFF" || &input[8..12] != b"WEBP" {
+        return Err("Input is not a valid WebP file".into());
+    }
+    Ok(())
+}
+
 #[wasm_bindgen]
 pub fn recompress_png(input_bytes: &[u8], compression: u8) -> Result<Vec<u8>, String> {
     recompress_png_optimized(input_bytes, compression, 0)
@@ -858,6 +878,101 @@ pub fn estimate_jpeg_recompress_progressive(
     chroma_code: u8,
 ) -> Result<u32, String> {
     let out = recompress_jpeg_progressive(input_bytes, quality, chroma_code)?;
+    Ok(out.len() as u32)
+}
+
+// ---------------------------------------------------------------------------
+// WebP recompress (Tier 4a.2a — lossless VP8L re-encode)
+// ---------------------------------------------------------------------------
+
+fn encode_webp(img: &DynamicImage, use_predictor: bool) -> Result<Vec<u8>, String> {
+    let (w, h) = img.dimensions();
+    let mut buf = Cursor::new(Vec::new());
+    let mut encoder = image_webp::WebPEncoder::new(&mut buf);
+    let mut params = image_webp::EncoderParams::default();
+    params.use_predictor_transform = use_predictor;
+    encoder.set_params(params);
+
+    if img.color().has_alpha() {
+        let rgba = img.to_rgba8();
+        encoder
+            .encode(rgba.as_raw(), w, h, image_webp::ColorType::Rgba8)
+            .map_err(|e| format!("Failed to encode WebP: {e}"))?;
+    } else {
+        let rgb = img.to_rgb8();
+        encoder
+            .encode(rgb.as_raw(), w, h, image_webp::ColorType::Rgb8)
+            .map_err(|e| format!("Failed to encode WebP: {e}"))?;
+    }
+
+    Ok(buf.into_inner())
+}
+
+fn recompress_webp_inner(
+    input: &[u8],
+    use_predictor: bool,
+    opt_level: u8,
+) -> Result<Vec<u8>, String> {
+    core_utils::validate_input(input)?;
+    ensure_webp(input)?;
+
+    // Animated WebP — hard reject (Q8 decision)
+    {
+        let decoder = image::codecs::webp::WebPDecoder::new(Cursor::new(input))
+            .map_err(|e| format!("Failed to create WebP decoder: {e}"))?;
+        if decoder.has_animation() {
+            return Err("Animated WebP not supported for recompress".into());
+        }
+    }
+
+    let img = decode_image(input)?;
+
+    let output = if opt_level >= 1 {
+        // Optimized: color type reduce + try both predictor settings, pick smallest
+        let reduced = color_type_reduce(&img);
+        let candidate_on = encode_webp(&reduced, true)?;
+        let candidate_off = encode_webp(&reduced, false)?;
+        if candidate_on.len() <= candidate_off.len() {
+            candidate_on
+        } else {
+            candidate_off
+        }
+    } else {
+        // Standard: use predictor toggle as-is, no color type reduce
+        encode_webp(&img, use_predictor)?
+    };
+
+    core_utils::validate_output(&output, core_utils::OutputFormat::WebP)?;
+    Ok(output)
+}
+
+#[wasm_bindgen]
+pub fn recompress_webp(input_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    recompress_webp_inner(input_bytes, true, 0)
+}
+
+#[wasm_bindgen]
+pub fn recompress_webp_with_options(
+    input_bytes: &[u8],
+    use_predictor: bool,
+    opt_level: u8,
+) -> Result<Vec<u8>, String> {
+    recompress_webp_inner(input_bytes, use_predictor, opt_level)
+}
+
+#[wasm_bindgen]
+pub fn estimate_webp_recompress_size(input_bytes: &[u8]) -> Result<u32, String> {
+    let out = recompress_webp(input_bytes)?;
+    Ok(out.len() as u32)
+}
+
+#[wasm_bindgen]
+pub fn estimate_webp_recompress_with_options(
+    input_bytes: &[u8],
+    use_predictor: bool,
+    opt_level: u8,
+) -> Result<u32, String> {
+    let out = recompress_webp_with_options(input_bytes, use_predictor, opt_level)?;
     Ok(out.len() as u32)
 }
 
@@ -1115,6 +1230,120 @@ mod tests {
         assert_eq!(
             optimized[25], 0,
             "RGB with all channels equal should reduce to grayscale (color type 0)"
+        );
+    }
+
+    // -- WebP recompress (Tier 4a.2a) --
+
+    fn sample_webp() -> Vec<u8> {
+        let img = RgbImage::from_fn(32, 32, |x, y| {
+            image::Rgb([(x * 8) as u8, (y * 8) as u8, 128])
+        });
+        let mut buf = Vec::new();
+        image::DynamicImage::ImageRgb8(img)
+            .write_to(&mut std::io::Cursor::new(&mut buf), image::ImageFormat::WebP)
+            .unwrap();
+        buf
+    }
+
+    fn sample_rgba_webp() -> Vec<u8> {
+        let img = RgbaImage::from_fn(32, 32, |x, y| {
+            image::Rgba([(x * 8) as u8, (y * 8) as u8, 128, 200])
+        });
+        let mut buf = Vec::new();
+        image::DynamicImage::ImageRgba8(img)
+            .write_to(&mut std::io::Cursor::new(&mut buf), image::ImageFormat::WebP)
+            .unwrap();
+        buf
+    }
+
+    #[test]
+    fn recompress_webp_roundtrip() {
+        let webp = sample_webp();
+        let out = recompress_webp(&webp).expect("recompress");
+        ensure_webp(&out).unwrap();
+        assert!(out.len() > 0, "output should be non-empty");
+    }
+
+    #[test]
+    fn recompress_webp_optimized_smaller_or_equal() {
+        let webp = sample_webp();
+        let baseline = recompress_webp(&webp).expect("baseline");
+        let optimized = recompress_webp_with_options(&webp, true, 1).expect("optimized");
+        ensure_webp(&optimized).unwrap();
+        assert!(
+            optimized.len() <= baseline.len(),
+            "Optimized ({}) should be <= baseline ({})",
+            optimized.len(),
+            baseline.len()
+        );
+    }
+
+    #[test]
+    fn recompress_webp_rgba_preserved() {
+        let webp = sample_rgba_webp();
+        let out = recompress_webp(&webp).expect("recompress");
+        ensure_webp(&out).unwrap();
+        let decoded = decode_image(&out).expect("decode output");
+        assert!(
+            decoded.color().has_alpha(),
+            "RGBA WebP should preserve alpha channel"
+        );
+    }
+
+    #[test]
+    fn recompress_webp_empty_input() {
+        assert!(recompress_webp(&[]).is_err());
+    }
+
+    #[test]
+    fn recompress_webp_corrupt_input() {
+        assert!(recompress_webp(b"not a webp file").is_err());
+    }
+
+    #[test]
+    fn recompress_webp_riff_but_not_webp() {
+        let mut bytes = vec![0u8; 20];
+        bytes[0..4].copy_from_slice(b"RIFF");
+        bytes[8..12].copy_from_slice(b"WAVE");
+        assert!(recompress_webp(&bytes).is_err());
+    }
+
+    #[test]
+    fn recompress_webp_static_not_animated() {
+        let webp = sample_webp();
+        let decoder = image::codecs::webp::WebPDecoder::new(std::io::Cursor::new(&webp))
+            .expect("decoder");
+        assert!(
+            !decoder.has_animation(),
+            "Static WebP should not report animation"
+        );
+    }
+
+    #[test]
+    fn recompress_webp_predictor_toggle() {
+        let webp = sample_webp();
+        let on = recompress_webp_with_options(&webp, true, 0).expect("predictor on");
+        let off = recompress_webp_with_options(&webp, false, 0).expect("predictor off");
+        ensure_webp(&on).unwrap();
+        ensure_webp(&off).unwrap();
+    }
+
+    #[test]
+    fn recompress_webp_optimized_opaque_rgba_to_rgb() {
+        let img = RgbaImage::from_fn(32, 32, |x, y| {
+            image::Rgba([(x * 8) as u8, (y * 8) as u8, 128, 255])
+        });
+        let mut buf = Vec::new();
+        image::DynamicImage::ImageRgba8(img)
+            .write_to(&mut std::io::Cursor::new(&mut buf), image::ImageFormat::WebP)
+            .unwrap();
+        let optimized = recompress_webp_with_options(&buf, true, 1).expect("optimized");
+        ensure_webp(&optimized).unwrap();
+        let decoded = decode_image(&optimized).expect("decode");
+        assert!(
+            !decoded.color().has_alpha(),
+            "Opaque RGBA should reduce to RGB (no alpha channel)"
         );
     }
 }

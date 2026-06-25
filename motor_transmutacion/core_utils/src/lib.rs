@@ -453,6 +453,95 @@ pub fn validate_output(bytes: &[u8], format: OutputFormat) -> Result<(), String>
 }
 
 // ---------------------------------------------------------------------------
+// WebP format probe (Tier 4a.2a — WebP recompress)
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WebpFormat {
+    Lossy,
+    Lossless,
+    Extended,
+}
+
+/// Probe the WebP sub-format (VP8 lossy, VP8L lossless, or VP8X extended)
+/// by inspecting RIFF chunks. For VP8X (extended) containers, recursively
+/// scans subsequent chunks to locate the actual VP8 / VP8L payload.
+///
+/// Pure byte-level parsing — no decode, no `image` crate dependency.
+/// Used by the prepare pipeline to surface honest notices before transmute.
+pub fn probe_webp_format(bytes: &[u8]) -> Result<WebpFormat, String> {
+    if bytes.is_empty() {
+        return Err(TransmutationError::EmptyInput.to_string());
+    }
+    if bytes.len() < 16 {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: "WebP too short for RIFF chunk header".into(),
+        }
+        .to_string());
+    }
+    if &bytes[0..4] != b"RIFF" {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: "not a RIFF container".into(),
+        }
+        .to_string());
+    }
+    if &bytes[8..12] != b"WEBP" {
+        return Err(TransmutationError::InvalidDimensions {
+            reason: "RIFF container is not WebP".into(),
+        }
+        .to_string());
+    }
+
+    let first_four_cc = &bytes[12..16];
+    match first_four_cc {
+        b"VP8 " => return Ok(WebpFormat::Lossy),
+        b"VP8L" => return Ok(WebpFormat::Lossless),
+        b"VP8X" => {
+            // Extended format — scan subsequent chunks for VP8 / VP8L
+            return probe_webp_extended_inner(bytes);
+        }
+        other => {
+            return Err(TransmutationError::InvalidDimensions {
+                reason: format!(
+                    "unknown WebP chunk type: {}",
+                    String::from_utf8_lossy(other)
+                ),
+            }
+            .to_string())
+        }
+    }
+}
+
+fn probe_webp_extended_inner(bytes: &[u8]) -> Result<WebpFormat, String> {
+    let limit = bytes.len().min(64 * 1024);
+    let mut pos: usize = 12;
+
+    while pos + 8 <= limit {
+        let four_cc = &bytes[pos..pos + 4];
+        let chunk_size = u32::from_le_bytes([
+            bytes[pos + 4],
+            bytes[pos + 5],
+            bytes[pos + 6],
+            bytes[pos + 7],
+        ]) as usize;
+
+        match four_cc {
+            b"VP8 " => return Ok(WebpFormat::Lossy),
+            b"VP8L" => return Ok(WebpFormat::Lossless),
+            _ => {}
+        }
+
+        pos += 8 + chunk_size;
+        if chunk_size % 2 != 0 {
+            pos += 1;
+        }
+    }
+
+    // No VP8/VP8L chunk found — treat as extended with unknown payload
+    Ok(WebpFormat::Extended)
+}
+
+// ---------------------------------------------------------------------------
 // Metadata scanners (StripAll policy — SPEC §5.10)
 // ---------------------------------------------------------------------------
 
@@ -1105,5 +1194,98 @@ mod tests {
 
         set_risk_mode(false);
         reset_session_max_input_bytes();
+    }
+
+    // -- WebP format probe (Tier 4a.2a) --
+
+    fn make_webp_header(chunk: &[u8; 4]) -> Vec<u8> {
+        let mut v = Vec::new();
+        v.extend_from_slice(b"RIFF");
+        v.extend_from_slice(&100u32.to_le_bytes());
+        v.extend_from_slice(b"WEBP");
+        v.extend_from_slice(chunk);
+        v.extend_from_slice(&50u32.to_le_bytes());
+        v.resize(70, 0);
+        v
+    }
+
+    fn make_webp_vp8x_with_inner(inner_chunk: &[u8; 4]) -> Vec<u8> {
+        let mut v = Vec::new();
+        // RIFF + size placeholder
+        v.extend_from_slice(b"RIFF");
+        v.extend_from_slice(&0u32.to_le_bytes());
+        v.extend_from_slice(b"WEBP");
+        // VP8X chunk (10 bytes data: flags + canvas width/height)
+        v.extend_from_slice(b"VP8X");
+        v.extend_from_slice(&10u32.to_le_bytes());
+        v.extend_from_slice(&[0u8; 10]);
+        // Inner chunk (VP8 or VP8L)
+        v.extend_from_slice(inner_chunk);
+        v.extend_from_slice(&40u32.to_le_bytes());
+        v.resize(v.len() + 40, 0);
+        // Fix RIFF total size
+        let total_size = (v.len() - 8) as u32;
+        v[4..8].copy_from_slice(&total_size.to_le_bytes());
+        v
+    }
+
+    #[test]
+    fn probe_webp_lossy() {
+        let bytes = make_webp_header(b"VP8 ");
+        assert_eq!(probe_webp_format(&bytes).unwrap(), WebpFormat::Lossy);
+    }
+
+    #[test]
+    fn probe_webp_lossless() {
+        let bytes = make_webp_header(b"VP8L");
+        assert_eq!(probe_webp_format(&bytes).unwrap(), WebpFormat::Lossless);
+    }
+
+    #[test]
+    fn probe_webp_extended_resolves_to_lossy() {
+        let bytes = make_webp_vp8x_with_inner(b"VP8 ");
+        assert_eq!(probe_webp_format(&bytes).unwrap(), WebpFormat::Lossy);
+    }
+
+    #[test]
+    fn probe_webp_extended_resolves_to_lossless() {
+        let bytes = make_webp_vp8x_with_inner(b"VP8L");
+        assert_eq!(probe_webp_format(&bytes).unwrap(), WebpFormat::Lossless);
+    }
+
+    #[test]
+    fn probe_webp_extended_no_payload() {
+        let bytes = make_webp_header(b"VP8X");
+        assert_eq!(probe_webp_format(&bytes).unwrap(), WebpFormat::Extended);
+    }
+
+    #[test]
+    fn probe_webp_empty_input() {
+        assert!(probe_webp_format(&[]).is_err());
+    }
+
+    #[test]
+    fn probe_webp_too_short() {
+        assert!(probe_webp_format(b"RIFF\x00\x00").is_err());
+    }
+
+    #[test]
+    fn probe_webp_not_riff() {
+        let mut bytes = make_webp_header(b"VP8L");
+        bytes[0..4].copy_from_slice(b"XXXX");
+        assert!(probe_webp_format(&bytes).is_err());
+    }
+
+    #[test]
+    fn probe_webp_not_webp_brand() {
+        let mut bytes = make_webp_header(b"VP8L");
+        bytes[8..12].copy_from_slice(b"AVIF");
+        assert!(probe_webp_format(&bytes).is_err());
+    }
+
+    #[test]
+    fn probe_webp_unknown_chunk() {
+        let bytes = make_webp_header(b"VP9 ");
+        assert!(probe_webp_format(&bytes).is_err());
     }
 }

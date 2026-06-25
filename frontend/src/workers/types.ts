@@ -15,7 +15,7 @@ export type TransmutationModule =
   | "transmutador_svg"
   | "transmutador_optimize";
 
-export type OutputExtension = "png" | "jpg" | "webp" | "ico" | "avif";
+export type OutputExtension = "png" | "jpg" | "webp" | "ico" | "avif" | "svg";
 
 /** Discriminates PNG vs JPEG source when module is `transmutador_encode`. */
 export type EncodeSource = "png" | "jpeg";
@@ -56,6 +56,8 @@ export type TransmutationOptions = {
   outputWidth?: number;
   /** Computed SVG raster height (sent to Wasm). */
   outputHeight?: number;
+  /** Tier 4a.2a WebP compress — VP8L predictor transform (0=off, 1=on). */
+  usePredictor?: number;
 };
 
 export type WorkerPurpose = "transmute" | "estimate" | "purge";

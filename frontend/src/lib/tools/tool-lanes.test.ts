@@ -19,6 +19,6 @@ describe("tool-lanes", () => {
     expect(convert.every((t) => t.category === "image")).toBe(true);
     expect(optimize.every((t) => t.category === "optimize")).toBe(true);
     expect(convert.length + optimize.length).toBe(active.length);
-    expect(optimize.length).toBe(4);
+    expect(optimize.length).toBe(5);
   });
 });

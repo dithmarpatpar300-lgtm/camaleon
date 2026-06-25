@@ -2,15 +2,15 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.8.2** (App) · Engine v1.7.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.9.0** (App) · Engine v1.8.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v3.5.1)
+## What works today (v3.9.0)
 
 | Capability | Status |
 |------------|--------|
-| **Twenty-five active tools** | Tiers 1–2 + AVIF + SVG + **optimize** (compress/resize, **functional v3.3.0**) — `/transmute/[slug]` |
+| **Twenty-six active tools** | Tiers 1–2 + AVIF + SVG + **optimize** (compress/resize, **functional v3.3.0**) — `/transmute/[slug]` |
 | **Tool browser lanes** | Convert vs Optimize (**v3.3.3**); lane persists on reload without flash (**v3.3.4**) |
 | **Settings + toasts** | Bottom toast actions work while Settings is open; factory prefs seeded on first visit (**v3.3.4**) |
 | **PWA / offline shell** | Serwist SW, dual shell+Wasm readiness, reprecache recovery (**v3.5.0**) |
@@ -46,7 +46,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Tests** | 183 Vitest unit tests |
 
-**Latest (v3.8.2):** **Compress Premium Phase E — Zopfli archival + progressive JPEG** — extreme archival compression via Zopfli DEFLATE (opt_level=2) and progressive JPEG scan toggle. Compress pipeline A–E complete. See [docs/releases/v3.8.2.md](docs/releases/v3.8.2.md) and [evaluation](docs/planning/compress_before_vs_after.md).
+**Latest (v3.9.0):** **WebP Compress** — lossless VP8L re-encode with predictor transform and color type optimization. Tier 4a.2a Matrix Expand begins. See [docs/releases/v3.9.0.md](docs/releases/v3.9.0.md).
 
 ## Core principles
 
@@ -123,8 +123,8 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v3.5.1)
-├── motor_transmutacion/   # Rust workspace (v1.6.0)
+├── frontend/              # Next.js app (v3.9.0)
+├── motor_transmutacion/   # Rust workspace (v1.8.0)
 │   ├── core_utils/
 │   ├── transmutador_jpg/         # JPEG → PNG
 │   ├── transmutador_png/         # PNG → JPEG
@@ -171,6 +171,7 @@ camaleon/
 | **Compress Premium Phase C** | **v3.8.0** | ✅ PNG lossless optimization — filter trial, color/bit reduction, deflate strategy tuning |
 | **Compress Premium Phase D** | **v3.8.1** | ✅ Lossy PNG quantization — palette reduction, indexed PNG, 2-256 colors |
 | **Compress Premium Phase E** | **v3.8.2** | ✅ Zopfli archival + progressive JPEG — pipeline A–E complete |
+| **Tier 4a.2a — WebP compress** | **v3.9.0** | ✅ WebP lossless VP8L re-encode, predictor transform, color type optimization |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Architecture atlas: **[ARCHITECTURE.md](ARCHITECTURE.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 

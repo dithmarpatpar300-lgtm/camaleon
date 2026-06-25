@@ -12,6 +12,7 @@ export type FidelityNoticeContext = {
   subsampling?: number;
   optimizationLevel?: number;
   lossyMode?: number;
+  webpSourceFormat?: "lossy" | "lossless" | "extended";
 };
 
 export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
@@ -62,7 +63,7 @@ export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
   }
 
   if (
-    (ctx.toolId === "png-compress" || ctx.toolId === "jpg-compress") &&
+    (ctx.toolId === "png-compress" || ctx.toolId === "jpg-compress" || ctx.toolId === "webp-compress") &&
     ctx.estimateDelta != null &&
     ctx.estimateDelta.deltaPct >= 0
   ) {
@@ -167,6 +168,42 @@ export function computeFidelityNotices(ctx: FidelityNoticeContext): Notice[] {
       severity: "warn",
       messageKey: `notices.fidelity.resizeAdvancedScale.${filterKey}`,
       priority: NOTICE_PRIORITY.warnFidelity,
+    });
+  }
+
+  if (ctx.toolId === "webp-compress" && (ctx.webpSourceFormat === "lossy" || ctx.webpSourceFormat === "extended")) {
+    notices.push({
+      id: "fidelity-webp-lossy-source",
+      severity: "warn",
+      messageKey: "notices.fidelity.webpLossySource",
+      priority: NOTICE_PRIORITY.warnFidelity,
+    });
+  }
+
+  if (ctx.toolId === "webp-compress" && ctx.webpSourceFormat === "lossless") {
+    notices.push({
+      id: "fidelity-webp-lossless-source",
+      severity: "info",
+      messageKey: "notices.fidelity.webpLosslessSource",
+      priority: NOTICE_PRIORITY.info,
+    });
+    // If the estimate shows no significant change (+-2%), explain the VP8L ceiling
+    if (ctx.estimateDelta != null && Math.abs(ctx.estimateDelta.deltaPct) <= 2) {
+      notices.push({
+        id: "fidelity-webp-lossless-limit",
+        severity: "info",
+        messageKey: "notices.fidelity.webpCompressLosslessLimit",
+        priority: NOTICE_PRIORITY.info,
+      });
+    }
+  }
+
+  if (ctx.toolId === "webp-compress") {
+    notices.push({
+      id: "fidelity-webp-metadata-stripped",
+      severity: "info",
+      messageKey: "notices.fidelity.webpMetadataStripped",
+      priority: NOTICE_PRIORITY.info,
     });
   }
 

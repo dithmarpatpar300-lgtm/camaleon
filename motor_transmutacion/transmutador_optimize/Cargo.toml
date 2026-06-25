@@ -3,7 +3,7 @@ name = "transmutador_optimize"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Same-format PNG/JPEG compress and resize (Tier 4a)"
+description = "Same-format PNG/JPEG/WebP compress and resize (Tier 4a)"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -11,7 +11,8 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 wasm-bindgen = "0.2"
 core_utils = { path = "../core_utils" }
-image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+image-webp = "0.2"
 jpeg-encoder = "0.7"
 miniz_oxide = "0.8"
 png = "0.18"
@@ -19,4 +20,4 @@ quantette = { version = "0.6", default-features = false, features = ["image"] }
 zopfli = "0.8"
 
 [dev-dependencies]
-image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }

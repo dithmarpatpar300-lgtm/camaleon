@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.8.2
-**Last updated:** 2026-06-23
-**Status:** v3.8.2 on `dev` (Compress Premium Phases A–E complete — Zopfli archival · progressive JPEG) · Engine v1.7.0 · **25 tools**
+**Version:** 3.9.0
+**Last updated:** 2026-06-24
+**Status:** v3.9.0 on `dev` (Tier 4a.2a — WebP compress · VP8L lossless re-encode) · Engine v1.8.0 · **26 tools**
 
 ---
 
@@ -909,7 +909,7 @@ pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 // Warning: lossless of lossy source. UI surfaces §5.12.4 inflation hint.
 ```
 
-**Policies:** StripAll (§5.10). PNG→WebP preserves alpha via RGBA lossless. JPEG→WebP warns in UI about size inflation (§5.12.4). `validate_output` must verify RIFF `WEBP` magic (`52 49 46 46 xx xx xx xx 57 45 42 50`).
+**Policies:** StripAll (§5.10). PNG→WebP preserves alpha via RGBA lossless. JPEG→WebP warns in UI about size inflation (§5.12.4). EXIF orientation auto-applied before encode — phone camera photos (Samsung, iPhone) are rotated to correct view before VP8L re-encode, so orientation is not lost when StripAll removes the EXIF tag. `validate_output` verifies RIFF `WEBP` magic.
 
 > **OutputFormat extension required:** `core_utils::OutputFormat` must be extended with `WebP` variant when this crate ships. Chief Architect will issue the amendment at implementation time.
 
@@ -983,11 +983,11 @@ pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 
 ### 6.13 `transmutador_optimize` (Implemented — Tier 4a, v3.2.9 scaffold · v3.3.0 functional)
 
-**Purpose:** Same-format PNG/JPEG optimization — re-encode (compress) and Lanczos downscale (resize). Ladder C (§1.3).
+**Purpose:** Same-format PNG/JPEG/WebP optimization — re-encode (compress) and Lanczos downscale (resize). Ladder C (§1.3).
 
 **Status:** Rust crate + worker routes shipped v3.2.9; **end-to-end activation** v3.3.0 (prepare warmup, Wasm type declarations, JPEG `fromFormat` meta probe).
 
-**Dependencies:** `image` (png/jpeg encode/decode, `imageops` Lanczos3), `core_utils`, `wasm-bindgen`
+**Dependencies:** `image` (png/jpeg encode/decode, `imageops` Lanczos3, `webp` feature), `image-webp` 0.2 (VP8L lossless WebP re-encode), `core_utils`, `wasm-bindgen`
 
 **Wasm exports:**
 
@@ -998,6 +998,10 @@ pub fn estimate_jpg_to_webp_size(input_bytes: &[u8]) -> Result<u32, String>
 | `resize_png(bytes, resize_percent)` | Downscale + PNG encode (default compression 6) |
 | `resize_jpeg(bytes, resize_percent)` | Downscale + JPEG encode (default Q85) |
 | `estimate_png_recompress_size` / `estimate_jpeg_recompress_size` | Full encode path for byte estimate |
+| `recompress_webp(bytes)` | WebP → WebP VP8L lossless re-encode (predictor on, no color reduce) |
+| `recompress_webp_with_options(bytes, use_predictor, opt_level)` | WebP re-encode with predictor toggle + color type optimization |
+| `estimate_webp_recompress_size(bytes)` | Size estimate (standard) |
+| `estimate_webp_recompress_with_options(bytes, use_predictor, opt_level)` | Size estimate (with options) |
 | `set_session_input_limit` / `reset_session_input_limit` / `set_risk_mode` | Limit pipeline parity (§6.1) |
 
 **Frontend integration:**
@@ -1676,6 +1680,7 @@ Chief Architect validates SPEC diff during second-pass review.
 | 0.2.0-patch | 2026-06-02 | Chief Architect | Worker init race fix; hook `ready` state; Unix build script | — |
 | 0.2.0 | 2026-06-02 | OpenCode | Phase 1: Wasm pipeline + Worker bridge + core_utils implementation | `phase1_wasm_pipeline_done.md` |
 | 0.1.0 | 2026-06-02 | Chief Architect | Initial SPEC from v0.1.0 bootstrap | — |
+| **3.9.0** | **2026-06-24** | **OpenCode** | **Tier 4a.2a WebP compress**: `transmutador_optimize` extended with `image` `webp` feature + `image-webp` 0.2 (VP8L lossless). `recompress_webp*` + `estimate_webp_recompress*` exports. `core_utils` `WebpFormat` enum + `probe_webp_format` with VP8X recursive chunk scanning. EXIF orientation auto-apply across 3 JPEG-decode crates (fixes phone camera rotation). Client-side `probeWebpFormat` for lossy-source notice detection. UI/UX clarity: lossless compression limit notice, fidelity hint improvements. `webp-compress` tool (#26). Engine v1.8.0. | This document |
 
 ---
 
@@ -1793,6 +1798,7 @@ Still **ladder A + B** (§1.3): output is always a raster image. Requires Wasm b
 | **JPEG compress** | `jpg-compress` | `transmutador_optimize` | ✅ v3.3.0 |
 | **PNG resize** | `png-resize` | `transmutador_optimize` | ✅ v3.3.0 |
 | **JPEG resize** | `jpg-resize` | `transmutador_optimize` | ✅ v3.3.0 |
+| **WebP compress** | webp-compress | transmutador_optimize | ✅ v3.9.0 |
 
 **Governance:** `ToolDefinition.category: "optimize"`. ToolBrowser **Convert vs Optimize** lanes shipped UX-4a (v3.3.3). Edit lane deferred to Tier 4b.
 
