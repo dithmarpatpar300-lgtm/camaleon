@@ -2494,6 +2494,18 @@ const es: Dictionary = {
       webpCompressLosslessLimit:
         "WebP lossless ya en su limite de compresion. VP8L no puede reducir la entropia mas — los pixeles se almacenan exactamente. Para archivos mas pequenos en fotos, usa WebP → JPG (lossy).",
     },
+    recommendations: {
+      lossyToLossless:
+        "Fuente lossy detectada. Convertir a lossless aumentara el tamano del archivo (expansion de entropia — igual que JPEG→PNG). Para reduccion de tamano, prueba {action:0}.",
+      losslessCeiling:
+        "Este archivo ya esta comprimido cerca de su limite lossless. No es posible una reduccion significativa a este nivel de calidad — prueba la optimizacion Full o considera otro formato para archivos mas pequenos.",
+      jpegGenerational:
+        "Re-codificar un JPEG agrega otra generacion de perdida. Para edicion o archivado, usa {action:0} una vez como maestro intermedio para prevenir la perdida acumulativa de calidad.",
+      alphaFlatten:
+        "Esta imagen tiene transparencia. JPEG no puede almacenar alpha — las areas transparentes se aplanaran al color de fondo seleccionado. Para preservar el canal alpha, prueba {action:0} o elige una salida lossless.",
+      compressLarger:
+        "El output es mas grande que el source con estas opciones. {action:0}",
+    },
     estimate: {
       cheapSlow: "Calculando…",
       moderateSlow: "Calculando — este formato puede tardar un momento para un tamano preciso.",
@@ -2544,6 +2556,14 @@ const es: Dictionary = {
       archival: "Archivo y texturas",
       icons: "Iconos y favicons",
     },
+  },
+  noticeActions: {
+    tryWebpToJpg: "WebP → JPG",
+    tryJpgCompress: "Comprimir JPEG",
+    tryPngAsMaster: "Usar PNG como maestro",
+    tryPngCompress: "Comprimir PNG",
+    tryHigherCompression: "Subir compresion",
+    tryLowerQuality: "Bajar calidad",
   },
 };
 

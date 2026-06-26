@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { sessionLimitForBytes } from "@/lib/transmutation/limits";
 import type { ColorOptionSpec, ToolDefinition } from "@/lib/tools/types";
 import type { TransmutationOptions } from "@/workers/types";
@@ -35,6 +36,8 @@ import { useEstimateElapsed } from "@/hooks/useEstimateElapsed";
 import { computeStagedNotices } from "@/lib/notices/compute-staged-notices";
 import { computeCostTier } from "@/lib/notices/compute-performance-notices";
 import type { ToolNoticeContext } from "@/lib/notices/tool-notice-profiles";
+import type { NoticeAction } from "@/lib/notices/types";
+import { stageForRecommendedTool } from "@/lib/transmutation/recommend-navigate";
 import { useI18n } from "@/providers/I18nProvider";
 import { useRiskMode } from "@/providers/RiskModeProvider";
 import { RiskModeBanner } from "./RiskModeBanner";
@@ -130,6 +133,16 @@ export function StagedWorkspace({
 }: StagedWorkspaceProps) {
   const { t } = useI18n();
   const { riskModeEnabled } = useRiskMode();
+  const router = useRouter();
+
+  const handleNoticeAction = useCallback(
+    async (action: NoticeAction) => {
+      if (!fileBytes) return;
+      const url = await stageForRecommendedTool(fileBytes, fileName, action.toolSlug);
+      router.push(url);
+    },
+    [fileBytes, fileName, router],
+  );
   const isGifTool = tool.id === "gif-to-png" || tool.id === "gif-to-jpg";
   const isAvifTool = tool.id === "avif-to-png" || tool.id === "avif-to-jpg";
   const isTiffTool = tool.id === "tiff-to-png" || tool.id === "tiff-to-jpg";
@@ -189,6 +202,7 @@ export function StagedWorkspace({
         canEstimate: limitContext.canEstimate,
         noticeContext,
         svgMeta,
+        hasAlpha,
         phase: noticePhase,
       }),
     [
@@ -205,6 +219,7 @@ export function StagedWorkspace({
       limitBlocked,
       noticeContext,
       svgMeta,
+      hasAlpha,
       noticePhase,
     ]
   );
@@ -387,7 +402,7 @@ export function StagedWorkspace({
         </div>
       )}
 
-      {!limitBlocked && <NoticeRail notices={stagedNotices} />}
+      {!limitBlocked && <NoticeRail notices={stagedNotices} onAction={handleNoticeAction} />}
 
       {!limitBlocked && (
         <div className={hasOptions ? "mb-5" : "mb-5 border-t border-border pt-4"}>

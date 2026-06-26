@@ -1,7 +1,7 @@
 # Tier 4 — Image Optimization & Editing
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v3.9.0 on `dev`** — Compress Premium A–E **✅ complete** · Resize Premium ✅ (v3.6.0) · UX-4a ✅ (v3.3.3) · 4a-pre ✅ (v3.3.3) · **4a.1** metrics UX merged into delivered functionality · **4a.2 Matrix Expand 🔄 in progress (4a.2a ✅ v3.9.0, 4a.2b ⏳ planned v3.9.1)** · **4b** editing planned  
+> **Status:** **v3.9.1 on `dev`** — Compress Premium A–E **✅ complete** · Resize Premium ✅ (v3.6.0) · UX-4a ✅ (v3.3.3) · 4a-pre ✅ (v3.3.3) · **4a.1** metrics UX merged into delivered functionality · **4a.2 Matrix Expand 🔄 in progress (4a.2a ✅ v3.9.0)** · **Smart Notice Recommendations ✅ (v3.9.1)** · 4a.2b SVG minify ⏳ planned · **4b** editing planned  
 > **Prerequisite:** Tier 3 **complete** (v3.0.1) · Tier 3.5 Universal ✅ · Tier 3.6.0–3.6.2 ✅ · Settings S1–S7 core ✅  
 > **Doctrine:** Same pipeline as convert tools — decode → honest options → re-encode → StripAll → **estimate-first** (metrics are the product on Ladder C)  
 > **SPEC anchor:** §1.3 Ladders C & D · §5.1 mental model · §12.5 Tier 4a · §12.6 Tier 4b · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -27,7 +27,8 @@ Tier 4 is Camaleon's **second major capability line** after the 21-tool convert 
 | **4a-pre** | Mobile UX | Top offline notices + sticky ToolBrowser coexistence | — (frontend) | **v3.3.3** | ✅ **Shipped** |
 | **4a.2 Matrix Expand** | **Umbrella** | **WebP recompress + SVG minify + WebP resize (4 sub-phases)** | **Multiple crates** | **v3.9.x** | **🔄 In progress** |
 | **4a.2a** | WebP compress | WebP VP8L lossless re-encode, predictor toggle, color type opt, animated reject | `transmutador_optimize` (extended) | **v3.9.0** | ✅ **Shipped** |
-| **4a.2b** | SVG minify | Lightweight text-optimization (zero deps), passes 1-6+10, .svgz input | `transmutador_svg` (extended) | v3.9.1 | 📋 Planned |
+| **Smart Notice** | **Cross-cutting UX** | **Recommendation engine: actionable inline pills, cross-tool dedup, 5 rules, file handoff reuse, 2→3 max notices** | Frontend only (8 files, 0 new deps) | **v3.9.1** | ✅ **Shipped** |
+| **4a.2b** | SVG minify | Lightweight text-optimization (zero deps), passes 1-6+10, .svgz input | `transmutador_svg` (extended) | v3.9.2+ | 📋 Planned |
 | **4a.2c** | SVG aggressive | oxvg_optimiser spike (passes 7-9 + CSS minify), Wasm size gate | `transmutador_svg` (or new) | TBD | 📋 Backlog |
 | **4a.2d** | WebP resize | WebP resize reusing optimize pipeline + VP8L re-encode | `transmutador_optimize` | TBD | 📋 Backlog |
 | **4a.3** | Batch optimize | Same settings × N files for compress/resize | orchestration only | v3.4.x | 📋 Backlog |
@@ -37,7 +38,7 @@ Tier 4 is Camaleon's **second major capability line** after the 21-tool convert 
 
 **Normative:** Tier 4 does **not** add PDF, HEIC, or new **convert** directions. Optimization and editing are **orthogonal ladders**.
 
-**End state (4a.2a shipped):** **26 active tools** with **Convert · Optimize** discovery surfaces; **13 Wasm crates** (~870 KB optimize + 1.63 MB svg + others).
+**End state (v3.9.1 shipped):** **26 active tools** + **Smart Notice Recommendations** (actionable inline pills, 5-rule engine, cross-tool navigation via file handoff) · **13 Wasm crates** (~870 KB optimize + 1.63 MB svg + others).
 
 ---
 
@@ -190,6 +191,44 @@ Input (PNG/JPEG)
 
 ---
 
+## 7.5 Smart Notice Recommendations ✅ (v3.9.1 — cross-cutting UX)
+
+**Shipped.** Transforma el Notice Rail de mensajes pasivos a un sistema de recomendaciones accionables con pills inline. Zero cambios en Rust/Wasm — puro frontend.
+
+### Features
+
+| Feature | Detail |
+|---------|--------|
+| **Actionable inline pills** | `ActionInlinePill` component embebido en el texto del notice con `bg-accent-subtle mx-0.5`, siguiendo el patrón `TransparencyNotice`/`BackgroundColorPill` |
+| **Recommendation engine** | 5 reglas heurísticas (R1-R5) que detectan cuándo la transmutación actual es subóptima y sugieren herramientas alternativas o ajustes de opciones |
+| **Cross-tool navigation** | Pills transfieren el archivo cargado al tool destino vía `stageFileHandoffFromFile()` (sistema existente, Tier 3.5) + `router.push()` |
+| **Deduplication** | Pipeline de supresión: recommendations reemplazan fidelity notices redundantes (4 reglas de supresión fidelity→rec; 2 reglas de supresión rec→rec) |
+| **Inline i18n** | Mensajes con markers `{action:0}`, `{action:1}` parseados por `NoticePanel` en tiempo de render |
+| **Max visible** | Aumentado de 2 a 3 para acomodar recommendations sin desplazar notices críticos |
+
+### Reglas activas
+
+| Regla | Disparador | Action pill |
+|-------|-----------|-------------|
+| R1 — Lossy→lossless | `jpg-to-webp`, `webp-compress` + lossy source + delta ≥ 0 | `[WebP → JPG →]` o `[Compress JPEG →]` |
+| R2 — Lossless ceiling | `png-compress`, `webp-compress` (lossless) + delta ±2% | Sin acción (informativo) |
+| R3 — JPEG generacional | `jpg-compress`, `jpg-resize` | `[Use PNG as master →]` → `jpg-to-png` |
+| R4 — Alpha flatten | `*-to-jpg` + hasAlpha | `[Compress PNG instead →]` → preserve slug |
+| R5 — Size increase | Compress + delta > 5% | `[Raise compression →]` / `[Lower quality →]` / `[WebP → JPG →]` |
+
+### Impacto
+
+| Área | Detalle |
+|------|--------|
+| **Files** | 8 TypeScript/React, 0 Rust, 0 Wasm, 0 new deps |
+| **Components** | `ActionInlinePill`, `NoticePanel` (enhanced), `NoticeRail`, `StagedWorkspace` |
+| **Notices** | `compute-recommendation-notices.ts` (new), `recommend-navigate.ts` (new) |
+| **Pipeline** | `compute-staged-notices` dedup layer (6 suppression rules) |
+
+**Detail:** `docs/planning/smart_notice_recommendations_investigation.md`
+
+---
+
 ## 8. Phase 4a.2 — Expand optimize matrix (umbrella)
 
 Phase 4a.2 "Matrix Expand" was split into 4 sub-phases due to scope. Only **4a.2a (WebP compress)** is shipped; 4a.2b–d remain in progress or backlog.
@@ -268,8 +307,9 @@ v3.8.1  Compress D — lossy quantization
 v3.8.2  Compress E — Zopfli archival, progressive JPEG
 ─── 4a.2 Matrix Expand (umbrella) ───
 v3.9.0  4a.2a WebP compress — VP8L lossless re-encode ✅
+v3.9.1  Smart Notice Recommendations — actionable rec engine ✅
 ─────── next ─────────────────────
-4a.2b   SVG minify (v3.9.1)
+4a.2b   SVG minify (v3.9.2+)
 4a.3    Batch optimize allowlist
 ─────── future ───────────────────
 4a.2c   SVG aggressive (oxvg spike)

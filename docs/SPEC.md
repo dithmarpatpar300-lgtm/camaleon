@@ -7,9 +7,9 @@
 > - If code and SPEC disagree, **SPEC wins** until a deliberate amendment is recorded.
 > - For a **narrative system atlas** (flows, crates, providers, all 25 tools), see **[ARCHITECTURE.md](../ARCHITECTURE.md)** at repo root.
 
-**Version:** 3.9.0
+**Version:** 3.9.1
 **Last updated:** 2026-06-24
-**Status:** v3.9.0 on `dev` (Tier 4a.2a — WebP compress · VP8L lossless re-encode) · Engine v1.8.0 · **26 tools**
+**Status:** v3.9.1 on `dev` (Tier 4a.2a WebP compress · Smart Notice Recommendations) · Engine v1.8.0 · **26 tools**
 
 ---
 
@@ -1680,6 +1680,7 @@ Chief Architect validates SPEC diff during second-pass review.
 | 0.2.0-patch | 2026-06-02 | Chief Architect | Worker init race fix; hook `ready` state; Unix build script | — |
 | 0.2.0 | 2026-06-02 | OpenCode | Phase 1: Wasm pipeline + Worker bridge + core_utils implementation | `phase1_wasm_pipeline_done.md` |
 | 0.1.0 | 2026-06-02 | Chief Architect | Initial SPEC from v0.1.0 bootstrap | — |
+| **3.9.1** | **2026-06-24** | **OpenCode** | **Smart Notice Recommendations**: Notice Rail transformed with actionable inline pills. `ActionInlinePill` component with `{action:0}` i18n markers. 5-rule recommendation engine (`compute-recommendation-notices.ts`) with cross-tool navigation via `stageFileHandoffFromFile`. Deduplication pipeline in `computeStagedNotices` (6 suppression rules). Max visible notices increased to 3. 8 TypeScript files, 0 Rust/Wasm changes, 0 new deps. | `smart_notice_recommendations_investigation.md` |
 | **3.9.0** | **2026-06-24** | **OpenCode** | **Tier 4a.2a WebP compress**: `transmutador_optimize` extended with `image` `webp` feature + `image-webp` 0.2 (VP8L lossless). `recompress_webp*` + `estimate_webp_recompress*` exports. `core_utils` `WebpFormat` enum + `probe_webp_format` with VP8X recursive chunk scanning. EXIF orientation auto-apply across 3 JPEG-decode crates (fixes phone camera rotation). Client-side `probeWebpFormat` for lossy-source notice detection. UI/UX clarity: lossless compression limit notice, fidelity hint improvements. `webp-compress` tool (#26). Engine v1.8.0. | This document |
 
 ---

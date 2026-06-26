@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.9.0** · Engine **v1.8.0** · Branch **`dev`** · **26 active tools** · **13 Wasm crates** · **183 Vitest tests**
+**Snapshot:** App **v3.9.1** · Engine **v1.8.0** · Branch **`dev`** · **26 active tools** · **13 Wasm crates** · **183 Vitest tests** · **Smart Notice engine**
 
 ---
 
@@ -101,7 +101,7 @@ flowchart TB
 camaleon/
 ├── ARCHITECTURE.md          ← this document (atlas)
 ├── README.md                ← quick start & capability summary
-├── frontend/                ← Next.js 15 app (v3.9.0)
+├── frontend/                ← Next.js 15 app (v3.9.1)
 │   ├── src/
 │   │   ├── app/             ← App Router pages, layout, SW source
 │   │   ├── components/      ← React UI (transmute, settings, layout, toast…)
@@ -638,6 +638,9 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 | Performance / slow path | `compute-performance-notices.ts` |
 | Estimate latency | `compute-estimate-notices.ts` |
 | SVG honesty | `compute-svg-honesty-notices.ts` |
+| **Recommendations (v3.9.1)** | **`compute-recommendation-notices.ts`** — 5 heuristic rules with inline `ActionInlinePill` buttons |
+
+**Smart Notice engine (v3.9.1):** The Notice Rail now supports actionable inline recommendations. When a transmutation is suboptimal (e.g., lossy→lossless inflation, JPEG generational loss, alpha flatten), recommendation notices replace passive fidelity warnings with clickable pills embedded in the notice text via `{action:0}` markers. Clicking a pill stages the file via `stageFileHandoffFromFile()` and navigates to the suggested tool. Deduplication pipeline suppresses redundant fidelity notices when recommendations are active. Max visible increased from 2 to 3. See `docs/planning/smart_notice_recommendations_investigation.md`.
 
 **Density:** Settings S4 (`notices-prefs.ts`) — `normal` vs `minimal` filter.
 
@@ -996,4 +999,4 @@ Five resampling filters (code 0-4): Nearest, Triangle, CatmullRom (default), Gau
 
 ---
 
-*Last updated: 2026-06-24 · App v3.9.0 · Engine v1.8.0 · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-24 · App v3.9.1 · Engine v1.8.0 · Smart Notice Recommendations · Maintained alongside SPEC/ROADMAP promotions.*

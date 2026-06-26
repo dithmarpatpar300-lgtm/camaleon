@@ -15,9 +15,11 @@
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.9.0** (`dev`) | **26 tools** · **Tier 4a.2a WebP compress** |
-| **Engine (Rust workspace)** | v1.8.0 | WebP VP8L lossless re-encode — Tier 4a.2a Matrix Expand begins |
-| **SPEC** | v3.9.0 | Tier 4a.2a WebP compress delivered |
+| **Frontend (app)** | **v3.9.1** (`dev`) | **26 tools** · **Smart Notice Recommendations** |
+| **Engine (Rust workspace)** | v1.8.0 | WebP VP8L lossless re-encode + Smart Notice engine |
+| **SPEC** | v3.9.1 | Tier 4a.2a WebP compress + Smart Notice Recommendations delivered |
+
+**v3.9.1** (`dev`): **Smart Notice Recommendations** — Notice Rail transformed from passive text to actionable inline recommendation engine. `ActionInlinePill` buttons embedded in notice text via `{action:0}` markers (follows `TransparencyNotice` pattern). Five heuristic rules (R1-R5) detect suboptimal transmutations and suggest alternative tools with cross-tool file handoff. Deduplication pipeline removes redundant fidelity notices when recommendations are active. Max visible increased to 3. Zero Rust/Wasm changes — pure TypeScript/React (8 files, 0 new deps). Investigation: `docs/planning/smart_notice_recommendations_investigation.md`.
 
 **v3.9.0** (`dev`): **Tier 4a.2a — WebP compress** — lossless VP8L re-encode with predictor transform toggle and color type optimization. Lossy WebP sources accepted with entropy expansion warning. Animated WebP rejected. New core_utils probe_webp_format with VP8X recursive chunk scanning (fixes false "extended" return). EXIF orientation auto-apply across 3 JPEG-decode crates (fixes phone camera photos displaying rotated). WebP UI/UX clarity improvements: lossless compression limit notice, explicit fidelity hints. Engine v1.8.0, +27.8 KB Wasm (869 KB total). Release: docs/releases/v3.9.0.md.
 
@@ -362,6 +364,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-24 | OpenCode | **v3.9.1 on `dev`:** Smart Notice Recommendations — actionable inline pills in Notice Rail via {action:0} markers. 5-rule recommendation engine, cross-tool navigation via file handoff, deduplication pipeline. 8 files, 0 Rust/Wasm deps. SPEC/ROADMAP/README/ARCHITECTURE → v3.9.1. |
 | 2026-06-24 | OpenCode | **v3.9.0 on `dev`:** Tier 4a.2a WebP compress — VP8L lossless re-encode, predictor transform, color type optimization, animated reject, lossy source warning. VP8X recursive chunk probe fix. EXIF orientation auto-apply across 3 crates (jpg-to-webp, jpg-compress, jpg-to-png). UI/UX clarity: lossless limit notice, fidelity hint improvements. Engine v1.8.0, +27.8 KB Wasm. SPEC/ROADMAP/README/ARCHITECTURE → v3.9.0. |
 | 2026-06-23 | OpenCode | **v3.8.2 on `dev`:** Compress Premium Phase E — Zopfli archival (opt_level=2, 3-8% more savings) + progressive JPEG via jpeg-encoder. Compress pipeline A–E complete. See also compress_before_vs_after.md. |
 | 2026-06-23 | OpenCode | **v3.8.1 on `dev`:** Compress Premium Phase D — lossy PNG quantization via quantette (Wu + FloydSteinberg). Palette reduction 2-256 colors, indexed PNG encoding via png crate. Fixed Colors: u8→u16 bug. Tool descriptions updated. Wasm +51.5 KB. SPEC/ROADMAP/README/ARCHITECTURE → v3.8.1. |

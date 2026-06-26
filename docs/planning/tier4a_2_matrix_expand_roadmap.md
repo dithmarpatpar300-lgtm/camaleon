@@ -1,7 +1,7 @@
 # Tier 4a.2 Matrix Expand Roadmap — Camaleon
 
-> **Status: v3.9.0 SHIPPED 2026-06-24 ✅** · 4a.2b pending · **Author:** OpenCode
-> **Scope:** WebP recompress (v3.9.0) + SVG minify (v3.9.1) — extend Ladder C optimization to WebP and SVG formats
+> **Status: v3.9.1 SHIPPED 2026-06-24 ✅ (4a.2a WebP + Smart Notice)** · 4a.2b pending · **Author:** OpenCode
+> **Scope:** WebP recompress (v3.9.0) + Smart Notice Recommendations (v3.9.1) + SVG minify (future) — extend Ladder C optimization to WebP and SVG formats, plus cross-cutting UX improvements
 > **Parent doc:** `docs/planning/tier4_plan.md` §8 · **Investigation:** `docs/planning/tier4a_2_matrix_expand_investigation.md`
 > **SPEC anchor:** §12.5 Tier 4a · §1.3 Ladder C · §5.12 WebP science · §5.10 StripAll
 > **Crate targets:** `transmutador_optimize` (WebP) · `transmutador_svg` (SVG minify)
@@ -15,8 +15,8 @@ Extend Camaleon's optimization ladder (Ladder C) beyond PNG/JPEG to cover **WebP
 
 **Deliverables:**
 - **v3.9.0** — `webp-compress` tool: lossless VP8L re-encode with honest lossy-source warnings **✅ SHIPPED**
-- **v3.9.1** — `svg-minify` tool: lightweight text-optimization (zero new deps) with optimization level + advanced toggles
-- **Future** — `4a.2c` oxvg_optimiser spike (aggressive SVG optimization) · `4a.2d` WebP resize
+- **v3.9.1** — Smart Notice Recommendations: actionable inline pills, 5-rule engine, cross-tool dedup **✅ SHIPPED**
+- **Future** — `v3.9.2+` SVG minify · `4a.2c` oxvg_optimiser spike · `4a.2d` WebP resize
 
 ---
 
@@ -25,7 +25,8 @@ Extend Camaleon's optimization ladder (Ladder C) beyond PNG/JPEG to cover **WebP
 | Phase | App version | Engine version | Type bump | Rationale |
 |-------|-------------|----------------|-----------|-----------|
 | **4a.2a** WebP compress | **v3.9.0 ✅** | **v1.8.0** | MINOR | New tool + new `image` feature (`webp`) + new `image-webp` direct dep |
-| **4a.2b** SVG minify | **v3.9.1** | v1.8.0 | PATCH | New tool, no new deps, no engine change |
+| **Smart Notice** | **v3.9.1 ✅** | v1.8.0 | PATCH | Cross-cutting UX — 8 files, 0 Rust/Wasm, 0 new deps |
+| **4a.2b** SVG minify | v3.9.2+ | v1.8.0 | PATCH | New tool, no new deps, no engine change |
 | **4a.2c** oxvg spike (future) | TBD | TBD | TBD | Gated on Wasm size + API stability |
 | **4a.2d** WebP resize (future) | TBD | TBD | PATCH | Reuses 4a.2a pipeline |
 
@@ -413,9 +414,10 @@ Both well within NFR-7 (3 MB per module).
 
 | Milestone | Tools | Crates | Wasm modules |
 |-----------|-------|--------|--------------|
-| v3.8.2 (current) | 25 | 14 (incl. core_utils) | 13 |
+| v3.8.2 | 25 | 14 (incl. core_utils) | 13 |
 | v3.9.0 (4a.2a) | **26** (+webp-compress) | 14 | 13 (no new crate) |
-| v3.9.1 (4a.2b) | **27** (+svg-minify) | 14 | 13 (no new crate) |
+| v3.9.1 (Smart Notice) | 26 (no new tool) | 14 | 13 (frontend only) |
+| v3.9.2+ (4a.2b) | **27** (+svg-minify) | 14 | 13 (no new crate) |
 
 ---
 
@@ -490,4 +492,4 @@ Both well within NFR-7 (3 MB per module).
 
 ---
 
-*Implementation roadmap for Tier 4a.2 Matrix Expand. **Phase 4a.2a SHIPPED v3.9.0 (2026-06-24):** `transmutador_optimize` extended with VP8L lossless re-encode (4 Wasm exports, 9 tests). Actual Wasm: **869 KB (+27.8 KB)**. EXIF orientation auto-apply added across 3 crates. VP8X recursive probe fix. 5 new notices, improved fidelity hints. 31 files changed, +2149 lines. All 10 architectural decisions resolved. **Next: 4a.2b SVG minify (v3.9.1)** followed by 4a.2c oxvg spike and 4a.2d WebP resize as future backlog.*
+*Implementation roadmap for Tier 4a.2 Matrix Expand. **Phase 4a.2a SHIPPED v3.9.0:** `transmutador_optimize` extended with VP8L lossless re-encode (4 Wasm exports, 9 tests). Wasm: **869 KB (+27.8 KB)**. EXIF orientation across 3 crates. VP8X recursive probe fix. 31 files, +2149 lines. **Smart Notice Recommendations SHIPPED v3.9.1:** Actionable inline pills, 5-rule engine, cross-tool navigation, dedup pipeline. 8 TypeScript files, 0 Rust. **Next: 4a.2b SVG minify (v3.9.2+)** followed by 4a.2c oxvg spike and 4a.2d WebP resize.*

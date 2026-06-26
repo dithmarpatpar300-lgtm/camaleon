@@ -2,6 +2,11 @@ export type NoticeSeverity = "error" | "warn" | "info" | "status";
 
 export type NoticePhase = "staged" | "estimating" | "transmuting";
 
+export type NoticeAction = {
+  labelKey: string;
+  toolSlug: string;
+};
+
 export type Notice = {
   id: string;
   severity: NoticeSeverity;
@@ -9,6 +14,8 @@ export type Notice = {
   params?: Record<string, string | number>;
   priority: number;
   phase?: NoticePhase;
+  /** Inline action pills rendered at {action:0}, {action:1}, etc. positions in the message. */
+  actions?: NoticeAction[];
 };
 
 export type CostTier = "L0" | "L1" | "L2" | "L3";

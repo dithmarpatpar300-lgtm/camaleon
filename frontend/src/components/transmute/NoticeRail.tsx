@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Notice } from "@/lib/notices/types";
+import type { Notice, NoticeAction } from "@/lib/notices/types";
 import {
   filterNoticesForDensity,
   getEffectiveNoticesPrefs,
@@ -11,10 +11,11 @@ import { NoticePanel } from "./NoticePanel";
 
 type NoticeRailProps = {
   notices: Notice[];
+  onAction?: (action: NoticeAction) => void;
   className?: string;
 };
 
-export function NoticeRail({ notices, className }: NoticeRailProps) {
+export function NoticeRail({ notices, onAction, className }: NoticeRailProps) {
   const [prefsRevision, setPrefsRevision] = useState(0);
 
   useEffect(() => subscribeNoticesPrefs(() => setPrefsRevision((v) => v + 1)), []);
@@ -29,7 +30,7 @@ export function NoticeRail({ notices, className }: NoticeRailProps) {
   return (
     <div className={className ?? "mb-4 space-y-2"}>
       {visibleNotices.map((notice) => (
-        <NoticePanel key={notice.id} notice={notice} />
+        <NoticePanel key={notice.id} notice={notice} onAction={onAction} />
       ))}
     </div>
   );

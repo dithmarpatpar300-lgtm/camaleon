@@ -2,11 +2,11 @@
 
 > **"Matter is neither created nor destroyed, it is only transmuted."**
 
-**v3.9.0** (App) · Engine v1.8.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
+**v3.9.1** (App) · Engine v1.8.0 · **Live:** [camaleon.bckthead3001.workers.dev](https://camaleon.bckthead3001.workers.dev) · [GitHub](https://github.com/dithmarpatpar300-lgtm/camaleon) · [ARCHITECTURE](ARCHITECTURE.md) · [SPEC](docs/SPEC.md) · [ROADMAP](docs/ROADMAP.md)
 
 Camaleon is an open-source, browser-local platform for **privacy-first** image format transmutation. Conversion runs entirely on your device via Rust/WebAssembly in Web Workers — no file bytes are uploaded to any server.
 
-## What works today (v3.9.0)
+## What works today (v3.9.1)
 
 | Capability | Status |
 |------------|--------|
@@ -46,7 +46,7 @@ Camaleon is an open-source, browser-local platform for **privacy-first** image f
 | **CI** | GitHub Actions: `cargo test --workspace` + `build:wasm` + `npm run build` |
 | **Tests** | 183 Vitest unit tests |
 
-**Latest (v3.9.0):** **WebP Compress** — lossless VP8L re-encode with predictor transform and color type optimization. Tier 4a.2a Matrix Expand begins. See [docs/releases/v3.9.0.md](docs/releases/v3.9.0.md).
+**Latest (v3.9.1):** **Smart Notice Recommendations** — the Notice Rail now features actionable inline recommendation pills. When a transmutation is suboptimal, clickable buttons suggest alternative tools with automatic file transfer. See [docs/planning/smart_notice_recommendations_investigation.md](docs/planning/smart_notice_recommendations_investigation.md).
 
 ## Core principles
 
@@ -123,7 +123,7 @@ npm run deploy:cf    # manual deploy (requires wrangler login)
 
 ```
 camaleon/
-├── frontend/              # Next.js app (v3.9.0)
+├── frontend/              # Next.js app (v3.9.1)
 ├── motor_transmutacion/   # Rust workspace (v1.8.0)
 │   ├── core_utils/
 │   ├── transmutador_jpg/         # JPEG → PNG
@@ -172,6 +172,7 @@ camaleon/
 | **Compress Premium Phase D** | **v3.8.1** | ✅ Lossy PNG quantization — palette reduction, indexed PNG, 2-256 colors |
 | **Compress Premium Phase E** | **v3.8.2** | ✅ Zopfli archival + progressive JPEG — pipeline A–E complete |
 | **Tier 4a.2a — WebP compress** | **v3.9.0** | ✅ WebP lossless VP8L re-encode, predictor transform, color type optimization |
+| **Smart Notice Recommendations** | **v3.9.1** | ✅ Actionable inline pills, 5-rule engine, cross-tool nav, dedup |
 
 Full detail: **[docs/ROADMAP.md](docs/ROADMAP.md)** · Architecture atlas: **[ARCHITECTURE.md](ARCHITECTURE.md)** · Multi-file plan: **[docs/planning/tier3_6_multi_file_plan.md](docs/planning/tier3_6_multi_file_plan.md)**
 

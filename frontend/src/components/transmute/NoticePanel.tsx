@@ -1,11 +1,14 @@
 "use client";
 
 import { useI18n } from "@/providers/I18nProvider";
-import type { Notice, NoticeSeverity } from "@/lib/notices/types";
+import type { Notice, NoticeAction, NoticeSeverity } from "@/lib/notices/types";
 import { cn } from "@/lib/utils";
+import { ActionInlinePill } from "./ActionInlinePill";
 
 type NoticePanelProps = {
   notice: Notice;
+  /** Called when an inline action pill is clicked. Receives the action data. */
+  onAction?: (action: NoticeAction) => void;
   className?: string;
 };
 
@@ -45,22 +48,55 @@ export function resolveNoticeMessage(
   return t(notice.messageKey, notice.params);
 }
 
-export function NoticePanel({ notice, className }: NoticePanelProps) {
+export function NoticePanel({ notice, onAction, className }: NoticePanelProps) {
   const { t } = useI18n();
   const styles = SEVERITY_STYLES[notice.severity];
   const message = resolveNoticeMessage(notice, t);
+  const hasActions = notice.actions && notice.actions.length > 0;
+
+  const containerClasses = cn(
+    "rounded-xl border px-4 py-3 text-xs leading-relaxed",
+    styles.container,
+    styles.text,
+    className,
+  );
+
+  if (!hasActions) {
+    return (
+      <p role={styles.role} className={containerClasses}>
+        {message}
+      </p>
+    );
+  }
+
+  // Parse {action:N} markers and inject ActionInlinePill components inline
+  const parts = message.split(/\{action:(\d+)\}/);
+  const children: React.ReactNode[] = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) {
+      if (parts[i]) {
+        children.push(parts[i]);
+      }
+    } else {
+      const actionIdx = parseInt(parts[i], 10);
+      const action = notice.actions![actionIdx];
+      if (action) {
+        children.push(
+          <ActionInlinePill
+            key={`action-${actionIdx}`}
+            label={t(action.labelKey)}
+            toolSlug={action.toolSlug}
+            onClick={() => onAction?.(action)}
+          />,
+        );
+      }
+    }
+  }
 
   return (
-    <p
-      role={styles.role}
-      className={cn(
-        "rounded-xl border px-4 py-3 text-xs leading-relaxed",
-        styles.container,
-        styles.text,
-        className
-      )}
-    >
-      {message}
-    </p>
+    <div role={styles.role} className={containerClasses}>
+      {children}
+    </div>
   );
 }
