@@ -489,6 +489,23 @@ const en: Dictionary = {
           },
         },
       },
+      v391: {
+        title: "Smart Notice Recommendations",
+        summary:
+          "The Notice Rail now features actionable inline recommendation pills. When a transmutation is suboptimal (lossy→lossless inflation, JPEG generational loss, alpha flatten), clickable buttons suggest alternative tools with automatic file transfer — no need to re-drop files. Zero upload, privacy-first.",
+        technical:
+          "ActionInlinePill component embedded in notice text via {action:0} i18n markers (follows TransparencyNotice/BackgroundColorPill pattern). compute-recommendation-notices.ts: 5 heuristic rules (R1-R5) + alphaPreserveSlug helper. Cross-tool navigation via stageFileHandoffFromFile() + router.push(). Deduplication: 6 suppression rules in compute-staged-notices pipeline. Max visible 2→3. 8 TypeScript files, 0 Rust/Wasm/deps. Frontend only.",
+        highlights: {
+          inlineRecPills: {
+            title: "Inline recommendation pills",
+            body: "Recommendations are embedded directly in the notice text — not below it. Clickable accent-subtle pills with arrow icons suggest better alternatives, following the same inline pattern as BackgroundColorPill in TransparencyNotice.",
+          },
+          smartEngine: {
+            title: "5-rule smart engine",
+            body: "The engine detects lossy→lossless inflation, JPEG generational loss, alpha flatten on JPEG outputs, lossless compression ceilings, and size increases. Each rule suggests the best alternative tool with automatic file transfer via the existing handoff system.",
+          },
+        },
+      },
       v380: {
         title: "Compress Premium Phase C — native PNG optimization",
         summary:

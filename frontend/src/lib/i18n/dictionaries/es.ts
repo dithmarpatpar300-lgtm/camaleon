@@ -490,6 +490,23 @@ const es: Dictionary = {
           },
         },
       },
+      v391: {
+        title: "Smart Notice Recommendations",
+        summary:
+          "El Notice Rail ahora incluye pills de recomendacion accionables. Cuando una transmutacion es suboptima (inflacion lossy→lossless, perdida generacional JPEG, aplanado de alpha), botones sugieren herramientas alternativas con transferencia automatica de archivos — sin necesidad de volver a soltar el archivo. Cero upload, privacidad primero.",
+        technical:
+          "Componente ActionInlinePill embebido en el texto del notice via marcadores {action:0} en i18n (sigue el patron de TransparencyNotice/BackgroundColorPill). compute-recommendation-notices.ts: 5 reglas heuristicas (R1-R5) + helper alphaPreserveSlug. Navegacion cross-tool via stageFileHandoffFromFile() + router.push(). Deduplicacion: 6 reglas de supresion en pipeline compute-staged-notices. Max visible 2→3. 8 archivos TypeScript, 0 Rust/Wasm/deps. Solo frontend.",
+        highlights: {
+          inlineRecPills: {
+            title: "Pills de recomendacion inline",
+            body: "Las recomendaciones se integran directamente en el texto del notice — no debajo. Pills accionables con icono de flecha y fondo accent-subtle, siguiendo el mismo patron inline que BackgroundColorPill en TransparencyNotice.",
+          },
+          smartEngine: {
+            title: "Motor inteligente de 5 reglas",
+            body: "El motor detecta inflacion lossy→lossless, perdida generacional JPEG, aplanado de alpha en salidas JPEG, limites de compresion lossless, y aumentos de tamano. Cada regla sugiere la mejor herramienta alternativa con transferencia automatica de archivos via el sistema de handoff existente.",
+          },
+        },
+      },
       v380: {
         title: "Compress Premium Fase C — optimizacion nativa de PNG",
         summary:
