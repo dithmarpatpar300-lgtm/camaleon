@@ -24,9 +24,11 @@ import {
   writeOfflinePrefs,
 } from "@/lib/prefs/offline-prefs";
 import { WASM_CRATES } from "@/lib/wasm/wasm-crates";
+import { useWasmSyncEngine, type WasmSyncState } from "@/lib/wasm/wasm-sync";
 import { cn } from "@/lib/utils";
 import { ConnectivityDot, type ConnectivityVisualState } from "@/components/connectivity/ConnectivityDot";
 import { SettingsSection } from "./SettingsSection";
+import { SettingsRow } from "./SettingsRow";
 import { SettingsSwitch } from "./SettingsSwitch";
 
 type Props = {
@@ -38,21 +40,24 @@ function isMobileUa(): boolean {
   return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 }
 
-function StatCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint: string;
-}) {
+function SyncBadge({ state, label }: { state: WasmSyncState; label: string }) {
+  const styles: Record<WasmSyncState, string> = {
+    idle: "border-border bg-bg-elevated/40 text-text-muted",
+    checking: "border-accent/30 bg-accent/10 text-accent",
+    up_to_date: "border-accent/30 bg-accent/10 text-accent",
+    stale: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    syncing: "border-accent/30 bg-accent/10 text-accent",
+    error: "border-border bg-bg-elevated/40 text-text-muted",
+  };
   return (
-    <div className="rounded-lg border border-border/70 bg-bg-elevated/40 px-3.5 py-3">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
-      <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-text-primary">{value}</p>
-      <p className="mt-1 text-[11px] leading-snug text-text-muted">{hint}</p>
-    </div>
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+        styles[state]
+      )}
+    >
+      {label}
+    </span>
   );
 }
 
@@ -75,6 +80,8 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
   const [precaching, setPrecaching] = useState(false);
   const [restoringShell, setRestoringShell] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const wasmSync = useWasmSyncEngine(drawerOpen);
 
   const refreshStatus = useCallback(async () => {
     const [crates, bytes, shell] = await Promise.all([
@@ -113,36 +120,33 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
     return t("settings.offline.modeOfflineDetail");
   }, [swSupported, swRegistered, visualState, t]);
 
+  const engineCount = `${cachedCrates.length}/${WASM_CRATES.length}`;
+  const shellCount = shellStatus
+    ? `${shellStatus.toolRoutesCached}/${shellStatus.toolRoutesTotal}`
+    : "—";
+  const storageStr = cacheBytes != null ? formatBytes(cacheBytes) : "—";
   const enginePct = Math.round((cachedCrates.length / WASM_CRATES.length) * 100);
   const shellPct =
     shellStatus && shellStatus.toolRoutesTotal > 0
       ? Math.round((shellStatus.toolRoutesCached / shellStatus.toolRoutesTotal) * 100)
       : 0;
 
-  const shellLayerPct = shellStatus
-    ? shellStatus.shellReady
-      ? 100
-      : Math.round(
-          (shellPct * 0.6 +
-            (shellStatus.hasHome ? 10 : 0) +
-            (shellStatus.hasOfflineFallback ? 10 : 0) +
-            (shellStatus.staticChunkCount > 0 ? 20 : 0)) *
-            (100 / 100)
-        )
-    : 0;
-
-  const offlineReadyPct =
-    shellStatus?.shellReady && cachedCrates.length === WASM_CRATES.length
-      ? 100
-      : Math.min(enginePct, shellLayerPct);
-
-  const shellHint = shellStatus?.shellReady
-    ? t("settings.offline.shellReady")
-    : shellStatus && shellStatus.toolRoutesCached >= shellStatus.toolRoutesTotal && shellStatus.staticChunkCount === 0
-      ? t("settings.offline.shellNeedChunks")
-      : shellPct > 0
-        ? t("settings.offline.shellPartial")
-        : t("settings.offline.shellMissing");
+  const syncStatusLabel = useMemo(() => {
+    switch (wasmSync.state) {
+      case "idle":
+        return t("settings.offline.syncIdle");
+      case "checking":
+        return t("settings.offline.syncChecking");
+      case "up_to_date":
+        return t("settings.offline.syncUpToDate");
+      case "stale":
+        return t("settings.offline.syncStale");
+      case "syncing":
+        return t("settings.offline.syncing");
+      case "error":
+        return t("settings.offline.syncError");
+    }
+  }, [wasmSync.state, t]);
 
   const runPrecache = useCallback(async () => {
     if (!online) {
@@ -167,7 +171,7 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
     }
   }, [online, refreshStatus, t, toast]);
 
-  const handleToggle = useCallback(
+  const handleToggleToolkit = useCallback(
     async (next: boolean) => {
       if (isMobileUa() && next && !prefs.dismissedMobileWarning) {
         writeOfflinePrefs({ dismissedMobileWarning: true });
@@ -243,6 +247,25 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
     });
   }, [forceOffline, networkOnline, setForceOffline, t, toast]);
 
+  const handleSyncNow = useCallback(async () => {
+    await wasmSync.syncNow();
+    await refreshStatus();
+    if (wasmSync.state === "up_to_date") {
+      toast({ message: t("settings.offline.syncDone"), variant: "success" });
+    } else if (wasmSync.state === "error") {
+      toast({ message: t("settings.offline.syncFailed"), variant: "info" });
+    }
+  }, [wasmSync, refreshStatus, t, toast]);
+
+  const handleCheckNow = useCallback(async () => {
+    await wasmSync.checkNow();
+    if (wasmSync.state === "stale") {
+      toast({ message: t("settings.offline.syncStaleToast"), variant: "info" });
+    } else if (wasmSync.state === "up_to_date") {
+      toast({ message: t("settings.offline.syncUpToDateToast"), variant: "success" });
+    }
+  }, [wasmSync, t, toast]);
+
   const actionButtonClass = cn(
     "rounded-lg border px-3 py-2 text-xs font-medium transition-colors",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -254,199 +277,235 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
       focusTarget="offline"
       className="[&>[data-settings-focus-card]]:border-accent/20 [&>[data-settings-focus-card]]:shadow-[0_0_0_1px_rgba(34,197,94,0.06)]"
     >
-      <div className="space-y-5 p-4 sm:p-5">
-        {/* Hero status */}
-        <div className="rounded-xl border border-border/80 bg-gradient-to-br from-bg-elevated/80 to-bg-base/40 p-4">
-          <div className="flex items-start gap-3.5">
-            <div className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border/60 bg-bg-base/60">
-              <ConnectivityDot state={visualState} size="lg" />
+      {/* Status card */}
+      <div className="border-b border-border bg-gradient-to-br from-bg-elevated/60 to-bg-base/40 px-4 py-4">
+        <div className="flex items-start gap-3.5">
+          <div className="relative mt-0.5">
+            <div className={cn(
+              "absolute -inset-1.5 rounded-full opacity-25 blur-md",
+              visualState === "online" ? "bg-accent/50" :
+              visualState === "simulated" ? "bg-amber-500/50" : "bg-text-muted/30"
+            )} />
+            <ConnectivityDot state={visualState} size="lg" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-semibold tracking-tight text-text-primary">{modeTitle}</p>
+            <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">{modeDetail}</p>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              <span className={cn(
+                "inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                swRegistered
+                  ? "bg-accent/15 text-accent"
+                  : "bg-bg-elevated/60 text-text-muted"
+              )}>
+                {swRegistered
+                  ? t("settings.offline.badgeSwActive")
+                  : t("settings.offline.badgeSwPending")}
+              </span>
+              <span className={cn(
+                "inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                online
+                  ? "bg-accent/10 text-accent/80"
+                  : "bg-bg-elevated/60 text-text-muted"
+              )}>
+                {online
+                  ? t("settings.offline.badgeNetworkUp")
+                  : t("settings.offline.badgeNetworkDown")}
+              </span>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-semibold tracking-tight text-text-primary">{modeTitle}</p>
-              <p className="mt-1 text-sm leading-relaxed text-text-secondary">{modeDetail}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                    swRegistered
-                      ? "border-accent/30 bg-accent/10 text-accent"
-                      : "border-border bg-bg-elevated/50 text-text-muted"
-                  )}
-                >
-                  {swRegistered
-                    ? t("settings.offline.badgeSwActive")
-                    : t("settings.offline.badgeSwPending")}
-                </span>
-                <span className="inline-flex items-center rounded-full border border-border/70 bg-bg-elevated/40 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
-                  {online
-                    ? t("settings.offline.badgeNetworkUp")
-                    : t("settings.offline.badgeNetworkDown")}
-                </span>
-              </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Cache overview */}
+      <div className="border-b border-border bg-bg-surface/50 px-4 py-4">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-text-muted mb-3">
+          {t("settings.offline.cacheOverviewLabel")}
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-bg-elevated/40 px-3 py-3">
+            <p className="text-[10px] font-medium text-text-muted">{t("settings.offline.enginesShort")}</p>
+            <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-text-primary">{engineCount}</p>
+            <div className="mt-2 h-1 overflow-hidden bg-bg-base">
+              <div
+                className="h-full bg-accent transition-[width] duration-300 ease-out"
+                style={{ width: `${enginePct}%` }}
+              />
             </div>
           </div>
-        </div>
-
-        <p className="text-sm leading-relaxed text-text-secondary">{t("settings.offline.description")}</p>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <StatCard
-            label={t("settings.offline.shellLabel")}
-            value={
-              shellStatus
-                ? `${shellStatus.toolRoutesCached}/${shellStatus.toolRoutesTotal}`
-                : "—"
-            }
-            hint={
-              shellStatus
-                ? shellStatus.shellReady
-                  ? t("settings.offline.shellHint", {
-                      cached: String(shellStatus.toolRoutesCached),
-                      total: String(shellStatus.toolRoutesTotal),
-                      chunks: String(shellStatus.staticChunkCount),
-                    })
-                  : shellHint
-                : shellHint
-            }
-          />
-          <StatCard
-            label={t("settings.offline.statusLabel")}
-            value={`${cachedCrates.length}/${WASM_CRATES.length}`}
-            hint={t("settings.offline.enginesHint", { pct: String(enginePct) })}
-          />
-        </div>
-
-        <StatCard
-          label={t("settings.offline.storageLabel")}
-          value={cacheBytes != null ? formatBytes(cacheBytes) : "—"}
-          hint={t("settings.offline.storageHint")}
-        />
-
-        {/* Offline readiness */}
-        <div>
-          <div className="mb-1.5 flex items-center justify-between text-[11px] text-text-muted">
-            <span>{t("settings.offline.offlineReadyLabel")}</span>
-            <span className="font-mono tabular-nums">{offlineReadyPct}%</span>
-          </div>
-          <p className="mb-2 text-[11px] leading-snug text-text-muted">
-            {t("settings.offline.offlineReadyHint")}
-          </p>
-          <div className="h-1.5 overflow-hidden rounded-full bg-bg-elevated">
-            <div
-              className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
-              style={{ width: `${offlineReadyPct}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Engine progress bar */}
-        <div>
-          <div className="mb-1.5 flex items-center justify-between text-[11px] text-text-muted">
-            <span>{t("settings.offline.cacheProgressLabel")}</span>
-            <span className="font-mono tabular-nums">{enginePct}%</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-bg-elevated">
-            <div
-              className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
-              style={{ width: `${enginePct}%` }}
-            />
-          </div>
-        </div>
-
-        {isMobileUa() && !prefs.dismissedMobileWarning && (
-          <p className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3.5 py-2.5 text-xs leading-relaxed text-amber-100/85">
-            {t("settings.offline.mobileWarning")}
-          </p>
-        )}
-
-        {/* Full toolkit */}
-        <div className="rounded-lg border border-border/70 bg-bg-elevated/30 p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-text-primary">
-                {t("settings.offline.fullToolkitLabel")}
-              </p>
-              <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
-                {t("settings.offline.fullToolkitHint")}
-              </p>
+          <div className="bg-bg-elevated/40 px-3 py-3">
+            <p className="text-[10px] font-medium text-text-muted">{t("settings.offline.shellShort")}</p>
+            <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-text-primary">{shellCount}</p>
+            <div className="mt-2 h-1 overflow-hidden bg-bg-base">
+              <div
+                className="h-full bg-accent transition-[width] duration-300 ease-out"
+                style={{ width: `${shellPct}%` }}
+              />
             </div>
-            <SettingsSwitch
-              checked={prefs.fullToolkitPrecache}
-              onChange={handleToggle}
-              disabled={precaching || !swSupported || !online}
-              label={t("settings.offline.fullToolkitLabel")}
-            />
           </div>
-          {precaching && progress && (
-            <div className="mt-4 space-y-2">
-              <p className="text-xs text-text-muted">
-                {t("settings.offline.precacheProgress", {
-                  done: String(progress.done),
-                  total: String(progress.total),
-                })}
-              </p>
-              <div className="h-1 overflow-hidden rounded-full bg-bg-base">
-                <div
-                  className="h-full rounded-full bg-accent/80 transition-[width] duration-200"
-                  style={{
-                    width: `${Math.round((progress.done / progress.total) * 100)}%`,
-                  }}
-                />
-              </div>
-            </div>
-          )}
+          <div className="bg-bg-elevated/40 px-3 py-3">
+            <p className="text-[10px] font-medium text-text-muted">{t("settings.offline.storageShort")}</p>
+            <p className="mt-1 font-mono text-lg font-semibold tabular-nums text-text-primary">{storageStr}</p>
+          </div>
         </div>
+      </div>
 
-        {/* Offline mode (cache-only in this tab) */}
-        <div className="rounded-lg border border-border/70 bg-bg-elevated/30 p-4">
-          <p className="text-sm font-medium text-text-primary">
-            {t("settings.offline.offlineModeTitle")}
-          </p>
-          <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
-            {t("settings.offline.offlineModeHint")}
-          </p>
-          <p className="mt-2 text-[11px] leading-relaxed text-text-muted">
-            {t("settings.offline.offlineModeNote")}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
+      {/* Engine sync */}
+      <SettingsRow
+        label={t("settings.offline.syncLabel")}
+        description={
+          wasmSync.state === "syncing" && wasmSync.syncProgress
+            ? t("settings.offline.syncProgressHint", {
+                done: String(wasmSync.syncProgress.done),
+                total: String(wasmSync.syncProgress.total),
+              })
+            : wasmSync.manifest
+              ? t("settings.offline.syncHintWithVersion", {
+                  version: wasmSync.manifest.version,
+                  buildId: wasmSync.manifest.buildId.slice(0, 6),
+                })
+              : t("settings.offline.syncHint")
+        }
+        bordered
+      >
+        <div className="flex items-center gap-2">
+          <SyncBadge state={wasmSync.state} label={syncStatusLabel} />
+          {wasmSync.state === "stale" && (
             <button
               type="button"
-              onClick={handleForceOffline}
-              disabled={!networkOnline && !forceOffline}
+              onClick={() => void handleSyncNow()}
+              disabled={!online}
               className={cn(
                 actionButtonClass,
-                forceOffline
-                  ? "border-error/40 bg-error/10 text-red-200 hover:border-error/55 hover:bg-error/15"
-                  : "border-border bg-bg-base/50 text-text-secondary hover:border-accent/25 hover:text-text-primary",
-                !networkOnline && !forceOffline && "cursor-not-allowed opacity-50"
+                "border-amber-500/30 bg-amber-500/10 text-amber-300 hover:border-amber-500/50",
+                !online && "cursor-not-allowed opacity-50"
               )}
             >
-              {forceOffline
-                ? t("settings.offline.offlineModeExit")
-                : t("settings.offline.offlineModeEnter")}
+              {t("settings.offline.syncUpdateAction")}
             </button>
+          )}
+          {wasmSync.state !== "stale" && wasmSync.state !== "syncing" && (
+            <button
+              type="button"
+              onClick={() => void handleCheckNow()}
+              disabled={!online || wasmSync.state === "checking"}
+              className={cn(
+                actionButtonClass,
+                "border-border bg-bg-base/50 text-text-secondary hover:border-accent/25 hover:text-text-primary",
+                (!online || wasmSync.state === "checking") && "cursor-not-allowed opacity-50"
+              )}
+            >
+              {wasmSync.state === "checking" ? t("settings.offline.syncCheckingAction") : t("settings.offline.syncCheckAction")}
+            </button>
+          )}
+        </div>
+      </SettingsRow>
+
+      {/* Sync progress bar */}
+      {wasmSync.state === "syncing" && wasmSync.syncProgress && (
+        <div className="px-4 pb-3">
+          <div className="h-1 overflow-hidden rounded-full bg-bg-elevated">
+            <div
+              className="h-full rounded-full bg-accent/80 transition-[width] duration-200"
+              style={{
+                width: `${Math.round((wasmSync.syncProgress.done / wasmSync.syncProgress.total) * 100)}%`,
+              }}
+            />
           </div>
         </div>
+      )}
 
-        <div className="rounded-lg border border-border/60 bg-bg-elevated/20 px-4 py-3.5">
-          <p className="text-sm font-medium text-text-primary">
-            {t("settings.offline.fireTestTitle")}
-          </p>
-          <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
-            {t("settings.offline.fireTestHint")}
-          </p>
+      {/* Auto-detect sync */}
+      <SettingsRow
+        label={t("settings.offline.syncAutoLabel")}
+        description={t("settings.offline.syncAutoHint")}
+        bordered
+      >
+        <SettingsSwitch
+          checked={wasmSync.autoDetect}
+          onChange={wasmSync.setAutoDetect}
+          label={t("settings.offline.syncAutoLabel")}
+        />
+      </SettingsRow>
+
+      {/* Full toolkit */}
+      <SettingsRow
+        label={t("settings.offline.fullToolkitLabel")}
+        description={
+          precaching && progress
+            ? t("settings.offline.precacheProgress", {
+                done: String(progress.done),
+                total: String(progress.total),
+              })
+            : t("settings.offline.fullToolkitHint")
+        }
+        bordered
+      >
+        <SettingsSwitch
+          checked={prefs.fullToolkitPrecache}
+          onChange={handleToggleToolkit}
+          disabled={precaching || !swSupported || !online}
+          label={t("settings.offline.fullToolkitLabel")}
+        />
+      </SettingsRow>
+
+      {/* Precache progress bar */}
+      {precaching && progress && (
+        <div className="px-4 pb-3">
+          <div className="h-1 overflow-hidden rounded-full bg-bg-elevated">
+            <div
+              className="h-full rounded-full bg-accent/80 transition-[width] duration-200"
+              style={{
+                width: `${Math.round((progress.done / progress.total) * 100)}%`,
+              }}
+            />
+          </div>
         </div>
+      )}
 
-        {/* Restore shell + clear */}
-        <div className="flex flex-wrap justify-end gap-2 border-t border-border/60 pt-4">
+      {/* Offline mode */}
+      <SettingsRow
+        label={t("settings.offline.offlineModeTitle")}
+        description={t("settings.offline.offlineModeHint")}
+        layout="stacked"
+        bordered
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleForceOffline}
+            disabled={!networkOnline && !forceOffline}
+            className={cn(
+              actionButtonClass,
+              forceOffline
+                ? "border-error/40 bg-error/10 text-red-200 hover:border-error/55 hover:bg-error/15"
+                : "border-border bg-bg-base/50 text-text-secondary hover:border-accent/25 hover:text-text-primary",
+              !networkOnline && !forceOffline && "cursor-not-allowed opacity-50"
+            )}
+          >
+            {forceOffline
+              ? t("settings.offline.offlineModeExit")
+              : t("settings.offline.offlineModeEnter")}
+          </button>
+        </div>
+      </SettingsRow>
+
+      {/* Maintenance */}
+      <SettingsRow
+        label={t("settings.offline.maintenanceLabel")}
+        description={t("settings.offline.maintenanceHint")}
+        layout="stacked"
+        bordered={false}
+      >
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => void handleRestoreShell()}
             disabled={restoringShell || precaching || !online || !swSupported}
             className={cn(
               actionButtonClass,
-              "border-accent/30 bg-accent-subtle text-accent hover:border-accent/50"
+              "border-accent/30 bg-accent-subtle text-accent hover:border-accent/50",
+              (restoringShell || precaching || !online || !swSupported) && "cursor-not-allowed opacity-50"
             )}
           >
             {restoringShell && progress
@@ -467,7 +526,7 @@ export function OfflineSettingsSection({ drawerOpen }: Props) {
             {t("settings.offline.clearAction")}
           </button>
         </div>
-      </div>
+      </SettingsRow>
     </SettingsSection>
   );
 }

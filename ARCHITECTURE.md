@@ -4,7 +4,7 @@
 > **Audience:** Maintainers, contributors, and coding assistants.  
 > **Companion docs:** [SPEC](docs/SPEC.md) (normative requirements) · [ROADMAP](docs/ROADMAP.md) (delivery phases) · [README](README.md) (quick start)
 
-**Snapshot:** App **v3.9.1** · Engine **v1.8.0** · Branch **`dev`** · **26 active tools** · **13 Wasm crates** · **183 Vitest tests** · **Smart Notice engine**
+**Snapshot:** App **v3.9.3** · Engine **v1.8.0** · Branch **`dev`** · **26 active tools** · **13 Wasm crates** · **191 Vitest tests** · **Wasm Sync Engine**
 
 ---
 
@@ -166,6 +166,7 @@ App semver (`frontend/package.json`) and engine semver (`motor_transmutacion/Car
 | **Current** | **v3.8.2** | Compress Premium Phases A–E complete — Zopfli archival, progressive JPEG |
 | **Prior** | **v3.8.1** | Compress Premium Phase D — lossy PNG quantization (quantette + indexed PNG) |
 | **Current** | **v3.9.0** | Tier 4a.2a — WebP compress (VP8L lossless re-encode) |
+| **Current** | **v3.9.3** | Wasm Sync Engine + S5 Offline Settings redesign — stale Wasm detection via manifest buildId, minimalist SettingsRow UI |
 | **Next** | TBD | **4a.2b** — SVG minify |
 
 ---
@@ -704,7 +705,7 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 | S2 Defaults | `transmutation-defaults.ts` | JPEG quality, PNG compression, AVIF, alpha bg |
 | S3 Performance | `performance-prefs.ts` | Resource tier, result cache, auto-estimate |
 | S4 Notices | `notices-prefs.ts` | Rail density, prepare progress style |
-| S5 Offline | `offline-prefs.ts` | Full toolkit precache opt-in |
+| S5 Offline | `offline-prefs.ts` | Full toolkit precache, Wasm sync auto-detect, sync buildId/timestamp |
 | S6 Risk | `risk-mode.ts` | Risk mode + acknowledgment timestamp |
 | Updates | `updates-prefs.ts` | Auto-detect app updates |
 | S7 Batch | `batch-universal-prefs.ts` | Default selection all/none |
@@ -727,7 +728,9 @@ Always use `sessionLimitForBytes()` — never cap elevated files back to 50 MB i
 | Shell reprecache | `reprecache-app-shell.ts`, `shell-reprecache-core.ts`, `ShellCacheBootstrap.tsx` |
 | Dual readiness | `shell-cache-status.ts` — shellReady + wasmReady |
 | Brand offline | SW cache-first for `/brand/*` before Serwist; `OFFLINE_SHELL_ASSET_PATHS` |
-| Wasm caching | `CacheFirst` for `/wasm/**` → `camaleon-wasm-v1` |
+| Wasm caching | `CacheFirst` for `/wasm/**` → `camaleon-wasm-v1` (constant in `lib/wasm/wasm-cache-constants.ts`) |
+| Wasm sync engine | `lib/wasm/wasm-sync.ts` — `useWasmSyncEngine()` hook, manifest buildId comparison, stale detection + purge/re-cache |
+| Wasm manifest | `build-wasm.mjs` generates `public/wasm/wasm-manifest.json` (version, buildId, per-crate sizes) |
 | Offline fallback | Navigation → `/~offline` |
 | Full toolkit download | `precache-toolkit.ts` — opt-in ~10–17 MB (Settings S5) |
 | Force offline | SW message `SET_FORCE_OFFLINE` — cache-only mode |
@@ -810,7 +813,7 @@ Legal page content: `lib/legal/content/es.ts` (+ EN variants).
 
 ### Frontend (Vitest)
 
-**Config:** `frontend/vitest.config.ts` · **183 tests** in 48 files · Node environment · no component tests
+**Config:** `frontend/vitest.config.ts` · **191 tests** in 49 files · Node environment · no component tests
 
 | Area | Example files |
 |------|---------------|
@@ -999,4 +1002,4 @@ Five resampling filters (code 0-4): Nearest, Triangle, CatmullRom (default), Gau
 
 ---
 
-*Last updated: 2026-06-24 · App v3.9.1 · Engine v1.8.0 · Smart Notice Recommendations · Maintained alongside SPEC/ROADMAP promotions.*
+*Last updated: 2026-06-26 · App v3.9.3 · Engine v1.8.0 · Wasm Sync Engine + S5 Redesign · Maintained alongside SPEC/ROADMAP promotions.*

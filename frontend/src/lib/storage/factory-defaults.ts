@@ -33,6 +33,7 @@ export function buildFactoryUserSettings(): UserSettings {
     offline: {
       fullToolkitPrecache: false,
       dismissedMobileWarning: false,
+      wasmSyncEnabled: true,
     },
     updates: {
       autoDetectUpdates: true,
@@ -82,6 +83,10 @@ export function mergeUserSettingsWithFactory(stored: Partial<UserSettings>): Use
         stored.offline?.dismissedMobileWarning ?? factory.offline!.dismissedMobileWarning!,
       precacheCompletedAt: stored.offline?.precacheCompletedAt,
       installPromoSnoozedUntil: stored.offline?.installPromoSnoozedUntil,
+      wasmSyncEnabled:
+        stored.offline?.wasmSyncEnabled ?? factory.offline!.wasmSyncEnabled!,
+      lastKnownWasmBuildId: stored.offline?.lastKnownWasmBuildId,
+      lastWasmSyncAt: stored.offline?.lastWasmSyncAt,
     },
     updates: { ...factory.updates, ...stored.updates },
     batchUniversal: { ...factory.batchUniversal, ...stored.batchUniversal },

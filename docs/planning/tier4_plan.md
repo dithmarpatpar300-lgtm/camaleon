@@ -1,7 +1,7 @@
 # Tier 4 — Image Optimization & Editing
 
 > **Branch:** `dev` (implementation) → merge to `main` at release tags  
-> **Status:** **v3.9.1 on `dev`** — Compress Premium A–E **✅ complete** · Resize Premium ✅ (v3.6.0) · UX-4a ✅ (v3.3.3) · 4a-pre ✅ (v3.3.3) · **4a.1** metrics UX merged into delivered functionality · **4a.2 Matrix Expand 🔄 in progress (4a.2a ✅ v3.9.0)** · **Smart Notice Recommendations ✅ (v3.9.1)** · 4a.2b SVG minify ⏳ planned · **4b** editing planned  
+> **Status:** **v3.9.3 on `dev`** — Compress Premium A–E **✅ complete** · Resize Premium ✅ (v3.6.0) · UX-4a ✅ (v3.3.3) · 4a-pre ✅ (v3.3.3) · **4a.1** metrics UX merged into delivered functionality · **4a.2 Matrix Expand 🔄 in progress (4a.2a ✅ v3.9.0)** · **Smart Notice Recommendations ✅ (v3.9.1)** · **Wasm Sync Engine + S5 Redesign ✅ (v3.9.3)** · 4a.2b SVG minify ⏳ planned · **4b** editing planned  
 > **Prerequisite:** Tier 3 **complete** (v3.0.1) · Tier 3.5 Universal ✅ · Tier 3.6.0–3.6.2 ✅ · Settings S1–S7 core ✅  
 > **Doctrine:** Same pipeline as convert tools — decode → honest options → re-encode → StripAll → **estimate-first** (metrics are the product on Ladder C)  
 > **SPEC anchor:** §1.3 Ladders C & D · §5.1 mental model · §12.5 Tier 4a · §12.6 Tier 4b · NFR-7 bundle · NFR-8 honesty · **`docs/LIMIT_PIPELINE.md`**  
@@ -38,7 +38,7 @@ Tier 4 is Camaleon's **second major capability line** after the 21-tool convert 
 
 **Normative:** Tier 4 does **not** add PDF, HEIC, or new **convert** directions. Optimization and editing are **orthogonal ladders**.
 
-**End state (v3.9.1 shipped):** **26 active tools** + **Smart Notice Recommendations** (actionable inline pills, 5-rule engine, cross-tool navigation via file handoff) · **13 Wasm crates** (~870 KB optimize + 1.63 MB svg + others).
+**End state (v3.9.3 shipped):** **26 active tools** + **Smart Notice Recommendations** + **Wasm Sync Engine** (stale Wasm detection via manifest buildId) · **S5 Offline Settings redesigned** (minimalist SettingsRow pattern) · **13 Wasm crates** (~870 KB optimize + 1.63 MB svg + others).
 
 ---
 

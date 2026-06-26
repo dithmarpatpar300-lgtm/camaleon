@@ -11,13 +11,15 @@
 
 ---
 
-## Current Snapshot (2026-06-24)
+## Current Snapshot (2026-06-26)
 
 | Layer | Version | Status |
 |-------|---------|--------|
-| **Frontend (app)** | **v3.9.2** (`dev`) | **26 tools** · **Smart Notice Recommendations** |
-| **Engine (Rust workspace)** | v1.8.0 | WebP VP8L lossless re-encode + Smart Notice engine |
-| **SPEC** | v3.9.2 | Smart Notice Recommendations delivered |
+| **Frontend (app)** | **v3.9.3** (`dev`) | **26 tools** · **Wasm Sync Engine + S5 Redesign** |
+| **Engine (Rust workspace)** | v1.8.0 | No engine changes (pure TypeScript/Node.js build enhancement) |
+| **SPEC** | v3.9.3 | Wasm Sync Engine + S5 Offline Settings Redesign delivered |
+
+**v3.9.3** (`dev`): **Wasm Sync Engine + S5 Offline Settings Redesign** — centralized detection of stale Wasm engines via `wasm-manifest.json` buildId comparison. `build-wasm.mjs` now generates `wasm-manifest.json` with SHA-256 content-hash buildId and per-crate sizes. New `useWasmSyncEngine()` hook (state machine: idle→checking→up_to_date|stale→syncing→up_to_date|error) with auto-detect toggle and manual "Update engines" / "Check now" actions. Settings S5 "Offline & cache" completely redesigned with minimalist `SettingsRow` pattern (consistency with S2–S8), compact cache overview, engine sync status badges, and maintenance row. Cache name centralized to `lib/wasm/wasm-cache-constants.ts` (single source of truth). New `OfflinePrefs`: `wasmSyncEnabled`, `lastKnownWasmBuildId`, `lastWasmSyncAt`. Zero Rust/Wasm changes — 8 new TypeScript files, 6 modified. 191 Vitest tests (+8 new). Investigation: `docs/planning/wasm_sync_and_s5_redesign.md`.
 
 **v3.9.2** (`dev`): **Release comms for Smart Notice** — adds What's New entry for v3.9.1 Smart Notice Recommendations, release notes, and i18n keys. Patch to complete the v3.9.1 release metadata.
 
@@ -366,6 +368,7 @@ Planning: `docs/planning/semantic_alpha_engine_plan.md`, analysis: `docs/plannin
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2026-06-26 | OpenCode | **v3.9.3 on `dev`:** Wasm Sync Engine + S5 Offline Settings Redesign — `useWasmSyncEngine()` state machine (idle/checking/up_to_date/stale/syncing/error) with manifest buildId comparison; `build-wasm.mjs` generates `wasm-manifest.json` (SHA-256 content hash); S5 redesigned with `SettingsRow` pattern; cache name centralized to `lib/wasm/wasm-cache-constants.ts`; new OfflinePrefs (wasmSyncEnabled, lastKnownWasmBuildId, lastWasmSyncAt); 191 Vitest tests (+8). Zero Rust/Wasm changes. SPEC/ROADMAP/README/ARCHITECTURE → v3.9.3. |
 | 2026-06-24 | OpenCode | **v3.9.2 on `dev`:** Release comms for Smart Notice — What's New entry + release notes + i18n keys. |
 | 2026-06-24 | OpenCode | **v3.9.1 on `dev`:** Smart Notice Recommendations — Notice Rail → actionable inline recommendation engine. 5 rules, cross-tool navigation via file handoff, dedup (6 suppression rules). 8 TypeScript files, 0 Rust/Wasm. |
 | 2026-06-24 | OpenCode | **v3.9.0 on `dev`:** Tier 4a.2a WebP compress — VP8L lossless re-encode, predictor transform, color type optimization, animated reject, lossy source warning. VP8X recursive chunk probe fix. EXIF orientation auto-apply across 3 crates (jpg-to-webp, jpg-compress, jpg-to-png). UI/UX clarity: lossless limit notice, fidelity hint improvements. Engine v1.8.0, +27.8 KB Wasm. SPEC/ROADMAP/README/ARCHITECTURE → v3.9.0. |

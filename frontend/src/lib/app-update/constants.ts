@@ -7,6 +7,7 @@ export const SW_CONTROL_TIMEOUT_MS = 10_000;
 export const VERSION_BEACON_PATH = "/version.json";
 
 /** Serwist wasm runtime cache — preserved during shell purge. */
-export const WASM_CACHE_NAME = "camaleon-wasm-v1";
+import { WASM_CACHE_NAME as _WASM_CACHE_NAME } from "@/lib/wasm/wasm-cache-constants";
+export const WASM_CACHE_NAME = _WASM_CACHE_NAME;
 
 export const HARD_RELOAD_QUERY_PARAM = "_camaleon_update";

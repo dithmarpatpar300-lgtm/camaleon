@@ -34,11 +34,20 @@ describe("offline-prefs", () => {
     expect(getEffectiveOfflinePrefs().fullToolkitPrecache).toBe(false);
   });
 
+  it("defaults wasmSyncEnabled to true", () => {
+    expect(getEffectiveOfflinePrefs().wasmSyncEnabled).toBe(true);
+  });
+
   it("persists full toolkit opt-in", () => {
     writeOfflinePrefs({ fullToolkitPrecache: true });
     expect(getEffectiveOfflinePrefs().fullToolkitPrecache).toBe(true);
     const raw = JSON.parse(store[USER_SETTINGS_STORAGE_KEY] ?? "{}");
     expect(raw.offline.fullToolkitPrecache).toBe(true);
+  });
+
+  it("persists wasmSyncEnabled toggle", () => {
+    writeOfflinePrefs({ wasmSyncEnabled: false });
+    expect(getEffectiveOfflinePrefs().wasmSyncEnabled).toBe(false);
   });
 
   it("markOfflinePrecacheComplete sets timestamp", () => {
@@ -49,8 +58,9 @@ describe("offline-prefs", () => {
   });
 
   it("resetOfflinePrefs clears offline block", () => {
-    writeOfflinePrefs({ fullToolkitPrecache: true });
+    writeOfflinePrefs({ fullToolkitPrecache: true, wasmSyncEnabled: false });
     resetOfflinePrefs();
     expect(getEffectiveOfflinePrefs().fullToolkitPrecache).toBe(false);
+    expect(getEffectiveOfflinePrefs().wasmSyncEnabled).toBe(true);
   });
 });

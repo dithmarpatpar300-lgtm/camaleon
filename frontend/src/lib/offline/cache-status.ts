@@ -1,8 +1,9 @@
 import { WASM_CRATES, wasmAssetUrls, type WasmCrateName } from "@/lib/wasm/wasm-crates";
+import { WASM_CACHE_NAME as _WASM_CACHE_NAME } from "@/lib/wasm/wasm-cache-constants";
 import type { TransmutationModule } from "@/workers/types";
 import { reprecacheAppShell } from "./reprecache-app-shell";
 
-export const WASM_CACHE_NAME = "camaleon-wasm-v1";
+export const WASM_CACHE_NAME = _WASM_CACHE_NAME;
 
 export type ClearOfflineCachesOptions = {
   /** When true and online, repopulate app shell after wipe. Default true. */

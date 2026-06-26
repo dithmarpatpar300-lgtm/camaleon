@@ -25,6 +25,7 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+// Canonical source: lib/wasm/wasm-cache-constants.ts (cannot import in SW scope)
 const WASM_CACHE = "camaleon-wasm-v1";
 const SHELL_CACHE_MAX_ENTRIES = 75;
 

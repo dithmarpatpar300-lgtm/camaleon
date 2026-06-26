@@ -18,15 +18,18 @@ export function readOfflinePrefs(): OfflinePrefs {
 }
 
 export function getEffectiveOfflinePrefs(): Required<
-  Pick<OfflinePrefs, "fullToolkitPrecache" | "dismissedMobileWarning">
+  Pick<OfflinePrefs, "fullToolkitPrecache" | "dismissedMobileWarning" | "wasmSyncEnabled">
 > &
-  Pick<OfflinePrefs, "precacheCompletedAt" | "installPromoSnoozedUntil"> {
+  Pick<OfflinePrefs, "precacheCompletedAt" | "installPromoSnoozedUntil" | "lastKnownWasmBuildId" | "lastWasmSyncAt"> {
   const stored = readOfflinePrefs();
   return {
     fullToolkitPrecache: stored.fullToolkitPrecache ?? false,
     dismissedMobileWarning: stored.dismissedMobileWarning ?? false,
+    wasmSyncEnabled: stored.wasmSyncEnabled ?? true,
     precacheCompletedAt: stored.precacheCompletedAt,
     installPromoSnoozedUntil: stored.installPromoSnoozedUntil,
+    lastKnownWasmBuildId: stored.lastKnownWasmBuildId,
+    lastWasmSyncAt: stored.lastWasmSyncAt,
   };
 }
 
@@ -43,6 +46,7 @@ export function resetOfflinePrefs(): void {
     offline: {
       fullToolkitPrecache: factory.fullToolkitPrecache,
       dismissedMobileWarning: factory.dismissedMobileWarning,
+      wasmSyncEnabled: factory.wasmSyncEnabled,
     },
   });
   notifyOfflinePrefsListeners();

@@ -48,6 +48,12 @@ export type OfflinePrefs = {
   dismissedMobileWarning?: boolean;
   /** ISO timestamp — hide home install promo until this time (Settings → Offline). */
   installPromoSnoozedUntil?: string;
+  /** Auto-detect Wasm engine updates via manifest check (default true). */
+  wasmSyncEnabled?: boolean;
+  /** Last synced Wasm manifest buildId. */
+  lastKnownWasmBuildId?: string;
+  /** ISO timestamp of last successful Wasm sync. */
+  lastWasmSyncAt?: string;
 };
 
 export type UpdatesPrefs = {
