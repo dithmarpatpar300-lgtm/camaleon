@@ -506,6 +506,23 @@ const en: Dictionary = {
           },
         },
       },
+      v393: {
+        title: "Wasm Sync Engine + S5 Offline Settings Redesign",
+        summary:
+          "Settings → Offline & cache has been redesigned from the ground up. A new Wasm Sync Engine detects stale cached conversion engines and lets you update them with one click — no app update needed. New minimalist layout with compact status card, stat grid, and inline progress bars.",
+        technical:
+          "New useWasmSyncEngine() hook (idle/checking/up_to_date/stale/syncing/error) fetches /wasm/wasm-manifest.json with no-store, compares buildId to stored lastKnownWasmBuildId. On stale: purge camaleon-wasm-v1 cache and re-run precacheFullToolkit(26 URLs). build-wasm.mjs generates manifest with SHA-256 content-hash buildId. WASM_CACHE_NAME centralized to lib/wasm/wasm-cache-constants.ts (single source, 3 consumers). S5: 8 SettingsRow blocks + custom status card (gradient bg, connectivity glow) + 3-column stat grid (engines/shell/storage). New OfflinePrefs: wasmSyncEnabled (default true), lastKnownWasmBuildId, lastWasmSyncAt. 8 new TS files, 17 modified. 191 Vitest tests (+8). Zero Rust/Wasm changes. App v3.9.3 · engine v1.8.0.",
+        highlights: {
+          wasmSync: {
+            title: "Wasm Sync Engine",
+            body: "Cached conversion engines are now checked against the latest deploy via a build manifest. When stale, one click purges and re-downloads all engines — zero app updates needed. Auto-detect checks when Settings opens.",
+          },
+          s5Redesign: {
+            title: "Modernized Offline & cache settings",
+            body: "A completely refreshed layout using the same SettingsRow pattern as the rest of the drawer. Compact status card, cache overview with progress bars, and engine sync status badges. Cleaner, faster, and ready for future options.",
+          },
+        },
+      },
       v380: {
         title: "Compress Premium Phase C — native PNG optimization",
         summary:

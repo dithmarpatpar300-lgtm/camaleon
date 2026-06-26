@@ -507,6 +507,23 @@ const es: Dictionary = {
           },
         },
       },
+      v393: {
+        title: "Wasm Sync Engine + Rediseno de Offline y cache",
+        summary:
+          "La seccion de Ajustes → Sin conexion y cache ha sido redisenada desde cero. Un nuevo Wasm Sync Engine detecta motores de conversion obsoletos en cache y permite actualizarlos con un solo clic — sin necesidad de actualizar la app. Nuevo diseno minimalista con tarjeta de estado compacta, cuadricula de estadisticas y barras de progreso integradas.",
+        technical:
+          "Nuevo hook useWasmSyncEngine() (idle/checking/up_to_date/stale/syncing/error) obtiene /wasm/wasm-manifest.json con no-store, compara buildId con lastKnownWasmBuildId almacenado. En stale: purga cache camaleon-wasm-v1 y re-ejecuta precacheFullToolkit(26 URLs). build-wasm.mjs genera manifest con hash SHA-256 buildId. WASM_CACHE_NAME centralizado en lib/wasm/wasm-cache-constants.ts. S5: 8 bloques SettingsRow + tarjeta de estado personalizada + cuadricula de 3 columnas (motores/shell/almacenamiento). Nuevos OfflinePrefs: wasmSyncEnabled, lastKnownWasmBuildId, lastWasmSyncAt. 8 archivos TS nuevos, 17 modificados. 191 tests Vitest (+8). Sin cambios en Rust/Wasm. App v3.9.3 · motor v1.8.0.",
+        highlights: {
+          wasmSync: {
+            title: "Wasm Sync Engine",
+            body: "Los motores de conversion en cache se verifican contra el ultimo deploy mediante un manifiesto. Cuando estan obsoletos, un clic purga y vuelve a descargar todos los motores — sin actualizaciones de la app. La deteccion automatica se activa al abrir Ajustes.",
+          },
+          s5Redesign: {
+            title: "Ajustes de Offline y cache modernizados",
+            body: "Un diseno completamente renovado usando el mismo patron SettingsRow que el resto del panel. Tarjeta de estado compacta, resumen de cache con barras de progreso e indicadores de sincronizacion de motores. Mas limpio, rapido y preparado para futuras opciones.",
+          },
+        },
+      },
       v380: {
         title: "Compress Premium Fase C — optimizacion nativa de PNG",
         summary:
