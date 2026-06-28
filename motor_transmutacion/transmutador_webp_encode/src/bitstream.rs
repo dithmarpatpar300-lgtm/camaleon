@@ -11,7 +11,7 @@
 use crate::bac::BoolEncoder;
 use crate::fdct::{forward_dct_4x4, forward_wht_4x4};
 use crate::prediction::{SubMode, YMode};
-use crate::probabilities::{get_coeff_prob, KF_Y_MODE_PROBS};
+use crate::probabilities::{get_coeff_prob, get_coeff_update_prob, KEYFRAME_YMODE_PROBS, KEYFRAME_UV_MODE_PROBS};
 use crate::zigzag::{find_eob, zigzag_scan};
 
 // ---------------------------------------------------------------------------
@@ -112,16 +112,14 @@ pub fn write_first_partition(
     // 10. refresh_entropy_probs = false (don't refresh for next frame)
     enc.encode_bool(false, 128);
     // 11. update_token_probabilities: read_bool per coeff_update_prob
-    // COEFF_UPDATE_PROBS values from image-webp: most are 255 (very likely
-    // no update). We set all to false (use default probabilities).
-    // The encoder must use the SAME probability values as the decoder.
+    // Must use the SAME probabilities as the decoder (COEFF_UPDATE_PROBS).
+    // The decoder reads 10 nodes per context (NUM_DCT_TOKENS-1=10).
     for ctype in 0..4 {
         for band in 0..8 {
             for ctx in 0..3 {
                 for node in 0..10 {
-                    // COEFF_UPDATE_PROBS values are mostly 255
-                    // Using 128 would desync from decoder
-                    enc.encode_bool(false, 128);
+                    let prob = get_coeff_update_prob(ctype, band, ctx, node);
+                    enc.encode_bool(false, prob); // no update
                 }
             }
         }
@@ -136,48 +134,51 @@ pub fn write_first_partition(
             let mb_idx = mb_row * mb_cols + mb_col;
             let mode = mb_modes[mb_idx];
 
-            // Context for y_mode probs
-            let above_mode = if mb_row > 0 { mb_modes[(mb_row-1)*mb_cols + mb_col] } else { YMode::DcPred };
-            let left_mode = if mb_col > 0 { mb_modes[mb_row*mb_cols + (mb_col-1)] } else { YMode::DcPred };
-            let prob_row = if above_mode == left_mode { 0 } else { 1 };
-            let prob = KF_Y_MODE_PROBS[prob_row];
+            // y_mode: image-webp KEYFRAME_YMODE_TREE
+            // Tree: [-B_PRED, 2, 4, 6, -DC_PRED, -V_PRED, -H_PRED, -TM_PRED]
+            // Node 0 (prob 145): LEFT=B_PRED, RIGHT=Node2
+            // Node 2 (prob 156): LEFT=Node4, RIGHT=Node6
+            // Node 4 (prob 163): LEFT=DC_PRED, RIGHT=V_PRED
+            // Node 6 (prob 128): LEFT=H_PRED, RIGHT=TM_PRED
+            let yp = KEYFRAME_YMODE_PROBS;
+            match mode {
+                YMode::BPred => {
+                    enc.encode_bool(true, yp[0]);  // LEFT → B_PRED
+                }
+                YMode::DcPred => {
+                    enc.encode_bool(false, yp[0]); // → Node2
+                    enc.encode_bool(true, yp[1]);  // LEFT → Node4
+                    enc.encode_bool(true, yp[2]);  // LEFT → DC_PRED
+                }
+                YMode::VPred => {
+                    enc.encode_bool(false, yp[0]);
+                    enc.encode_bool(true, yp[1]);
+                    enc.encode_bool(false, yp[2]); // RIGHT → V_PRED
+                }
+                YMode::HPred => {
+                    enc.encode_bool(false, yp[0]);
+                    enc.encode_bool(false, yp[1]); // RIGHT → Node6
+                    enc.encode_bool(true, yp[3]);  // LEFT → H_PRED
+                }
+                YMode::TmPred => {
+                    enc.encode_bool(false, yp[0]);
+                    enc.encode_bool(false, yp[1]);
+                    enc.encode_bool(false, yp[3]); // RIGHT → TM_PRED
+                }
+            }
 
-            encode_y_mode(&mut enc, mode, prob);
-
-            // uv_mode — always DC_PRED for now
-            encode_y_mode(&mut enc, YMode::DcPred, prob);
+            // uv_mode: image-webp KEYFRAME_UV_MODE_TREE
+            // Tree: [-DC_PRED, 2, -V_PRED, 4, -H_PRED, -TM_PRED]
+            // Node 0 (prob 142): LEFT=DC_PRED, RIGHT=Node2
+            // Node 2 (prob 114): LEFT=V_PRED, RIGHT=Node4
+            // Node 4 (prob 183): LEFT=H_PRED, RIGHT=TM_PRED
+            // Phase 2: always DC_PRED for chroma
+            let up = KEYFRAME_UV_MODE_PROBS;
+            enc.encode_bool(true, up[0]);  // LEFT → DC_PRED
         }
     }
 
     enc.finish()
-}
-
-/// Encode a y_mode using the VP8 probability tree.
-fn encode_y_mode(enc: &mut BoolEncoder, mode: YMode, prob: [u8; 3]) {
-    match mode {
-        YMode::DcPred => {
-            enc.encode_bool(false, prob[2]); // not TM
-            enc.encode_bool(true, prob[0]);  // is DC
-        }
-        YMode::VPred => {
-            enc.encode_bool(false, prob[2]);
-            enc.encode_bool(false, prob[0]);
-            enc.encode_bool(true, prob[1]);
-        }
-        YMode::HPred => {
-            enc.encode_bool(false, prob[2]);
-            enc.encode_bool(false, prob[0]);
-            enc.encode_bool(false, prob[1]);
-        }
-        YMode::TmPred => {
-            enc.encode_bool(true, prob[2]);
-        }
-        YMode::BPred => {
-            // B_PRED: encode as DC for now
-            enc.encode_bool(false, prob[2]);
-            enc.encode_bool(true, prob[0]);
-        }
-    }
 }
 
 // ---------------------------------------------------------------------------

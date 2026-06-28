@@ -50,6 +50,18 @@ fn encode_decode_roundtrip_16x16() {
         }
     }
 
+    // Also test 32x32 (4 MBs)
+    let rgb32 = vec![128u8; 32 * 32 * 3];
+    let webp32 = encode_webp_lossy(&rgb32, 32, 32, 75).expect("encode failed");
+    let result32 = ImageReader::new(Cursor::new(&webp32))
+        .with_guessed_format()
+        .map_err(|e| format!("guess: {e}"))
+        .and_then(|r| r.decode().map_err(|e| format!("decode: {e}")));
+    match result32 {
+        Ok(img) => println!("32x32 Q75: DECODE OK -> {}x{}", img.width(), img.height()),
+        Err(e) => println!("32x32 Q75: DECODE FAILED -> {e}"),
+    }
+
     // Also try at quality 100 (minimal quantization)
     let webp100 = encode_webp_lossy(&rgb, 16, 16, 100).expect("encode failed");
     let result100 = ImageReader::new(Cursor::new(&webp100))
