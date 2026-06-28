@@ -34,7 +34,8 @@ impl BoolEncoder {
     }
 
     pub fn encode_bool(&mut self, value: bool, prob: u8) {
-        let split = 1 + (((self.range - 1) * prob as u32) >> 8);
+        // Match libwebp VP8PutBit: split = (range * prob) >> 8
+        let split = ((self.range * prob as u32) >> 8).max(1);
 
         if value {
             self.lowvalue += split;
@@ -43,17 +44,14 @@ impl BoolEncoder {
             self.range = split;
         }
 
-        let mut shift = 7;
-        for s in 0..8 {
-            if (self.range << s) >= 128 {
-                shift = s;
-                break;
-            }
+        // Renormalize: shift one bit at a time while range < 128
+        let mut s: u32 = 0;
+        while self.range < 128 {
+            self.range <<= 1;
+            self.lowvalue <<= 1;
+            s += 1;
         }
-
-        self.range <<= shift;
-        self.count += shift;
-        self.lowvalue <<= shift;
+        self.count += s;
 
         if self.count >= 8 {
             self.count -= 8;
@@ -77,29 +75,9 @@ impl BoolEncoder {
     }
 
     pub fn finish(mut self) -> Vec<u8> {
-        // Ensure first output byte >= 4 so the VP8 decoder's initial
-        // 16-bit value is at least 1024. This allows decoding true
-        // booleans after ~4 false ones (common in frame headers).
-        if self.lowvalue > 0 {
-            while self.count < 8 || (self.lowvalue >> 24) < 4 {
-                if self.count >= 32 {
-                    break;
-                }
-                self.lowvalue <<= 1;
-                self.count += 1;
-            }
-        }
-
-        // Output all complete bytes
-        while self.count >= 8 {
-            self.count -= 8;
-            self.output.push((self.lowvalue >> 24) as u8);
-            self.lowvalue &= 0x00FFFFFF;
-        }
-
-        // Output final partial byte
         if self.count > 0 {
-            let shifted = (self.lowvalue as u64) << (24 - self.count);
+            let shift = 24 - self.count;
+            let shifted = (self.lowvalue as u64) << shift;
             self.output.push((shifted >> 24) as u8);
         }
 
@@ -176,7 +154,7 @@ impl<'a> BoolDecoder<'a> {
     }
 
     pub fn decode_bool(&mut self, prob: u8) -> bool {
-        let split = 1 + (((self.range - 1) * prob as u32) >> 8);
+        let split = ((self.range * prob as u32) >> 8).max(1);
 
         let result;
         if self.value >= (split << 8) {
@@ -237,9 +215,9 @@ pub fn update_prob(prob: &mut u8, value: bool) {
 
 /// Calculate the split point for a boolean with probability `prob`.
 ///
-/// Used by both encoder and decoder — they must agree on this value.
+/// Matches libwebp: split = (range * prob) >> 8
 pub fn calc_split(range: u32, prob: u8) -> u32 {
-    1 + (((range - 1) * prob as u32) >> 8)
+    ((range * prob as u32) >> 8).max(1)
 }
 
 // ---------------------------------------------------------------------------
@@ -261,12 +239,11 @@ mod tests {
 
     #[test]
     fn bac_encoder_split_calculation() {
-        // split = 1 + ((range - 1) * prob >> 8)
-        assert_eq!(calc_split(255, 128), 128);
+        // split = (range * prob) >> 8, max(1)
+        assert_eq!(calc_split(255, 128), 127);
         assert_eq!(calc_split(255, 200), 199);
         assert_eq!(calc_split(255, 1), 1);
         assert_eq!(calc_split(255, 255), 254);
-        assert_eq!(calc_split(127, 128), 64);
     }
 
     #[test]
