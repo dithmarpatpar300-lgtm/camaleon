@@ -1,0 +1,12 @@
+[package]
+name = "transmutador_webp_encode"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+core_utils = { path = "../core_utils" }
