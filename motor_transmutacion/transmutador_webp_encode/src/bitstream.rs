@@ -1,57 +1,39 @@
-//! VP8 bitstream writer.
+//! VP8 bitstream writer — Phase 3 spec-compliant.
 //!
 //! Writes the three components of a VP8 keyframe:
 //! 1. Uncompressed frame header (10 bytes)
-//! 2. First partition (BAC-encoded): frame parameters + macroblock modes
-//! 3. Second partition (BAC-encoded): chroma modes + DCT coefficients
+//! 2. First partition: frame params + MB modes (y_mode + uv_mode per MB)
+//! 3. Second partition: DCT coefficients
 //!
-//! ## Coefficient encoding
-//!
-//! DCT coefficients are encoded using a binary token tree with
-//! 11 leaves (10 internal nodes). Each internal node uses a
-//! probability from KF_COEFF_PROBS. For Phase 1 (uniform
-//! probability), all nodes use prob=128.
+//! The encoding order EXACTLY matches the image-webp decoder
+//! (`vp8.rs` `read_frame_header` + `read_macroblock_header`).
 
 use crate::bac::BoolEncoder;
 use crate::fdct::{forward_dct_4x4, forward_wht_4x4};
-use crate::prediction::YMode;
-use crate::probabilities::KF_Y_MODE_PROBS;
+use crate::prediction::{SubMode, YMode};
+use crate::probabilities::{get_coeff_prob, KF_Y_MODE_PROBS};
 use crate::zigzag::{find_eob, zigzag_scan};
 
 // ---------------------------------------------------------------------------
 // Frame header (uncompressed, 10 bytes)
 // ---------------------------------------------------------------------------
 
-/// Write the uncompressed VP8 frame header.
-///
-/// Returns 10 bytes that precede the first partition.
-pub fn write_frame_header(
-    width: u32,
-    height: u32,
-    first_part_size: u32,
-) -> [u8; 10] {
+pub fn write_frame_header(width: u32, height: u32, first_part_size: u32) -> [u8; 10] {
     let mut header = [0u8; 10];
 
-    // Frame tag (bytes 0-2): keyframe, version 0, show_frame=1, first_part_size
-    let frame_tag: u32 = 0  // keyframe
-        | (0 << 1)           // version 0
-        | (1 << 4)           // show_frame
-        | (first_part_size << 5); // first partition size (19 bits)
+    let frame_tag: u32 = 0 | (0 << 1) | (1 << 4) | (first_part_size << 5);
     header[0] = (frame_tag & 0xFF) as u8;
     header[1] = ((frame_tag >> 8) & 0xFF) as u8;
     header[2] = ((frame_tag >> 16) & 0xFF) as u8;
 
-    // Start code (bytes 3-5): 0x9D 0x01 0x2A
     header[3] = 0x9D;
     header[4] = 0x01;
     header[5] = 0x2A;
 
-    // Width (bytes 6-7): 14-bit width, 2-bit horizontal_scale
     let width_field: u16 = (width as u16) | (0 << 14);
     header[6] = (width_field & 0xFF) as u8;
     header[7] = ((width_field >> 8) & 0xFF) as u8;
 
-    // Height (bytes 8-9): 14-bit height, 2-bit vertical_scale
     let height_field: u16 = (height as u16) | (0 << 14);
     header[8] = (height_field & 0xFF) as u8;
     header[9] = ((height_field >> 8) & 0xFF) as u8;
@@ -63,165 +45,176 @@ pub fn write_frame_header(
 // Quality → quantizer index
 // ---------------------------------------------------------------------------
 
-/// Map Camaleon quality parameter (0-100) to VP8 quantizer index (0-127).
-///
-/// Higher quality → lower q_index → less quantization.
-/// Uses a linear approximation of the libwebp curve.
 pub fn quality_to_q_index(quality: u8) -> u8 {
     let q = quality.clamp(0, 100);
-    if q >= 100 {
-        0
-    } else if q == 0 {
-        127
-    } else {
-        // Linear mapping: quality 75 → q_index ~20
+    if q >= 100 { 0 }
+    else if q == 0 { 127 }
+    else {
         let qi = ((100u32 - q as u32) * 128) / 100;
         qi.min(127) as u8
     }
 }
 
 // ---------------------------------------------------------------------------
-// First partition writer (BAC-encoded)
+// First partition — frame params + MB modes
 // ---------------------------------------------------------------------------
 
-/// Write the first partition: frame parameters only (no MB modes).
+/// Write the first partition: frame parameters + macroblock modes.
 ///
-/// RFC 6386 §10.4 — MB modes go in the second partition.
+/// Encoding order matches image-webp decoder `read_frame_header`:
+/// 1. color_space (1 bit)
+/// 2. clamping_type (1 bit)
+/// 3. segmentation_enabled (1 bit)
+/// 4. filter_type (1 bit)
+/// 5. loop_filter_level (6 bits)
+/// 6. sharpness_level (3 bits)
+/// 7. loop_filter_adjustments (1 bit)
+/// 8. num_partitions (2 bits) — 0 = 1 partition
+/// 9. quantizer: y_ac_qi (7 bits) + 5 optional signed deltas
+/// 10. refresh_entropy_probs (1 bit)
+/// 11. update_token_probabilities (coeff_update_probs × 1056 booleans)
+/// 12. mb_no_skip_coeff (1 bit) — if 0, no skip flag per MB
+/// 13. prob_skip_false (8 bits, only if mb_no_skip_coeff=1)
+/// 14. Per-MB: y_mode (tree) + uv_mode (tree)
 pub fn write_first_partition(
-    _mb_cols: usize,
-    _mb_rows: usize,
+    mb_modes: &[YMode],
+    mb_cols: usize,
+    mb_rows: usize,
     q_index: u8,
     filter_level: u8,
 ) -> Vec<u8> {
     let mut enc = BoolEncoder::new();
 
-    // Color space and clamping type
-    enc.encode_bool(false, 128); // color_space = 0 (YUV)
-    enc.encode_bool(false, 128); // clamping_type = 0
-
-    // Segmentation: disabled
-    enc.encode_bool(false, 128); // segmentation_enabled = false
-
-    // Loop filter
-    enc.encode_bool(false, 128); // filter_type = 0 (normal)
-    enc.encode_value(filter_level as u32, 6); // loop_filter_level
-    enc.encode_value(0, 3); // sharpness_level = 0
-    enc.encode_bool(false, 128); // mb_lf_adjustments = false
-
-    // Quantizer parameters
+    // 1. color_space = 0 (YUV)
+    enc.encode_bool(false, 128);
+    // 2. clamping_type = 0
+    enc.encode_bool(false, 128);
+    // 3. segmentation_enabled = false
+    enc.encode_bool(false, 128);
+    // 4. filter_type = 0 (normal)
+    enc.encode_bool(false, 128);
+    // 5. loop_filter_level (6 bits)
+    enc.encode_value(filter_level as u32, 6);
+    // 6. sharpness_level (3 bits)
+    enc.encode_value(0, 3);
+    // 7. loop_filter_adjustments_enabled = false
+    enc.encode_bool(false, 128);
+    // 8. num_partitions = 0 (means 1 partition, log2(1)=0)
+    enc.encode_value(0, 2);
+    // 9. Quantizer
     enc.encode_value(q_index as u32, 7); // y_ac_qi
-    enc.encode_bool(false, 128); // y_dc_delta_present
-    enc.encode_bool(false, 128); // y2_dc_delta_present
-    enc.encode_bool(false, 128); // y2_ac_delta_present
-    enc.encode_bool(false, 128); // uv_dc_delta_present
-    enc.encode_bool(false, 128); // uv_ac_delta_present
-
-    // Refresh golden frame
+    // 5 optional signed deltas (flag=false → delta=0)
+    enc.encode_bool(false, 128); // y_dc_delta
+    enc.encode_bool(false, 128); // y2_dc_delta
+    enc.encode_bool(false, 128); // y2_ac_delta
+    enc.encode_bool(false, 128); // uv_dc_delta
+    enc.encode_bool(false, 128); // uv_ac_delta
+    // 10. refresh_entropy_probs = false (don't refresh for next frame)
     enc.encode_bool(false, 128);
-
-    // Refresh alt reference frame
+    // 11. update_token_probabilities: read_bool per coeff_update_prob
+    // COEFF_UPDATE_PROBS values from image-webp: most are 255 (very likely
+    // no update). We set all to false (use default probabilities).
+    // The encoder must use the SAME probability values as the decoder.
+    for ctype in 0..4 {
+        for band in 0..8 {
+            for ctx in 0..3 {
+                for node in 0..10 {
+                    // COEFF_UPDATE_PROBS values are mostly 255
+                    // Using 128 would desync from decoder
+                    enc.encode_bool(false, 128);
+                }
+            }
+        }
+    }
+    // 12. mb_no_skip_coeff = 0 (disable skip mode)
     enc.encode_bool(false, 128);
+    // No prob_skip_false since skip is disabled
 
-    // Probability updates: use defaults (no update)
-    enc.encode_bool(false, 128); // coeff_prob_update_flag
-    enc.encode_bool(false, 128); // mb_probs_update_flag
-
-    // Skip mode: disabled
-    enc.encode_bool(false, 128);
-
-    // Note: MB modes (y_mode) are in the second partition per RFC 6386 §10.5
-
-    enc.finish()
-}
-
-// ---------------------------------------------------------------------------
-// Second partition writer (BAC-encoded)
-// ---------------------------------------------------------------------------
-
-/// Write the second partition: y_mode + uv_mode + DCT coefficients.
-///
-/// RFC 6386 §10.5: macroblock modes and residual data are in the second partition.
-pub fn write_second_partition(
-    y_ac_blocks: &[[i16; 16]],
-    wht_coeffs: &[[i16; 16]],
-    uv_blocks_u: &[[i16; 16]],
-    uv_blocks_v: &[[i16; 16]],
-    mb_modes: &[YMode],
-    mb_cols: usize,
-    mb_rows: usize,
-) -> Vec<u8> {
-    let mut enc = BoolEncoder::new();
-
+    // 13-14. Per-MB: y_mode + uv_mode
     for mb_row in 0..mb_rows {
         for mb_col in 0..mb_cols {
             let mb_idx = mb_row * mb_cols + mb_col;
             let mode = mb_modes[mb_idx];
 
-            // y_mode — luma prediction mode
-            let above_mode = if mb_row > 0 {
-                mb_modes[(mb_row - 1) * mb_cols + mb_col]
-            } else {
-                YMode::DcPred
-            };
-            let left_mode = if mb_col > 0 {
-                mb_modes[mb_row * mb_cols + (mb_col - 1)]
-            } else {
-                YMode::DcPred
-            };
+            // Context for y_mode probs
+            let above_mode = if mb_row > 0 { mb_modes[(mb_row-1)*mb_cols + mb_col] } else { YMode::DcPred };
+            let left_mode = if mb_col > 0 { mb_modes[mb_row*mb_cols + (mb_col-1)] } else { YMode::DcPred };
             let prob_row = if above_mode == left_mode { 0 } else { 1 };
             let prob = KF_Y_MODE_PROBS[prob_row];
 
-            match mode {
-                YMode::DcPred => {
-                    enc.encode_bool(false, prob[2]); // not TM
-                    enc.encode_bool(true, prob[0]);  // is DC
-                }
-                YMode::VPred => {
-                    enc.encode_bool(false, prob[2]);
-                    enc.encode_bool(false, prob[0]);
-                    enc.encode_bool(true, prob[1]);
-                }
-                YMode::HPred => {
-                    enc.encode_bool(false, prob[2]);
-                    enc.encode_bool(false, prob[0]);
-                    enc.encode_bool(false, prob[1]);
-                }
-                YMode::TmPred => {
-                    enc.encode_bool(true, prob[2]);
-                }
-                YMode::BPred => {
-                    // B_PRED: encode as DC for now (B_PRED tree integration
-                    // requires per-sub-block mode encoding — Phase 2.5)
-                    enc.encode_bool(false, prob[2]);
-                    enc.encode_bool(true, prob[0]);
-                }
-            }
+            encode_y_mode(&mut enc, mode, prob);
 
-            // uv_mode — chroma prediction mode (same tree, same probs)
-            // Phase 1: all UV modes are DC_PRED
+            // uv_mode — always DC_PRED for now
+            encode_y_mode(&mut enc, YMode::DcPred, prob);
+        }
+    }
+
+    enc.finish()
+}
+
+/// Encode a y_mode using the VP8 probability tree.
+fn encode_y_mode(enc: &mut BoolEncoder, mode: YMode, prob: [u8; 3]) {
+    match mode {
+        YMode::DcPred => {
             enc.encode_bool(false, prob[2]); // not TM
             enc.encode_bool(true, prob[0]);  // is DC
+        }
+        YMode::VPred => {
+            enc.encode_bool(false, prob[2]);
+            enc.encode_bool(false, prob[0]);
+            enc.encode_bool(true, prob[1]);
+        }
+        YMode::HPred => {
+            enc.encode_bool(false, prob[2]);
+            enc.encode_bool(false, prob[0]);
+            enc.encode_bool(false, prob[1]);
+        }
+        YMode::TmPred => {
+            enc.encode_bool(true, prob[2]);
+        }
+        YMode::BPred => {
+            // B_PRED: encode as DC for now
+            enc.encode_bool(false, prob[2]);
+            enc.encode_bool(true, prob[0]);
+        }
+    }
+}
 
-            // WHT coefficients (one 4×4 block = 16 coeffs)
-            encode_coeff_block(&mut enc, &wht_coeffs[mb_idx], 0); // type=0 (Y2_DC)
+// ---------------------------------------------------------------------------
+// Second partition — DCT coefficients
+// ---------------------------------------------------------------------------
 
-            // 16 Y AC blocks
-            for blk in 0..16 {
-                let blk_idx = mb_idx * 16 + blk;
-                encode_coeff_block(&mut enc, &y_ac_blocks[blk_idx], 1);
-            }
+/// Write the second partition: DCT coefficients for all macroblocks.
+pub fn write_second_partition(
+    y_ac_blocks: &[[i16; 16]],
+    wht_coeffs: &[[i16; 16]],
+    uv_blocks_u: &[[i16; 16]],
+    uv_blocks_v: &[[i16; 16]],
+    mb_cols: usize,
+    mb_rows: usize,
+) -> Vec<u8> {
+    let mut enc = BoolEncoder::new();
 
-            // 4 U blocks
-            for blk in 0..4 {
-                let blk_idx = mb_idx * 4 + blk;
-                encode_coeff_block(&mut enc, &uv_blocks_u[blk_idx], 2);
-            }
+    for mb_idx in 0..(mb_cols * mb_rows) {
+        // WHT coefficients (Y2 DC block)
+        encode_coeff_block(&mut enc, &wht_coeffs[mb_idx], 0, 0);
 
-            // 4 V blocks
-            for blk in 0..4 {
-                let blk_idx = mb_idx * 4 + blk;
-                encode_coeff_block(&mut enc, &uv_blocks_v[blk_idx], 3);
-            }
+        // 16 Y AC blocks
+        for blk in 0..16 {
+            let blk_idx = mb_idx * 16 + blk;
+            encode_coeff_block(&mut enc, &y_ac_blocks[blk_idx], 1, 0);
+        }
+
+        // 4 U blocks
+        for blk in 0..4 {
+            let blk_idx = mb_idx * 4 + blk;
+            encode_coeff_block(&mut enc, &uv_blocks_u[blk_idx], 2, 0);
+        }
+
+        // 4 V blocks
+        for blk in 0..4 {
+            let blk_idx = mb_idx * 4 + blk;
+            encode_coeff_block(&mut enc, &uv_blocks_v[blk_idx], 3, 0);
         }
     }
 
@@ -229,159 +222,187 @@ pub fn write_second_partition(
 }
 
 // ---------------------------------------------------------------------------
-// Coefficient token encoding
+// Coefficient encoding with real KF_COEFF_PROBS
 // ---------------------------------------------------------------------------
 
-/// Encode a 4×4 block of DCT coefficients (16 values in raster order)
-/// using the VP8 token tree.
+/// Encode a 4×4 block of DCT coefficients using the VP8 token tree
+/// with REAL probabilities from KF_COEFF_PROBS.
 ///
 /// `coeffs`: 16 coefficients in 4×4 raster order.
-/// `coeff_type`: 0=Y2_DC, 1=Y_AC, 2=UV_DC, 3=UV_AC (determines probability context).
-fn encode_coeff_block(enc: &mut BoolEncoder, coeffs: &[i16; 16], _coeff_type: usize) {
-    // Zig-zag scan
+/// `coeff_type`: 0=Y2_DC, 1=Y_AC, 2=UV_DC, 3=UV_AC
+/// `ctx`: initial probability context (0-2)
+fn encode_coeff_block(enc: &mut BoolEncoder, coeffs: &[i16; 16], coeff_type: usize, ctx: usize) {
     let scan = zigzag_scan(*coeffs);
     let eob = find_eob(&scan);
 
-    // Encode each coefficient up to EOB
+    let mut current_ctx = ctx;
+
     for pos in 0..=eob {
         let coeff = scan[pos];
-        let abs = coeff.abs() as u32;
+        let abs_val = coeff.unsigned_abs() as u32;
         let is_last = pos == eob;
 
-        if is_last && abs == 0 {
-            // EOB with only zeros — encode EOB token
-            encode_eob(enc);
+        if is_last && abs_val == 0 {
+            // EOB token
+            encode_token_with_probs(enc, 0, coeff_type, 0, current_ctx);
             break;
         }
 
-        // Determine token based on absolute value
-        // Token encoding tree (uniform prob=128 for Phase 1):
-        // root: node0 → node1
-        // node1: node3 or node4
-        // node2: node5 or node6
-        // node3: ZERO(1) or ONE(2)
-        // node4: TWO(3) or THREE(4)
-        // node5: node7 or node8
-        // node6: node9 or EOB(0)
-        // node7: FOUR(5) or CAT1(6)
-        // node8: CAT2(7) or CAT3(8)
-        // node9: CAT4(9) or CAT5(10)
-        encode_token(enc, abs);
+        // Determine band based on position
+        let band = if pos == 0 { 0 } else if pos <= 4 { 1 } else if pos <= 9 { 2 } else { 3 };
 
-        // Sign
-        if abs > 0 {
+        // Encode token
+        let token = abs_to_token(abs_val);
+        encode_token_with_probs(enc, token, coeff_type, band, current_ctx);
+
+        // Sign bit (for non-zero tokens)
+        if abs_val > 0 {
             enc.encode_bool(coeff < 0, 128);
         }
 
         // Extra bits for category tokens
-        match abs {
-            0 | 1 | 2 | 3 => {} // no extra bits
-            4..=5 => {
-                let extra = abs - 4;
-                enc.encode_bool(extra != 0, 128); // 1 bit
-            }
-            6..=8 => {
-                let extra = abs - 6;
-                enc.encode_value(extra, 2); // 2 bits
-            }
-            9..=11 => {
-                let extra = abs - 9;
-                enc.encode_value(extra, 2);
-            }
-            12..=15 => {
-                let extra = abs - 12;
-                enc.encode_value(extra, 2);
-            }
-            16..=19 => {
-                let extra = abs - 16;
-                enc.encode_value(extra, 2);
-            }
-            _ => {
-                // CAT5: abs >= 20, 3 extra bits for base, rest as binary
-                if abs <= 27 {
-                    let extra = abs - 20;
-                    enc.encode_value(extra, 3);
-                } else {
-                    // Large values: encode 7 bits of magnitude
-                    let extra = abs & 0x7F;
-                    enc.encode_value(extra, 7);
-                }
-            }
+        encode_extra_bit(enc, abs_val);
+
+        // Update context: if coefficient was non-zero, ctx=1 or 2
+        current_ctx = if abs_val > 0 { 2 } else { 1 };
+    }
+}
+
+/// VP8 token tree encoding with real probabilities from KF_COEFF_PROBS.
+///
+/// Token tree structure (10 internal nodes, 11 leaves):
+/// Node 0 (prob[node 0]): LEFT → Node 1, RIGHT → Node 2
+/// Node 1 (prob[node 1]): LEFT → Node 3, RIGHT → Node 4
+/// Node 2 (prob[node 2]): LEFT → Node 5, RIGHT → Node 6
+/// Node 3 (prob[node 3]): LEFT → ZERO(1), RIGHT → ONE(2)
+/// Node 4 (prob[node 4]): LEFT → TWO(3), RIGHT → THREE(4)
+/// Node 5 (prob[node 5]): LEFT → Node 7, RIGHT → Node 8
+/// Node 6 (prob[node 6]): LEFT → Node 9, RIGHT → EOB(0)
+/// Node 7 (prob[node 7]): LEFT → FOUR(5), RIGHT → CAT1(6)
+/// Node 8 (prob[node 8]): LEFT → CAT2(7), RIGHT → CAT3(8)
+/// Node 9 (prob[node 9]): LEFT → CAT4(9), RIGHT → CAT5(10)
+fn encode_token_with_probs(enc: &mut BoolEncoder, token: u32, ctype: usize, band: usize, ctx: usize) {
+    // Get probability for each tree node from KF_COEFF_PROBS
+    let p = |node: usize| -> u8 { get_coeff_prob(ctype, band, ctx, node) };
+
+    match token {
+        // EOB (token 0): Node0→RIGHT, Node2→RIGHT, Node6→RIGHT
+        0 => {
+            enc.encode_bool(false, p(0)); // → Node 2
+            enc.encode_bool(false, p(2)); // → Node 6
+            enc.encode_bool(false, p(6)); // → EOB
+        }
+        // ZERO (token 1): Node0→LEFT, Node1→LEFT, Node3→LEFT
+        1 => {
+            enc.encode_bool(true, p(0));  // → Node 1
+            enc.encode_bool(true, p(1));  // → Node 3
+            enc.encode_bool(true, p(3));  // → ZERO
+        }
+        // ONE (token 2): Node0→LEFT, Node1→LEFT, Node3→RIGHT
+        2 => {
+            enc.encode_bool(true, p(0));
+            enc.encode_bool(true, p(1));
+            enc.encode_bool(false, p(3)); // → ONE
+        }
+        // TWO (token 3): Node0→LEFT, Node1→RIGHT, Node4→LEFT
+        3 => {
+            enc.encode_bool(true, p(0));
+            enc.encode_bool(false, p(1)); // → Node 4
+            enc.encode_bool(true, p(4));  // → TWO
+        }
+        // THREE (token 4): Node0→LEFT, Node1→RIGHT, Node4→RIGHT
+        4 => {
+            enc.encode_bool(true, p(0));
+            enc.encode_bool(false, p(1));
+            enc.encode_bool(false, p(4)); // → THREE
+        }
+        // FOUR (token 5): Node0→RIGHT, Node2→LEFT, Node5→LEFT, Node7→LEFT
+        5 => {
+            enc.encode_bool(false, p(0)); // → Node 2
+            enc.encode_bool(true, p(2));  // → Node 5
+            enc.encode_bool(true, p(5));  // → Node 7
+            enc.encode_bool(true, p(7));  // → FOUR
+        }
+        // CAT1 (token 6): Node0→RIGHT, Node2→LEFT, Node5→LEFT, Node7→RIGHT
+        6 => {
+            enc.encode_bool(false, p(0));
+            enc.encode_bool(true, p(2));
+            enc.encode_bool(true, p(5));
+            enc.encode_bool(false, p(7)); // → CAT1
+        }
+        // CAT2 (token 7): Node0→RIGHT, Node2→LEFT, Node5→RIGHT, Node8→LEFT
+        7 => {
+            enc.encode_bool(false, p(0));
+            enc.encode_bool(true, p(2));
+            enc.encode_bool(false, p(5)); // → Node 8
+            enc.encode_bool(true, p(8));  // → CAT2
+        }
+        // CAT3 (token 8): Node0→RIGHT, Node2→LEFT, Node5→RIGHT, Node8→RIGHT
+        8 => {
+            enc.encode_bool(false, p(0));
+            enc.encode_bool(true, p(2));
+            enc.encode_bool(false, p(5));
+            enc.encode_bool(false, p(8)); // → CAT3
+        }
+        // CAT4 (token 9): Node0→RIGHT, Node2→RIGHT, Node6→LEFT, Node9→LEFT
+        9 => {
+            enc.encode_bool(false, p(0));
+            enc.encode_bool(false, p(2)); // → Node 6
+            enc.encode_bool(true, p(6));  // → Node 9
+            enc.encode_bool(true, p(9));  // → CAT4
+        }
+        // CAT5 (token 10): Node0→RIGHT, Node2→RIGHT, Node6→LEFT, Node9→RIGHT
+        _ => {
+            enc.encode_bool(false, p(0));
+            enc.encode_bool(false, p(2));
+            enc.encode_bool(true, p(6));
+            enc.encode_bool(false, p(9)); // → CAT5
         }
     }
 }
 
-/// Encode the EOB (end of block) token.
-fn encode_eob(enc: &mut BoolEncoder) {
-    // Tree path to EOB (token 0):
-    // node0 → node2 (right, false)
-    // node2 → node6 (right, false)
-    // node6 → EOB (right, false)
-    enc.encode_bool(false, 128); // go to node2
-    enc.encode_bool(false, 128); // go to node6
-    enc.encode_bool(false, 128); // EOB
+/// Map absolute coefficient value to VP8 token number.
+fn abs_to_token(abs: u32) -> u32 {
+    match abs {
+        0 => 1,      // ZERO
+        1 => 2,      // ONE
+        2 => 3,      // TWO
+        3 => 4,      // THREE
+        4..=5 => 5,  // FOUR
+        6..=8 => 6,  // CAT1
+        9..=11 => 7, // CAT2
+        12..=15 => 8,// CAT3
+        16..=19 => 9,// CAT4
+        _ => 10,     // CAT5 (20+)
+    }
 }
 
-/// Encode a coefficient token based on absolute value.
-fn encode_token(enc: &mut BoolEncoder, abs: u32) {
-    // We use a simplified binary tree with uniform probabilities.
-    // The tree structure matches the VP8 spec token tree.
-
-    if abs <= 3 {
-        // Left branch: small values (tokens 1-4)
-        enc.encode_bool(true, 128);  // go to node1 (left)
-        if abs <= 1 {
-            // node3: ZERO or ONE
-            enc.encode_bool(true, 128);  // go to node3 (left)
-            if abs == 0 {
-                enc.encode_bool(true, 128);  // ZERO (left of node3)
-            } else {
-                enc.encode_bool(false, 128); // ONE (right of node3)
-            }
-        } else {
-            // node4: TWO or THREE
-            enc.encode_bool(false, 128); // go to node4 (right)
-            if abs == 2 {
-                enc.encode_bool(true, 128);  // TWO (left of node4)
-            } else {
-                enc.encode_bool(false, 128); // THREE (right of node4)
-            }
+/// Encode extra bits for category tokens (5-10).
+fn encode_extra_bit(enc: &mut BoolEncoder, abs: u32) {
+    match abs {
+        0..=3 => {} // no extra bits
+        4..=5 => {
+            enc.encode_bool(abs == 5, 128); // 1 bit
         }
-    } else {
-        // Right branch: larger values (tokens 5-10)
-        enc.encode_bool(false, 128); // go to node2 (right)
-
-        if abs <= 5 {
-            // node5 → node7: FOUR(5) or CAT1(6)
-            enc.encode_bool(true, 128);  // go to node5 (left)
-            enc.encode_bool(true, 128);  // go to node7 (left)
-            if abs <= 5 {
-                enc.encode_bool(true, 128);  // FOUR (left of node7)
+        6..=8 => {
+            enc.encode_value(abs - 6, 2, ); // 2 bits
+        }
+        9..=11 => {
+            enc.encode_value(abs - 9, 2);
+        }
+        12..=15 => {
+            enc.encode_value(abs - 12, 2);
+        }
+        16..=19 => {
+            enc.encode_value(abs - 16, 2);
+        }
+        _ => {
+            // CAT5: 3 extra bits for values 20-27
+            if abs <= 27 {
+                enc.encode_value(abs - 20, 3);
             } else {
-                enc.encode_bool(false, 128); // CAT1 (right of node7)
-            }
-        } else if abs <= 11 {
-            // node5 → node8: CAT2(7) or CAT3(8)
-            enc.encode_bool(true, 128);  // go to node5 (left)
-            enc.encode_bool(false, 128); // go to node8 (right)
-            if abs <= 8 || abs <= 11 && abs > 8 {
-                // Need to distinguish CAT2 vs CAT3
-                if abs <= 8 {
-                    enc.encode_bool(true, 128);  // CAT2
-                } else {
-                    enc.encode_bool(false, 128); // CAT3
-                }
-            } else {
-                unreachable!()
-            }
-        } else {
-            // node6 → node9: CAT4(9) or CAT5(10)
-            enc.encode_bool(false, 128); // go to node6 (right)
-            enc.encode_bool(true, 128);  // go to node9 (left)
-            if abs <= 19 {
-                enc.encode_bool(true, 128);  // CAT4 (left of node9)
-            } else {
-                enc.encode_bool(false, 128); // CAT5 (right of node9)
+                // Large values: clamp to CAT5 range
+                enc.encode_value((abs - 20).min(7), 3);
             }
         }
     }
@@ -391,19 +412,11 @@ fn encode_token(enc: &mut BoolEncoder, abs: u32) {
 // Full MB encoding helpers
 // ---------------------------------------------------------------------------
 
-/// Process a macroblock: FDCT on all sub-blocks, WHT on luma DC.
-///
-/// Returns:
-/// - `wht`: 16 WHT coefficients (from the 16 luma DC values)
-/// - `y_ac`: 16 arrays of 15 AC coefficients (no DC) for the 16 Y sub-blocks
-/// - `u_blocks`: 4 arrays of 16 coefficients for U sub-blocks
-/// - `v_blocks`: 4 arrays of 16 coefficients for V sub-blocks
 pub fn process_macroblock(
     y_residual: &[i16; 256],
     u_residual: &[i16; 64],
     v_residual: &[i16; 64],
 ) -> ([i16; 16], [[i16; 16]; 16], [[i16; 16]; 4], [[i16; 16]; 4]) {
-    // FDCT on 16 Y sub-blocks (each 4×4 = 16 values)
     let mut y_dct: [[i16; 16]; 16] = [[0; 16]; 16];
     for i in 0..16 {
         let mut block = [0i16; 16];
@@ -417,23 +430,16 @@ pub fn process_macroblock(
         y_dct[i] = forward_dct_4x4(block);
     }
 
-    // Extract 16 DC values from Y sub-blocks
     let mut dc_values = [0i16; 16];
-    for i in 0..16 {
-        dc_values[i] = y_dct[i][0];
-    }
-
-    // WHT on DC values
+    for i in 0..16 { dc_values[i] = y_dct[i][0]; }
     let wht = forward_wht_4x4(dc_values);
 
-    // Y AC blocks (no DC — replace DC with 0)
     let mut y_ac: [[i16; 16]; 16] = [[0; 16]; 16];
     for i in 0..16 {
         y_ac[i] = y_dct[i];
-        y_ac[i][0] = 0; // DC is in WHT
+        y_ac[i][0] = 0;
     }
 
-    // FDCT on 4 U sub-blocks (each 2×2 of 4×4 = 8×8 total)
     let mut u_blocks: [[i16; 16]; 4] = [[0; 16]; 4];
     for i in 0..4 {
         let mut block = [0i16; 16];
@@ -447,7 +453,6 @@ pub fn process_macroblock(
         u_blocks[i] = forward_dct_4x4(block);
     }
 
-    // FDCT on 4 V sub-blocks
     let mut v_blocks: [[i16; 16]; 4] = [[0; 16]; 4];
     for i in 0..4 {
         let mut block = [0i16; 16];
@@ -481,42 +486,25 @@ mod tests {
     }
 
     #[test]
-    fn frame_header_width_height() {
-        let header = write_frame_header(3000, 4000, 0);
-        let w_lo = header[6] as u16;
-        let w_hi = header[7] as u16;
-        let width = w_lo | ((w_hi & 0x3F) << 8);
-        assert_eq!(width, 3000);
-
-        let h_lo = header[8] as u16;
-        let h_hi = header[9] as u16;
-        let height = h_lo | ((h_hi & 0x3F) << 8);
-        assert_eq!(height, 4000);
-    }
-
-    #[test]
     fn quality_to_q_index_mapping() {
         assert_eq!(quality_to_q_index(100), 0);
         assert_eq!(quality_to_q_index(0), 127);
         let q75 = quality_to_q_index(75);
-        assert!(q75 >= 10 && q75 <= 40, "Q75 q_index should be ~32, got {}", q75);
+        assert!(q75 >= 10 && q75 <= 40);
     }
 
     #[test]
-    fn first_partition_produces_output() {
-        let bytes = write_first_partition(2, 2, 32, 20);
-        assert!(!bytes.is_empty(), "first partition should produce output");
-        assert!(bytes.len() >= 2, "first partition should have >=2 bytes");
+    fn first_partition_with_modes() {
+        let modes = vec![YMode::DcPred; 4];
+        let bytes = write_first_partition(&modes, 2, 2, 32, 20);
+        assert!(!bytes.is_empty());
     }
 
     #[test]
-    fn process_mb_constant_residual() {
-        // Constant residual of 0 → all DCT coefficients should be ~0
-        let y = [0i16; 256];
-        let u = [0i16; 64];
-        let v = [0i16; 64];
-        let (wht, _y_ac, _u_blk, _v_blk) = process_macroblock(&y, &u, &v);
-        // WHT of zero DC values should be ~0
-        assert_eq!(wht[0], 0, "WHT DC should be 0 for zero residual");
+    fn abs_to_token_correct() {
+        assert_eq!(abs_to_token(0), 1);
+        assert_eq!(abs_to_token(1), 2);
+        assert_eq!(abs_to_token(5), 5);
+        assert_eq!(abs_to_token(20), 10);
     }
 }

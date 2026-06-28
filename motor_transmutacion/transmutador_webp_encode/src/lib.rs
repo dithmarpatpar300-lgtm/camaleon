@@ -161,26 +161,19 @@ pub fn encode_webp_lossy(
     // Step 4: Write first partition (frame params + MB modes)
     let filter_level = ((q_index as u32 * 63) / 127).min(63) as u8;
     let first_part = bitstream::write_first_partition(
+        &modes,
         mb_cols,
         mb_rows,
         q_index,
         filter_level,
     );
 
-    // Step 5: Write second partition (coefficients)
-    // The second partition must be written BEFORE we know first_part_size
-    // because first_part_size is in the frame header. But in VP8,
-    // we can compute first_part_size directly.
-    // Actually, the frame header is written first, then partitions.
-    // We need first_part_size to be known before writing the frame header.
-    // Since we already wrote the first partition, its size is known.
-
+    // Step 5: Write second partition (coefficients only)
     let second_part = bitstream::write_second_partition(
         &all_y_ac,
         &all_wht,
         &all_u_blocks,
         &all_v_blocks,
-        &modes,
         mb_cols,
         mb_rows,
     );

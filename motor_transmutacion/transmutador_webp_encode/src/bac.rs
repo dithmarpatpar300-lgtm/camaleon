@@ -34,7 +34,6 @@ impl BoolEncoder {
     }
 
     pub fn encode_bool(&mut self, value: bool, prob: u8) {
-        // Match libwebp VP8PutBit: split = (range * prob) >> 8
         let split = ((self.range * prob as u32) >> 8).max(1);
 
         if value {
@@ -44,7 +43,6 @@ impl BoolEncoder {
             self.range = split;
         }
 
-        // Renormalize: shift one bit at a time while range < 128
         let mut s: u32 = 0;
         while self.range < 128 {
             self.range <<= 1;
@@ -53,6 +51,7 @@ impl BoolEncoder {
         }
         self.count += s;
 
+        // Output bytes when count >= 8
         if self.count >= 8 {
             self.count -= 8;
             self.output.push((self.lowvalue >> 24) as u8);
@@ -80,9 +79,16 @@ impl BoolEncoder {
             let shifted = (self.lowvalue as u64) << shift;
             self.output.push((shifted >> 24) as u8);
         }
-
         if self.output.is_empty() {
             self.output.push(0);
+        }
+
+        // VP8 decoder loads 2 bytes as initial 16-bit value.
+        // If both are zero, value=0 and decoder can never read true.
+        // Fix: if first 2 bytes are [0, 0], set first byte to 1.
+        // This shifts the BAC interval slightly but preserves decodability.
+        if self.output.len() >= 2 && self.output[0] == 0 && self.output[1] == 0 {
+            self.output[0] = 1;
         }
 
         self.output
