@@ -189,6 +189,12 @@ pub fn write_second_partition(
                 YMode::TmPred => {
                     enc.encode_bool(true, prob[2]);
                 }
+                YMode::BPred => {
+                    // B_PRED: encode as DC for now (B_PRED tree integration
+                    // requires per-sub-block mode encoding — Phase 2.5)
+                    enc.encode_bool(false, prob[2]);
+                    enc.encode_bool(true, prob[0]);
+                }
             }
 
             // uv_mode — chroma prediction mode (same tree, same probs)

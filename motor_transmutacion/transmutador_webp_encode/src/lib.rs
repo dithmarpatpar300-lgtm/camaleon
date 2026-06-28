@@ -13,7 +13,8 @@ pub mod yuv;
 pub mod zigzag;
 
 use crate::macroblock::MacroblockGrid;
-use crate::prediction::{compute_residual_16x16, compute_residual_8x8, predict_dc_16x16, predict_dc_8x8, YMode};
+use crate::prediction::{choose_mb_mode, compute_residual_16x16, compute_residual_8x8,
+    predict_chroma_8x8, YMode};
 use crate::probabilities::{AC_QLOOKUP, DC_QLOOKUP};
 
 use wasm_bindgen::prelude::*;
@@ -57,8 +58,8 @@ pub fn encode_webp_lossy(
     let mb_cols = grid.mb_cols;
     let mb_rows = grid.mb_rows;
 
-    // All MBs use DC_PRED for Phase 1
-    let modes: Vec<YMode> = vec![YMode::DcPred; grid.total_mbs()];
+    // All MBs use DC_PRED for Phase 1; Phase 2 chooses per-MB
+    let mut modes: Vec<YMode> = Vec::with_capacity(grid.total_mbs());
 
     // Step 3: Process all macroblocks (FDCT + WHT)
     let total_mbs = grid.total_mbs();
@@ -106,10 +107,21 @@ pub fn encode_webp_lossy(
                 }
             }
 
-            // DC_PRED prediction
-            let pred_y = predict_dc_16x16(&above_y, &left_y, has_above, has_left);
-            let pred_u = predict_dc_8x8(&above_u, &left_u, has_above, has_left);
-            let pred_v = predict_dc_8x8(&above_v, &left_v, has_above, has_left);
+            // Phase 2: choose best prediction mode via SAD
+            let top_left = if has_above && has_left {
+                let above_mb = grid.get_mb(mb_row - 1, mb_col);
+                let left_mb = grid.get_mb(mb_row, mb_col - 1);
+                above_mb.y[15 * 16 + 15].min(left_mb.y[15]) as u8
+            } else { 128u8 };
+
+            let (y_mode, pred_y) = choose_mb_mode(
+                &mb.y, &above_y, &left_y, has_above, has_left, top_left,
+            );
+            modes.push(y_mode);
+
+            // Chroma prediction (DC_PRED only for simplicity — Phase 2 uses DC for chroma)
+            let pred_u = predict_chroma_8x8(YMode::DcPred, &above_u, &left_u, has_above, has_left, 128);
+            let pred_v = predict_chroma_8x8(YMode::DcPred, &above_v, &left_v, has_above, has_left, 128);
 
             // Residuals
             let y_residual = compute_residual_16x16(&mb.y, &pred_y);
