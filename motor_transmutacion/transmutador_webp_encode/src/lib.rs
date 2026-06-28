@@ -149,7 +149,6 @@ pub fn encode_webp_lossy(
     // Step 4: Write first partition (frame params + MB modes)
     let filter_level = ((q_index as u32 * 63) / 127).min(63) as u8;
     let first_part = bitstream::write_first_partition(
-        &modes,
         mb_cols,
         mb_rows,
         q_index,

@@ -77,9 +77,29 @@ impl BoolEncoder {
     }
 
     pub fn finish(mut self) -> Vec<u8> {
+        // Ensure first output byte >= 4 so the VP8 decoder's initial
+        // 16-bit value is at least 1024. This allows decoding true
+        // booleans after ~4 false ones (common in frame headers).
+        if self.lowvalue > 0 {
+            while self.count < 8 || (self.lowvalue >> 24) < 4 {
+                if self.count >= 32 {
+                    break;
+                }
+                self.lowvalue <<= 1;
+                self.count += 1;
+            }
+        }
+
+        // Output all complete bytes
+        while self.count >= 8 {
+            self.count -= 8;
+            self.output.push((self.lowvalue >> 24) as u8);
+            self.lowvalue &= 0x00FFFFFF;
+        }
+
+        // Output final partial byte
         if self.count > 0 {
-            let shift = 24 - self.count;
-            let shifted = (self.lowvalue as u64) << shift;
+            let shifted = (self.lowvalue as u64) << (24 - self.count);
             self.output.push((shifted >> 24) as u8);
         }
 

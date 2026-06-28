@@ -84,13 +84,12 @@ pub fn quality_to_q_index(quality: u8) -> u8 {
 // First partition writer (BAC-encoded)
 // ---------------------------------------------------------------------------
 
-/// Write the first partition: frame parameters + macroblock luma modes.
+/// Write the first partition: frame parameters only (no MB modes).
 ///
-/// Returns the BAC-encoded byte stream.
+/// RFC 6386 §10.4 — MB modes go in the second partition.
 pub fn write_first_partition(
-    mb_modes: &[YMode],
-    mb_cols: usize,
-    mb_rows: usize,
+    _mb_cols: usize,
+    _mb_rows: usize,
     q_index: u8,
     filter_level: u8,
 ) -> Vec<u8> {
@@ -120,7 +119,7 @@ pub fn write_first_partition(
     // Refresh golden frame
     enc.encode_bool(false, 128);
 
-    // Refresh alt reference frame  
+    // Refresh alt reference frame
     enc.encode_bool(false, 128);
 
     // Probability updates: use defaults (no update)
@@ -130,56 +129,7 @@ pub fn write_first_partition(
     // Skip mode: disabled
     enc.encode_bool(false, 128);
 
-    // Macroblock y_mode data
-    for mb_row in 0..mb_rows {
-        for mb_col in 0..mb_cols {
-            let mode = mb_modes[mb_row * mb_cols + mb_col];
-
-            // Context for y_mode probabilities
-            let above_mode = if mb_row > 0 {
-                mb_modes[(mb_row - 1) * mb_cols + mb_col]
-            } else {
-                YMode::DcPred
-            };
-            let left_mode = if mb_col > 0 {
-                mb_modes[mb_row * mb_cols + (mb_col - 1)]
-            } else {
-                YMode::DcPred
-            };
-
-            let prob_row = if above_mode == left_mode {
-                0
-            } else {
-                1
-            };
-
-            let prob = KF_Y_MODE_PROBS[prob_row];
-
-            // Encode mode using probability tree
-            // Tree: root → (not TM: left, is TM: right)
-            //   not TM → (is DC: left, not DC: right)
-            //     not DC → (is V: left, not V: right → H)
-            match mode {
-                YMode::DcPred => {
-                    enc.encode_bool(false, prob[2]); // not TM
-                    enc.encode_bool(true, prob[0]);  // is DC
-                }
-                YMode::VPred => {
-                    enc.encode_bool(false, prob[2]); // not TM
-                    enc.encode_bool(false, prob[0]); // not DC
-                    enc.encode_bool(true, prob[1]);  // is V
-                }
-                YMode::HPred => {
-                    enc.encode_bool(false, prob[2]); // not TM
-                    enc.encode_bool(false, prob[0]); // not DC
-                    enc.encode_bool(false, prob[1]); // not V (= H)
-                }
-                YMode::TmPred => {
-                    enc.encode_bool(true, prob[2]); // is TM
-                }
-            }
-        }
-    }
+    // Note: MB modes (y_mode) are in the second partition per RFC 6386 §10.5
 
     enc.finish()
 }
@@ -188,12 +138,14 @@ pub fn write_first_partition(
 // Second partition writer (BAC-encoded)
 // ---------------------------------------------------------------------------
 
-/// Write the second partition: chroma modes + DCT coefficients.
+/// Write the second partition: y_mode + uv_mode + DCT coefficients.
+///
+/// RFC 6386 §10.5: macroblock modes and residual data are in the second partition.
 pub fn write_second_partition(
-    y_ac_blocks: &[[i16; 16]],     // 16 Y AC blocks per MB (no DC — handled by WHT)
-    wht_coeffs: &[[i16; 16]],       // WHT coefficients per MB (1 per MB)
-    uv_blocks_u: &[[i16; 16]],      // 4 U sub-blocks per MB
-    uv_blocks_v: &[[i16; 16]],      // 4 V sub-blocks per MB
+    y_ac_blocks: &[[i16; 16]],
+    wht_coeffs: &[[i16; 16]],
+    uv_blocks_u: &[[i16; 16]],
+    uv_blocks_v: &[[i16; 16]],
     mb_modes: &[YMode],
     mb_cols: usize,
     mb_rows: usize,
@@ -203,11 +155,9 @@ pub fn write_second_partition(
     for mb_row in 0..mb_rows {
         for mb_col in 0..mb_cols {
             let mb_idx = mb_row * mb_cols + mb_col;
+            let mode = mb_modes[mb_idx];
 
-            // Chroma mode (uv_mode) — use DC_PRED for Phase 1
-            // Same probability tree as y_mode but with UV_PROBS
-            // For Phase 1: all MBs use DC_PRED for chroma
-            // Context for uv_mode
+            // y_mode — luma prediction mode
             let above_mode = if mb_row > 0 {
                 mb_modes[(mb_row - 1) * mb_cols + mb_col]
             } else {
@@ -219,8 +169,29 @@ pub fn write_second_partition(
                 YMode::DcPred
             };
             let prob_row = if above_mode == left_mode { 0 } else { 1 };
-            let prob = KF_Y_MODE_PROBS[prob_row]; // reuse Y probs for UV (spec says they're same)
+            let prob = KF_Y_MODE_PROBS[prob_row];
 
+            match mode {
+                YMode::DcPred => {
+                    enc.encode_bool(false, prob[2]); // not TM
+                    enc.encode_bool(true, prob[0]);  // is DC
+                }
+                YMode::VPred => {
+                    enc.encode_bool(false, prob[2]);
+                    enc.encode_bool(false, prob[0]);
+                    enc.encode_bool(true, prob[1]);
+                }
+                YMode::HPred => {
+                    enc.encode_bool(false, prob[2]);
+                    enc.encode_bool(false, prob[0]);
+                    enc.encode_bool(false, prob[1]);
+                }
+                YMode::TmPred => {
+                    enc.encode_bool(true, prob[2]);
+                }
+            }
+
+            // uv_mode — chroma prediction mode (same tree, same probs)
             // Phase 1: all UV modes are DC_PRED
             enc.encode_bool(false, prob[2]); // not TM
             enc.encode_bool(true, prob[0]);  // is DC
@@ -228,22 +199,22 @@ pub fn write_second_partition(
             // WHT coefficients (one 4×4 block = 16 coeffs)
             encode_coeff_block(&mut enc, &wht_coeffs[mb_idx], 0); // type=0 (Y2_DC)
 
-            // 16 Y AC blocks (each has no DC — already in WHT)
+            // 16 Y AC blocks
             for blk in 0..16 {
                 let blk_idx = mb_idx * 16 + blk;
-                encode_coeff_block(&mut enc, &y_ac_blocks[blk_idx], 1); // type=1 (Y_AC)
+                encode_coeff_block(&mut enc, &y_ac_blocks[blk_idx], 1);
             }
 
             // 4 U blocks
             for blk in 0..4 {
                 let blk_idx = mb_idx * 4 + blk;
-                encode_coeff_block(&mut enc, &uv_blocks_u[blk_idx], 2); // type=2 (UV_DC)
+                encode_coeff_block(&mut enc, &uv_blocks_u[blk_idx], 2);
             }
 
             // 4 V blocks
             for blk in 0..4 {
                 let blk_idx = mb_idx * 4 + blk;
-                encode_coeff_block(&mut enc, &uv_blocks_v[blk_idx], 3); // type=3 (UV_AC)
+                encode_coeff_block(&mut enc, &uv_blocks_v[blk_idx], 3);
             }
         }
     }
@@ -527,8 +498,7 @@ mod tests {
 
     #[test]
     fn first_partition_produces_output() {
-        let modes = vec![YMode::DcPred; 4];
-        let bytes = write_first_partition(&modes, 2, 2, 32, 20);
+        let bytes = write_first_partition(2, 2, 32, 20);
         assert!(!bytes.is_empty(), "first partition should produce output");
         assert!(bytes.len() >= 2, "first partition should have >=2 bytes");
     }
